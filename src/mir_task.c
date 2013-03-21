@@ -193,7 +193,21 @@ void mir_task_wait(struct mir_task_t* task)
     return;
 }/*}}}*/
 
-void mir_task_wait_twc(struct mir_twc_t* twc)
+struct mir_twc_t* mir_twc_create() 
+{/*{{{*/
+    struct mir_twc_t* twc = (struct mir_twc_t*) mir_malloc_int (sizeof(struct mir_twc_t));
+    if(twc == NULL)
+        MIR_ABORT(MIR_ERROR_STR "Unable to create twc!\n");
+
+   for(int i=0; i<runtime->num_workers; i++)
+       twc->count_per_worker[i] = 0;
+
+   twc->count = 0;
+
+   return twc;
+}/*}}}*/
+
+void mir_twc_wait(struct mir_twc_t* twc)
 {/*{{{*/
     MIR_RECORDER_STATE_BEGIN(MIR_STATE_TSYNC);
 
@@ -208,19 +222,5 @@ void mir_task_wait_twc(struct mir_twc_t* twc)
 
     MIR_RECORDER_STATE_END(NULL, 0);
     return;
-}/*}}}*/
-
-struct mir_twc_t* mir_twc_create() 
-{/*{{{*/
-    struct mir_twc_t* twc = (struct mir_twc_t*) mir_malloc_int (sizeof(struct mir_twc_t));
-    if(twc == NULL)
-        MIR_ABORT(MIR_ERROR_STR "Unable to create twc!\n");
-
-   for(int i=0; i<runtime->num_workers; i++)
-       twc->count_per_worker[i] = 0;
-
-   twc->count = 0;
-
-   return twc;
 }/*}}}*/
 

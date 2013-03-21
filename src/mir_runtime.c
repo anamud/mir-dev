@@ -116,6 +116,9 @@ void mir_config()
 {/*{{{*/
     // Get MIR_CONF environment string 
     const char* conf_str = getenv("MIR_CONF");
+    if(!conf_str)
+        return;
+
     if(strlen(conf_str) == 0)
         return;
 

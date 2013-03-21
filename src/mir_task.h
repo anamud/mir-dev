@@ -64,8 +64,8 @@ void mir_task_execute(struct mir_task_t* task);
 
 void mir_task_wait(struct mir_task_t* task);
 
-void mir_task_wait_twc(struct mir_twc_t* twc);
-
 struct mir_twc_t* mir_twc_create();
+
+void mir_twc_wait(struct mir_twc_t* twc);
 
 #endif

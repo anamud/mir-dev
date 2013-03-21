@@ -1,0 +1,35 @@
+env = Environment()
+env['CCFLAGS'] = Split("""
+-std=c99
+-Wall 
+-Werror 
+-Wno-unused-function 
+-Wno-unused-variable
+-I/home/ananya/mir/src
+""")
+
+env['LINKFLAGS'] = Split("""
+""")
+
+env['LIBS'] = Split("""
+mir 
+pthread
+numa
+""")
+
+env['LIBPATH'] = Split("""
+/home/ananya/mir/src/
+""")
+
+src_list = Split("""
+nqueens.c
+""") 
+
+debug = ARGUMENTS.get('debug',0)
+if int(debug):
+    env.Append(CCFLAGS = '-g')
+    env.Append(CCFLAGS = '-O0')
+else:
+    env.Append(CCFLAGS = '-O3')
+
+env.Program('nqueens', source = src_list)
