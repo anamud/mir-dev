@@ -192,14 +192,15 @@ int verify_queens (int size)
 
 int main(int argc, char *argv[])
 {/*{{{*/
-    // Init the runtime
-    mir_create();
-
     if (argc > 2)
     {
         printf("Usage: nqueens board-size\n");
         exit(0);
     }
+
+    // Init the runtime
+    mir_create();
+
 
     int size = 14;
 

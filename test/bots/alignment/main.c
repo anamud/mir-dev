@@ -3,8 +3,8 @@
 #include <sys/time.h>
 
 #include "mir_public_int.h"
-#include "uts.h"
 #include "helper.h"
+#include "alignment.h"
 
 #define CHECK_RESULT 1
 
@@ -19,29 +19,27 @@ int main(int argc, char *argv[])
 {/*{{{*/
     if (argc > 2)
     {
-        printf("Usage: uts input-file\n");
+        printf("Usage: alignment input-file\n");
         exit(0);
     }
 
     // Init the runtime
     mir_create();
 
-    uts_read_file(argv[1]);
+    pairalign_init(argv[1]);
 
-    Node root;
-    uts_initRoot(&root);
-
+    align_init();
     long par_time_start = get_usecs();
-    parallel_uts(&root);
+    align();
     long par_time_end = get_usecs();
     double par_time = (double)( par_time_end - par_time_start) / 1000000;
-
-    uts_show_stats();
 
     int check = TEST_NOT_PERFORMED;
     if (CHECK_RESULT)
     {
-        check = uts_check_result();
+        align_seq_init();
+        align_seq();
+        check = align_verify();
     }
 
     printf("%s(%s),check=%d in [SUCCESSFUL, UNSUCCESSFUL, NOT_APPLICABLE, NOT_PERFORMED],time=%f secs\n", argv[0], argv[1], check, par_time);
