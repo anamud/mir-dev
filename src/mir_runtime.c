@@ -21,6 +21,7 @@
 #include "mir_sched_pol.h"
 #include "mir_arch.h"
 #include "mir_mem_pol.h"
+#include "mir_utils.h"
 
 #ifndef __tile__
 #include <papi.h>
@@ -172,6 +173,20 @@ void mir_config()
                     MIR_ABORT(MIR_ERROR_STR "Dependence reolver not supported yet!\n");
                     // runtime->enable_dependence_resolver = 1;
                     break;
+                case 'l':
+                    if(tok[2] == '=')
+                    {
+                        char* s = tok+3;
+                        int ps_sz = atoi(s) * 1024 *1024;
+                        if(0 == mir_pstack_set_size(ps_sz))
+                            MIR_DEBUG(MIR_DEBUG_STR "Process stack size set to %d MB!\n", ps_sz);
+                        else
+                            MIR_DEBUG(MIR_DEBUG_STR "Could not set process stack size to %d MB!\n", ps_sz);
+                    }
+                    else
+                    {
+                        MIR_ABORT(MIR_ERROR_STR "Incorrect MIR_CONF parameter [%c]\n", c);
+                    }
                 default:
                     break;
             }

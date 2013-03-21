@@ -7,6 +7,7 @@
 
 // Task
 //#define MIR_TASK_DEBUG 1
+#define MIR_TASK_DEFAULT_NAME "NO_NAME"
 #define MIR_TASK_ID_START 0
 //#define MIR_TASK_ALLOCATE_ON_STACK 1
 

@@ -1,4 +1,5 @@
 src_list = Split("""
+mir_utils.c 
 mir_debug.c 
 mir_memory.c 
 mir_mem_pol.c 

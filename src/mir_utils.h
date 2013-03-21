@@ -1,6 +1,8 @@
 #ifndef MIR_UTILS_H
 #define MIR_UTILS_H 1
 
-#include "mir_defines.h"
+#include <stdlib.h>
+
+int mir_pstack_set_size(size_t sz);
 
 #endif

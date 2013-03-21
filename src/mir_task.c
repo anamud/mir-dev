@@ -12,6 +12,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#include <alloca.h>
 
 extern struct mir_runtime_t* runtime;
 
@@ -53,7 +54,7 @@ struct mir_task_t* mir_task_create(mir_tfunc_t tfunc, void* data, size_t data_si
     task->id.uid = __sync_fetch_and_add(&(g_tasks_uidc), 1);
 
     // Task name
-    task->name[0] = '\0';
+    strcpy(task->name, MIR_TASK_DEFAULT_NAME);
     if(name)
     {/*{{{*/
         if(strlen(name) > MIR_SHORT_NAME_LEN)
@@ -144,22 +145,19 @@ void mir_task_execute(struct mir_task_t* task)
 
     // Compose event metadata
     char event_meta_data[MIR_SHORT_NAME_LEN] = {0};
-#ifdef __tile__
-    sprintf(event_meta_data, "%llu,%s", task->id.uid, task->name);
-#else
-    sprintf(event_meta_data, "%lu,%s", task->id.uid, task->name);
-#endif
+    //char* event_meta_data = alloca(sizeof(char) * MIR_SHORT_NAME_LEN);
+    sprintf(event_meta_data, "%" MIR_FORMSPEC_UL ",%s", task->id.uid, task->name);
 
     // Record event and state
-    MIR_RECORDER_EVENT(&event_meta_data[0], 16);
+    MIR_RECORDER_EVENT(&event_meta_data[0], MIR_SHORT_NAME_LEN);
     MIR_RECORDER_STATE_BEGIN( MIR_STATE_TEXEC);
 
     // Execute task function
     task->func(task->data);
 
     // Record event and state
-    MIR_RECORDER_STATE_END(&event_meta_data[0], 16);
-    MIR_RECORDER_EVENT(&event_meta_data[0], 16);
+    MIR_RECORDER_STATE_END(&event_meta_data[0], MIR_SHORT_NAME_LEN);
+    MIR_RECORDER_EVENT(&event_meta_data[0], MIR_SHORT_NAME_LEN);
 
     // Mark task as done
     task->done = 1;

@@ -1,1 +1,2 @@
-Create BOTS standalone UTS benchmark
+Create BOTS standalone UTS benchmark [DONE]
+Get the damn thing to scale! (Use -l=size in MIR_CONF)
