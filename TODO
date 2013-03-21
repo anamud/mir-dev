@@ -1,0 +1,12 @@
+Build with tilecc.
+Test on tilepro64.
+Architecture specific SConstruct.
+Simulatanoes debug and release build in SConstruct.
+Give git access to others (Artur, Ali, Mats and possibly PaPP partners).
+Setup git permissions (How? Dev and public repos?).
+Find a good license. GPL? Check with BSC about Mercurium and BOTS.
+Get started with clang support.
+Strengthen Mercurium support.
+Work on UTS.
+Work on benchmarks with data dependences.
+Get a gimp to parallelize BOTS FFT and Strassen. 
