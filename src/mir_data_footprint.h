@@ -1,0 +1,27 @@
+#ifndef MIR_DATA_FOOTPRINT_H
+#define MIR_DATA_FOOTPRINT_H
+
+#include <stdint.h>
+#include <stdlib.h>
+
+enum mir_data_access_t 
+{
+    MIR_DATA_ACCESS_READ = 0,
+    MIR_DATA_ACCESS_WRITE = 1,
+    MIR_DATA_ACCESS_READWRITE = 2
+};
+typedef enum mir_data_access_t mir_data_access_t;
+
+struct mir_data_footprint_t
+{
+    void* base;
+    size_t type;
+    uint64_t start;
+    uint64_t end;
+    mir_data_access_t data_access;
+};
+
+void mir_data_footprint_copy(struct mir_data_footprint_t* dest, struct mir_data_footprint_t* src);
+
+#endif /* end of include guard: MIR_DATA_FOOTPRINT_H */
+

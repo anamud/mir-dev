@@ -1,0 +1,42 @@
+#ifndef MIR_RUNTIME_H
+#define MIR_RUNTIME_H 1
+
+#include <pthread.h>
+#include <stdint.h>
+#include <stdlib.h>
+#include <stdbool.h>
+
+#include "mir_worker.h"
+#include "mir_arch.h"
+#include "mir_defines.h"
+#include "mir_types.h"
+#include "mir_sched_pol.h"
+
+struct mir_runtime_t
+{
+    // Data
+    uint16_t num_workers;
+    pthread_key_t worker_index;
+    uint64_t init_time;
+    struct mir_worker_t workers[MIR_WORKER_MAX_COUNT];
+    struct mir_sched_pol_t *sched_pol;
+    struct mir_arch_t* arch;
+
+    // Flags
+    bool sig_dying;
+    bool enable_stats;
+    bool enable_recorder;
+    bool enable_dependence_resolver;
+};
+
+void mir_create();
+
+void mir_destroy();
+
+void mir_config();
+
+void mir_preconfig_init();
+
+void mir_postconfig_init();
+
+#endif //MIR_RUNTIME_H

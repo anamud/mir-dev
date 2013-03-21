@@ -1,0 +1,26 @@
+#ifndef MIR_ARCH_H
+#define MIR_ARCH_H 1
+
+#include "stdint.h"
+#include "mir_types.h"
+
+struct mir_arch_t 
+{/*{{{*/
+    // Constants
+    const char* name;
+    uint16_t num_cores;
+    uint16_t num_nodes;
+
+    // Interfaces
+    void (*config) (const char* conf_str);
+    void (*create) ();
+    void (*destroy) ();
+    uint16_t (*node_of) (uint16_t coreid);
+    void (*cores_of) (uint16_t nodeid, struct mir_sbuf_t* coreids);
+    void (*vicinity_of) (uint16_t coreid, struct mir_sbuf_t* coreids);
+    uint16_t (*comm_cost_of) (uint16_t from_nodeid, uint16_t to_nodeid);
+};/*}}}*/
+
+struct mir_arch_t* mir_arch_create_by_query();
+
+#endif //MIR_ARCH_H 1

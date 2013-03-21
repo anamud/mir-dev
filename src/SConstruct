@@ -1,0 +1,47 @@
+src_list = Split("""
+mir_debug.c 
+mir_memory.c 
+mir_mem_pol.c 
+mir_perf.c 
+mir_lock.c 
+mir_queue.c 
+mir_data_footprint.c 
+mir_arch.c 
+mir_arch_adk.c 
+mir_arch_gatti.c 
+mir_arch_tilepro64.c 
+mir_arch_gothmog.c 
+mir_recorder.c 
+mir_task.c 
+mir_worker.c 
+mir_sched_pol.c
+mir_sched_pol_ws.c
+mir_sched_pol_central.c
+mir_runtime.c
+""")
+
+env = Environment()
+
+env['CCFLAGS'] = Split("""
+-Wall 
+-Werror 
+-Wno-unused-function 
+-Wno-unused-variable 
+-fPIC 
+-std=c99 
+-D_GNU_SOURCE 
+""")
+
+debug = ARGUMENTS.get('debug',0)
+if int(debug):
+    env.Append(CCFLAGS = '-g')
+    env.Append(CCFLAGS = '-O0')
+    env.Append(CCFLAGS = '-DMIR_ENABLE_DEBUG')
+else:
+    env.Append(CCFLAGS = '-O3')
+
+env['LIBS'] = Split("""
+m
+""")
+
+env.Library(target = 'mir', source = src_list)

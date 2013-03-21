@@ -1,0 +1,35 @@
+env = Environment()
+env['CCFLAGS'] = Split("""
+-std=c99
+-Wall 
+-Werror 
+-Wno-unused-function 
+-Wno-unused-variable
+-I/local/ananya/mir/
+""")
+
+env['LINKFLAGS'] = Split("""
+""")
+
+env['LIBS'] = Split("""
+mir 
+pthread
+numa
+""")
+
+env['LIBPATH'] = Split("""
+/local/ananya/mir/
+""")
+
+src_list = Split("""
+fib.c
+""") 
+
+debug = ARGUMENTS.get('debug',0)
+if int(debug):
+    env.Append(CCFLAGS = '-g')
+    env.Append(CCFLAGS = '-O0')
+else:
+    env.Append(CCFLAGS = '-O3')
+
+env.Program('fib', source = src_list)
