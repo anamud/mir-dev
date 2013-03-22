@@ -14,3 +14,4 @@ Add a clean user interface to the library (How? Machine generate the interface?)
 Find and add a good deque implementation. Ask Shavit and Maged.
 Cleanup dependence resolution support.
 Add a help document.
+Add the NUMA/NUCA scheduler.
