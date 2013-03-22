@@ -5,7 +5,7 @@ env['CCFLAGS'] = Split("""
 -Werror 
 -Wno-unused-function 
 -Wno-unused-variable
--I/local/ananya/mir/
+-I/home/ananya/mir/src/
 """)
 
 env['LINKFLAGS'] = Split("""
@@ -18,7 +18,7 @@ numa
 """)
 
 env['LIBPATH'] = Split("""
-/local/ananya/mir/
+/home/ananya/mir/src/
 """)
 
 src_list = Split("""
