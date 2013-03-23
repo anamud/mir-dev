@@ -14,8 +14,125 @@
 #include <tmc/mem.h>
 #endif
 #include <string.h>
+#include <stdlib.h>
+#include <stdbool.h>
+#include <unistd.h>
 
 extern struct mir_runtime_t* runtime;
+
+struct mem_header_t
+{/*{{{*/
+    uint64_t magic;
+    size_t sz;
+    uint16_t nodeid;
+};/*}}}*/
+
+static struct mem_header_t* get_mem_header(void* addr)
+{/*{{{*/
+    if(!addr)
+        return NULL;
+
+    struct mem_header_t* header = addr - sizeof(struct mem_header_t);
+    if(header->magic == runtime->init_time)
+    {
+        return header;
+    }
+    else
+    {
+        return NULL;
+    }
+}/*}}}*/
+
+static inline uint16_t get_node_of(void* addr)
+{/*{{{*/
+    int nodeid = runtime->arch->num_nodes+1;
+    get_mempolicy(&nodeid, NULL, 0, (void*)addr, MPOL_F_NODE|MPOL_F_ADDR);
+    return (uint16_t) nodeid;
+}/*}}}*/
+
+struct mir_mem_node_dist_t* mir_mem_node_dist_create()
+{/*{{{*/
+    struct mir_mem_node_dist_t* dist = mir_malloc_int(sizeof(struct mir_mem_node_dist_t));
+    if(dist == NULL) 
+        MIR_ABORT(MIR_ERROR_STR "Cannot allocate memory!\n");
+
+    dist->buf = mir_malloc_int(sizeof(size_t) * runtime->arch->num_nodes);
+    if(dist->buf == NULL) 
+        MIR_ABORT(MIR_ERROR_STR "Cannot allocate memory!\n");
+    for(uint16_t i=0; i<runtime->arch->num_nodes; i++)
+        dist->buf[i] = 0;
+
+    return dist;
+}/*}}}*/
+
+void  mir_mem_node_dist_destroy(struct mir_mem_node_dist_t* dist)
+{/*{{{*/
+    mir_free_int(dist->buf, sizeof(size_t) * runtime->arch->num_nodes);
+    mir_free_int(dist, sizeof(struct mir_mem_node_dist_t));
+}/*}}}*/
+
+struct mir_mem_node_dist_t* mir_mem_get_dist(void* addr, size_t sz, void* part_of)
+{/*{{{*/
+    if(addr == NULL || sz == 0)
+        return NULL;
+
+    struct mir_mem_node_dist_t* dist = mir_mem_node_dist_create();
+
+    // Check if the part_of address contains a header
+    // If yes, then the ... 
+    // distribution is fully contained at the nodeid of the header. ...
+    // Fill and return
+    if(part_of)
+    {
+        struct mem_header_t* header = get_mem_header(part_of);
+        if(header)
+        {
+            dist->buf[header->nodeid] += sz;
+            return dist;
+        }
+    }
+
+    // Check if the addr contains a header
+    // If yes, then the ... 
+    // distribution is fully contained at the nodeid of the header. ...
+    // Fill and return
+    struct mem_header_t* header = get_mem_header(addr);
+    if(header)
+    {
+        dist->buf[header->nodeid] += sz;
+        return dist;
+    }
+
+#ifndef __tile__
+    // Now we take the costly route.
+    // Ask libnuma for node distribution
+    // Jump by page size
+    uint16_t node = get_node_of(addr);
+    uint16_t page_size = sysconf(_SC_PAGESIZE);
+
+    if(sz <= page_size)
+    dist->buf[node] += sz;
+
+    uint16_t new_node = runtime->arch->num_nodes + 1;
+    size_t ifrom = 0;
+    size_t i;
+    for (i=page_size; i<sz; i+=page_size) 
+    {
+        new_node = get_node_of(addr+i);
+        if (new_node != node) 
+        {
+            dist->buf[node] += (i-ifrom);
+            node = new_node;
+            ifrom = i;
+        }
+    }
+
+    if (new_node == node) 
+        dist->buf[node] += (sz-ifrom);
+#endif
+
+    return dist;
+}/*}}}*/
 
 struct mir_mem_pol_t
 {/*{{{*/

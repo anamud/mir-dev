@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <stdlib.h>
+#include "mir_mem_pol.h"
 
 enum mir_data_access_t 
 {
@@ -19,9 +20,12 @@ struct mir_data_footprint_t
     uint64_t start;
     uint64_t end;
     mir_data_access_t data_access;
+    void* part_of;
 };
 
 void mir_data_footprint_copy(struct mir_data_footprint_t* dest, struct mir_data_footprint_t* src);
+
+struct mir_mem_node_dist_t* mir_data_footprint_get_dist(struct mir_data_footprint_t* footprint);
 
 #endif /* end of include guard: MIR_DATA_FOOTPRINT_H */
 
