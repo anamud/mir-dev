@@ -71,12 +71,10 @@ void  mir_mem_node_dist_destroy(struct mir_mem_node_dist_t* dist)
     mir_free_int(dist, sizeof(struct mir_mem_node_dist_t));
 }/*}}}*/
 
-struct mir_mem_node_dist_t* mir_mem_get_dist(void* addr, size_t sz, void* part_of)
+void mir_mem_get_dist(struct mir_mem_node_dist_t* dist, void* addr, size_t sz, void* part_of)
 {/*{{{*/
-    if(addr == NULL || sz == 0)
-        return NULL;
-
-    struct mir_mem_node_dist_t* dist = mir_mem_node_dist_create();
+    if(addr == NULL || sz == 0 || dist == NULL)
+        return;
 
     // Check if the part_of address contains a header
     // If yes, then the ... 
@@ -88,7 +86,7 @@ struct mir_mem_node_dist_t* mir_mem_get_dist(void* addr, size_t sz, void* part_o
         if(header)
         {
             dist->buf[header->nodeid] += sz;
-            return dist;
+            return;
         }
     }
 
@@ -100,7 +98,7 @@ struct mir_mem_node_dist_t* mir_mem_get_dist(void* addr, size_t sz, void* part_o
     if(header)
     {
         dist->buf[header->nodeid] += sz;
-        return dist;
+        return;
     }
 
 #ifndef __tile__
@@ -131,7 +129,14 @@ struct mir_mem_node_dist_t* mir_mem_get_dist(void* addr, size_t sz, void* part_o
         dist->buf[node] += (sz-ifrom);
 #endif
 
-    return dist;
+}/*}}}*/
+
+size_t mir_mem_node_dist_sum(struct mir_mem_node_dist_t* dist)
+{/*{{{*/
+    size_t sz = 0;
+    for(int i=0; i<runtime->arch->num_nodes; i++)
+        sz+= dist->buf[i];
+    return sz;
 }/*}}}*/
 
 struct mir_mem_pol_t
@@ -145,7 +150,7 @@ struct mir_mem_pol_t
     void  (*release) (void* addr, size_t sz);
 };/*}}}*/
 
-static struct mir_mem_pol_t* mem_pol = NULL;
+static struct mir_mem_pol_t* mem_pol;
 
 static inline void advance_node()
 {/*{{{*/
@@ -259,7 +264,7 @@ void mir_mem_pol_config (const char* conf_str)
         {
             char c = tok[1];
             switch(c)
-            {
+            {/*{{{*/
                 case 'm':
                     if(tok[2] == '=')
                     {
@@ -284,7 +289,7 @@ void mir_mem_pol_config (const char* conf_str)
                     break;
                 default:
                     break;
-            }
+            }/*}}}*/
         }
         tok = strtok(NULL, " ");
     }

@@ -8,8 +8,8 @@
 enum mir_data_access_t 
 {
     MIR_DATA_ACCESS_READ = 0,
-    MIR_DATA_ACCESS_WRITE = 1,
-    MIR_DATA_ACCESS_READWRITE = 2
+    MIR_DATA_ACCESS_WRITE,
+    MIR_DATA_ACCESS_NUM_TYPES
 };
 typedef enum mir_data_access_t mir_data_access_t;
 
@@ -25,7 +25,8 @@ struct mir_data_footprint_t
 
 void mir_data_footprint_copy(struct mir_data_footprint_t* dest, struct mir_data_footprint_t* src);
 
-struct mir_mem_node_dist_t* mir_data_footprint_get_dist(struct mir_data_footprint_t* footprint);
+// Note: This adds to dist
+void mir_data_footprint_get_dist(struct mir_mem_node_dist_t* dist, struct mir_data_footprint_t* footprint);
 
 #endif /* end of include guard: MIR_DATA_FOOTPRINT_H */
 

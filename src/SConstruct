@@ -18,6 +18,7 @@ mir_worker.c
 mir_sched_pol.c
 mir_sched_pol_ws.c
 mir_sched_pol_central.c
+mir_sched_pol_numa.c
 mir_runtime.c
 """)
 

@@ -91,7 +91,7 @@ uint16_t node_of_gothmog(uint16_t coreid)
     }
 }/*}}}*/
 
-void cores_of_gothmog(uint16_t nodeid, struct mir_sbuf_t* coreids)
+void cores_of_gothmog(struct mir_sbuf_t* coreids, uint16_t nodeid)
 {/*{{{*/
     coreids->size = 0;
     switch(nodeid)
@@ -142,9 +142,133 @@ void cores_of_gothmog(uint16_t nodeid, struct mir_sbuf_t* coreids)
     }
 }/*}}}*/
 
-void vicinity_of_gothmog(uint16_t coreid, struct mir_sbuf_t* coreids)
+uint16_t vicinity_of_gothmog(uint16_t* neighbors, uint16_t nodeid, uint16_t diameter)
 {/*{{{*/
-    MIR_ABORT(MIR_ERROR_STR "Vicinity information not added yet!");
+    uint16_t count = 0;
+    if(diameter == 1)
+    {
+        switch(nodeid)
+        {/*{{{*/
+            case 0:
+                count = 1;
+                neighbors[0] = 1;
+                break;
+            case 1:
+                count = 1;
+                neighbors[0] = 0;
+                break;
+            case 2:
+                count = 1;
+                neighbors[0] = 3;
+                break;
+            case 3:
+                count = 1;
+                neighbors[0] = 2;
+                break;
+            case 4:
+                count = 1;
+                neighbors[0] = 5;
+                break;
+            case 5:
+                count = 1;
+                neighbors[0] = 4;
+                break;
+            case 6:
+                count = 1;
+                neighbors[0] = 7;
+                break;
+            case 7:
+                count = 1;
+                neighbors[0] = 6;
+                break;
+            default:
+                break;
+        }/*}}}*/
+    }
+    else if(diameter == 2)
+    {
+        switch(nodeid)
+        {/*{{{*/
+            case 0:
+                count = 3;
+                neighbors[0] = 2;
+                neighbors[1] = 4;
+                neighbors[2] = 6;
+                break;
+            case 2:
+                count = 3;
+                neighbors[0] = 0;
+                neighbors[1] = 4;
+                neighbors[2] = 6;
+                break;
+            case 4:
+                count = 3;
+                neighbors[0] = 0;
+                neighbors[1] = 2;
+                neighbors[2] = 6;
+            case 6:
+                count = 3;
+                neighbors[0] = 0;
+                neighbors[1] = 2;
+                neighbors[2] = 4;
+                break;
+            case 1:
+                count = 3;
+                neighbors[0] = 3;
+                neighbors[1] = 5;
+                neighbors[2] = 7;
+                break;
+            case 3:
+                count = 3;
+                neighbors[0] = 1;
+                neighbors[1] = 5;
+                neighbors[2] = 7;
+                break;
+            case 5:
+                count = 3;
+                neighbors[0] = 1;
+                neighbors[1] = 3;
+                neighbors[2] = 7;
+                break;
+            case 7:
+                count = 3;
+                neighbors[0] = 1;
+                neighbors[1] = 3;
+                neighbors[2] = 5;
+                break;
+            default:
+                break;
+        }/*}}}*/
+    }
+    else if(diameter == 3)
+    {
+        switch(nodeid)
+        {/*{{{*/
+            case 0:
+            case 2:
+            case 4:
+            case 6:
+                count = 4;
+                neighbors[0] = 1;
+                neighbors[1] = 3;
+                neighbors[2] = 5;
+                neighbors[3] = 7;
+                break;
+            case 1:
+            case 3:
+            case 5:
+            case 7:
+                count = 4;
+                neighbors[0] = 0;
+                neighbors[1] = 2;
+                neighbors[2] = 4;
+                neighbors[3] = 6;
+                break;
+            default:
+                break;
+        }/*}}}*/
+    }
+    return count;
 }/*}}}*/
 
 static uint16_t socket_of_gothmog(uint16_t nodeid)
@@ -194,6 +318,8 @@ struct mir_arch_t arch_gothmog =
     .name = "gothmog.it.kth.se",
     .num_nodes = 8,
     .num_cores = 48,
+    .diameter = 3,
+    .llc_size_KB = 5000,
     .config = config_gothmog,
     .create = create_gothmog,
     .destroy = destroy_gothmog,

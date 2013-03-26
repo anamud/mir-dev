@@ -38,6 +38,7 @@ struct mir_task_t
     // Data footprint
     struct mir_data_footprint_t* data_footprints;
     uint32_t num_data_footprints;
+    struct mir_mem_node_dist_t* dist_by_access_type[MIR_DATA_ACCESS_NUM_TYPES];
 };/*}}}*/
 
 #ifdef MIR_TASK_DEBUG
@@ -61,6 +62,8 @@ void mir_task_schedule(struct mir_task_t* task);
 void mir_task_schedule_int(struct mir_task_t* task);
 
 void mir_task_execute(struct mir_task_t* task);
+
+struct mir_mem_node_dist_t* mir_task_get_footprint_dist(struct mir_task_t* task, mir_data_access_t access);
 
 void mir_task_wait(struct mir_task_t* task);
 

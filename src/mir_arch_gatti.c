@@ -34,7 +34,7 @@ uint16_t node_of_gatti(uint16_t coreid)
     return 0;
 }/*}}}*/
 
-void cores_of_gatti(uint16_t nodeid, struct mir_sbuf_t* coreids)
+void cores_of_gatti(struct mir_sbuf_t* coreids, uint16_t nodeid)
 {/*{{{*/
     coreids->size = 0;
     switch(nodeid)
@@ -50,9 +50,9 @@ void cores_of_gatti(uint16_t nodeid, struct mir_sbuf_t* coreids)
     }
 }/*}}}*/
 
-void vicinity_of_gatti(uint16_t coreid, struct mir_sbuf_t* coreids)
+uint16_t vicinity_of_gatti(uint16_t* neighbors, uint16_t nodeid, uint16_t diameter)
 {/*{{{*/
-    MIR_ABORT(MIR_ERROR_STR "Vicinity information not added yet!\n");
+    return 0;
 }/*}}}*/
 
 uint16_t comm_cost_of_gatti(uint16_t from_nodeid, uint16_t to_nodeid)
@@ -65,6 +65,8 @@ struct mir_arch_t arch_gatti =
     .name = "gatti",
     .num_nodes = 1,
     .num_cores = 4,
+    .diameter = 0,
+    .llc_size_KB = 4096,
     .config = config_gatti,
     .create = create_gatti,
     .destroy = destroy_gatti,

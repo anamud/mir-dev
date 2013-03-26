@@ -27,6 +27,8 @@ struct mir_mem_node_dist_t* mir_mem_node_dist_create();
 
 void  mir_mem_node_dist_destroy(struct mir_mem_node_dist_t* dist);
 
-struct mir_mem_node_dist_t* mir_mem_get_dist(void* addr, size_t sz, void* part_of);
+void mir_mem_get_dist(struct mir_mem_node_dist_t* dist, void* addr, size_t sz, void* part_of);
+
+size_t mir_mem_node_dist_sum(struct mir_mem_node_dist_t* dist);
 #endif /* end of include guard: MIR_MEM_POL_H */
 

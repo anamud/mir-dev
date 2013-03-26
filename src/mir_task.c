@@ -77,6 +77,8 @@ struct mir_task_t* mir_task_create(mir_tfunc_t tfunc, void* data, size_t data_si
     task->comm_cost = -1;
 
     // Data footprint
+    for(int i=0; i<MIR_DATA_ACCESS_NUM_TYPES; i++)
+        task->dist_by_access_type[i] = NULL;
     task->data_footprints = NULL;
     if (num_data_footprints > 0)
     {/*{{{*/
@@ -171,6 +173,26 @@ void mir_task_execute(struct mir_task_t* task)
     __sync_synchronize();
 
     // FIXME Destroy task !
+}/*}}}*/
+
+struct mir_mem_node_dist_t* mir_task_get_footprint_dist(struct mir_task_t* task, mir_data_access_t access)
+{/*{{{*/
+    if(task->num_data_footprints == 0)
+        return NULL;
+
+    if(task->dist_by_access_type[access] == NULL)
+    {
+        // Allocate dist
+        struct mir_mem_node_dist_t* dist = mir_mem_node_dist_create();
+        task->dist_by_access_type[access] = dist;
+
+        // Calculate dist
+        for(int i=0; i<task->num_data_footprints; i++)
+            if(task->data_footprints[i].data_access == access)
+                mir_data_footprint_get_dist(dist, &task->data_footprints[i]);
+    }
+
+    return task->dist_by_access_type[access];
 }/*}}}*/
 
 void mir_task_wait(struct mir_task_t* task)

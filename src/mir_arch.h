@@ -10,14 +10,16 @@ struct mir_arch_t
     const char* name;
     uint16_t num_cores;
     uint16_t num_nodes;
+    uint16_t diameter; // Largest hop distance between two nodes
+    size_t llc_size_KB; 
 
     // Interfaces
     void (*config) (const char* conf_str);
     void (*create) ();
     void (*destroy) ();
     uint16_t (*node_of) (uint16_t coreid);
-    void (*cores_of) (uint16_t nodeid, struct mir_sbuf_t* coreids);
-    void (*vicinity_of) (uint16_t coreid, struct mir_sbuf_t* coreids);
+    void (*cores_of) (struct mir_sbuf_t* coreids, uint16_t nodeid);
+    uint16_t (*vicinity_of) (uint16_t* neighbors, uint16_t nodeid, uint16_t diameter);
     uint16_t (*comm_cost_of) (uint16_t from_nodeid, uint16_t to_nodeid);
 };/*}}}*/
 

@@ -15,9 +15,9 @@ void mir_data_footprint_copy(struct mir_data_footprint_t* dest, struct mir_data_
     dest->part_of = src->part_of;
 }/*}}}*/
 
-struct mir_mem_node_dist_t* mir_data_footprint_get_dist(struct mir_data_footprint_t* footprint)
-{
-    return mir_mem_get_dist( footprint->base, 
+void mir_data_footprint_get_dist(struct mir_mem_node_dist_t* dist, struct mir_data_footprint_t* footprint)
+{/*{{{*/
+    mir_mem_get_dist( dist, footprint->base, 
             (footprint->end - footprint->start + 1) * footprint->type, 
             footprint->part_of );
-}
+}/*}}}*/

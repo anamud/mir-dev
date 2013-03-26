@@ -130,12 +130,12 @@ void mir_config()
     // Parse tokens
     char* tok = strtok(str, " ");
     while(tok)
-    {/*{{{*/
+    {
         if(tok[0] == '-')
         {
             char c = tok[1];
             switch(c)
-            {
+            {/*{{{*/
                 case 'w':
                     if(tok[2] == '=')
                     {
@@ -189,10 +189,10 @@ void mir_config()
                     }
                 default:
                     break;
-            }
+            }/*}}}*/
         }
         tok = strtok(NULL, " ");
-    }/*}}}*/
+    }
 
     // Pass token string to other configurable components
     mir_mem_pol_config(conf_str);

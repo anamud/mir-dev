@@ -25,7 +25,7 @@ uint16_t node_of_tilepro64(uint16_t coreid)
     return coreid;
 }/*}}}*/
 
-void cores_of_tilepro64(uint16_t nodeid, struct mir_sbuf_t* coreids)
+void cores_of_tilepro64(struct mir_sbuf_t* coreids, uint16_t nodeid)
 {/*{{{*/
     if(nodeid > 63)
         MIR_ABORT(MIR_ERROR_STR "Cores of node not found!\n");
@@ -34,9 +34,9 @@ void cores_of_tilepro64(uint16_t nodeid, struct mir_sbuf_t* coreids)
     coreids->buf[0] = nodeid;
 }/*}}}*/
 
-void vicinity_of_tilepro64(uint16_t coreid, struct mir_sbuf_t* coreids)
+uint16_t vicinity_of_tilepro64(uint16_t* neighbors, uint16_t nodeid, uint16_t diameter)
 {/*{{{*/
-    MIR_ABORT(MIR_ERROR_STR "Vicinity information not added yet!");
+    return 0;
 }/*}}}*/
 
 uint16_t comm_cost_of_tilepro64(uint16_t from_nodeid, uint16_t to_nodeid)
@@ -64,6 +64,8 @@ struct mir_arch_t arch_tilepro64 =
     .name = "tilepro64",
     .num_nodes = 64,
     .num_cores = 64,
+    .diameter = 14,
+    .llc_size_KB = 64,
     .config = config_tilepro64,
     .create = create_tilepro64,
     .destroy = destroy_tilepro64,
