@@ -3,10 +3,11 @@
 #include <sys/time.h>
 
 #include "mir_public_int.h"
-#include "uts.h"
+#include "health.h"
 #include "helper.h"
 
 #define CHECK_RESULT 1
+int cutoff_value = 2;
 
 long get_usecs(void)
 {/*{{{*/
@@ -19,29 +20,26 @@ int main(int argc, char *argv[])
 {/*{{{*/
     if (argc > 2)
     {
-        printf("Usage: %s input-file\n", argv[0]);
+        printf("Usage: uts input-file\n");
         exit(0);
     }
 
     // Init the runtime
     mir_create();
 
-    uts_read_file(argv[1]);
-
-    Node root;
-    uts_initRoot(&root);
+    struct Village *top;
+    read_input_data(argv[1]);
+    allocate_village(&top, (void *)0, (void *)0, sim_level, 0);
 
     long par_time_start = get_usecs();
-    parallel_uts(&root);
+    sim_village_main_par(top);
     long par_time_end = get_usecs();
     double par_time = (double)( par_time_end - par_time_start) / 1000000;
-
-    uts_show_stats();
 
     int check = TEST_NOT_PERFORMED;
     if (CHECK_RESULT)
     {
-        check = uts_check_result();
+        check = check_village(top);
     }
 
     printf("%s(%s),check=%d in [SUCCESSFUL, UNSUCCESSFUL, NOT_APPLICABLE, NOT_PERFORMED],time=%f secs\n", argv[0], argv[1], check, par_time);
