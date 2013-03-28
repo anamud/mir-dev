@@ -5,4 +5,8 @@
 
 int mir_pstack_set_size(size_t sz);
 
+int mir_get_num_threads();
+
+int mir_get_threadid();
+
 #endif

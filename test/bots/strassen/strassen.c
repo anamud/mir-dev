@@ -1142,19 +1142,29 @@ void strassen_main_seq(REAL *A, REAL *B, REAL *C, int n)
 
 int main(int argc, char **argv)
 {/*{{{*/
-    if (argc > 3)
+    if (argc > 4)
     {
-        PMSG("Usage: %s mat_size cutoff\n", argv[0]);
+        PMSG("Usage: %s mat_size mat_cutoff task_cutoff\n", argv[0]);
         exit(1);
     }
 
     // Init the runtime
     mir_create();
 
-    if(argc > 1)
+    if(argc == 2)
+        arg_size = atoi(argv[1]);
+
+    if(argc == 3)
     {
         arg_size = atoi(argv[1]);
         app_cutoff_value = atoi(argv[2]);
+    }
+
+    if(argc == 4)
+    {
+        arg_size = atoi(argv[1]);
+        app_cutoff_value = atoi(argv[2]);
+        cutoff_value = atoi(argv[3]);
     }
 
     double *A, *B, *C, *D;
@@ -1185,7 +1195,7 @@ int main(int argc, char **argv)
         check = compare_matrix(arg_size, C, arg_size, D, arg_size);
     }
 
-    PMSG("%s(%d,%d),check=%d in [SUCCESSFUL, UNSUCCESSFUL, NOT_APPLICABLE, NOT_PERFORMED],time=%f secs\n", argv[0], arg_size, app_cutoff_value, check, par_time);
+    PMSG("%s(%d,%d,%d),check=%d in [SUCCESSFUL, UNSUCCESSFUL, NOT_APPLICABLE, NOT_PERFORMED],time=%f secs\n", argv[0], arg_size, app_cutoff_value, cutoff_value, check, par_time);
 
     mir_destroy();
 

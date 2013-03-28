@@ -290,7 +290,7 @@ void MIR_RECORDER_STATE_END(const char* meta_data, uint32_t meta_data_length)
     state->begin_time = ending_state->begin_time;
     state->id = ending_state->id;
     state->parent_id = ending_state->parent_id;
-    MIR_ASSERT(meta_data_length < MIR_RECORDER_STATE_META_DATA_MAX_SIZE-1);
+    MIR_ASSERT(meta_data_length < MIR_RECORDER_STATE_META_DATA_MAX_SIZE);
 
     if(meta_data != NULL)
     {
@@ -361,7 +361,7 @@ void MIR_RECORDER_EVENT(const char* meta_data, uint32_t meta_data_length)
     // Copy event meta data
     if(meta_data != NULL)
     {
-        MIR_ASSERT(meta_data_length < MIR_RECORDER_EVENT_META_DATA_MAX_SIZE-1);
+        MIR_ASSERT(meta_data_length < MIR_RECORDER_EVENT_META_DATA_MAX_SIZE);
         // Copy meta_data as null-terminated string
         memcpy(event->meta_data, meta_data, meta_data_length);
         event->meta_data[meta_data_length] = '\0';
@@ -376,6 +376,6 @@ void MIR_RECORDER_EVENT(const char* meta_data, uint32_t meta_data_length)
 
     // If buffer is near full, dump!
     //MIR_ASSERT(r->event_buffer_head < MIR_RECORDER_BUFFER_MAX_SIZE);
-    if (r->state_buffer_head == (MIR_RECORDER_BUFFER_MAX_SIZE-1))
+    if (r->event_buffer_head == (MIR_RECORDER_BUFFER_MAX_SIZE-1))
         mir_recorder_dump_to_file(r);
 }/*}}}*/

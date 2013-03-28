@@ -68,7 +68,7 @@ struct mir_task_t* mir_task_create(mir_tfunc_t tfunc, void* data, size_t data_si
     if(twc) 
     {
         task->twc = twc;
-        task->twc->count++;
+        __sync_fetch_and_add(&(task->twc->count), 1);
     }
 
     // Communication cost
@@ -146,20 +146,20 @@ void mir_task_execute(struct mir_task_t* task)
     struct mir_worker_t* worker = mir_worker_get_context();
 
     // Compose event metadata
-    char event_meta_data[MIR_SHORT_NAME_LEN] = {0};
+    char event_meta_data[MIR_RECORDER_EVENT_META_DATA_MAX_SIZE-1] = {0};
     //char* event_meta_data = alloca(sizeof(char) * MIR_SHORT_NAME_LEN);
     sprintf(event_meta_data, "%" MIR_FORMSPEC_UL ",%s", task->id.uid, task->name);
 
     // Record event and state
-    MIR_RECORDER_EVENT(&event_meta_data[0], MIR_SHORT_NAME_LEN);
+    MIR_RECORDER_EVENT(&event_meta_data[0], MIR_RECORDER_EVENT_META_DATA_MAX_SIZE-1);
     MIR_RECORDER_STATE_BEGIN( MIR_STATE_TEXEC);
 
     // Execute task function
     task->func(task->data);
 
     // Record event and state
-    MIR_RECORDER_STATE_END(&event_meta_data[0], MIR_SHORT_NAME_LEN);
-    MIR_RECORDER_EVENT(&event_meta_data[0], MIR_SHORT_NAME_LEN);
+    MIR_RECORDER_STATE_END(&event_meta_data[0], MIR_RECORDER_EVENT_META_DATA_MAX_SIZE-1);
+    MIR_RECORDER_EVENT(&event_meta_data[0], MIR_RECORDER_EVENT_META_DATA_MAX_SIZE-1);
 
     // Mark task as done
     task->done = 1;

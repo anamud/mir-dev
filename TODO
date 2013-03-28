@@ -9,9 +9,9 @@ Get started with clang support.
 Strengthen Mercurium support.
 Work on UTS.
 Work on benchmarks with data dependences.
-Get a gimp to parallelize BOTS FFT and Strassen. 
+Get a gimp to parallelize BOTS FFT and Strassen. [Done. Gimp = Me.]
 Add a clean user interface to the library (How? Machine generate the interface?)
 Find and add a good deque implementation. Ask Shavit and Maged.
 Cleanup dependence resolution support.
 Add a help document.
-Add the NUMA/NUCA scheduler.
+Add the NUMA/NUCA scheduler. [Done]

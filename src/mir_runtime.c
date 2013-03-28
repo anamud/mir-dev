@@ -113,6 +113,25 @@ alive:
     MIR_DEBUG(MIR_DEBUG_STR "Initialization complete!\n");
 }/*}}}*/
 
+static inline void print_help()
+{
+    // Here all configuration components
+    // ... should define the intention 
+    // ... of their config symbols
+
+    MIR_INFORM(MIR_INFORM_STR "Valid options in MIR_CONF environment variable ...\n"
+    "-h print this help message\n"
+    "-w=<int> number of workers\n"
+    "-s=<str> task scheduling policy\n"
+    "-r enable recorder\n"
+    "-d enable dependence resolution\n"
+    "-i write statistics to file\n"
+    "-l=<int> stack size in MB\n"
+    "-q=<int> queue capacity\n"
+    "-m=<str> memory allocation policy\n"
+    );
+}
+
 void mir_config()
 {/*{{{*/
     // Get MIR_CONF environment string 
@@ -136,6 +155,9 @@ void mir_config()
             char c = tok[1];
             switch(c)
             {/*{{{*/
+                case 'h':
+                    print_help();
+                    break;
                 case 'w':
                     if(tok[2] == '=')
                     {
