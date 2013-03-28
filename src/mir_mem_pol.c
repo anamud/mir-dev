@@ -164,6 +164,8 @@ static void* allocate_coarse(size_t sz)
 {/*{{{*/
     void* addr = NULL;
     advance_node();
+    
+    size_t new_sz = sz + sizeof(struct mem_header_t);
 
 #ifndef __tile__
     numa_set_bind_policy(1);
@@ -171,30 +173,40 @@ static void* allocate_coarse(size_t sz)
     numa_bitmask_clearall(mask);
     numa_bitmask_setbit(mask, mem_pol->node);
     numa_set_membind(mask);
-    addr = numa_alloc_onnode(sz, mem_pol->node);
+    addr = numa_alloc_onnode(new_sz, mem_pol->node);
     numa_bitmask_free(mask);
     numa_set_bind_policy(0);
 #ifdef MIR_MEM_POL_LOCK_PAGES
-    mlock(addr, sz);
+    mlock(addr, new_sz);
 #endif
     // Fault it in
-    memset(addr, 0, sz);
+    memset(addr, 0, new_sz);
 #else
     tmc_alloc_t home = TMC_ALLOC_INIT;
     tmc_alloc_set_home(&home, mem_pol->node);
     mir_page_attr_set(&home);
-    addr = tmc_alloc_map(&home, sz);
+    addr = tmc_alloc_map(&home, new_sz);
 #endif
 
     if(addr)
-        __sync_fetch_and_add(&mem_pol->total_allocated, sz);
+    {
+        // Write header
+        struct mem_header_t* header = (struct mem_header_t*) addr;
+        header->magic = runtime->init_time;
+        header->sz = sz;
+        header->nodeid = mem_pol->node;
 
-    return addr;
+        __sync_fetch_and_add(&mem_pol->total_allocated, new_sz);
+    }
+
+    return (void*) ((unsigned char*)addr + sizeof(struct mem_header_t));
 }/*}}}*/
 
 static void* allocate_fine(size_t sz)
 {/*{{{*/
     void* addr = NULL;
+
+    size_t new_sz = sz + sizeof(struct mem_header_t);
 
 #ifndef __tile__
     int cur_pol;
@@ -202,44 +214,65 @@ static void* allocate_fine(size_t sz)
     struct bitmask* mask = numa_bitmask_alloc(runtime->arch->num_nodes);
     numa_bitmask_setall(mask);
     numa_set_interleave_mask(mask);
-    addr = numa_alloc_interleaved_subset(sz, mask);
+    addr = numa_alloc_interleaved_subset(new_sz, mask);
     set_mempolicy(cur_pol, mask->maskp, mask->size + 1);
     numa_bitmask_free(mask);
 #ifdef MIR_MEM_POL_LOCK_PAGES
-    mlock(addr, sz);
+    mlock(addr, new_sz);
 #endif
-    memset(addr, 0, sz);
+    // Fault it in
+    memset(addr, 0, new_sz);
 #else
     tmc_alloc_t home = TMC_ALLOC_INIT;
     tmc_alloc_set_home(&home, TMC_ALLOC_HOME_HASH);
     mir_page_attr_set(&home);
-    addr = tmc_alloc_map(&home, sz);
+    addr = tmc_alloc_map(&home, new_sz);
 #endif
 
     if(addr)
-        __sync_fetch_and_add(&mem_pol->total_allocated, sz);
+    {
+        // Write header
+        struct mem_header_t* header = (struct mem_header_t*) addr;
+        header->magic = 0;
+        header->sz = sz;
+        header->nodeid = runtime->arch->num_nodes + 1;
 
-    return addr;
+        __sync_fetch_and_add(&mem_pol->total_allocated, sz);
+    }
+
+    return (void*) ((unsigned char*)addr + sizeof(struct mem_header_t));
 }/*}}}*/
 
 static void* allocate_system(size_t sz)
 {/*{{{*/
-    return mir_malloc_int(sz);
+    size_t new_sz = sz + sizeof(struct mem_header_t);
+    void* addr = mir_malloc_int(new_sz);
+    if(addr)
+    {
+        // Write header
+        struct mem_header_t* header = (struct mem_header_t*) addr;
+        header->magic = 0;
+        header->sz = sz;
+        header->nodeid = runtime->arch->num_nodes + 1;
+    }
+    return (void*) ((unsigned char*)addr + sizeof(struct mem_header_t));
 }/*}}}*/
 
 static void release_coarse(void* addr, size_t sz)
 {/*{{{*/
+    size_t new_sz = sz + sizeof(struct mem_header_t);
+    void* new_addr = (void*)((char*)addr - sizeof(struct mem_header_t));
 #ifndef __tile__
 #ifdef MIR_MEM_POL_LOCK_PAGES 
-    munlock(addr, sz);
+    munlock(new_addr, new_sz);
 #endif 
-    numa_free(addr, sz);
+    numa_free(new_addr, new_sz);
 #else
-    tmc_alloc_unmap(addr, sz);
+    tmc_alloc_unmap(new_addr, new_sz);
 #endif
 
     if(addr)
-        __sync_fetch_and_sub(&mem_pol->total_allocated, sz);
+        __sync_fetch_and_sub(&mem_pol->total_allocated, new_sz);
 }/*}}}*/
 
 static void release_fine(void* addr, size_t sz)
@@ -249,7 +282,8 @@ static void release_fine(void* addr, size_t sz)
 
 static void release_system(void* addr, size_t sz)
 {/*{{{*/
-    free(addr);
+    void* new_addr = (void*)((char*)addr - sizeof(struct mem_header_t));
+    free(new_addr);
 }/*}}}*/
 
 void mir_mem_pol_config (const char* conf_str)
@@ -279,12 +313,17 @@ void mir_mem_pol_config (const char* conf_str)
                             mem_pol->allocate = allocate_coarse;
                             mem_pol->release = release_coarse;
                         }
+                        else if(0 == strcmp(pol, "system"))
+                        {
+                            mem_pol->allocate = allocate_system;
+                            mem_pol->release = release_system;
+                        }
                         else
                         {
                             MIR_ABORT(MIR_ERROR_STR "Incorrect MIR_CONF parameter [%c]\n", c);
                         }
 
-                        MIR_DEBUG(MIR_DEBUG_STR "Memory policy set to %s\n", pol);
+                        MIR_DEBUG(MIR_DEBUG_STR "Memory allocation policy changed to %s\n", pol);
                     }
                     break;
                 default:
@@ -311,6 +350,7 @@ void mir_mem_pol_create ()
     // Default allocation
     mem_pol->allocate = allocate_system;
     mem_pol->release = release_system;
+    MIR_DEBUG(MIR_DEBUG_STR "Memory allocation policy set to %s\n", "system");
 
     // Low-level stuff
 #ifndef __tile__

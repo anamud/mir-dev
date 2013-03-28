@@ -30,10 +30,9 @@ void reduce_init()
     uint64_t num_pages = pow(2, max_depth);
     size_t buf_size = sizeof(uint64_t) * PAGE_SZ * num_pages;
     PMSG("Memory required = %lu MB\n", buf_size/(1024*1024));
-    buffer = malloc(buf_size);
+    buffer = mir_mem_pol_allocate(buf_size);
     if(!buffer)
         PABRT("Cannot allocate memory!\n");
-
 
     PDBG("Initializing memory ... \n");
     for(uint64_t i=0; i<num_pages; i++)
@@ -76,12 +75,36 @@ void for_task(uint64_t start, uint64_t end, uint64_t depth, struct mir_twc_t* tw
         
         // Create task
         {
+            // Data environment
             struct reduce_wrapper_arg_t arg;
             arg.in1 = buffer + PAGE_SZ*in1;
             arg.in2 = buffer + PAGE_SZ*in2;
             arg.out = buffer + PAGE_SZ*out;
 
-            struct mir_task_t* task = mir_task_create((mir_tfunc_t) reduce_wrapper, &arg, sizeof(struct reduce_wrapper_arg_t), twc, 0, NULL, NULL);
+            // Data footprint
+            struct mir_data_footprint_t footprints[3];
+            footprints[0].base = (void*) buffer + PAGE_SZ*in1;
+            footprints[0].start = 0;
+            footprints[0].end = PAGE_SZ-1;
+            footprints[0].type = sizeof(uint64_t);
+            footprints[0].data_access = MIR_DATA_ACCESS_READ;
+            footprints[0].part_of = buffer;
+
+            footprints[1].base = (void*) buffer + PAGE_SZ*in2;
+            footprints[1].start = 0;
+            footprints[1].end = PAGE_SZ-1;
+            footprints[1].type = sizeof(uint64_t);
+            footprints[1].data_access = MIR_DATA_ACCESS_READ;
+            footprints[1].part_of = buffer;
+
+            footprints[2].base = (void*) buffer + PAGE_SZ*out;
+            footprints[2].start = 0;
+            footprints[2].end = PAGE_SZ-1;
+            footprints[2].type = sizeof(uint64_t);
+            footprints[2].data_access = MIR_DATA_ACCESS_WRITE;
+            footprints[2].part_of = buffer;
+
+            struct mir_task_t* task = mir_task_create((mir_tfunc_t) reduce_wrapper, &arg, sizeof(struct reduce_wrapper_arg_t), twc, 3, footprints, NULL);
         }
     }/*}}}*/
 }/*}}}*/
@@ -179,9 +202,9 @@ int reduce_check()
 
 void reduce_deinit()
 {/*{{{*/
-    /*uint64_t num_pages = pow(2, max_depth);*/
-    /*size_t buf_size = sizeof(uint64_t) * PAGE_SZ * num_pages;*/
-    free(buffer/*, buf_size*/);
+    uint64_t num_pages = pow(2, max_depth);
+    size_t buf_size = sizeof(uint64_t) * PAGE_SZ * num_pages;
+    mir_mem_pol_release(buffer, buf_size);
 }/*}}}*/
 
 int main(int argc, char *argv[])
