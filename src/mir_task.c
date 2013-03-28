@@ -79,6 +79,7 @@ struct mir_task_t* mir_task_create(mir_tfunc_t tfunc, void* data, size_t data_si
     // Data footprint
     for(int i=0; i<MIR_DATA_ACCESS_NUM_TYPES; i++)
         task->dist_by_access_type[i] = NULL;
+    task->num_data_footprints = 0;
     task->data_footprints = NULL;
     if (num_data_footprints > 0)
     {/*{{{*/
@@ -95,6 +96,8 @@ struct mir_task_t* mir_task_create(mir_tfunc_t tfunc, void* data, size_t data_si
         {
             mir_data_footprint_copy(&task->data_footprints[i], &data_footprints[i]);
         }
+
+        task->num_data_footprints = num_data_footprints;
     }/*}}}*/
 
     // Flags

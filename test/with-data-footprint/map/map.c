@@ -32,7 +32,7 @@ void map_init()
         PABRT("Cannot allocate memory!\n");
     for(uint64_t j=0; j<num_tasks; j++)
     {
-        buffer[j] = malloc(sizeof(uint64_t) * buf_sz);
+        buffer[j] = mir_mem_pol_allocate(sizeof(uint64_t) * buf_sz);
         if(!buffer[j])
             PABRT("Cannot allocate memory!\n");
     }
@@ -68,12 +68,22 @@ void for_task(uint64_t start, uint64_t end, struct mir_twc_t* twc)
     {/*{{{*/
         // Create task
         {
+            // Data env
             struct map_wrapper_arg_t arg;
             arg.in = buffer[j];
             arg.out = buffer[j];
-            PDBG("Task %lu reads buf %lu and writes buf %lu\n", buffer[j], buffer[j]);
+            PDBG("Task %lu reads buf %p and writes buf %p\n", j, buffer[j], buffer[j]);
 
-            struct mir_task_t* task = mir_task_create((mir_tfunc_t) map_wrapper, &arg, sizeof(struct map_wrapper_arg_t), twc, 0, NULL, NULL);
+            // Data footprint
+            struct mir_data_footprint_t footprint;
+            footprint.base = (void*) buffer[j];
+            footprint.start = 0;
+            footprint.end = buf_sz - 1;
+            footprint.type = sizeof(uint64_t);
+            footprint.data_access = MIR_DATA_ACCESS_READ;
+            footprint.part_of = NULL;
+
+            struct mir_task_t* task = mir_task_create((mir_tfunc_t) map_wrapper, &arg, sizeof(struct map_wrapper_arg_t), twc, 1, &footprint, NULL);
         }
     }/*}}}*/
 }/*}}}*/
@@ -146,7 +156,8 @@ int map_check()
 void map_deinit()
 {/*{{{*/
     for(uint64_t j=0; j<num_tasks; j++)
-        free(buffer[j]/*, sizeof(uint64_t) * buf_sz*/);
+        //free(buffer[j]/*, sizeof(uint64_t) * buf_sz*/);
+        mir_mem_pol_release(buffer[j], sizeof(uint64_t) * buf_sz);
     free(buffer/*, sizeof(uint64_t*) * num_tasks*/);
 }/*}}}*/
 
