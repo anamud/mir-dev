@@ -70,7 +70,7 @@ void mir_postconfig_init()
 
     // Scheduling policy
     runtime->sched_pol->create();
-    MIR_DEBUG(MIR_DEBUG_STR "Sched pol set to %s\n", runtime->sched_pol->name);
+    MIR_DEBUG(MIR_DEBUG_STR "Task scheduling policy set to %s\n", runtime->sched_pol->name);
 
     // Recorder
     if(runtime->enable_recorder == 1)
@@ -129,6 +129,7 @@ static inline void print_help()
     "-l=<int> stack size in MB\n"
     "-q=<int> queue capacity\n"
     "-m=<str> memory allocation policy\n"
+    "-y=<int> schedule cutoff\n"
     );
 }
 

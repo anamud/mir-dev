@@ -16,6 +16,8 @@
 extern uint32_t g_num_tasks_waiting;
 extern struct mir_runtime_t* runtime;
 
+static size_t schedule_cutoff_config = 0;
+
 void config_numa (const char* conf_str)
 {/*{{{*/
     char str[MIR_LONG_NAME_LEN];
@@ -37,6 +39,17 @@ void config_numa (const char* conf_str)
                         char* s = tok+3;
                         sp->queue_capacity = atoi(s);
                         //MIR_INFORM(MIR_INFORM_STR "Setting queue capacity to %d\n", sp->queue_capacity);
+                    }
+                    else
+                    {
+                        MIR_ABORT(MIR_ERROR_STR "Incorrect MIR_CONF parameter [%c]\n", c);
+                    }
+                    break;
+                case 'y':
+                    if(tok[2] == '=')
+                    {
+                        char* s = tok+3;
+                        schedule_cutoff_config = atoi(s);
                     }
                     else
                     {
@@ -99,6 +112,10 @@ void push_numa (struct mir_task_t* task)
     if(dist)
     {
         size_t limit = (runtime->arch->llc_size_KB * 1024) / (runtime->arch->num_cores / runtime->arch->num_nodes);
+
+        if(schedule_cutoff_config > 0)
+            limit = schedule_cutoff_config;
+            
         if(mir_mem_node_dist_sum(dist) < limit)
         {
             least_cost_worker = this_worker;
