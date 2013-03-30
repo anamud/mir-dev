@@ -90,16 +90,18 @@ void push_ws (struct mir_task_t* task)
 #ifdef MIR_SCHED_POL_INLINE_TASKS
         mir_task_execute(task);
         // Update stats
-        worker->status->num_tasks_inlined++;
+        if(runtime->enable_stats)
+            worker->status->num_tasks_inlined++;
 #else
         MIR_ABORT(MIR_ERROR_STR "Cannot enque task. Increase queue capacity using MIR_CONF.\n");
 #endif
     }
     else
     {
-        // Update stats
         __sync_fetch_and_add(&g_num_tasks_waiting, 1);
-        worker->status->num_tasks_spawned++;
+        // Update stats
+        if(runtime->enable_stats)
+            worker->status->num_tasks_spawned++;
     }
 
     MIR_RECORDER_STATE_END(NULL, 0);
@@ -111,6 +113,7 @@ bool pop_ws (struct mir_task_t** task)
     struct mir_sched_pol_t* sp = runtime->sched_pol;
     uint32_t num_queues = sp->num_queues;
     struct mir_worker_t* worker = mir_worker_get_context(); 
+    uint16_t node = runtime->arch->node_of(worker->id);
 
     // First try to pop from own queue
     //MIR_RECORDER_STATE_BEGIN(MIR_STATE_TMOBING);
@@ -122,8 +125,19 @@ bool pop_ws (struct mir_task_t** task)
         if(*task)
         {
             // Update stats
+            if(runtime->enable_stats)
+            {
+                struct mir_mem_node_dist_t* dist = mir_task_get_footprint_dist(*task, MIR_DATA_ACCESS_READ);
+                if(dist)
+                {
+                    (*task)->comm_cost = get_comm_cost(node, dist);
+                    mir_worker_status_update_comm_cost(worker->status, (*task)->comm_cost);
+                }
+            }
+
             __sync_fetch_and_sub(&g_num_tasks_waiting, 1);
             T_DBG("Dq", *task);
+
             found = 1;
         }
     }
@@ -148,9 +162,21 @@ bool pop_ws (struct mir_task_t** task)
             if(*task) 
             {
                 // Update stats
+                if(runtime->enable_stats)
+                {
+                    struct mir_mem_node_dist_t* dist = mir_task_get_footprint_dist(*task, MIR_DATA_ACCESS_READ);
+                    if(dist)
+                    {
+                        (*task)->comm_cost = get_comm_cost(node, dist);
+                        mir_worker_status_update_comm_cost(worker->status, (*task)->comm_cost);
+                    }
+
+                    worker->status->num_tasks_stolen++;
+                }
+
                 __sync_fetch_and_sub(&g_num_tasks_waiting, 1);
                 T_DBG("St", *task);
-                worker->status->num_tasks_stolen++;
+
                 found = 1;
                 break;
             }

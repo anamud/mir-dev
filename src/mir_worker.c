@@ -100,6 +100,15 @@ void mir_worker_status_reset(struct mir_worker_status_t* status)
     }
 }/*}}}*/
 
+void mir_worker_status_update_comm_cost(struct mir_worker_status_t* status, unsigned long comm_cost)
+{
+    status->comm_cost += comm_cost;
+    if(status->lowest_comm_cost > comm_cost)
+        status->lowest_comm_cost = comm_cost;
+    if(status->highest_comm_cost < comm_cost)
+        status->highest_comm_cost = comm_cost;
+}
+
 void mir_worker_status_dump_to_file(struct mir_worker_status_t* status, FILE* file)
 {/*{{{*/
     if(status)
@@ -168,9 +177,9 @@ void mir_worker_do_work(struct mir_worker_t* worker)
         // Execute task
         mir_task_execute(task);
 
-        // Update worker status counter
-        worker->status->num_tasks_executed++;
-        // printf("W%d:exec=%d\n", worker->id, worker->status->num_tasks_executed);
+        // Update stats
+        if(runtime->enable_stats)
+            worker->status->num_tasks_executed++;
 
         // Update busy counter
         __sync_fetch_and_sub(&g_worker_status_board, 1);

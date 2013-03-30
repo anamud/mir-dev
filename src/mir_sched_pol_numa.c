@@ -89,16 +89,6 @@ void destroy_numa ()
     mir_free_int(sp->queues, sizeof(struct mir_queue_t*) * sp->num_queues);
 }/*}}}*/
 
-static inline unsigned long get_comm_cost(uint16_t node, struct mir_mem_node_dist_t* dist)
-{/*{{{*/
-    unsigned long comm_cost = 0;
-
-    for(int i=0; i<runtime->arch->num_nodes; i++)
-        comm_cost += (dist->buf[i] * runtime->arch->comm_cost_of(node, i));
-
-    return comm_cost;
-}/*}}}*/
-
 void push_numa (struct mir_task_t* task)
 {/*{{{*/
     MIR_RECORDER_STATE_BEGIN(MIR_STATE_TSUBMIT);
@@ -119,7 +109,8 @@ void push_numa (struct mir_task_t* task)
         if(mir_mem_node_dist_sum(dist) < limit)
         {
             least_cost_worker = this_worker;
-            task->comm_cost = get_comm_cost(runtime->arch->node_of(least_cost_worker->id), dist);
+            if(runtime->enable_stats)
+                task->comm_cost = get_comm_cost(runtime->arch->node_of(least_cost_worker->id), dist);
         }
         else
         {
@@ -140,7 +131,9 @@ void push_numa (struct mir_task_t* task)
                     }
                 }
             }
-            task->comm_cost = least_comm_cost;
+
+            if(runtime->enable_stats)
+                task->comm_cost = least_comm_cost;
         }
     }
     else
@@ -155,16 +148,20 @@ void push_numa (struct mir_task_t* task)
 #ifdef MIR_SCHED_POL_INLINE_TASKS
         mir_task_execute(task);
         // Update stats
-        this_worker->status->num_tasks_inlined++;
+        if(runtime->enable_stats)
+            this_worker->status->num_tasks_inlined++;
 #else
         MIR_ABORT(MIR_ERROR_STR "Cannot enque task. Increase queue capacity using MIR_CONF.\n");
 #endif
     }
     else
     {
-        // Update stats
+        //MIR_INFORM(MIR_INFORM_STR "Task scheduled on worker %d\n", least_cost_worker->id);
         __sync_fetch_and_add(&g_num_tasks_waiting, 1);
-        least_cost_worker->status->num_tasks_spawned++;
+        
+        // Update stats
+        if(runtime->enable_stats)
+            this_worker->status->num_tasks_spawned++;
     }
 
     MIR_RECORDER_STATE_END(NULL, 0);
@@ -188,6 +185,13 @@ bool pop_numa (struct mir_task_t** task)
         if(*task)
         {
             // Update stats
+            if(runtime->enable_stats)
+            {
+                // task->comm-cost already calculated in push
+                if((*task)->comm_cost != -1)
+                    mir_worker_status_update_comm_cost(worker->status, (*task)->comm_cost);
+            }
+
             __sync_fetch_and_sub(&g_num_tasks_waiting, 1);
             T_DBG("Dq", *task);
             found = 1;
@@ -218,15 +222,22 @@ bool pop_numa (struct mir_task_t** task)
                 mir_queue_pop(queue, (void**)&(*task));
                 if(*task)
                 {
-                    // Update comm cost
-                    struct mir_mem_node_dist_t* dist = mir_task_get_footprint_dist(*task, MIR_DATA_ACCESS_READ);
-                    if(dist)
-                        (*task)->comm_cost = get_comm_cost(neighbors[i], dist);
-
                     // Update stats
+                    if(runtime->enable_stats)
+                    {
+                        struct mir_mem_node_dist_t* dist = mir_task_get_footprint_dist(*task, MIR_DATA_ACCESS_READ);
+                        if(dist)
+                        {
+                            (*task)->comm_cost = get_comm_cost(node, dist);
+                            mir_worker_status_update_comm_cost(worker->status, (*task)->comm_cost);
+                        }
+
+                        worker->status->num_tasks_stolen++;
+                    }
+
                     __sync_fetch_and_sub(&g_num_tasks_waiting, 1);
-                    worker->status->num_tasks_stolen++;
                     T_DBG("Dq", *task);
+
                     found = 1;
                     break;
                 }

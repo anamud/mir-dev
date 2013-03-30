@@ -26,4 +26,6 @@ struct mir_sched_pol_t
 
 struct mir_sched_pol_t* mir_sched_pol_get_by_name(const char* name);
 
+unsigned long get_comm_cost(uint16_t node, struct mir_mem_node_dist_t* dist);
+
 #endif 

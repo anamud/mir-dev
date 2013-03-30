@@ -10,11 +10,13 @@
 #define CHECK_RESULT 1
 
 #define OPR_SCALE (42)
-#define SLEEP_MS 1
+#define SLEEP_MS 20
 
 uint64_t** buffer = NULL;
 int num_tasks = (2<<12);
 int buf_sz = (2<<14);
+
+size_t g_sum = 0;
 
 long get_usecs(void)
 {/*{{{*/
@@ -45,8 +47,13 @@ void map_init()
 
 void map(uint64_t* in, uint64_t* out)
 {/*{{{*/
+    size_t sum = 0;
     for(uint64_t i=0; i<buf_sz; i++)
+    {
         out[i] = OPR_SCALE * in[i];
+        sum += (int)sqrt((double)(out[i])); 
+    }
+    __sync_fetch_and_add(&g_sum, sum);
     mir_sleep_ms(SLEEP_MS);
 }/*}}}*/
 
@@ -165,7 +172,7 @@ int main(int argc, char *argv[])
 {/*{{{*/
     if (argc > 3)
     {
-        printf("Usage: %s num_tasks buf_size\n", argv[0]);
+        printf("Usage: %s num_tasks buf_size_K\n", argv[0]);
         exit(0);
     }
 
@@ -178,7 +185,7 @@ int main(int argc, char *argv[])
     if(argc == 3)
     {
         num_tasks = atoi(argv[1]);
-        buf_sz = atoi(argv[2]);
+        buf_sz = atoi(argv[2]) * 1024;
     }
 
     map_init();
@@ -196,6 +203,7 @@ int main(int argc, char *argv[])
 
     map_deinit();
 
+    printf("Sum = %lu\n", g_sum);
     printf("%s(%d,%d),check=%d in [SUCCESSFUL, UNSUCCESSFUL, NOT_APPLICABLE, NOT_PERFORMED],time=%f secs\n", argv[0], num_tasks, buf_sz, check, par_time);
 
     // Pull down the runtime
