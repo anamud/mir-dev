@@ -71,6 +71,14 @@ void  mir_mem_node_dist_destroy(struct mir_mem_node_dist_t* dist)
     mir_free_int(dist, sizeof(struct mir_mem_node_dist_t));
 }/*}}}*/
 
+static void print_dist(struct mir_mem_node_dist_t* dist)
+{
+    MIR_INFORM("Dist: ");
+    for(int i=0; i<runtime->arch->num_nodes; i++)
+        MIR_INFORM("%lu ", dist->buf[i]);
+    MIR_INFORM("\n");
+}
+
 void mir_mem_get_dist(struct mir_mem_node_dist_t* dist, void* addr, size_t sz, void* part_of)
 {/*{{{*/
     if(addr == NULL || sz == 0 || dist == NULL)
@@ -86,6 +94,7 @@ void mir_mem_get_dist(struct mir_mem_node_dist_t* dist, void* addr, size_t sz, v
         if(header)
         {
             dist->buf[header->nodeid] += sz;
+            //print_dist(dist);
             return;
         }
     }
@@ -98,6 +107,7 @@ void mir_mem_get_dist(struct mir_mem_node_dist_t* dist, void* addr, size_t sz, v
     if(header)
     {
         dist->buf[header->nodeid] += sz;
+        //print_dist(dist);
         return;
     }
 
@@ -127,8 +137,9 @@ void mir_mem_get_dist(struct mir_mem_node_dist_t* dist, void* addr, size_t sz, v
 
     if (new_node == node) 
         dist->buf[node] += (sz-ifrom);
-#endif
 
+    //print_dist(dist);
+#endif
 }/*}}}*/
 
 size_t mir_mem_node_dist_sum(struct mir_mem_node_dist_t* dist)
@@ -343,8 +354,7 @@ void mir_mem_pol_create ()
     // Statistics
     mem_pol->total_allocated = 0;
     // Node for coarse allocation
-    // FIXME: This assumes there is always a node 0
-    mem_pol->node = 0;
+    mem_pol->node = runtime->arch->num_nodes;
     // Lock
     mir_lock_create(&mem_pol->lock);
     // Default allocation
@@ -368,6 +378,12 @@ void mir_mem_pol_destroy ()
 void* mir_mem_pol_allocate (size_t sz)
 {/*{{{*/
     return mem_pol->allocate(sz);
+    /*void* block =  mem_pol->allocate(sz);*/
+    /*struct mir_mem_node_dist_t* dist = mir_mem_node_dist_create();*/
+    /*mir_mem_node_dist_destroy(dist);*/
+    /*mir_mem_get_dist(dist, block, sz, NULL);*/
+    /*print_dist(dist);*/
+    /*return block;*/
 }/*}}}*/
 
 void mir_mem_pol_release (void* addr, size_t sz)

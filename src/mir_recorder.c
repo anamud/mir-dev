@@ -203,7 +203,7 @@ void mir_recorder_destroy(struct mir_recorder_t* recorder)
     mir_free_int(recorder, sizeof(struct mir_recorder_t));
 }/*}}}*/
 
-void mir_recorder_dump_to_file(struct mir_recorder_t* recorder)
+void mir_recorder_write_to_file(struct mir_recorder_t* recorder)
 {/*{{{*/
     // Dump states
     for(uint64_t i=0; i<recorder->state_buffer_head; i++)
@@ -309,7 +309,7 @@ void MIR_RECORDER_STATE_END(const char* meta_data, uint32_t meta_data_length)
     // If buffer is near full, dump!
     //MIR_ASSERT(r->state_buffer_head < MIR_RECORDER_BUFFER_MAX_SIZE);
     if (r->state_buffer_head == (MIR_RECORDER_BUFFER_MAX_SIZE-1))
-        mir_recorder_dump_to_file(r);
+        mir_recorder_write_to_file(r);
 }/*}}}*/
 
 void MIR_RECORDER_EVENT(const char* meta_data, uint32_t meta_data_length)
@@ -377,5 +377,5 @@ void MIR_RECORDER_EVENT(const char* meta_data, uint32_t meta_data_length)
     // If buffer is near full, dump!
     //MIR_ASSERT(r->event_buffer_head < MIR_RECORDER_BUFFER_MAX_SIZE);
     if (r->event_buffer_head == (MIR_RECORDER_BUFFER_MAX_SIZE-1))
-        mir_recorder_dump_to_file(r);
+        mir_recorder_write_to_file(r);
 }/*}}}*/

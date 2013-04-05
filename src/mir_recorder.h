@@ -80,7 +80,7 @@ struct mir_recorder_t* mir_recorder_create(uint16_t id);
 
 void mir_recorder_destroy(struct mir_recorder_t* recorder);
 
-void mir_recorder_dump_to_file(struct mir_recorder_t* recorder);
+void mir_recorder_write_to_file(struct mir_recorder_t* recorder);
 
 // NOTE: This interface uses thread specific structures to record 
 void MIR_RECORDER_STATE_BEGIN(mir_state_name_t name);

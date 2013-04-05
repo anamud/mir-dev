@@ -109,7 +109,12 @@ void mir_worker_status_update_comm_cost(struct mir_worker_status_t* status, unsi
         status->highest_comm_cost = comm_cost;
 }
 
-void mir_worker_status_dump_to_file(struct mir_worker_status_t* status, FILE* file)
+void mir_worker_status_write_header_to_file(FILE* file)
+{
+    fprintf(file, "worker,created,self-exec,stolen,inlined,total_comm_cost,avg_comm_cost_per_task,lowest_comm_cost,highest_comm_cost\n");
+}
+
+void mir_worker_status_write_to_file(struct mir_worker_status_t* status, FILE* file)
 {/*{{{*/
     if(status)
     {
@@ -119,7 +124,7 @@ void mir_worker_status_dump_to_file(struct mir_worker_status_t* status, FILE* fi
             avg_comm_cost_per_task /= status->num_tasks_executed;
 
         // Dump to file
-        fprintf(file, "worker %d: created=%d self-exec=%d stolen=%d inlined=%d total_comm_cost=%lu avg_comm_cost_per_task=%lu lowest_comm_cost=%lu highest_comm_cost=%lu\n", 
+        fprintf(file, "%d,%d,%d,%d,%d,%lu,%lu,%lu,%lu\n", 
                 status->id, 
                 status->num_tasks_spawned, 
                 (status->num_tasks_executed - status->num_tasks_stolen), 

@@ -114,6 +114,12 @@ void push_numa (struct mir_task_t* task)
         }
         else
         {
+            //Print dist
+            /*MIR_INFORM("Dist for task %" MIR_FORMSPEC_UL ": ", task->id.uid);*/
+            /*for(int i=0; i<runtime->arch->num_nodes; i++)*/
+                /*MIR_INFORM("%lu ", dist->buf[i]);*/
+            /*MIR_INFORM("\n");*/
+
             uint16_t prev_node = runtime->arch->num_nodes + 1;
             unsigned long least_comm_cost = -1;
             for(int i=0; i<runtime->num_workers; i++)
@@ -208,16 +214,19 @@ bool pop_numa (struct mir_task_t** task)
     // Pop by hop count
     //MIR_RECORDER_STATE_BEGIN(MIR_STATE_TSTEALING);
     
+#if 1
     uint16_t neighbors[runtime->arch->num_nodes];
     uint16_t count;
 
-    for(int d=0; d<runtime->arch->diameter && found!=1; d++)
-    {
+    for(int d=0; d<=runtime->arch->diameter && found!=1; d++)
+    {/*{{{*/
         count = runtime->arch->vicinity_of(neighbors, node, d);
         for(int i=0; i<count; i++)
         {
             struct mir_queue_t* queue = sp->queues[neighbors[i]];
-            if(mir_queue_size(queue) > 0)
+            uint32_t queue_sz = mir_queue_size(queue);
+            size_t low_limit = (runtime->arch->num_cores/runtime->arch->num_nodes)*d;
+            if(queue_sz > low_limit)
             {
                 mir_queue_pop(queue, (void**)&(*task));
                 if(*task)
@@ -243,9 +252,10 @@ bool pop_numa (struct mir_task_t** task)
                 }
             }
         }
-    }
+    }/*}}}*/
 
     //MIR_RECORDER_STATE_END(NULL, 0);
+#endif
 
     return found;
 }/*}}}*/

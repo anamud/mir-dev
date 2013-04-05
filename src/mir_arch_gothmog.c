@@ -296,21 +296,35 @@ static uint16_t socket_of_gothmog(uint16_t nodeid)
     }
 }/*}}}*/
 
+/*uint16_t comm_cost_of_gothmog(uint16_t from_nodeid, uint16_t to_nodeid)*/
+/*{[>{{{<]*/
+    /*if(from_nodeid == to_nodeid)*/
+        /*return 10;*/
+
+    /*// Nodes in the same socket have a HT24 connection*/
+    /*if(socket_of_gothmog(from_nodeid) == socket_of_gothmog(to_nodeid))*/
+        /*return 16;*/
+
+    /*// Even and odd-numbered nodes are connected together using HT8*/
+    /*// Even-to-odd connection requires two hops over HT8*/
+    /*if(from_nodeid % 2 != to_nodeid % 2)*/
+        /*return 30;*/
+    /*else*/
+        /*return 20;*/
+/*}[>}}}<]*/
+
 uint16_t comm_cost_of_gothmog(uint16_t from_nodeid, uint16_t to_nodeid)
 {/*{{{*/
+    // These values straight from numactl --hardware
     if(from_nodeid == to_nodeid)
         return 10;
-
-    // Nodes in the same socket have a HT24 connection
-    if(socket_of_gothmog(from_nodeid) == socket_of_gothmog(to_nodeid))
-        return 16;
 
     // Even and odd-numbered nodes are connected together using HT8
     // Even-to-odd connection requires two hops over HT8
     if(from_nodeid % 2 != to_nodeid % 2)
-        return 30;
+        return 16;
     else
-        return 20;
+        return 22;
 }/*}}}*/
 
 struct mir_arch_t arch_gothmog = 

@@ -19,6 +19,7 @@ struct mir_data_footprint_t
     size_t type;
     uint64_t start;
     uint64_t end;
+    uint64_t row_sz; // FIXME: This restricts footprints to square blocks
     mir_data_access_t data_access;
     void* part_of;
 };

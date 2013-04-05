@@ -53,5 +53,7 @@ void mir_worker_status_reset(struct mir_worker_status_t* status);
 
 void mir_worker_status_update_comm_cost(struct mir_worker_status_t* status, unsigned long comm_cost);
 
-void mir_worker_status_dump_to_file(struct mir_worker_status_t* status, FILE* file);
+void mir_worker_status_write_header_to_file(FILE* file);
+
+void mir_worker_status_write_to_file(struct mir_worker_status_t* status, FILE* file);
 #endif 

@@ -9,10 +9,11 @@
 
 #define CHECK_RESULT 1
 
-#define PAGE_SZ (4096/sizeof(uint64_t))
+size_t PAGE_SZ = (4096/sizeof(uint64_t));
 #define MAX_DEPTH_DEFAULT 12
 #define OPR_SCALE (42)
-#define SLEEP_MS 1
+#define SLEEP_MS 0
+#define ENABLE_FAULT_IN 1
 
 uint64_t* buffer = NULL;
 int max_depth = MAX_DEPTH_DEFAULT;
@@ -26,6 +27,7 @@ long get_usecs(void)
 
 void reduce_init()
 {/*{{{*/
+    PMSG("Init ... \n");
     PDBG("Allocating memory ... \n");
     uint64_t num_pages = pow(2, max_depth);
     size_t buf_size = sizeof(uint64_t) * PAGE_SZ * num_pages;
@@ -34,10 +36,12 @@ void reduce_init()
     if(!buffer)
         PABRT("Cannot allocate memory!\n");
 
+#ifdef ENABLE_FAULT_IN
     PDBG("Initializing memory ... \n");
     for(uint64_t i=0; i<num_pages; i++)
         for(uint64_t j=0; j<PAGE_SZ; j++)
             buffer[i*PAGE_SZ + j] = i+1;
+#endif
 }/*}}}*/
 
 void reduce(uint64_t* in1, uint64_t* in2, uint64_t* out)
@@ -86,6 +90,7 @@ void for_task(uint64_t start, uint64_t end, uint64_t depth, struct mir_twc_t* tw
             footprints[0].base = (void*) buffer + PAGE_SZ*in1;
             footprints[0].start = 0;
             footprints[0].end = PAGE_SZ-1;
+            footprints[0].row_sz = 1;
             footprints[0].type = sizeof(uint64_t);
             footprints[0].data_access = MIR_DATA_ACCESS_READ;
             footprints[0].part_of = buffer;
@@ -93,6 +98,7 @@ void for_task(uint64_t start, uint64_t end, uint64_t depth, struct mir_twc_t* tw
             footprints[1].base = (void*) buffer + PAGE_SZ*in2;
             footprints[1].start = 0;
             footprints[1].end = PAGE_SZ-1;
+            footprints[1].row_sz = 1;
             footprints[1].type = sizeof(uint64_t);
             footprints[1].data_access = MIR_DATA_ACCESS_READ;
             footprints[1].part_of = buffer;
@@ -100,6 +106,7 @@ void for_task(uint64_t start, uint64_t end, uint64_t depth, struct mir_twc_t* tw
             footprints[2].base = (void*) buffer + PAGE_SZ*out;
             footprints[2].start = 0;
             footprints[2].end = PAGE_SZ-1;
+            footprints[2].row_sz = 1;
             footprints[2].type = sizeof(uint64_t);
             footprints[2].data_access = MIR_DATA_ACCESS_WRITE;
             footprints[2].part_of = buffer;
@@ -125,7 +132,7 @@ void for_task_wrapper(void* arg)
 
 void reduce_par()
 {/*{{{*/
-    PDBG("Reducing in parallel ... \n");
+    PMSG("Parallel exec ... \n");
 
     for(uint64_t i=0; i<max_depth; i++)
     {
@@ -183,25 +190,28 @@ void reduce_par()
 
 int reduce_check()
 {/*{{{*/
-    if(OPR_SCALE != 1)
-        return TEST_NOT_APPLICABLE;
+    PMSG("Check ... \n");
+    return TEST_NOT_APPLICABLE;
+    /*if(OPR_SCALE != 1)*/
+        /*return TEST_NOT_APPLICABLE;*/
 
-    uint64_t num_pages = pow(2, max_depth);
-    uint64_t check_val = (num_pages) * (num_pages+1) / 2;
-    if(buffer[0] == check_val)
-    {
-        //PMSG("%lu = %lu\n", buffer[0], check_val);
-        return TEST_SUCCESSFUL;
-    }
-    else
-    {
-        PMSG("%lu != %lu\n", buffer[0], check_val);
-        return TEST_UNSUCCESSFUL;
-    }
+    /*uint64_t num_pages = pow(2, max_depth);*/
+    /*uint64_t check_val = (num_pages) * (num_pages+1) / 2;*/
+    /*if(buffer[0] == check_val)*/
+    /*{*/
+        /*//PMSG("%lu = %lu\n", buffer[0], check_val);*/
+        /*return TEST_SUCCESSFUL;*/
+    /*}*/
+    /*else*/
+    /*{*/
+        /*PMSG("%lu != %lu\n", buffer[0], check_val);*/
+        /*return TEST_UNSUCCESSFUL;*/
+    /*}*/
 }/*}}}*/
 
 void reduce_deinit()
 {/*{{{*/
+    PMSG("Deinit ... \n");
     uint64_t num_pages = pow(2, max_depth);
     size_t buf_size = sizeof(uint64_t) * PAGE_SZ * num_pages;
     mir_mem_pol_release(buffer, buf_size);
@@ -209,9 +219,9 @@ void reduce_deinit()
 
 int main(int argc, char *argv[])
 {/*{{{*/
-    if (argc > 2)
+    if (argc > 3)
     {
-        printf("Usage: %s depth\n", argv[0]);
+        printf("Usage: %s depth page_sz_KB\n", argv[0]);
         exit(0);
     }
 
@@ -220,6 +230,12 @@ int main(int argc, char *argv[])
 
     if(argc == 2)
         max_depth = atoi(argv[1]);
+
+    if(argc == 3)
+    {
+        max_depth = atoi(argv[1]);
+        PAGE_SZ = (atoi(argv[2])*1024)/sizeof(uint64_t);
+    }
 
     reduce_init();
 
@@ -236,7 +252,7 @@ int main(int argc, char *argv[])
 
     reduce_deinit();
 
-    printf("%s(%d),check=%d in [SUCCESSFUL, UNSUCCESSFUL, NOT_APPLICABLE, NOT_PERFORMED],time=%f secs\n", argv[0], max_depth, check, par_time);
+    printf("%s(%d,%lu),check=%d in [SUCCESSFUL, UNSUCCESSFUL, NOT_APPLICABLE, NOT_PERFORMED],time=%f secs\n", argv[0], max_depth, PAGE_SZ, check, par_time);
 
     // Pull down the runtime
     mir_destroy();

@@ -256,7 +256,7 @@ void mir_destroy()
     {/*{{{*/
         for (int i=0; i<runtime->num_workers; i++)
         {
-            mir_recorder_dump_to_file(runtime->workers[i].recorder);
+            mir_recorder_write_to_file(runtime->workers[i].recorder);
             mir_recorder_destroy(runtime->workers[i].recorder);
         }
     }/*}}}*/
@@ -270,11 +270,13 @@ void mir_destroy()
         if(!stats_file)
             MIR_ABORT(MIR_ERROR_STR "Cannot open stats file %s for writing!\n", MIR_STATS_FILE_NAME);
 
+        // Write header 
+        mir_worker_status_write_header_to_file(stats_file);
         // Write all worker status counters to stats file
         for(int i=0; i<runtime->num_workers; i++) 
         {
             struct mir_worker_status_t* status = runtime->workers[i].status;
-            mir_worker_status_dump_to_file(status, stats_file);
+            mir_worker_status_write_to_file(status, stats_file);
         }
 
         // Close stats file

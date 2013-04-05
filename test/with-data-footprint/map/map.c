@@ -10,7 +10,9 @@
 #define CHECK_RESULT 1
 
 #define OPR_SCALE (42)
-#define SLEEP_MS 20
+#define SLEEP_MS 0
+#define LOOP_CNT 4
+//#define ENABLE_FAULT_IN 
 
 uint64_t** buffer = NULL;
 int num_tasks = (2<<12);
@@ -27,6 +29,7 @@ long get_usecs(void)
 
 void map_init()
 {/*{{{*/
+    PMSG("Init ... \n");
     PDBG("Allocating memory ... \n");
     PMSG("Memory required = %lu MB\n", (buf_sz*sizeof(uint64_t)*num_tasks)/(1024*1024));
     buffer = malloc(sizeof(uint64_t*) * num_tasks);
@@ -39,20 +42,24 @@ void map_init()
             PABRT("Cannot allocate memory!\n");
     }
 
+#ifdef ENABLE_FAULT_IN
     PDBG("Initializing memory ... \n");
     for(uint64_t i=0; i<num_tasks; i++)
         for(uint64_t j=0; j<buf_sz; j++)
             buffer[i][j] = i+1;
+#endif
 }/*}}}*/
 
 void map(uint64_t* in, uint64_t* out)
 {/*{{{*/
     size_t sum = 0;
-    for(uint64_t i=0; i<buf_sz; i++)
-    {
-        out[i] = OPR_SCALE * in[i];
-        sum += (int)sqrt((double)(out[i])); 
-    }
+    for(uint64_t j=0; j<LOOP_CNT; j++)
+        for(uint64_t i=0; i<buf_sz; i++)
+        {
+            out[i] = OPR_SCALE * in[i];
+            sum += (int)sqrt((double)(out[i])); 
+        }
+
     __sync_fetch_and_add(&g_sum, sum);
     mir_sleep_ms(SLEEP_MS);
 }/*}}}*/
@@ -86,6 +93,7 @@ void for_task(uint64_t start, uint64_t end, struct mir_twc_t* twc)
             footprint.base = (void*) buffer[j];
             footprint.start = 0;
             footprint.end = buf_sz - 1;
+            footprint.row_sz = 1;
             footprint.type = sizeof(uint64_t);
             footprint.data_access = MIR_DATA_ACCESS_READ;
             footprint.part_of = NULL;
@@ -110,7 +118,7 @@ void for_task_wrapper(void* arg)
 
 void map_par()
 {/*{{{*/
-    PDBG("Mapping in parallel ... \n");
+    PMSG("Parallel exec ... \n");
 
     struct mir_twc_t* twc = mir_twc_create();
 
@@ -157,11 +165,13 @@ void map_par()
 
 int map_check()
 {/*{{{*/
+    PMSG("Check ... \n");
     return TEST_NOT_APPLICABLE;
 }/*}}}*/
 
 void map_deinit()
 {/*{{{*/
+    PMSG("Deinit ... \n");
     for(uint64_t j=0; j<num_tasks; j++)
         //free(buffer[j]/*, sizeof(uint64_t) * buf_sz*/);
         mir_mem_pol_release(buffer[j], sizeof(uint64_t) * buf_sz);

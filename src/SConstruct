@@ -37,6 +37,7 @@ env['CCFLAGS'] = Split("""
 debug = ARGUMENTS.get('debug',0)
 if int(debug):
     env.Append(CCFLAGS = '-g')
+    env.Append(CCFLAGS = '-gdwarf-2')
     env.Append(CCFLAGS = '-O0')
     env.Append(CCFLAGS = '-DMIR_ENABLE_DEBUG')
 else:

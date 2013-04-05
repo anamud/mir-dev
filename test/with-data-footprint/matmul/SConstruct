@@ -1,0 +1,44 @@
+env = Environment()
+env['CCFLAGS'] = Split("""
+-std=c99
+-Wall 
+-Werror 
+-Wno-unused-function 
+-Wno-unused-variable
+-I/home/ananya/mir/src
+-I/opt/intel/mkl/include 
+""")
+
+env['LINKFLAGS'] = Split("""
+-L/opt/intel/mkl/lib/intel64/
+-Wl,-rpath=/opt/intel/mkl/lib/intel64/
+""")
+
+env['LIBS'] = Split("""
+mir 
+pthread
+numa
+m
+mkl_sequential
+mkl_core
+mkl_rt
+""")
+
+env['LIBPATH'] = Split("""
+/home/ananya/mir/src/
+""")
+
+src_list = Split("""
+matmul.c
+""") 
+
+debug = ARGUMENTS.get('debug',0)
+if int(debug):
+    env.Append(CCFLAGS = '-g')
+    env.Append(CCFLAGS = '-gdwarf-2')
+    env.Append(CCFLAGS = '-O0')
+    env.Append(CCFLAGS = '-DDEBUG_ME')
+else:
+    env.Append(CCFLAGS = '-O3')
+
+env.Program('matmul', source = src_list)

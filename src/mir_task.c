@@ -160,6 +160,8 @@ void mir_task_execute(struct mir_task_t* task)
     // Execute task function
     task->func(task->data);
 
+    //MIR_INFORM(MIR_INFORM_STR "Task %" MIR_FORMSPEC_UL " executed on worker %d\n", task->id.uid, worker->id);
+
     // Record event and state
     MIR_RECORDER_STATE_END(&event_meta_data[0], MIR_RECORDER_EVENT_META_DATA_MAX_SIZE-1);
     MIR_RECORDER_EVENT(&event_meta_data[0], MIR_RECORDER_EVENT_META_DATA_MAX_SIZE-1);
@@ -193,6 +195,12 @@ struct mir_mem_node_dist_t* mir_task_get_footprint_dist(struct mir_task_t* task,
         for(int i=0; i<task->num_data_footprints; i++)
             if(task->data_footprints[i].data_access == access)
                 mir_data_footprint_get_dist(dist, &task->data_footprints[i]);
+
+        // Print dist
+        /*MIR_INFORM("Dist for task %" MIR_FORMSPEC_UL ": ", task->id.uid);*/
+        /*for(int i=0; i<runtime->arch->num_nodes; i++)*/
+            /*MIR_INFORM("%lu ", dist->buf[i]);*/
+        /*MIR_INFORM("\n");*/
     }
 
     return task->dist_by_access_type[access];
