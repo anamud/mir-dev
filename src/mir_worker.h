@@ -32,10 +32,13 @@ struct mir_worker_t
 {
     pthread_t pthread;
     uint16_t id;
+    uint16_t bias;
     struct mir_lock_t sig_die;
     struct mir_worker_status_t* status;
     struct mir_recorder_t* recorder;
 };
+
+void mir_worker_update_bias(struct mir_worker_t* worker);
 
 void mir_worker_master_init(struct mir_worker_t* worker);
 

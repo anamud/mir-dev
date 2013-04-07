@@ -122,7 +122,9 @@ void push_numa (struct mir_task_t* task)
 
             uint16_t prev_node = runtime->arch->num_nodes + 1;
             unsigned long least_comm_cost = -1;
-            for(int i=0; i<runtime->num_workers; i++)
+            int bias = this_worker->bias;
+            int i = bias;
+            do
             {
                 struct mir_worker_t* worker = &runtime->workers[i];
                 uint16_t node = runtime->arch->node_of(worker->id);
@@ -130,13 +132,32 @@ void push_numa (struct mir_task_t* task)
                 {
                     prev_node = node;
                     unsigned long comm_cost = get_comm_cost(node, dist);
-                    if(comm_cost < least_comm_cost)
+                    if(comm_cost <= least_comm_cost)
                     {
                         least_comm_cost = comm_cost;
                         least_cost_worker = worker;
                     }
                 }
-            }
+                i = (i+1)%runtime->num_workers;
+            } while (i!=bias);
+            mir_worker_update_bias(this_worker);
+
+            /*for(int i=0; i<runtime->num_workers; i++)*/
+            /*{*/
+                /*// FIXME: Decision bias possible here*/
+                /*struct mir_worker_t* worker = &runtime->workers[i];*/
+                /*uint16_t node = runtime->arch->node_of(worker->id);*/
+                /*if(node != prev_node)*/
+                /*{*/
+                    /*prev_node = node;*/
+                    /*unsigned long comm_cost = get_comm_cost(node, dist);*/
+                    /*if(comm_cost <= least_comm_cost)*/
+                    /*{*/
+                        /*least_comm_cost = comm_cost;*/
+                        /*least_cost_worker = worker;*/
+                    /*}*/
+                /*}*/
+            /*}*/
 
             if(runtime->enable_stats)
                 task->comm_cost = least_comm_cost;
@@ -223,6 +244,7 @@ bool pop_numa (struct mir_task_t** task)
         count = runtime->arch->vicinity_of(neighbors, node, d);
         for(int i=0; i<count; i++)
         {
+            // FIXME: Decision bias possible here
             struct mir_queue_t* queue = sp->queues[neighbors[i]];
             uint32_t queue_sz = mir_queue_size(queue);
             size_t low_limit = (runtime->arch->num_cores/runtime->arch->num_nodes)*d;

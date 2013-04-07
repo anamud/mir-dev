@@ -144,6 +144,9 @@ void mir_worker_local_init(struct mir_worker_t* worker)
     if (rval != 0)
         MIR_ABORT(MIR_ERROR_STR "Could not set TLS for worker %d!\n", worker->id);
 
+    // Set the bias
+    worker->bias = worker->id;
+
     // Bind the worker
     MIR_DEBUG(MIR_DEBUG_STR "Binding worker to core %d\n", worker->id);
 #ifdef __tile__
@@ -212,3 +215,8 @@ void mir_worker_check_done()
             break;
     }
 }/*}}}*/
+
+void mir_worker_update_bias(struct mir_worker_t* worker)
+{
+    worker->bias = (worker->bias + 1)%(runtime->num_workers);
+}

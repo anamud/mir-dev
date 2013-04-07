@@ -41,6 +41,7 @@
 #include "mir_public_int.h"
 
 #define CHECK_RESULT 0
+//#define HINT_ONLY_ACCESS_INTENSIVE_FOOTPRINTS 1
 
 int BS = 50;
 int NB = 50;
@@ -319,7 +320,29 @@ void sparselu_par_call(float **BENCH)
                     imm_args.kk = kk;
 
                     // Footprint
-                    struct mir_data_footprint_t footprints[3];
+#ifdef HINT_ONLY_ACCESS_INTENSIVE_FOOTPRINTS
+                    const int num_footprints = 2;
+                    struct mir_data_footprint_t footprints[num_footprints];
+
+                    footprints[0].base = BENCH[kk*NB+jj];
+                    footprints[0].start = 0;
+                    footprints[0].end = BS*BS-1;
+                    footprints[0].row_sz = 1;
+                    footprints[0].type = sizeof(float);
+                    footprints[0].data_access = MIR_DATA_ACCESS_READ;
+                    footprints[0].part_of = BENCH[kk*NB+jj];
+
+                    footprints[1].base = BENCH[kk*NB+jj];
+                    footprints[1].start = 0;
+                    footprints[1].end = BS*BS-1;
+                    footprints[1].row_sz = 1;
+                    footprints[1].type = sizeof(float);
+                    footprints[1].data_access = MIR_DATA_ACCESS_WRITE;
+                    footprints[1].part_of = BENCH[kk*NB+jj];
+#else
+                    const int num_footprints = 3;
+                    struct mir_data_footprint_t footprints[num_footprints];
+
                     footprints[0].base = BENCH[kk*NB+kk];
                     footprints[0].start = 0;
                     footprints[0].end = BS*BS-1;
@@ -343,8 +366,9 @@ void sparselu_par_call(float **BENCH)
                     footprints[2].type = sizeof(float);
                     footprints[2].data_access = MIR_DATA_ACCESS_WRITE;
                     footprints[2].part_of = BENCH[kk*NB+jj];
+#endif
 
-                    struct mir_task_t* task = mir_task_create((mir_tfunc_t) smp_ol_sparselu_par_call_0, (void*) &imm_args, sizeof(struct nanos_args_0_t), twc, 3, footprints, NULL);
+                    struct mir_task_t* task = mir_task_create((mir_tfunc_t) smp_ol_sparselu_par_call_0, (void*) &imm_args, sizeof(struct nanos_args_0_t), twc, num_footprints, footprints, NULL);
                 }
             }
 
@@ -362,7 +386,29 @@ void sparselu_par_call(float **BENCH)
                     imm_args.kk = kk;
 
                     // Footprint
-                    struct mir_data_footprint_t footprints[3];
+#ifdef HINT_ONLY_ACCESS_INTENSIVE_FOOTPRINTS 
+                    const int num_footprints = 2;
+                    struct mir_data_footprint_t footprints[num_footprints];
+
+                    footprints[0].base = BENCH[ii*NB+kk];
+                    footprints[0].start = 0;
+                    footprints[0].end = BS*BS-1;
+                    footprints[0].row_sz = 1;
+                    footprints[0].type = sizeof(float);
+                    footprints[0].data_access = MIR_DATA_ACCESS_READ;
+                    footprints[0].part_of = BENCH[ii*NB+kk];
+
+                    footprints[1].base = BENCH[ii*NB+kk];
+                    footprints[1].start = 0;
+                    footprints[1].end = BS*BS-1;
+                    footprints[1].row_sz = 1;
+                    footprints[1].type = sizeof(float);
+                    footprints[1].data_access = MIR_DATA_ACCESS_WRITE;
+                    footprints[1].part_of = BENCH[ii*NB+kk];
+#else
+                    const int num_footprints = 3;
+                    struct mir_data_footprint_t footprints[num_footprints];
+
                     footprints[0].base = BENCH[kk*NB+kk];
                     footprints[0].start = 0;
                     footprints[0].end = BS*BS-1;
@@ -386,8 +432,9 @@ void sparselu_par_call(float **BENCH)
                     footprints[2].type = sizeof(float);
                     footprints[2].data_access = MIR_DATA_ACCESS_WRITE;
                     footprints[2].part_of = BENCH[ii*NB+kk];
+#endif
 
-                    struct mir_task_t* task = mir_task_create((mir_tfunc_t) smp_ol_sparselu_par_call_1, (void*) &imm_args, sizeof(struct nanos_args_1_t), twc, 3, footprints, NULL);
+                    struct mir_task_t* task = mir_task_create((mir_tfunc_t) smp_ol_sparselu_par_call_1, (void*) &imm_args, sizeof(struct nanos_args_1_t), twc, num_footprints, footprints, NULL);
                 }
             }
 
@@ -414,7 +461,27 @@ void sparselu_par_call(float **BENCH)
                             imm_args.kk = kk;
 
                             // Footprint
-                            struct mir_data_footprint_t footprints[4];
+#ifdef HINT_ONLY_ACCESS_INTENSIVE_FOOTPRINTS 
+                            const int num_footprints = 2;
+                            struct mir_data_footprint_t footprints[num_footprints];
+                            footprints[0].base = BENCH[ii*NB+jj];
+                            footprints[0].start = 0;
+                            footprints[0].end = BS*BS-1;
+                            footprints[0].row_sz = 1;
+                            footprints[0].type = sizeof(float);
+                            footprints[0].data_access = MIR_DATA_ACCESS_READ;
+                            footprints[0].part_of = BENCH[ii*NB+jj];
+
+                            footprints[1].base = BENCH[ii*NB+jj];
+                            footprints[1].start = 0;
+                            footprints[1].end = BS*BS-1;
+                            footprints[1].row_sz = 1;
+                            footprints[1].type = sizeof(float);
+                            footprints[1].data_access = MIR_DATA_ACCESS_WRITE;
+                            footprints[1].part_of = BENCH[ii*NB+jj];
+#else
+                            const int num_footprints = 4;
+                            struct mir_data_footprint_t footprints[num_footprints];
                             footprints[0].base = BENCH[ii*NB+kk];
                             footprints[0].start = 0;
                             footprints[0].end = BS*BS-1;
@@ -446,8 +513,9 @@ void sparselu_par_call(float **BENCH)
                             footprints[3].type = sizeof(float);
                             footprints[3].data_access = MIR_DATA_ACCESS_WRITE;
                             footprints[3].part_of = BENCH[ii*NB+jj];
+#endif
 
-                            struct mir_task_t* task = mir_task_create((mir_tfunc_t) smp_ol_sparselu_par_call_2, (void*) &imm_args, sizeof(struct nanos_args_2_t), twc, 4, footprints, NULL);
+                            struct mir_task_t* task = mir_task_create((mir_tfunc_t) smp_ol_sparselu_par_call_2, (void*) &imm_args, sizeof(struct nanos_args_2_t), twc, num_footprints, footprints, NULL);
                         }
                     }
 
