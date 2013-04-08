@@ -509,10 +509,16 @@ void sort_init(void)
         arg_size = 4;
     }
 
-    array = (ELM *) malloc(arg_size * sizeof(ELM));
-    tmp = (ELM *) malloc(arg_size * sizeof(ELM));
+    array = (ELM *) mir_mem_pol_allocate (arg_size * sizeof(ELM));
+    tmp = (ELM *) mir_mem_pol_allocate (arg_size * sizeof(ELM));
     fill_array(array);
     scramble_array(array);
+}/*}}}*/
+
+void sort_deinit(void)
+{/*{{{*/
+    mir_mem_pol_release(array, arg_size * sizeof(ELM));
+    mir_mem_pol_release(tmp, arg_size * sizeof(ELM));
 }/*}}}*/
 
 typedef struct _nx_data_env_8_t_tag
@@ -578,6 +584,8 @@ int main(int argc, char **argv)
 #ifdef CHECK_RESULT 
     check = sort_verify();
 #endif
+
+    sort_deinit();
 
     PMSG("%s(%lu),check=%d in %s,time=%f secs\n", argv[0], arg_size, check, TEST_ENUM_STRING, par_time);
     PALWAYS("%fs\n", par_time);

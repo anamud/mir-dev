@@ -138,7 +138,7 @@ void allocate_village( struct Village **capital, struct Village *back,
       personnel = (int) pow(2, level);
       population = personnel * sim_population_ratio;
       /* Allocate Village */
-      *capital = (struct Village *) malloc(sizeof(struct Village));
+      *capital = (struct Village *) mir_mem_pol_allocate (sizeof(struct Village));
       /* Initialize Village */
       (*capital)->back  = back;
       (*capital)->next  = next;
@@ -148,7 +148,7 @@ void allocate_village( struct Village **capital, struct Village *back,
       (*capital)->population = NULL;
       for(i=0;i<population;i++)
       {
-         patient = (struct Patient *)malloc(sizeof(struct Patient));
+         patient = (struct Patient *)mir_mem_pol_allocate (sizeof(struct Patient));
          patient->id = sim_pid++;
          patient->seed = (*capital)->seed;
          // changes seed for capital:

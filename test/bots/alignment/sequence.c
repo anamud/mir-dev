@@ -175,7 +175,7 @@ int readseqs(char *filename)
       seq1 = get_seq(names[i], &l1, chartab, fin);
 
       seqlen_array[i] = l1;
-      seq_array[i]    = (char *) malloc((l1 + 2) * sizeof (char));
+      seq_array[i]    = (char *) mir_mem_pol_allocate ((l1 + 2) * sizeof (char));
 
       encode(seq1, seq_array[i], l1);
 

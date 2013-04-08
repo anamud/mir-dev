@@ -6204,7 +6204,7 @@ void fft(int n, COMPLEX * in, COMPLEX * out)
     COMPLEX *W;
 
     PMSG("Computing coefficients ");
-    W = (COMPLEX *) malloc((n + 1) * sizeof(COMPLEX));
+    W = (COMPLEX *) mir_mem_pol_allocate ((n + 1) * sizeof(COMPLEX));
 /*#pragma omp parallel*/
 /*#pragma omp single*/
     // Task41
@@ -6229,7 +6229,7 @@ void fft(int n, COMPLEX * in, COMPLEX * out)
     fft_aux(n, in, out, factors, W, n);
     PMSG(" completed!\n");
 
-    free(W);
+    mir_mem_pol_release(W, (n + 1) * sizeof(COMPLEX));
     return;
 }/*}}}*/
 
@@ -6241,7 +6241,7 @@ void fft_seq(int n, COMPLEX * in, COMPLEX * out)
     int r;
     COMPLEX *W;
 
-    W = (COMPLEX *) malloc((n + 1) * sizeof(COMPLEX));
+    W = (COMPLEX *) mir_mem_pol_allocate ((n + 1) * sizeof(COMPLEX));
     compute_w_coefficients_seq(n, 0, n / 2, W);
 
     /* 
@@ -6256,7 +6256,7 @@ void fft_seq(int n, COMPLEX * in, COMPLEX * out)
 
     fft_aux_seq(n, in, out, factors, W, n);
 
-    free(W);
+    mir_mem_pol_release(W, (n + 1) * sizeof(COMPLEX));
     return;
 }/*}}}*/
 

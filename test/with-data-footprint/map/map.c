@@ -30,7 +30,7 @@ void map_init()
     PMSG("Init ... \n");
     PDBG("Allocating memory ... \n");
     PMSG("Memory required = %lu MB\n", (buf_sz*sizeof(uint64_t)*num_tasks)/(1024*1024));
-    buffer = malloc(sizeof(uint64_t*) * num_tasks);
+    buffer = malloc (sizeof(uint64_t*) * num_tasks);
     if(!buffer)
         PABRT("Cannot allocate memory!\n");
     for(uint64_t j=0; j<num_tasks; j++)
