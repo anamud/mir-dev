@@ -8,12 +8,11 @@
 #include <mkl_cblas.h> // COMMENT THIS FOR NOT USE CBLAS
 
 #include "mir_public_int.h"
+#include "helper.h"
 
 #ifndef BSIZE
 #define BSIZE 128
 #endif
-
-#define CHECK 0
 
 float **A;
 float **B;
@@ -90,7 +89,7 @@ int check(unsigned long DIM)
             {
                 if(fabsf(C[i][j]- C_seq[i][j]) > 1e-3)
                 {
-                    fprintf(stderr, "%f != %f \n", C[i][j], C_seq[i][j]);
+                    PMSG("%f != %f \n", C[i][j], C_seq[i][j]);
                     return 1;
                 }
             }
@@ -304,10 +303,7 @@ void init (unsigned long argc, char **argv, unsigned long * N_p, unsigned long *
         DIM=atoi(argv[1]);
     }
     else
-    {
-        printf("usage: %s DIM\n",argv[0]);
-        exit(0);
-    }
+        PABRT("usage: %s DIM\n",argv[0]);
 
     // matrix init
     unsigned long N=BSIZE*DIM;
@@ -381,32 +377,31 @@ int main(int argc, char *argv[])
     // compute
     compute(&start, &stop,(unsigned long) BSIZE, DIM, (void *)A, (void *)B, (void *)C);
 
-    if(CHECK)
-    {
-        struct timeval start_seq;
-        struct timeval stop_seq;
-        unsigned long elapsed_seq;
-        init_seq(N, DIM);
-        compute_seq(&start_seq, &stop_seq,(unsigned long) BSIZE, DIM, (void *)A, (void *)B, (void *)C_seq);
-        int result = check(DIM);
-        deinit_seq(DIM);
-        if(result == 0)
-            printf("Check successful!\n");
-        else
-            printf("Check UNSUCCESSFUL :-(\n");
-        elapsed_seq = 1000000 * (stop_seq.tv_sec - start_seq.tv_sec);
-        elapsed_seq += stop_seq.tv_usec - start_seq.tv_usec;
-        printf ("Seq. time %f secs\n", (double)(elapsed_seq)/1000000);
-    }
+#ifdef CHECk_RESULT
+    struct timeval start_seq;
+    struct timeval stop_seq;
+    unsigned long elapsed_seq;
+    init_seq(N, DIM);
+    compute_seq(&start_seq, &stop_seq,(unsigned long) BSIZE, DIM, (void *)A, (void *)B, (void *)C_seq);
+    int result = check(DIM);
+    deinit_seq(DIM);
+    if(result == 0)
+        PMSG("Check successful!\n");
+    else
+        PMSG("Check UNSUCCESSFUL :-(\n");
+    elapsed_seq = 1000000 * (stop_seq.tv_sec - start_seq.tv_sec);
+    elapsed_seq += stop_seq.tv_usec - start_seq.tv_usec;
+    PMSG ("Seq. time %f secs\n", (double)(elapsed_seq)/1000000);
+#endif
 
     elapsed = 1000000 * (stop.tv_sec - start.tv_sec);
     elapsed += stop.tv_usec - start.tv_usec;
-    printf("Matrix dimension: %ld\n",N);
+    PMSG("Matrix dimension: %ld\n",N);
     // time in usecs
-    printf ("Time %f secs\n", (double)(elapsed)/1000000);
+    PMSG ("Time %f secs\n", (double)(elapsed)/1000000);
     // performance in MFLOPS
-    printf("Perf %lu MFlops\n", (unsigned long)((((double)N)*((double)N)*((double)N)*2)/elapsed));
-    printf("Perf %lu MBytes/s\n", (unsigned long)((((double)N)*((double)N)*2*sizeof(float))/elapsed));
+    PMSG("Perf %lu MFlops\n", (unsigned long)((((double)N)*((double)N)*((double)N)*2)/elapsed));
+    PMSG("Perf %lu MBytes/s\n", (unsigned long)((((double)N)*((double)N)*2*sizeof(float))/elapsed));
 
     deinit(DIM);
 

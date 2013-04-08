@@ -42,8 +42,6 @@
 #include "mir_public_int.h"
 #include "helper.h"
 
-#define CHECK_RESULT 1
-
 int arg_size = 2048;
 int app_cutoff_value = 64;
 int cutoff_value = 3;
@@ -442,7 +440,7 @@ void OptimizedStrassenMultiply_seq(REAL *C, REAL *A, REAL *B, unsigned MatrixSiz
     C22 = C21 + QuadrantSize;
 
     /* Allocate Heap Space Here */
-    StartHeap = Heap = malloc(QuadrantSizeInBytes * NumberOfVariables);
+    StartHeap = Heap = mir_mem_pol_allocate (QuadrantSizeInBytes * NumberOfVariables);
     /* ensure that heap is on cache boundary */
     if ( ((PTR) Heap) & 31)
         Heap = (char*) ( ((PTR) Heap) + 32 - ( ((PTR) Heap) & 31) );
@@ -582,7 +580,7 @@ void OptimizedStrassenMultiply_seq(REAL *C, REAL *A, REAL *B, unsigned MatrixSiz
         C21 = (REAL*) ( ((PTR) C21 ) + RowIncrementC);
         C22 = (REAL*) ( ((PTR) C22 ) + RowIncrementC);
     }
-    free(StartHeap);
+    mir_mem_pol_release (StartHeap, QuadrantSizeInBytes * NumberOfVariables);
 }/*}}}*/
 
 struct  nanos_args_0_t
@@ -826,7 +824,7 @@ void OptimizedStrassenMultiply_par(REAL *C, REAL *A, REAL *B, unsigned MatrixSiz
     C22 = C21 + QuadrantSize;
 
     /* Allocate Heap Space Here */
-    StartHeap = Heap = malloc(QuadrantSizeInBytes * NumberOfVariables);
+    StartHeap = Heap = mir_mem_pol_allocate (QuadrantSizeInBytes * NumberOfVariables);
     /* ensure that heap is on cache boundary */
     if ( ((PTR) Heap) & 31)
         Heap = (char*) ( ((PTR) Heap) + 32 - ( ((PTR) Heap) & 31) );
@@ -1076,7 +1074,7 @@ void OptimizedStrassenMultiply_par(REAL *C, REAL *A, REAL *B, unsigned MatrixSiz
         C21 = (REAL*) ( ((PTR) C21 ) + RowIncrementC);
         C22 = (REAL*) ( ((PTR) C22 ) + RowIncrementC);
     }
-    free(StartHeap);
+    mir_mem_pol_release (StartHeap, QuadrantSizeInBytes * NumberOfVariables);
 }/*}}}*/
 
 /*
@@ -1123,7 +1121,7 @@ int compare_matrix(int n, REAL *A, int an, REAL *B, int bn)
  */
 REAL *alloc_matrix(int n) 
 {/*{{{*/
-    return malloc(n * n * sizeof(REAL));
+    return mir_mem_pol_allocate (n * n * sizeof(REAL));
 }/*}}}*/
 
 void strassen_main_par(REAL *A, REAL *B, REAL *C, int n)
@@ -1143,10 +1141,7 @@ void strassen_main_seq(REAL *A, REAL *B, REAL *C, int n)
 int main(int argc, char **argv)
 {/*{{{*/
     if (argc > 4)
-    {
-        PMSG("Usage: %s mat_size mat_cutoff task_cutoff\n", argv[0]);
-        exit(1);
-    }
+        PABRT("Usage: %s mat_size mat_cutoff task_cutoff\n", argv[0]);
 
     // Init the runtime
     mir_create();
@@ -1169,15 +1164,12 @@ int main(int argc, char **argv)
 
     double *A, *B, *C, *D;
     if ((arg_size & (arg_size - 1)) != 0 || (arg_size % 16) != 0)
-    {
-        PMSG("Error: matrix size (%d) must be a power of 2 and a multiple of %d\n", arg_size, 16);
-        exit(1);
-    }
+        PABRT("Error: matrix size (%d) must be a power of 2 and a multiple of %d\n", arg_size, 16);
 
-    A = (double *) malloc(arg_size * arg_size * sizeof(double));
-    B = (double *) malloc(arg_size * arg_size * sizeof(double));
-    C = (double *) malloc(arg_size * arg_size * sizeof(double));
-    D = (double *) malloc(arg_size * arg_size * sizeof(double));
+    A = (double *) mir_mem_pol_allocate (arg_size * arg_size * sizeof(double));
+    B = (double *) mir_mem_pol_allocate (arg_size * arg_size * sizeof(double));
+    C = (double *) mir_mem_pol_allocate (arg_size * arg_size * sizeof(double));
+    D = (double *) mir_mem_pol_allocate (arg_size * arg_size * sizeof(double));
 
     init_matrix(arg_size, A, arg_size);
     init_matrix(arg_size, B, arg_size);
@@ -1187,15 +1179,19 @@ int main(int argc, char **argv)
     long par_time_end = get_usecs();
     double par_time = (double)( par_time_end - par_time_start) / 1000000;
 
-    strassen_main_seq(D, A, B, arg_size);
-
     int check = TEST_NOT_PERFORMED;
-    if (CHECK_RESULT)
-    {
-        check = compare_matrix(arg_size, C, arg_size, D, arg_size);
-    }
+#ifdef CHECK_RESULT
+    PDBG("Checking ... \n");
+    long seq_time_start = get_usecs();
+    strassen_main_seq(D, A, B, arg_size);
+    long seq_time_end = get_usecs();
+    double seq_time = (double)( seq_time_end - seq_time_start) / 1000000;
+    check = compare_matrix(arg_size, C, arg_size, D, arg_size);
+    PMSG("Seq. time=%f secs\n", seq_time);
+#endif
 
-    PMSG("%s(%d,%d,%d),check=%d in [SUCCESSFUL, UNSUCCESSFUL, NOT_APPLICABLE, NOT_PERFORMED],time=%f secs\n", argv[0], arg_size, app_cutoff_value, cutoff_value, check, par_time);
+    PMSG("%s(%d,%d,%d),check=%d in %s,time=%f secs\n", argv[0], arg_size, app_cutoff_value, cutoff_value, check, TEST_ENUM_STRING, par_time);
+    PALWAYS("%fs\n", par_time);
 
     mir_destroy();
 

@@ -1,17 +1,30 @@
 Build with tilecc.
-Test on tilepro64.
+Test on TILEPro64.
 Architecture specific SConstruct.
-Simulatanoes debug and release build in SConstruct.
-Give git access to others (Artur, Ali, Mats and possibly PaPP partners).
-Setup git permissions (How? Dev and public repos?).
-Find a good license. GPL? Check with BSC about Mercurium and BOTS.
+Simulatanoes debug and release build in SConstruct. 
+- Added debug and opt builds for mir
+- Added debug, opt and verbose builds for benchmarks
+Give git access to others.
+- Have decided to use ssh public id to give access to interested users
+Setup git permissions (
+- How? Dev and public repos?
+Find a good license. 
+- How about GPL? Check with BSC about Mercurium and BOTS.
 Get started with clang support.
 Strengthen Mercurium support.
 Work on UTS.
+- Scaling is poor. 
+- Uninteresting. Benchmark stresses fine grained execution. 
 Work on benchmarks with data dependences.
-Get a gimp to parallelize BOTS FFT and Strassen. [Done. Gimp = Me.]
-Add a clean user interface to the library (How? Machine generate the interface?)
-Find and add a good deque implementation. Ask Shavit and Maged.
+- Added benchmarks with data footprint
+Get a gimp to parallelize BOTS FFT and Strassen. 
+- Done. Gimp = Me.
+Add a clean user interface to the library (
+- How? Machine generate the interface?
+Find and add a good deque implementation. 
+- Ask Shavit and Maged.
 Cleanup dependence resolution support.
 Add a help document.
-Add the NUMA/NUCA scheduler. [Done]
+Add the NUMA/NUCA scheduler. 
+- Done. Need to test it on the TILEPro64.
+Add a benchmark testing script

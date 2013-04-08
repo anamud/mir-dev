@@ -1,6 +1,5 @@
 import os
 app_name = os.getcwd().split(os.sep)[-1]
-print('This is a SPECIALIZED BUILD. \n')
 
 ######################
 # Common environment #
@@ -16,19 +15,12 @@ env['CCFLAGS'] = Split("""
 -Wno-unused-but-set-variable
 -I/home/ananya/mir/src
 -I/home/ananya/mir/test/common
--I/opt/intel/mkl/include
 """)
-env['LINKFLAGS'] = Split("""
--L/opt/intel/mkl/lib/intel64
--Wl,-rpath=/opt/intel/mkl/lib/intel64
-""")
+env['LINKFLAGS'] = ['']
 env['LIBS'] = Split("""
 pthread
 numa
 m
-mkl_sequential
-mkl_core
-mkl_rt
 """)
 env['LIBPATH'] = ['/home/ananya/mir/src/']
 

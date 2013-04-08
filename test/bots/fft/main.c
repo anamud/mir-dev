@@ -6,8 +6,6 @@
 #include "fft.h"
 #include "helper.h"
 
-#define CHECK_RESULT 1
-
 long get_usecs(void)
 {/*{{{*/
     struct timeval t;
@@ -18,10 +16,7 @@ long get_usecs(void)
 int main(int argc, char *argv[])
 {/*{{{*/
     if (argc > 2)
-    {
-        printf("Usage: %s number\n", argv[0]);
-        exit(0);
-    }
+        PABRT("Usage: %s number\n", argv[0]);
 
     // Init the runtime
     mir_create();
@@ -34,8 +29,8 @@ int main(int argc, char *argv[])
     COMPLEX *out1 = NULL;
     COMPLEX *out2 = NULL;
 
-    in = malloc(arg_size * sizeof(COMPLEX));
-    out1 = malloc(arg_size * sizeof(COMPLEX));
+    in = mir_mem_pol_allocate (arg_size * sizeof(COMPLEX));
+    out1 = mir_mem_pol_allocate (arg_size * sizeof(COMPLEX));
     for (int i = 0; i < arg_size; ++i)
     {
         in[i].re = 1.00000000000000000000000000000000000000000000000000000e+00;
@@ -48,20 +43,28 @@ int main(int argc, char *argv[])
     double par_time = (double)( par_time_end - par_time_start) / 1000000;
 
     int check = TEST_NOT_PERFORMED;
-    if (CHECK_RESULT)
+#ifdef CHECK_RESULT
+    out2 = mir_mem_pol_allocate (arg_size * sizeof(COMPLEX));
+    for (int i = 0; i < arg_size; ++i)
     {
-        out2 = malloc(arg_size * sizeof(COMPLEX));
-        for (int i = 0; i < arg_size; ++i)
-        {
-            in[i].re = 1.00000000000000000000000000000000000000000000000000000e+00;
-            in[i].im = 1.00000000000000000000000000000000000000000000000000000e+00;
-        }
-        fft_seq(arg_size, in, out2);
-        check = test_correctness(arg_size, out1, out2);
-        ;
+        in[i].re = 1.00000000000000000000000000000000000000000000000000000e+00;
+        in[i].im = 1.00000000000000000000000000000000000000000000000000000e+00;
     }
+    long seq_time_start = get_usecs();
+    fft_seq(arg_size, in, out2);
+    long seq_time_end = get_usecs();
+    double seq_time = (double)( seq_time_end - seq_time_start) / 1000000;
+    check = test_correctness(arg_size, out1, out2);
+    mir_mem_pol_release (out2, arg_size * sizeof(COMPLEX));
+    PMSG("Seq. time=%f secs\n", seq_time);
+#endif
 
-    printf("%s(%d),check=%d in [SUCCESSFUL, UNSUCCESSFUL, NOT_APPLICABLE, NOT_PERFORMED],time=%f secs\n", argv[0], arg_size, check, par_time);
+    PMSG("%s(%d),check=%d in %s,time=%f secs\n", argv[0], arg_size, check, TEST_ENUM_STRING, par_time);
+    PALWAYS("%fs\n", par_time);
+
+    // Release memory 
+    mir_mem_pol_release (in, arg_size * sizeof(COMPLEX));
+    mir_mem_pol_release (out1, arg_size * sizeof(COMPLEX));
 
     // Pull down the runtime
     mir_destroy();

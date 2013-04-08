@@ -6,9 +6,10 @@
 #include <sys/time.h>
 
 #include "mir_public_int.h"
+#include "helper.h"
 
 static uint64_t  par_res, seq_res;
-int bots_cutoff_value;
+int cutoff_value;
 #define FIB_NUM_PRECOMP 50
 uint64_t fib_results[FIB_NUM_PRECOMP] = 
 {/*{{{*/
@@ -67,7 +68,6 @@ uint64_t fib_results[FIB_NUM_PRECOMP] =
 // Forward declarations
 uint64_t fib_seq (int n);
 uint64_t fib(int n, int d);
-long bots_usecs(void);
 int main(int argc, char **argv);
 
 typedef struct _nx_data_env_0_t_tag
@@ -103,7 +103,7 @@ uint64_t  fib(int n, int d)
     uint64_t  x, y;
     if (n < 2)
         return n;
-    if (d < bots_cutoff_value)
+    if (d < cutoff_value)
     {/*{{{*/
         // Create task1
         _nx_data_env_0_t imm_args_0;
@@ -134,7 +134,7 @@ uint64_t  fib(int n, int d)
     return x + y;
 }/*}}}*/
 
-long bots_usecs(void)
+long get_usecs(void)
 {/*{{{*/
     struct timeval t;
     gettimeofday(&t, ((void *) 0));
@@ -147,39 +147,54 @@ if (n<2) return n;
 return fib_seq(n-1) + fib_seq(n-2);
 }/*}}}*/
 
+int check_fib()
+{/*{{{*/
+    if (par_res == seq_res)
+        return TEST_SUCCESSFUL;
+    else
+        return TEST_UNSUCCESSFUL;
+}/*}}}*/
+
 int main(int argc, char **argv)
 {/*{{{*/
     // Init the runtime
     mir_create();
 
     if (argc > 3)
-    {
-        printf("Usage: fib number cut_off\n");
-        exit(0);
-    }
+        PMSG("Usage: %s number cut_off\n", argv[0]);
 
-    bots_cutoff_value = 15;
+    cutoff_value = 15;
     int num = 42;
 
     if(argv[2])
-        bots_cutoff_value = atoi(argv[2]);
+        cutoff_value = atoi(argv[2]);
     if(argv[1])
         num = atoi(argv[1]);
-    printf("Computing fib %d %d ... \n", num, bots_cutoff_value);
+    PMSG("Computing fib %d %d ... \n", num, cutoff_value);
 
-    long par_start = bots_usecs();
+    long par_time_start = get_usecs();
     par_res = fib(num, 0);
-    long par_end = bots_usecs();
+    long par_time_end = get_usecs();
+    double par_time = (double)( par_time_end - par_time_start) / 1000000;
 
+    int check = TEST_NOT_PERFORMED;
+#ifdef CHECK_RESULT
+    PDBG("Checking ... \n");
     if (num > FIB_NUM_PRECOMP)
         seq_res = fib_seq(num);
     else
+    {
+        long seq_time_start = get_usecs();
         seq_res = fib_results[num];
+        long seq_time_end = get_usecs();
+        double seq_time = (double)( seq_time_end - seq_time_start) / 1000000;
+        PMSG("Seq. time=%f secs\n", seq_time);
+    }
+    check = check_fib();
+#endif
 
-    if (par_res == seq_res)
-        printf("fib,arg(%d,%d),%s,%f sec\n", num, bots_cutoff_value, "correct", ((double) (par_end - par_start)) / 1000000);
-    else
-        printf("fib,arg(%d,%d),%s,%f sec\n", num, bots_cutoff_value, "INCORRECT", ((double) (par_end - par_start)) / 1000000);
+    PMSG("%s(%d,%d),check=%d in %s,time=%f secs\n", argv[0], num, cutoff_value, check, TEST_ENUM_STRING, par_time);
+    PALWAYS("%fs\n", par_time);
 
     mir_destroy();
 

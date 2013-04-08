@@ -40,7 +40,6 @@
 #include "sparselu.h"
 #include "mir_public_int.h"
 
-#define CHECK_RESULT 0
 //#define HINT_ONLY_ACCESS_INTENSIVE_FOOTPRINTS 1
 
 int BS = 50;
@@ -604,17 +603,22 @@ int main(int argc, char *argv[])
     double par_time = (double)( par_time_end - par_time_start) / 1000000;
 
     int check = TEST_NOT_PERFORMED;
-    if (CHECK_RESULT)
-    {
-        sparselu_init(&SEQ, "serial");
-        sparselu_seq_call(SEQ);
-        check = sparselu_check(SEQ, BENCH);
-        sparselu_fini(SEQ, "serial");
-    }
+#ifdef CHECK_RESULT
+    PDBG("Checking ... \n");
+    sparselu_init(&SEQ, "serial");
+    long seq_time_start = get_usecs();
+    sparselu_seq_call(SEQ);
+    long seq_time_end = get_usecs();
+    double seq_time = (double)( seq_time_end - seq_time_start) / 1000000;
+    check = sparselu_check(SEQ, BENCH);
+    sparselu_fini(SEQ, "serial");
+    PMSG("Seq. time=%f secs\n", seq_time);
+#endif
 
     sparselu_fini(BENCH, "benchmark");
 
-    printf("%s(%d,%d),check=%d in [SUCCESSFUL, UNSUCCESSFUL, NOT_APPLICABLE, NOT_PERFORMED],time=%f secs\n", argv[0], NB, BS, check, par_time);
+    PMSG("%s(%d,%d),check=%d in %s,time=%f secs\n", argv[0], NB, BS, check, TEST_ENUM_STRING, par_time);
+    PALWAYS("%fs\n", par_time);
 
     // Pull down the runtime
     mir_destroy();

@@ -29,6 +29,7 @@
 #include "sequence_extern.h"
 #include "alignment.h"
 #include "helper.h"
+#include "mir_public_int.h"
 
 /***********************************************************************
  * :
@@ -103,12 +104,12 @@ void alloc_aln(int nseqs)
 {
    int i;
 
-   names        = (char   **) malloc((nseqs + 1) * sizeof(char *));
-   seq_array    = (char   **) malloc((nseqs + 1) * sizeof(char *));
-   seqlen_array = (int     *) malloc((nseqs + 1) * sizeof(int));
+   names        = (char   **) mir_mem_pol_allocate ((nseqs + 1) * sizeof(char *));
+   seq_array    = (char   **) mir_mem_pol_allocate ((nseqs + 1) * sizeof(char *));
+   seqlen_array = (int     *) mir_mem_pol_allocate ((nseqs + 1) * sizeof(int));
 
    for (i = 0; i < nseqs + 1; i++) {
-      names[i]     = (char *  ) malloc((MAXNAMES + 1) * sizeof(char));
+      names[i]     = (char *  ) mir_mem_pol_allocate ((MAXNAMES + 1) * sizeof(char));
       seq_array[i] = NULL;
    }
 }

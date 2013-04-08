@@ -6,8 +6,6 @@
 #include "mir_public_int.h"
 #include "helper.h"
 
-#define CHECK_RESULT 1
-
 long get_usecs(void)
 {/*{{{*/
     struct timeval t;
@@ -507,7 +505,7 @@ void sort_init(void)
 {/*{{{*/
     if (arg_size < 4)
     {
-        fprintf(stdout, "%lu can not be less than 4, using 4 as a parameter.\n", arg_size);
+        PMSG("%lu can not be less than 4, using 4 as a parameter.\n", arg_size);
         arg_size = 4;
     }
 
@@ -559,12 +557,9 @@ int sort_verify(void)
 }/*}}}*/
 
 int main(int argc, char **argv)
-{
+{/*{{{*/
     if (argc > 2)
-    {
-        fprintf(stdout, "Usage: %s num_elements\n", argv[0]);
-        exit(0);
-    }
+        PABRT("Usage: %s num_elements\n", argv[0]);
 
     // Init the runtime
     mir_create();
@@ -580,15 +575,15 @@ int main(int argc, char **argv)
     double par_time = (double)( par_time_end - par_time_start) / 1000000;
 
     int check = TEST_NOT_PERFORMED;
-    if (CHECK_RESULT)
-    {
-        check = sort_verify();
-    }
+#ifdef CHECK_RESULT 
+    check = sort_verify();
+#endif
 
-    printf("%s(%lu),check=%d in [SUCCESSFUL, UNSUCCESSFUL, NOT_APPLICABLE, NOT_PERFORMED],time=%f secs\n", argv[0], arg_size, check, par_time);
+    PMSG("%s(%lu),check=%d in %s,time=%f secs\n", argv[0], arg_size, check, TEST_ENUM_STRING, par_time);
+    PALWAYS("%fs\n", par_time);
 
     // Pull down the runtime
     mir_destroy();
 
     return 0;
-}
+}/*}}}*/

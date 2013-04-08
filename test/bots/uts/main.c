@@ -6,8 +6,6 @@
 #include "uts.h"
 #include "helper.h"
 
-#define CHECK_RESULT 1
-
 long get_usecs(void)
 {/*{{{*/
     struct timeval t;
@@ -18,10 +16,7 @@ long get_usecs(void)
 int main(int argc, char *argv[])
 {/*{{{*/
     if (argc > 2)
-    {
-        printf("Usage: %s input-file\n", argv[0]);
-        exit(0);
-    }
+        PABRT("Usage: %s input-file\n", argv[0]);
 
     // Init the runtime
     mir_create();
@@ -39,12 +34,13 @@ int main(int argc, char *argv[])
     uts_show_stats();
 
     int check = TEST_NOT_PERFORMED;
-    if (CHECK_RESULT)
-    {
-        check = uts_check_result();
-    }
+#ifdef CHECK_RESULT
+    PDBG("Checking ... \n");
+    check = uts_check_result();
+#endif
 
-    printf("%s(%s),check=%d in [SUCCESSFUL, UNSUCCESSFUL, NOT_APPLICABLE, NOT_PERFORMED],time=%f secs\n", argv[0], argv[1], check, par_time);
+    PMSG("%s(%s),check=%d in %s,time=%f secs\n", argv[0], argv[1], check, TEST_ENUM_STRING, par_time);
+    PALWAYS("%fs\n", par_time);
 
     // Pull down the runtime
     mir_destroy();

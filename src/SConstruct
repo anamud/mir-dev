@@ -1,26 +1,6 @@
-src_list = Split("""
-mir_utils.c 
-mir_debug.c 
-mir_memory.c 
-mir_mem_pol.c 
-mir_perf.c 
-mir_lock.c 
-mir_queue.c 
-mir_data_footprint.c 
-mir_arch.c 
-mir_arch_adk.c 
-mir_arch_gatti.c 
-mir_arch_tilepro64.c 
-mir_arch_gothmog.c 
-mir_recorder.c 
-mir_task.c 
-mir_worker.c 
-mir_sched_pol.c
-mir_sched_pol_ws.c
-mir_sched_pol_central.c
-mir_sched_pol_numa.c
-mir_runtime.c
-""")
+######################
+# Common environment #
+######################
 
 env = Environment()
 
@@ -34,17 +14,27 @@ env['CCFLAGS'] = Split("""
 -D_GNU_SOURCE 
 """)
 
-debug = ARGUMENTS.get('debug',0)
-if int(debug):
-    env.Append(CCFLAGS = '-g')
-    env.Append(CCFLAGS = '-gdwarf-2')
-    env.Append(CCFLAGS = '-O0')
-    env.Append(CCFLAGS = '-DMIR_ENABLE_DEBUG')
-else:
-    env.Append(CCFLAGS = '-O3')
+#####################
+# Debug environment #
+#####################
 
-env['LIBS'] = Split("""
-m
+debug = env.Clone();
+debug['CCFLAGS'] += Split("""
+-O0
+-g
+-gdwarf-2
+-DMIR_ENABLE_DEBUG
 """)
+debug.VariantDir('debug-build', '.', duplicate=0)
+debug_src = debug.Glob('debug-build/*.c')
+debug.Library(target = 'mir-debug', source = debug_src)
 
-env.Library(target = 'mir', source = src_list)
+###################
+# Opt environment #
+###################
+
+opt = env.Clone();
+opt['CCFLAGS'] += ['-O3']
+opt.VariantDir('opt-build', '.', duplicate=0)
+opt_src = opt.Glob('opt-build/*.c')
+opt.Library('mir-opt', source = opt_src)

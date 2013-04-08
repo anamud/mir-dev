@@ -5,23 +5,33 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-#ifdef DEBUG_ME
+#ifdef ALLOW_DEBUG_MESSAGES
 #define PDBG(...) do{ fprintf( stderr, __VA_ARGS__ ); } while(0)
 #else
 #define PDBG(...) do{ } while (0)
 #endif
 
+#ifdef ALLOW_MESSAGES
 #define PMSG(...) do{ fprintf( stderr, __VA_ARGS__ ); } while(0)
+#else
+#define PMSG(...) do{ } while (0)
+#endif
+
+#define PALWAYS(...) do{ fprintf( stderr, __VA_ARGS__ ); } while(0)
 
 #define PABRT(...) do{ fprintf( stderr, __VA_ARGS__ ); exit(1); } while(0)
 
 #define TEST_NOT_PERFORMED 2
-#define TEST_NOT_APPLICABLE 2
 #define TEST_UNSUCCESSFUL 1
 #define TEST_SUCCESSFUL 0
+#define TEST_ENUM_STRING "[SUCCESSFUL=0, UNSUCCESSFUL, NOT_PERFORMED]"
 
+#ifndef FALSE
 #define FALSE 0
+#endif
+#ifndef TRUE
 #define TRUE 1
+#endif
 
 #endif /* end of include guard: HELPER_H_ATGBOPN5 */
 

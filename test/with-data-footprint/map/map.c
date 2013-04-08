@@ -7,8 +7,6 @@
 #include "mir_public_int.h"
 #include "helper.h"
 
-#define CHECK_RESULT 1
-
 #define OPR_SCALE (42)
 #define SLEEP_MS 0
 #define LOOP_CNT 4
@@ -166,7 +164,7 @@ void map_par()
 int map_check()
 {/*{{{*/
     PMSG("Check ... \n");
-    return TEST_NOT_APPLICABLE;
+    return TEST_NOT_PERFORMED;
 }/*}}}*/
 
 void map_deinit()
@@ -181,10 +179,7 @@ void map_deinit()
 int main(int argc, char *argv[])
 {/*{{{*/
     if (argc > 3)
-    {
-        printf("Usage: %s num_tasks buf_size_K\n", argv[0]);
-        exit(0);
-    }
+        PABRT("Usage: %s num_tasks buf_size_K\n", argv[0]);
 
     // Init the runtime
     mir_create();
@@ -206,15 +201,15 @@ int main(int argc, char *argv[])
     double par_time = (double)( par_time_end - par_time_start) / 1000000;
 
     int check = TEST_NOT_PERFORMED;
-    if (CHECK_RESULT)
-    {
-        check = map_check();
-    }
+#ifdef CHECK_RESULT 
+    check = map_check();
+#endif
 
     map_deinit();
 
-    printf("Sum = %lu\n", g_sum);
-    printf("%s(%d,%d),check=%d in [SUCCESSFUL, UNSUCCESSFUL, NOT_APPLICABLE, NOT_PERFORMED],time=%f secs\n", argv[0], num_tasks, buf_sz, check, par_time);
+    PMSG("Sum = %lu\n", g_sum);
+    PMSG("%s(%d,%d),check=%d in %s,time=%f secs\n", argv[0], num_tasks, buf_sz, check, TEST_ENUM_STRING, par_time);
+    PALWAYS("%fs\n", par_time);
 
     // Pull down the runtime
     mir_destroy();

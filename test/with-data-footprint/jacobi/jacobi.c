@@ -245,6 +245,7 @@ int main(int argc, char* argv[])
 
     // Print stats
     PMSG("Solution using jacobi iteration: DIM = %d, BS=%d, num iterations = %d, time = %f seconds\n", DIM, BS, max_iters, (double) ((te - ts))/1000000);
+    PALWAYS("%fs\n", (double) ((te - ts))/1000000);
 
     // Pull down the runtime
     mir_destroy();

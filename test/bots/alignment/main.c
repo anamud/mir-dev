@@ -6,8 +6,6 @@
 #include "helper.h"
 #include "alignment.h"
 
-#define CHECK_RESULT 1
-
 long get_usecs(void)
 {/*{{{*/
     struct timeval t;
@@ -18,10 +16,7 @@ long get_usecs(void)
 int main(int argc, char *argv[])
 {/*{{{*/
     if (argc > 2)
-    {
-        printf("Usage: alignment input-file\n");
-        exit(0);
-    }
+        PABRT("Usage: %s input-file\n", argv[0]);
 
     // Init the runtime
     mir_create();
@@ -35,14 +30,22 @@ int main(int argc, char *argv[])
     double par_time = (double)( par_time_end - par_time_start) / 1000000;
 
     int check = TEST_NOT_PERFORMED;
-    if (CHECK_RESULT)
-    {
+#ifdef CHECK_RESULT
+        PDBG("Checking ... \n");
         align_seq_init();
+        long seq_time_start = get_usecs();
         align_seq();
+        long seq_time_end = get_usecs();
+        double seq_time = (double)( seq_time_end - seq_time_start) / 1000000;
         check = align_verify();
-    }
+        align_seq_deinit();
+        PMSG("Seq. time=%f secs\n", seq_time);
+#endif
 
-    printf("%s(%s),check=%d in [SUCCESSFUL, UNSUCCESSFUL, NOT_APPLICABLE, NOT_PERFORMED],time=%f secs\n", argv[0], argv[1], check, par_time);
+    align_deinit();
+
+    PMSG("%s(%s),check=%d in %s,time=%f secs\n", argv[0], argv[1], check, TEST_ENUM_STRING, par_time);
+    PALWAYS("%fs\n", par_time);
 
     // Pull down the runtime
     mir_destroy();

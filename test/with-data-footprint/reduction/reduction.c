@@ -7,8 +7,6 @@
 #include "mir_public_int.h"
 #include "helper.h"
 
-#define CHECK_RESULT 1
-
 size_t PAGE_SZ = (4096/sizeof(uint64_t));
 #define MAX_DEPTH_DEFAULT 12
 #define OPR_SCALE (42)
@@ -191,9 +189,9 @@ void reduce_par()
 int reduce_check()
 {/*{{{*/
     PMSG("Check ... \n");
-    return TEST_NOT_APPLICABLE;
+    return TEST_NOT_PERFORMED;
     /*if(OPR_SCALE != 1)*/
-        /*return TEST_NOT_APPLICABLE;*/
+        /*return TEST_NOT_PERFORMED;*/
 
     /*uint64_t num_pages = pow(2, max_depth);*/
     /*uint64_t check_val = (num_pages) * (num_pages+1) / 2;*/
@@ -220,10 +218,7 @@ void reduce_deinit()
 int main(int argc, char *argv[])
 {/*{{{*/
     if (argc > 3)
-    {
-        printf("Usage: %s depth page_sz_KB\n", argv[0]);
-        exit(0);
-    }
+        PABRT("Usage: %s depth page_sz_KB\n", argv[0]);
 
     // Init the runtime
     mir_create();
@@ -245,14 +240,14 @@ int main(int argc, char *argv[])
     double par_time = (double)( par_time_end - par_time_start) / 1000000;
 
     int check = TEST_NOT_PERFORMED;
-    if (CHECK_RESULT)
-    {
-        check = reduce_check();
-    }
+#ifdef CHECK_RESULT 
+    check = reduce_check();
+#endif
 
     reduce_deinit();
 
-    printf("%s(%d,%lu),check=%d in [SUCCESSFUL, UNSUCCESSFUL, NOT_APPLICABLE, NOT_PERFORMED],time=%f secs\n", argv[0], max_depth, PAGE_SZ, check, par_time);
+    PMSG("%s(%d,%lu),check=%d in %s,time=%f secs\n", argv[0], max_depth, PAGE_SZ, check, TEST_ENUM_STRING, par_time);
+    PALWAYS("%fs\n", par_time);
 
     // Pull down the runtime
     mir_destroy();

@@ -748,11 +748,16 @@ void pairalign_init (char *filename)
 void align_init ()
 {/*{{{*/
     int i,j;
-    bench_output = (int *) malloc(sizeof(int)*nseqs*nseqs);
+    bench_output = (int *) mir_mem_pol_allocate (sizeof(int)*nseqs*nseqs);
 
     for(i = 0; i<nseqs; i++)
         for(j = 0; j<nseqs; j++)
             bench_output[i*nseqs+j] = 0;
+}/*}}}*/
+
+void align_deinit ()
+{/*{{{*/
+    mir_mem_pol_release(bench_output, sizeof(int)*nseqs*nseqs);
 }/*}}}*/
 
 void align()
@@ -763,11 +768,16 @@ void align()
 void align_seq_init ()
 {/*{{{*/
     int i,j;
-    seq_output = (int *) malloc(sizeof(int)*nseqs*nseqs);
+    seq_output = (int *) mir_mem_pol_allocate (sizeof(int)*nseqs*nseqs);
 
     for(i = 0; i<nseqs; i++)
         for(j = 0; j<nseqs; j++)
             seq_output[i*nseqs+j] = 0;
+}/*}}}*/
+
+void align_seq_deinit ()
+{/*{{{*/
+    mir_mem_pol_release(seq_output, sizeof(int)*nseqs*nseqs);
 }/*}}}*/
 
 void align_seq()

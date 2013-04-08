@@ -7,13 +7,7 @@
 #include <alloca.h>
 
 #include "mir_public_int.h"
-
-#define CHECK_RESULT 1
-
-#define TEST_NOT_PERFORMED 2
-#define TEST_NOT_APPLICABLE 2
-#define TEST_UNSUCCESSFUL 1
-#define TEST_SUCCESSFUL 0
+#include "helper.h"
 
 static int solutions[] = 
 {/*{{{*/
@@ -185,7 +179,7 @@ void find_queens (int size)
 
 int verify_queens (int size)
 {/*{{{*/
-    if ( size > MAX_SOLUTIONS ) return TEST_NOT_APPLICABLE;
+    if ( size > MAX_SOLUTIONS ) return TEST_UNSUCCESSFUL;
     if ( total_count == solutions[size-1]) return TEST_SUCCESSFUL;
     return TEST_UNSUCCESSFUL;
 }/*}}}*/
@@ -193,20 +187,16 @@ int verify_queens (int size)
 int main(int argc, char *argv[])
 {/*{{{*/
     if (argc > 2)
-    {
-        printf("Usage: nqueens board-size\n");
-        exit(0);
-    }
+        PABRT("Usage: nqueens board-size\n");
 
     // Init the runtime
     mir_create();
-
 
     int size = 14;
 
     if(argv[1])
         size = atoi(argv[1]);
-    printf("Computing nqueens %d ... \n", size);
+    PMSG("Computing nqueens %d ... \n", size);
 
     long par_time_start = get_usecs();
     find_queens(size);
@@ -214,12 +204,12 @@ int main(int argc, char *argv[])
     double par_time = (double)( par_time_end - par_time_start) / 1000000;
 
     int check = TEST_NOT_PERFORMED;
-    if (CHECK_RESULT)
-    {
-        check = verify_queens(size);
-    }
+#ifdef CHECK_RESULT
+    check = verify_queens(size);
+#endif
 
-    printf("%s(%d,%d),check=%d in [SUCCESSFUL, UNSUCCESSFUL, NOT_APPLICABLE, NOT_PERFORMED],time=%f secs\n", argv[0], size, cutoff_value, check, par_time);
+    PMSG("%s(%d,%d),check=%d in %s,time=%f secs\n", argv[0], size, cutoff_value, check, TEST_ENUM_STRING, par_time);
+    PALWAYS("%fs\n", par_time);
 
     // Pull down the runtime
     mir_destroy();

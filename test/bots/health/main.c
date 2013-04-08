@@ -19,10 +19,7 @@ long get_usecs(void)
 int main(int argc, char *argv[])
 {/*{{{*/
     if (argc > 2)
-    {
-        printf("Usage: uts input-file\n");
-        exit(0);
-    }
+        PABRT("Usage: %s input-file\n", argv[0]);
 
     // Init the runtime
     mir_create();
@@ -37,12 +34,12 @@ int main(int argc, char *argv[])
     double par_time = (double)( par_time_end - par_time_start) / 1000000;
 
     int check = TEST_NOT_PERFORMED;
-    if (CHECK_RESULT)
-    {
-        check = check_village(top);
-    }
+#ifdef CHECK_RESULT
+    check = check_village(top);
+#endif
 
-    printf("%s(%s),check=%d in [SUCCESSFUL, UNSUCCESSFUL, NOT_APPLICABLE, NOT_PERFORMED],time=%f secs\n", argv[0], argv[1], check, par_time);
+    PMSG("%s(%s),check=%d in %s,time=%f secs\n", argv[0], argv[1], check, TEST_ENUM_STRING, par_time);
+    PALWAYS("%fs\n", par_time);
 
     // Pull down the runtime
     mir_destroy();

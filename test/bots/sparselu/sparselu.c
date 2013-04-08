@@ -64,7 +64,7 @@ void genmat (float *M[])
             if (ii-1 == jj) null_entry = FALSE; 
             /* allocating matrix */
             if (null_entry == FALSE){
-                M[ii*NB+jj] = (float *) malloc(BS*BS*sizeof(float));
+                M[ii*NB+jj] = (float *) mir_mem_pol_allocate (BS*BS*sizeof(float));
                 if ((M[ii*NB+jj] == NULL))
                 {
                     PMSG("Error: Out of memory\n");
@@ -110,7 +110,7 @@ float * allocate_clean_block()
     int i,j;
     float *p, *q;
 
-    p = (float *) malloc(BS*BS*sizeof(float));
+    p = (float *) mir_mem_pol_allocate (BS*BS*sizeof(float));
     q=p;
     if (p!=NULL){
         for (i = 0; i < BS; i++) 
@@ -170,7 +170,7 @@ void fwd(float *diag, float *col)
 
 void sparselu_init (float ***pBENCH, char *pass)
 {/*{{{*/
-    *pBENCH = (float **) malloc(NB*NB*sizeof(float *));
+    *pBENCH = (float **) malloc (NB*NB*sizeof(float *));
     genmat(*pBENCH);
     print_structure(pass, *pBENCH);
 }/*}}}*/

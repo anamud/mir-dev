@@ -6,8 +6,6 @@
 #include "mir_public_int.h"
 #include "helper.h"
 
-#define CHECK_RESULT 1
-
 long get_usecs(void)
 {/*{{{*/
     struct timeval t;
@@ -21,10 +19,7 @@ int NB, BS;
 int main(int argc, char *argv[])
 {/*{{{*/
     if (argc != 3)
-    {
-        printf("Usage: %s NB BS \n", argv[0]);
-        exit(1);
-    }
+        PABRT("Usage: %s NB BS \n", argv[0]);
 
     // Init the runtime
     mir_create();
@@ -41,15 +36,20 @@ int main(int argc, char *argv[])
     sparselu_fini(BENCH, "benchmark");
 
     int check = TEST_NOT_PERFORMED;
-    if (CHECK_RESULT)
-    {
-        sparselu_init(&SEQ, "serial");
-        sparselu_seq_call(SEQ);
-        sparselu_fini(SEQ, "serial");
-        check = sparselu_check(SEQ, BENCH);
-    }
+#ifdef CHECK_RESULT
+    PDBG("Checking ... \n");
+    sparselu_init(&SEQ, "serial");
+    long seq_time_start = get_usecs();
+    sparselu_seq_call(SEQ);
+    long seq_time_end = get_usecs();
+    double seq_time = (double)( seq_time_end - seq_time_start) / 1000000;
+    sparselu_fini(SEQ, "serial");
+    check = sparselu_check(SEQ, BENCH);
+    PMSG("Seq. time=%f secs\n", seq_time);
+#endif
 
-    printf("%s(%d,%d),check=%d in [SUCCESSFUL, UNSUCCESSFUL, NOT_APPLICABLE, NOT_PERFORMED],time=%f secs\n", argv[0], NB, BS, check, par_time);
+    PMSG("%s(%d,%d),check=%d in %s,time=%f secs\n", argv[0], NB, BS, check, TEST_ENUM_STRING, par_time);
+    PALWAYS("%fs\n", par_time);
 
     // Pull down the runtime
     mir_destroy();
