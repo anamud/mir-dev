@@ -78,7 +78,7 @@ void destroy_ws ()
 
 void push_ws (struct mir_task_t* task)
 {/*{{{*/
-    MIR_RECORDER_STATE_BEGIN(MIR_STATE_TSUBMIT);
+    MIR_RECORDER_STATE_BEGIN(MIR_STATE_TSCHED);
 
     // Get this worker!
     struct mir_worker_t* worker = mir_worker_get_context(); 
@@ -101,7 +101,7 @@ void push_ws (struct mir_task_t* task)
         __sync_fetch_and_add(&g_num_tasks_waiting, 1);
         // Update stats
         if(runtime->enable_stats)
-            worker->status->num_tasks_spawned++;
+            worker->status->num_tasks_created++;
     }
 
     MIR_RECORDER_STATE_END(NULL, 0);
@@ -116,7 +116,7 @@ bool pop_ws (struct mir_task_t** task)
     uint16_t node = runtime->arch->node_of(worker->id);
 
     // First try to pop from own queue
-    //MIR_RECORDER_STATE_BEGIN(MIR_STATE_TMOBING);
+    //MIR_RECORDER_STATE_BEGIN(MIR_STATE_TPOP);
 
     struct mir_queue_t* queue = sp->queues[worker->id];
     if(mir_queue_size(queue) > 0)
@@ -130,9 +130,16 @@ bool pop_ws (struct mir_task_t** task)
                 struct mir_mem_node_dist_t* dist = mir_task_get_footprint_dist(*task, MIR_DATA_ACCESS_READ);
                 if(dist)
                 {
-                    (*task)->comm_cost = get_comm_cost(node, dist);
+                    /*MIR_INFORM("Dist for task %" MIR_FORMSPEC_UL ": ", (*task)->id.uid);*/
+                    /*for(int i=0; i<runtime->arch->num_nodes; i++)*/
+                        /*MIR_INFORM("%lu ", dist->buf[i]);*/
+                    /*MIR_INFORM("\n");*/
+
+                    (*task)->comm_cost = mir_sched_pol_get_comm_cost(node, dist);
                     mir_worker_status_update_comm_cost(worker->status, (*task)->comm_cost);
                 }
+
+                worker->status->num_tasks_owned++;
             }
 
             __sync_fetch_and_sub(&g_num_tasks_waiting, 1);
@@ -148,7 +155,7 @@ bool pop_ws (struct mir_task_t** task)
         return found;
 
     // Next try to pop from other queues
-    //MIR_RECORDER_STATE_BEGIN(MIR_STATE_TSTEALING);
+    //MIR_RECORDER_STATE_BEGIN(MIR_STATE_TSTEAL);
 
     uint16_t ctr = worker->id + 1;
     if(ctr == num_queues) ctr = 0;
@@ -167,7 +174,12 @@ bool pop_ws (struct mir_task_t** task)
                     struct mir_mem_node_dist_t* dist = mir_task_get_footprint_dist(*task, MIR_DATA_ACCESS_READ);
                     if(dist)
                     {
-                        (*task)->comm_cost = get_comm_cost(node, dist);
+                        /*MIR_INFORM("Dist for task %" MIR_FORMSPEC_UL ": ", (*task)->id.uid);*/
+                        /*for(int i=0; i<runtime->arch->num_nodes; i++)*/
+                            /*MIR_INFORM("%lu ", dist->buf[i]);*/
+                        /*MIR_INFORM("\n");*/
+
+                        (*task)->comm_cost = mir_sched_pol_get_comm_cost(node, dist);
                         mir_worker_status_update_comm_cost(worker->status, (*task)->comm_cost);
                     }
 
@@ -193,15 +205,16 @@ bool pop_ws (struct mir_task_t** task)
 }/*}}}*/
 
 struct mir_sched_pol_t policy_ws = 
-{
+{/*{{{*/
     .num_queues = MIR_WORKER_MAX_COUNT,
     .queue_capacity = MIR_QUEUE_MAX_CAPACITY,
     .queues = NULL,
+    .alt_queues = NULL,
     .name = "ws",
     .config = config_ws,
     .create = create_ws,
     .destroy = destroy_ws,
     .push = push_ws,
     .pop = pop_ws
-};
+};/*}}}*/
 

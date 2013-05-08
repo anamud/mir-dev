@@ -24,7 +24,7 @@
 #include "mir_utils.h"
 
 #ifndef __tile__
-#include <papi.h>
+#include "papi.h"
 #endif
 
 // The global runtime object
@@ -61,6 +61,7 @@ void mir_preconfig_init()
     runtime->enable_stats = 0;
     runtime->enable_recorder = 0;
     runtime->enable_dependence_resolver = 0;
+    runtime->task_inlining_limit = MIR_TASK_INLINING_LIMIT_DEFAULT;
 }/*}}}*/
 
 void mir_postconfig_init()
@@ -80,7 +81,10 @@ void mir_postconfig_init()
         // PAPI
         int retval = PAPI_library_init( PAPI_VER_CURRENT );
         if ( retval != PAPI_VER_CURRENT )
-            MIR_ABORT(MIR_ERROR_STR "PAPI_library_init failed!");
+            MIR_ABORT(MIR_ERROR_STR "PAPI_library_init failed [%d != %d]!\n", retval, PAPI_VER_CURRENT);
+        retval = PAPI_thread_init(pthread_self);
+        if ( retval != PAPI_OK )
+            MIR_ABORT(MIR_ERROR_STR "PAPI_thread_init failed [%d]!\n", retval);
 #endif
 #endif
     }
@@ -114,7 +118,7 @@ alive:
 }/*}}}*/
 
 static inline void print_help()
-{
+{/*{{{*/
     // Here all configuration components
     // ... should define the intention 
     // ... of their config symbols
@@ -125,13 +129,14 @@ static inline void print_help()
     "-s=<str> task scheduling policy\n"
     "-r enable recorder\n"
     "-d enable dependence resolution\n"
+    "-x=<int> task inlining limit\n"
     "-i write statistics to file\n"
     "-l=<int> stack size in MB\n"
     "-q=<int> queue capacity\n"
     "-m=<str> memory allocation policy\n"
-    "-y=<int> schedule cutoff\n"
+    "-y=<csv> schedule policy specific parameters\n"
     );
-}
+}/*}}}*/
 
 void mir_config()
 {/*{{{*/
@@ -196,6 +201,17 @@ void mir_config()
                     MIR_ABORT(MIR_ERROR_STR "Dependence reolver not supported yet!\n");
                     // runtime->enable_dependence_resolver = 1;
                     break;
+                case 'x':
+                    if(tok[2] == '=')
+                    {
+                        char* s = tok+3;
+                        runtime->task_inlining_limit = atoi(s);
+                    }
+                    else
+                    {
+                        MIR_ABORT(MIR_ERROR_STR "Incorrect MIR_CONF parameter [%c]\n", c);
+                    }
+                    break;
                 case 'l':
                     if(tok[2] == '=')
                     {
@@ -238,10 +254,16 @@ void mir_create()
 
     // Initialize 
     mir_postconfig_init();
+
+    // Set a marking event
+    MIR_RECORDER_EVENT(NULL,0);
 }/*}}}*/
 
 void mir_destroy()
 {/*{{{*/
+    // Set a marking event
+    MIR_RECORDER_EVENT(NULL,0);
+
     MIR_DEBUG(MIR_DEBUG_STR "Shutting down ...\n");
 
     // Check if workers are free
@@ -277,6 +299,8 @@ void mir_destroy()
         {
             struct mir_worker_status_t* status = runtime->workers[i].status;
             mir_worker_status_write_to_file(status, stats_file);
+            // FIXME: Maybe this should be done by the worker
+            mir_worker_status_destroy(status);
         }
 
         // Close stats file

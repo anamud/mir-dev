@@ -5,7 +5,18 @@ app_name = os.getcwd().split(os.sep)[-1]
 # Common environment #
 ######################
 
+import os
+MIR_ROOT = os.environ.get('MIR_ROOT')
+if(MIR_ROOT == None):
+    print('MIR_ROOT is not defined. Aborting!')
+    Exit(2)
+PAPI_ROOT = os.environ.get('PAPI_ROOT')
+if(PAPI_ROOT == None):
+    print('PAPI_ROOT is not defined. Aborting!')
+    Exit(2)
+
 env = Environment()
+env['CC'] = ['/local/opt/intel/composer_xe_2013.3.163/bin/intel64/icc']
 env['CCFLAGS'] = Split("""
 -std=c99
 -Wall 
@@ -13,16 +24,18 @@ env['CCFLAGS'] = Split("""
 -Wno-unused-function 
 -Wno-unused-variable
 -Wno-unused-but-set-variable
--I/home/ananya/mir/src
--I/home/ananya/mir/test/common
 """)
+env['CFLAGS'] += ['-I' + MIR_ROOT+'/src']
+env['CFLAGS'] += ['-I' + MIR_ROOT+'/test/common']
 env['LINKFLAGS'] = ['']
 env['LIBS'] = Split("""
 pthread
+papi
 numa
 m
 """)
-env['LIBPATH'] = ['/home/ananya/mir/src/']
+env['LIBPATH'] = [MIR_ROOT + '/src']
+env['LIBPATH'] += [PAPI_ROOT + '/lib']
 
 #####################
 # Debug environment #
@@ -32,7 +45,7 @@ debug = env.Clone();
 debug['CCFLAGS'] += Split("""
 -O0
 -g
--gdwarf-2
+-ggdb
 -DALLOW_DEBUG_MESSAGES
 """)
 debug['LIBS'] += ['mir-debug']
@@ -44,9 +57,17 @@ debug.Program(app_name +'-debug', source = debug_src)
 # Opt environment #
 ###################
 
+#-vec-
+#-axsse4.2
+#-opt-prefetch
+#-vec-report
+#-opt-report3
+#-opt-report-phase hlo
+#-O3
 opt = env.Clone();
 opt['CCFLAGS'] += Split("""
 -O3
+-vec-report
 """)
 opt['LIBS'] += ['mir-opt']
 opt.VariantDir('opt-build', '.', duplicate=0)

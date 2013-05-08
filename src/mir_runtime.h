@@ -21,6 +21,7 @@ struct mir_runtime_t
     struct mir_worker_t workers[MIR_WORKER_MAX_COUNT];
     struct mir_sched_pol_t *sched_pol;
     struct mir_arch_t* arch;
+    uint32_t task_inlining_limit;
 
     // Flags
     bool sig_dying;

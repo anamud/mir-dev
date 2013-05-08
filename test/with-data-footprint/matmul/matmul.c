@@ -14,10 +14,25 @@
 #define BSIZE 128
 #endif
 
+//#define BMALLOC_IN_PARALLEL 1
+
 float **A;
 float **B;
 float **C;
 float **C_seq;
+
+long get_usecs(void)
+{/*{{{*/
+    struct timeval t;
+    gettimeofday(&t,NULL);
+    return t.tv_sec*1000000 + t.tv_usec;
+}/*}}}*/
+
+void print_elapsed(long t_start_us, const char* msg)
+{/*{{{*/
+    long t_end = get_usecs();
+    PALWAYS("%s time = %f seconds\n", msg, (double) ((t_end - t_start_us))/1000000);
+}/*}}}*/
 
 /*// CODE WITHOUT CBLAS
 
@@ -290,6 +305,29 @@ void deinit_seq(unsigned long DIM)
     free(C_seq);
 }/*}}}*/
 
+void malloc_task(uint64_t start, uint64_t end, struct mir_twc_t* twc)
+{/*{{{*/
+    for(uint64_t j=start; j<=end; j++)
+    {/*{{{*/
+        A[j] = (float *) mir_mem_pol_allocate(BSIZE*BSIZE*sizeof(float));
+        B[j] = (float *) mir_mem_pol_allocate(BSIZE*BSIZE*sizeof(float));
+        C[j] = (float *) mir_mem_pol_allocate(BSIZE*BSIZE*sizeof(float));
+    }/*}}}*/
+}/*}}}*/
+
+struct malloc_task_wrapper_arg_t
+{/*{{{*/
+    uint64_t start;
+    uint64_t end;
+    struct mir_twc_t* twc;
+};/*}}}*/
+
+void malloc_task_wrapper(void* arg)
+{/*{{{*/
+    struct malloc_task_wrapper_arg_t* warg = (struct malloc_task_wrapper_arg_t*) arg;
+    malloc_task(warg->start, warg->end, warg->twc);
+}/*}}}*/
+
 void init (unsigned long argc, char **argv, unsigned long * N_p, unsigned long * DIM_p)
 {/*{{{*/
     unsigned long ISEED[4] = {0,0,0,1};
@@ -328,16 +366,66 @@ void init (unsigned long argc, char **argv, unsigned long * N_p, unsigned long *
     B = (float **) malloc(DIM*DIM*sizeof(float *));
     C = (float **) malloc(DIM*DIM*sizeof(float *));
 
+    long tblock_malloc_start = get_usecs();
+#ifdef BMALLOC_IN_PARALLEL
+    {/*{{{*/
+        PMSG("Allocating blocks in parallel ...\n");
+        struct mir_twc_t* twc = mir_twc_create();
+
+        // Split the task creation load among workers
+        // Same action as worksharing omp for
+        uint32_t num_workers = mir_get_num_threads();
+        uint64_t num_iter = (DIM*DIM) / num_workers;
+        uint64_t num_tail_iter = (DIM*DIM) % num_workers;
+        if(num_iter > 0)
+        {
+            // Create prologue tasks
+            for(uint32_t k=0; k<num_workers; k++)
+            {
+                uint64_t start = k * num_iter;
+                uint64_t end = start + num_iter - 1;
+                {
+                    struct malloc_task_wrapper_arg_t arg;
+                    arg.start = start;
+                    arg.end = end;
+                    arg.twc = twc;
+
+                    struct mir_task_t* task = mir_task_create((mir_tfunc_t) malloc_task_wrapper, &arg, sizeof(struct malloc_task_wrapper_arg_t), twc, 0, NULL, NULL);
+                }
+            }
+        }
+        if(num_tail_iter > 0)
+        {
+            // Create epilogue task
+            uint64_t start = num_workers * num_iter;
+            uint64_t end = start + num_tail_iter - 1;
+            {
+                struct malloc_task_wrapper_arg_t arg;
+                arg.start = start;
+                arg.end = end;
+                arg.twc = twc;
+
+                struct mir_task_t* task = mir_task_create((mir_tfunc_t) malloc_task_wrapper, &arg, sizeof(struct malloc_task_wrapper_arg_t), twc, 0, NULL, NULL);
+            }
+        }
+
+        mir_twc_wait(twc);
+    }/*}}}*/
+#else
     for (unsigned long i = 0; i < DIM*DIM; i++)
     {
         A[i] = (float *) mir_mem_pol_allocate(BSIZE*BSIZE*sizeof(float));
         B[i] = (float *) mir_mem_pol_allocate(BSIZE*BSIZE*sizeof(float));
         C[i] = (float *) mir_mem_pol_allocate(BSIZE*BSIZE*sizeof(float));
     }
+#endif
+    print_elapsed(tblock_malloc_start, "Block malloc");
 
+    long tblock_init_start = get_usecs();
     convert_to_blocks(BSIZE,DIM, N, Alin, (void *)A);
     convert_to_blocks(BSIZE,DIM, N, Blin, (void *)B);
     convert_to_blocks(BSIZE,DIM, N, Clin, (void *)C);
+    print_elapsed(tblock_init_start, "Block init");
 
     free(Alin);
     free(Blin);
@@ -377,7 +465,8 @@ int main(int argc, char *argv[])
     // compute
     compute(&start, &stop,(unsigned long) BSIZE, DIM, (void *)A, (void *)B, (void *)C);
 
-#ifdef CHECk_RESULT
+#ifdef CHECK_RESULT
+//#if 1
     struct timeval start_seq;
     struct timeval stop_seq;
     unsigned long elapsed_seq;
@@ -402,6 +491,7 @@ int main(int argc, char *argv[])
     // performance in MFLOPS
     PMSG("Perf %lu MFlops\n", (unsigned long)((((double)N)*((double)N)*((double)N)*2)/elapsed));
     PMSG("Perf %lu MBytes/s\n", (unsigned long)((((double)N)*((double)N)*2*sizeof(float))/elapsed));
+    PALWAYS("%fs\n", (double)(elapsed)/1000000);
 
     deinit(DIM);
 

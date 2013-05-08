@@ -42,8 +42,8 @@
 
 //#define HINT_ONLY_ACCESS_INTENSIVE_FOOTPRINTS 1
 
-int BS = 50;
-int NB = 50;
+int BS = 256;
+int NB = 64;
 float **SEQ, **BENCH;
 
 long get_usecs(void)
@@ -557,7 +557,8 @@ void sparselu_fini (float **BENCH, char *pass)
 {/*{{{*/
     print_structure(pass, BENCH);
     for(int i=0;i<NB*NB; i++)
-        mir_mem_pol_release(BENCH[i], sizeof(float) * BS * BS);
+        if(BENCH[i])
+            mir_mem_pol_release(BENCH[i], sizeof(float) * BS * BS);
     free(BENCH);
 }/*}}}*/
 

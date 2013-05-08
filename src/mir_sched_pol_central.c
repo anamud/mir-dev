@@ -77,7 +77,7 @@ void destroy_central ()
 
 void push_central (struct mir_task_t* task)
 {/*{{{*/
-    MIR_RECORDER_STATE_BEGIN(MIR_STATE_TSUBMIT);
+    MIR_RECORDER_STATE_BEGIN(MIR_STATE_TSCHED);
     struct mir_worker_t* worker = mir_worker_get_context(); 
 
     // Push task to central queue
@@ -98,7 +98,7 @@ void push_central (struct mir_task_t* task)
         __sync_fetch_and_add(&g_num_tasks_waiting, 1);
         // Update stats
         if(runtime->enable_stats)
-            worker->status->num_tasks_spawned++;
+            worker->status->num_tasks_created++;
     }
 
     MIR_RECORDER_STATE_END(NULL, 0);
@@ -125,7 +125,7 @@ bool pop_central (struct mir_task_t** task)
                 struct mir_mem_node_dist_t* dist = mir_task_get_footprint_dist(*task, MIR_DATA_ACCESS_READ);
                 if(dist)
                 {
-                    (*task)->comm_cost = get_comm_cost(node, dist);
+                    (*task)->comm_cost = mir_sched_pol_get_comm_cost(node, dist);
                     mir_worker_status_update_comm_cost(worker->status, (*task)->comm_cost);
                 }
             }
@@ -134,6 +134,10 @@ bool pop_central (struct mir_task_t** task)
             T_DBG("Dq", *task);
 
             found = 1;
+
+            // Update stats
+            if(runtime->enable_stats)
+                worker->status->num_tasks_owned++;
         }
     }
 
@@ -146,6 +150,7 @@ struct mir_sched_pol_t policy_central =
     .num_queues = 1,
     .queue_capacity = MIR_QUEUE_MAX_CAPACITY,
     .queues = NULL,
+    .alt_queues = NULL,
     .name = "central",
     .config = config_central,
     .create = create_central,

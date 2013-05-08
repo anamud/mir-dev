@@ -271,30 +271,30 @@ uint16_t vicinity_of_gothmog(uint16_t* neighbors, uint16_t nodeid, uint16_t diam
     return count;
 }/*}}}*/
 
-static uint16_t socket_of_gothmog(uint16_t nodeid)
-{/*{{{*/
-    switch(nodeid)
-    {
-        case 0:
-        case 1:
-            return 0;
-            break;
-        case 2:
-        case 3:
-            return 1;
-            break;
-        case 4:
-        case 5:
-            return 2;
-            break;
-        case 6:
-        case 7:
-            return 3;
-            break;
-        default:
-            MIR_ABORT(MIR_ERROR_STR "Invalid socket query!");
-    }
-}/*}}}*/
+/*static uint16_t socket_of(uint16_t nodeid)*/
+/*{[>{{{<]*/
+    /*switch(nodeid)*/
+    /*{*/
+        /*case 0:*/
+        /*case 1:*/
+            /*return 0;*/
+            /*break;*/
+        /*case 2:*/
+        /*case 3:*/
+            /*return 1;*/
+            /*break;*/
+        /*case 4:*/
+        /*case 5:*/
+            /*return 2;*/
+            /*break;*/
+        /*case 6:*/
+        /*case 7:*/
+            /*return 3;*/
+            /*break;*/
+        /*default:*/
+            /*MIR_ABORT(MIR_ERROR_STR "Invalid socket query!");*/
+    /*}*/
+/*}[>}}}<]*/
 
 /*uint16_t comm_cost_of_gothmog(uint16_t from_nodeid, uint16_t to_nodeid)*/
 /*{[>{{{<]*/
@@ -302,7 +302,7 @@ static uint16_t socket_of_gothmog(uint16_t nodeid)
         /*return 10;*/
 
     /*// Nodes in the same socket have a HT24 connection*/
-    /*if(socket_of_gothmog(from_nodeid) == socket_of_gothmog(to_nodeid))*/
+    /*if(socket_of(from_nodeid) == socket_of(to_nodeid))*/
         /*return 16;*/
 
     /*// Even and odd-numbered nodes are connected together using HT8*/

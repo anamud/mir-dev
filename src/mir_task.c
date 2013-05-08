@@ -13,8 +13,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <alloca.h>
+#include <stdbool.h>
 
 extern struct mir_runtime_t* runtime;
+extern uint32_t g_num_tasks_waiting;
 
 static uint64_t g_tasks_uidc = MIR_TASK_ID_START + 1;
 
@@ -30,8 +32,34 @@ static inline unsigned int mir_twc_reduce(struct mir_twc_t* twc)
         return 1;
 }/*}}}*/
 
+static inline bool inline_task()
+{/*{{{*/
+    if(runtime->task_inlining_limit == 0)
+        return false;
+
+    if(0 == strcmp(runtime->sched_pol->name, "numa"))
+        return false;
+
+    if((g_num_tasks_waiting/runtime->num_workers) >= runtime->task_inlining_limit)
+        return true;
+
+    return false;
+}/*}}}*/
+
 struct mir_task_t* mir_task_create(mir_tfunc_t tfunc, void* data, size_t data_size, struct mir_twc_t* twc, unsigned int num_data_footprints, struct mir_data_footprint_t* data_footprints, const char* name)
 {/*{{{*/
+    // To inline or not to line, that is the grand question!
+    if(inline_task())
+    {
+        tfunc(data);
+        // Update stats
+        struct mir_worker_t* worker = mir_worker_get_context(); 
+        if(runtime->enable_stats)
+            worker->status->num_tasks_inlined++;
+        return NULL;
+    }
+
+    // Go on and create the task
     MIR_RECORDER_STATE_BEGIN(MIR_STATE_TCREATE);
 
     struct mir_task_t* task = NULL;
@@ -208,6 +236,9 @@ struct mir_mem_node_dist_t* mir_task_get_footprint_dist(struct mir_task_t* task,
 
 void mir_task_wait(struct mir_task_t* task)
 {/*{{{*/
+    if(!task)
+        return;
+
     MIR_RECORDER_STATE_BEGIN(MIR_STATE_TSYNC);
 
     struct mir_worker_t* worker = mir_worker_get_context();
@@ -217,7 +248,13 @@ void mir_task_wait(struct mir_task_t* task)
     {
         __sync_synchronize();
         T_DBG("Wa", task);
-        mir_worker_do_work(worker);
+#ifdef MIR_WORKER_BACKOFF_DURING_SYNC
+    // Sync with backoff=true
+    mir_worker_do_work(worker, true);
+#else
+    // Sync with backoff=false
+    mir_worker_do_work(worker, false);
+#endif
     }
 
     MIR_RECORDER_STATE_END(NULL, 0);
@@ -248,7 +285,13 @@ void mir_twc_wait(struct mir_twc_t* twc)
     while(mir_twc_reduce(twc) != 1)
     {
         // __sync_synchronize();
-        mir_worker_do_work(worker);
+#ifdef MIR_WORKER_BACKOFF_DURING_SYNC
+        // Sync with backoff=true
+        mir_worker_do_work(worker, true);
+#else
+        // Sync with backoff=false
+        mir_worker_do_work(worker, false);
+#endif
     }
 
     MIR_RECORDER_STATE_END(NULL, 0);

@@ -6,7 +6,18 @@ print('This is a SPECIALIZED BUILD. \n')
 # Common environment #
 ######################
 
+import os
+MIR_ROOT = os.environ.get('MIR_ROOT')
+if(MIR_ROOT == None):
+    print('MIR_ROOT is not defined. Aborting!')
+    Exit(2)
+PAPI_ROOT = os.environ.get('PAPI_ROOT')
+if(PAPI_ROOT == None):
+    print('PAPI_ROOT is not defined. Aborting!')
+    Exit(2)
+
 env = Environment()
+env['CC'] = ['/local/opt/intel/composer_xe_2013.3.163/bin/intel64/icc']
 env['CCFLAGS'] = Split("""
 -std=c99
 -Wall 
@@ -14,23 +25,25 @@ env['CCFLAGS'] = Split("""
 -Wno-unused-function 
 -Wno-unused-variable
 -Wno-unused-but-set-variable
--I/home/ananya/mir/src
--I/home/ananya/mir/test/common
 -I/opt/intel/mkl/include
 """)
+env['CFLAGS'] += ['-I' + MIR_ROOT+'/src']
+env['CFLAGS'] += ['-I' + MIR_ROOT+'/test/common']
 env['LINKFLAGS'] = Split("""
 -L/opt/intel/mkl/lib/intel64
 -Wl,-rpath=/opt/intel/mkl/lib/intel64
 """)
 env['LIBS'] = Split("""
 pthread
+papi
 numa
 m
 mkl_sequential
 mkl_core
 mkl_rt
 """)
-env['LIBPATH'] = ['/home/ananya/mir/src/']
+env['LIBPATH'] = [MIR_ROOT + '/src']
+env['LIBPATH'] += [PAPI_ROOT + '/lib']
 
 #####################
 # Debug environment #

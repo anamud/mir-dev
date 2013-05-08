@@ -2,8 +2,15 @@
 # Common environment #
 ######################
 
+import os
+PAPI_ROOT = os.environ.get('PAPI_ROOT')
+if(PAPI_ROOT == None):
+    print('PAPI_ROOT is not defined. Aborting!')
+    Exit(2)
+
 env = Environment()
 
+env['CC'] = ['/local/opt/intel/composer_xe_2013.3.163/bin/intel64/icc']
 env['CCFLAGS'] = Split("""
 -Wall 
 -Werror 
@@ -14,6 +21,8 @@ env['CCFLAGS'] = Split("""
 -D_GNU_SOURCE 
 """)
 
+env['CFLAGS'] += ['-I' + PAPI_ROOT+'/include']
+
 #####################
 # Debug environment #
 #####################
@@ -22,7 +31,7 @@ debug = env.Clone();
 debug['CCFLAGS'] += Split("""
 -O0
 -g
--gdwarf-2
+-ggdb
 -DMIR_ENABLE_DEBUG
 """)
 debug.VariantDir('debug-build', '.', duplicate=0)
@@ -34,7 +43,7 @@ debug.Library(target = 'mir-debug', source = debug_src)
 ###################
 
 opt = env.Clone();
-opt['CCFLAGS'] += ['-O3']
+opt['CCFLAGS'] += ['-O2']
 opt.VariantDir('opt-build', '.', duplicate=0)
 opt_src = opt.Glob('opt-build/*.c')
 opt.Library('mir-opt', source = opt_src)

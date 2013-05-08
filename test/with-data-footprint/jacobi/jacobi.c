@@ -20,14 +20,18 @@ const char* final_plate_file = "./jacobi-final.plate";
 const int max_iters = 1;
 
 // Globals
-int DIM = 2048;
-int BS = 32;
+int worksharing_chunk_size = 8;
+//int DIM = 8192;
+int DIM = 9216;
+//int BS = 256;
+int BS = 288;
 int NB;
 float* plate = NULL;
 float* oldplate = NULL;
 
 // Macros
 #define RM2D(ARR,NUMCOLS,ROWI,COLI) ARR[(ROWI)*(NUMCOLS) + (COLI)]
+#define LOOP_CNT 1
 
 long get_usecs(void)
 {/*{{{*/
@@ -60,13 +64,14 @@ void jacobi_point(unsigned int row, unsigned int col/*, bool print*/)
 
 void jacobi_block(unsigned int row, unsigned int col/*, bool print*/)
 {/*{{{*/
-    for(int i=0; i<BS; i++)
-        for(int j=0; j<BS; j++)
-        {
-            int prow = (col*BS) + j;
-            int pcol = (row*BS) + i;
-            jacobi_point(prow, pcol/*, print*/);
-        }
+    for(int l=0; l<LOOP_CNT; l++)
+        for(int i=0; i<BS; i++)
+            for(int j=0; j<BS; j++)
+            {
+                int prow = (col*BS) + j;
+                int pcol = (row*BS) + i;
+                jacobi_point(prow, pcol/*, print*/);
+            }
 }/*}}}*/
 
 struct jacobi_block_wrapper_arg_t 
@@ -80,6 +85,458 @@ void jacobi_block_wrapper(void* arg)
 {/*{{{*/
     struct jacobi_block_wrapper_arg_t* warg = (struct jacobi_block_wrapper_arg_t*)(arg);
     jacobi_block(warg->row, warg->col/*, warg->print*/);
+}/*}}}*/
+
+enum BTYPES
+{/*{{{*/
+    TOP=0,
+    BOTTOM,
+    LEFT,
+    RIGHT,
+    MIDDLE,
+    TOPRIGHT,
+    TOPLEFT,
+    BOTTOMRIGHT,
+    BOTTOMLEFT
+};/*}}}*/
+typedef enum BTYPES BTYPE;
+
+static inline BTYPE get_block_type(int row, int col)
+{/*{{{*/
+    if(row == 0 && col == 0)
+        return TOPLEFT;
+    if(row == 0 && col == NB-1)
+        return TOPRIGHT;
+    if(row == NB-1 && col == 0)
+        return BOTTOMLEFT;
+    if(row == NB-1 && col == NB-1)
+        return BOTTOMRIGHT;
+    if(row < NB-1 && row > 0 && col > 0 && col < NB-1)
+        return MIDDLE;
+    if(col == NB-1)
+        return RIGHT;
+    if(col == 0)
+        return LEFT;
+    if(row == 0)
+        return TOP;
+    if(row == NB-1)
+        return BOTTOM;
+    return MIDDLE;
+}/*}}}*/
+
+static inline int get_num_footprints(int row, int col)
+{/*{{{*/
+    BTYPE b = get_block_type(row, col);
+    switch(b)
+    {
+        case TOP:
+        case BOTTOM:
+        case LEFT:
+        case RIGHT:
+            return 3 + 2;
+        case TOPRIGHT:
+        case TOPLEFT:
+        case BOTTOMRIGHT:
+        case BOTTOMLEFT:
+            return 2 + 2;
+        default:
+            return 4 + 2;
+    }
+}/*}}}*/
+
+static inline void fill_footprints(int row, int col, struct mir_data_footprint_t* footprints)
+{/*{{{*/
+    BTYPE b = get_block_type(row, col);
+    int num_footprints = get_num_footprints(row, col);
+    int i = 0;
+    int block_num;
+    switch(b)
+    {/*{{{*/
+        case TOP:
+            footprints[i].base = (void*) oldplate + (row+1)*DIM + (col)*BS;
+            footprints[i].start = 0;
+            footprints[i].end = BS-1;
+            footprints[i].row_sz = DIM;
+            footprints[i].type = sizeof(float);
+            footprints[i].data_access = MIR_DATA_ACCESS_READ;
+            footprints[i].part_of = oldplate;
+            i++;
+            footprints[i].base = (void*) oldplate + (row)*DIM + (col+1)*BS;
+            footprints[i].start = 0;
+            footprints[i].end = BS-1;
+            footprints[i].row_sz = DIM;
+            footprints[i].type = sizeof(float);
+            footprints[i].data_access = MIR_DATA_ACCESS_READ;
+            footprints[i].part_of = oldplate;
+            i++;
+            footprints[i].base = (void*) oldplate + (row)*DIM + (col-1)*BS;
+            footprints[i].start = 0;
+            footprints[i].end = BS-1;
+            footprints[i].row_sz = DIM;
+            footprints[i].type = sizeof(float);
+            footprints[i].data_access = MIR_DATA_ACCESS_READ;
+            footprints[i].part_of = oldplate;
+            i++;
+            break;
+        case BOTTOM:
+            footprints[i].base = (void*) oldplate + (row-1)*DIM + (col)*BS;
+            footprints[i].start = 0;
+            footprints[i].end = BS-1;
+            footprints[i].row_sz = DIM;
+            footprints[i].type = sizeof(float);
+            footprints[i].data_access = MIR_DATA_ACCESS_READ;
+            footprints[i].part_of = oldplate;
+            i++;
+            footprints[i].base = (void*) oldplate + (row)*DIM + (col+1)*BS;
+            footprints[i].start = 0;
+            footprints[i].end = BS-1;
+            footprints[i].row_sz = DIM;
+            footprints[i].type = sizeof(float);
+            footprints[i].data_access = MIR_DATA_ACCESS_READ;
+            footprints[i].part_of = oldplate;
+            i++;
+            footprints[i].base = (void*) oldplate + (row)*DIM + (col-1)*BS;
+            footprints[i].start = 0;
+            footprints[i].end = BS-1;
+            footprints[i].row_sz = DIM;
+            footprints[i].type = sizeof(float);
+            footprints[i].data_access = MIR_DATA_ACCESS_READ;
+            footprints[i].part_of = oldplate;
+            i++;
+            break;
+        case LEFT:
+            footprints[i].base = (void*) oldplate + (row-1)*DIM + (col)*BS;
+            footprints[i].start = 0;
+            footprints[i].end = BS-1;
+            footprints[i].row_sz = DIM;
+            footprints[i].type = sizeof(float);
+            footprints[i].data_access = MIR_DATA_ACCESS_READ;
+            footprints[i].part_of = oldplate;
+            i++;
+            footprints[i].base = (void*) oldplate + (row+1)*DIM + (col)*BS;
+            footprints[i].start = 0;
+            footprints[i].end = BS-1;
+            footprints[i].row_sz = DIM;
+            footprints[i].type = sizeof(float);
+            footprints[i].data_access = MIR_DATA_ACCESS_READ;
+            footprints[i].part_of = oldplate;
+            i++;
+            footprints[i].base = (void*) oldplate + (row)*DIM + (col+1)*BS;
+            footprints[i].start = 0;
+            footprints[i].end = BS-1;
+            footprints[i].row_sz = DIM;
+            footprints[i].type = sizeof(float);
+            footprints[i].data_access = MIR_DATA_ACCESS_READ;
+            footprints[i].part_of = oldplate;
+            i++;
+            break;
+        case RIGHT:
+            footprints[i].base = (void*) oldplate + (row-1)*DIM + (col)*BS;
+            footprints[i].start = 0;
+            footprints[i].end = BS-1;
+            footprints[i].row_sz = DIM;
+            footprints[i].type = sizeof(float);
+            footprints[i].data_access = MIR_DATA_ACCESS_READ;
+            footprints[i].part_of = oldplate;
+            i++;
+            footprints[i].base = (void*) oldplate + (row+1)*DIM + (col)*BS;
+            footprints[i].start = 0;
+            footprints[i].end = BS-1;
+            footprints[i].row_sz = DIM;
+            footprints[i].type = sizeof(float);
+            footprints[i].data_access = MIR_DATA_ACCESS_READ;
+            footprints[i].part_of = oldplate;
+            i++;
+            footprints[i].base = (void*) oldplate + (row)*DIM + (col-1)*BS;
+            footprints[i].start = 0;
+            footprints[i].end = BS-1;
+            footprints[i].row_sz = DIM;
+            footprints[i].type = sizeof(float);
+            footprints[i].data_access = MIR_DATA_ACCESS_READ;
+            footprints[i].part_of = oldplate;
+            i++;
+            break;
+        case TOPRIGHT:
+            footprints[i].base = (void*) oldplate + (row+1)*DIM + (col)*BS;
+            footprints[i].start = 0;
+            footprints[i].end = BS-1;
+            footprints[i].row_sz = DIM;
+            footprints[i].type = sizeof(float);
+            footprints[i].data_access = MIR_DATA_ACCESS_READ;
+            footprints[i].part_of = oldplate;
+            i++;
+            footprints[i].base = (void*) oldplate + (row)*DIM + (col-1)*BS;
+            footprints[i].start = 0;
+            footprints[i].end = BS-1;
+            footprints[i].row_sz = DIM;
+            footprints[i].type = sizeof(float);
+            footprints[i].data_access = MIR_DATA_ACCESS_READ;
+            footprints[i].part_of = oldplate;
+            i++;
+            break;
+        case TOPLEFT:
+            footprints[i].base = (void*) oldplate + (row)*DIM + (col+1)*BS;
+            footprints[i].start = 0;
+            footprints[i].end = BS-1;
+            footprints[i].row_sz = DIM;
+            footprints[i].type = sizeof(float);
+            footprints[i].data_access = MIR_DATA_ACCESS_READ;
+            footprints[i].part_of = oldplate;
+            i++;
+            footprints[i].base = (void*) oldplate + (row+1)*DIM + (col)*BS;
+            footprints[i].start = 0;
+            footprints[i].end = BS-1;
+            footprints[i].row_sz = DIM;
+            footprints[i].type = sizeof(float);
+            footprints[i].data_access = MIR_DATA_ACCESS_READ;
+            footprints[i].part_of = oldplate;
+            i++;
+            break;
+        case BOTTOMRIGHT:
+            footprints[i].base = (void*) oldplate + (row)*DIM + (col-1)*BS;
+            footprints[i].start = 0;
+            footprints[i].end = BS-1;
+            footprints[i].row_sz = DIM;
+            footprints[i].type = sizeof(float);
+            footprints[i].data_access = MIR_DATA_ACCESS_READ;
+            footprints[i].part_of = oldplate;
+            i++;
+            footprints[i].base = (void*) oldplate + (row-1)*DIM + (col)*BS;
+            footprints[i].start = 0;
+            footprints[i].end = BS-1;
+            footprints[i].row_sz = DIM;
+            footprints[i].type = sizeof(float);
+            footprints[i].data_access = MIR_DATA_ACCESS_READ;
+            footprints[i].part_of = oldplate;
+            i++;
+            break;
+        case BOTTOMLEFT:
+            footprints[i].base = (void*) oldplate + (row)*DIM + (col+1)*BS;
+            footprints[i].start = 0;
+            footprints[i].end = BS-1;
+            footprints[i].row_sz = DIM;
+            footprints[i].type = sizeof(float);
+            footprints[i].data_access = MIR_DATA_ACCESS_READ;
+            footprints[i].part_of = oldplate;
+            i++;
+            footprints[i].base = (void*) oldplate + (row-1)*DIM + (col)*BS;
+            footprints[i].start = 0;
+            footprints[i].end = BS-1;
+            footprints[i].row_sz = DIM;
+            footprints[i].type = sizeof(float);
+            footprints[i].data_access = MIR_DATA_ACCESS_READ;
+            footprints[i].part_of = oldplate;
+            i++;
+            break;
+        default:
+            footprints[i].base = (void*) oldplate + (row-1)*DIM + (col)*BS;
+            footprints[i].start = 0;
+            footprints[i].end = BS-1;
+            footprints[i].row_sz = DIM;
+            footprints[i].type = sizeof(float);
+            footprints[i].data_access = MIR_DATA_ACCESS_READ;
+            footprints[i].part_of = oldplate;
+            i++;
+            footprints[i].base = (void*) oldplate + (row+1)*DIM + (col)*BS;
+            footprints[i].start = 0;
+            footprints[i].end = BS-1;
+            footprints[i].row_sz = DIM;
+            footprints[i].type = sizeof(float);
+            footprints[i].data_access = MIR_DATA_ACCESS_READ;
+            footprints[i].part_of = oldplate;
+            i++;
+            footprints[i].base = (void*) oldplate + (row)*DIM + (col+1)*BS;
+            footprints[i].start = 0;
+            footprints[i].end = BS-1;
+            footprints[i].row_sz = DIM;
+            footprints[i].type = sizeof(float);
+            footprints[i].data_access = MIR_DATA_ACCESS_READ;
+            footprints[i].part_of = oldplate;
+            i++;
+            footprints[i].base = (void*) oldplate + (row)*DIM + (col-1)*BS;
+            footprints[i].start = 0;
+            footprints[i].end = BS-1;
+            footprints[i].row_sz = DIM;
+            footprints[i].type = sizeof(float);
+            footprints[i].data_access = MIR_DATA_ACCESS_READ;
+            footprints[i].part_of = oldplate;
+            i++;
+            break;
+    }/*}}}*/
+
+    footprints[i].base = (void*) oldplate + (row)*DIM + (col)*BS;
+    footprints[i].start = 0;
+    footprints[i].end = (BS-1);
+    footprints[i].row_sz = DIM;
+    footprints[i].type = sizeof(float);
+    footprints[i].data_access = MIR_DATA_ACCESS_READ;
+    footprints[i].part_of = oldplate;
+    i++;
+
+    footprints[i].base = (void*) plate + (row)*DIM + (col)*BS;
+    footprints[i].start = 0;
+    footprints[i].end = (BS-1);
+    footprints[i].row_sz = DIM;
+    footprints[i].type = sizeof(float);
+    footprints[i].data_access = MIR_DATA_ACCESS_WRITE;
+    footprints[i].part_of = plate;
+    i++;
+
+    assert(i == num_footprints);
+}/*}}}*/
+
+void jacobi_par()
+{/*{{{*/
+    int i, j;
+    int iters;
+    for(iters=0;iters<max_iters; iters++)
+    {
+        struct mir_twc_t* twc = mir_twc_create();
+        for(i=0; i<NB; i++) 
+        {
+            for(j=0; j<NB; j++) 
+            {
+//#pragma omp task 
+            //jacobi_block(i, j, oldplate, plate);
+
+            // Data env
+            struct jacobi_block_wrapper_arg_t arg;
+            arg.row = i;
+            arg.col = j;
+            /*if(j==0 && i==0)*/
+                /*arg.print = true;*/
+            /*else*/
+                /*arg.print = false;*/
+
+            // Data footprint
+            /*struct mir_data_footprint_t footprints[2];*/
+            /*footprints[0].base = (void*) oldplate + (j*BS) + (i*DIM);*/
+            /*footprints[0].start = 0;*/
+            /*footprints[0].end = BS-1;*/
+            /*footprints[0].row_sz = DIM;*/
+            /*footprints[0].type = sizeof(float);*/
+            /*footprints[0].data_access = MIR_DATA_ACCESS_READ;*/
+            /*footprints[0].part_of = oldplate;*/
+
+            /*footprints[1].base = (void*) plate + (j*BS) + (i*DIM);*/
+            /*footprints[1].start = 0;*/
+            /*footprints[1].end = BS-1;*/
+            /*footprints[1].row_sz = DIM;*/
+            /*footprints[1].type = sizeof(float);*/
+            /*footprints[1].data_access = MIR_DATA_ACCESS_WRITE;*/
+            /*footprints[1].part_of = plate;*/
+
+            int num_footprints = get_num_footprints(i,j);
+            struct mir_data_footprint_t footprints[num_footprints];
+            fill_footprints(i,j,footprints);
+
+            struct mir_task_t* task = mir_task_create((mir_tfunc_t) jacobi_block_wrapper, &arg, sizeof(struct jacobi_block_wrapper_arg_t), twc, num_footprints, footprints, NULL);
+            }
+        }
+//#pragma omp taskwait
+        mir_twc_wait(twc);
+
+        // Flip plates
+        float* temp = plate;
+        plate = oldplate;
+        oldplate = temp;
+        //}
+
+        // Print error in this iteration
+        PMSG("Iteration %d done!\n", iters);
+    } 
+}/*}}}*/
+
+void for_task(int start, int end, struct mir_twc_t* twc)
+{/*{{{*/
+    for(int i=start; i<=end; i++)
+    {
+        for(int j=0; j<NB; j++) 
+        {
+//#pragma omp task 
+        //jacobi_block(i, j, oldplate, plate);
+
+        // Data env
+        struct jacobi_block_wrapper_arg_t arg;
+        arg.row = i;
+        arg.col = j;
+
+        int num_footprints = get_num_footprints(i,j);
+        struct mir_data_footprint_t footprints[num_footprints];
+        fill_footprints(i,j,footprints);
+
+        struct mir_task_t* task = mir_task_create((mir_tfunc_t) jacobi_block_wrapper, &arg, sizeof(struct jacobi_block_wrapper_arg_t), twc, num_footprints, footprints, NULL);
+        }
+    }
+}/*}}}*/
+
+struct for_task_wrapper_arg_t
+{/*{{{*/
+    uint64_t start;
+    uint64_t end;
+    struct mir_twc_t* twc;
+};/*}}}*/
+
+void for_task_wrapper(void* arg)
+{/*{{{*/
+    struct for_task_wrapper_arg_t* warg = (struct for_task_wrapper_arg_t*) arg;
+    for_task(warg->start, warg->end, warg->twc);
+}/*}}}*/
+
+void jacobi_par_worksharing()
+{/*{{{*/
+    for(int iters=0;iters<max_iters; iters++)
+    {
+        struct mir_twc_t* twc = mir_twc_create();
+        // Split the task creation load among workers
+        // Same action as worksharing omp for
+        //uint32_t num_workers = mir_get_num_threads();
+        uint32_t num_workers = worksharing_chunk_size;
+        uint64_t num_iter = NB / num_workers;
+        uint64_t num_tail_iter = NB % num_workers;
+        if(num_iter > 0)
+        {
+            // Create prologue tasks
+            for(uint32_t k=0; k<num_workers; k++)
+            {
+                uint64_t start = k * num_iter;
+                uint64_t end = start + num_iter - 1;
+                {
+                    struct for_task_wrapper_arg_t arg;
+                    arg.start = start;
+                    arg.end = end;
+                    arg.twc = twc;
+
+                    struct mir_task_t* task = mir_task_create((mir_tfunc_t) for_task_wrapper, &arg, sizeof(struct for_task_wrapper_arg_t), twc, 0, NULL, NULL);
+                }
+            }
+        }
+        if(num_tail_iter > 0)
+        {
+            // Create epilogue task
+            uint64_t start = num_workers * num_iter;
+            uint64_t end = start + num_tail_iter - 1;
+            {
+                struct for_task_wrapper_arg_t arg;
+                arg.start = start;
+                arg.end = end;
+                arg.twc = twc;
+
+                struct mir_task_t* task = mir_task_create((mir_tfunc_t) for_task_wrapper, &arg, sizeof(struct for_task_wrapper_arg_t), twc, 0, NULL, NULL);
+            }
+        }
+//#pragma omp taskwait
+        mir_twc_wait(twc);
+
+        // Flip plates
+        float* temp = plate;
+        plate = oldplate;
+        oldplate = temp;
+        //}
+
+        // Print error in this iteration
+        PMSG("Iteration %d done!\n", iters);
+    } 
 }/*}}}*/
 
 int main(int argc, char* argv[])
@@ -99,7 +556,7 @@ int main(int argc, char* argv[])
 
     if(DIM%BS > 0)
         PABRT("BS %d does not divide DIM %d properly\n", BS, DIM);
-    int NB = DIM/BS;/*}}}*/
+    NB = DIM/BS;/*}}}*/
 
     // Init the runtime
     mir_create();
@@ -143,7 +600,7 @@ int main(int argc, char* argv[])
         RM2D(oldplate,DIM,DIM-1,i) = HEAT_BOT;
     }/*}}}*/
 
-#if 0
+#ifdef CHECK_RESULT
     PMSG("Writing init plate to file %s ...\n", init_plate_file);
     // Write init plate/*{{{*/
     FILE* fp = fopen(init_plate_file, "w");
@@ -163,65 +620,12 @@ int main(int argc, char* argv[])
     PMSG("Solving plate ...!\n");
     // Iterate and solve/*{{{*/
     long ts, te;
-    int iters;
     ts = get_usecs();
-    int i, j;
-    for(iters=0;iters<max_iters; iters++)
-    {
-        struct mir_twc_t* twc = mir_twc_create();
-        for(i=0; i<NB; i++) 
-        {
-            for(j=0; j<NB; j++) 
-            {
-//#pragma omp task 
-            //jacobi_block(i, j, oldplate, plate);
-
-            // Data env
-            struct jacobi_block_wrapper_arg_t arg;
-            arg.row = i;
-            arg.col = j;
-            /*if(j==0 && i==0)*/
-                /*arg.print = true;*/
-            /*else*/
-                /*arg.print = false;*/
-
-            // Data footprint
-            struct mir_data_footprint_t footprints[2];
-            footprints[0].base = (void*) oldplate + (j*BS) + (i*DIM);
-            footprints[0].start = 0;
-            footprints[0].end = BS-1;
-            footprints[0].row_sz = DIM;
-            footprints[0].type = sizeof(float);
-            footprints[0].data_access = MIR_DATA_ACCESS_READ;
-            footprints[0].part_of = oldplate;
-
-            footprints[1].base = (void*) plate + (j*BS) + (i*DIM);
-            footprints[1].start = 0;
-            footprints[1].end = BS-1;
-            footprints[1].row_sz = DIM;
-            footprints[1].type = sizeof(float);
-            footprints[1].data_access = MIR_DATA_ACCESS_WRITE;
-            footprints[1].part_of = plate;
-
-            struct mir_task_t* task = mir_task_create((mir_tfunc_t) jacobi_block_wrapper, &arg, sizeof(struct jacobi_block_wrapper_arg_t), twc, 2, footprints, NULL);
-            }
-        }
-//#pragma omp taskwait
-        mir_twc_wait(twc);
-
-        // Flip plates
-        float* temp = plate;
-        plate = oldplate;
-        oldplate = temp;
-        //}
-
-        // Print error in this iteration
-        PMSG("Iteration %d done!\n", iters);
-    } 
+    //jacobi_par();
+    jacobi_par_worksharing();
     te = get_usecs();/*}}}*/
 
-#if 0
-    PMSG("Writing init plate to file %s ...\n", init_plate_file);
+#ifdef CHECK_RESULT
     PMSG("Writing final plate to file %s ...\n", final_plate_file);
     // Write solution/*{{{*/
     fp = fopen(final_plate_file, "w");
@@ -231,7 +635,7 @@ int main(int argc, char* argv[])
         for(int i=0; i<DIM; i++) 
         {
             for(int j=0; j<DIM; j++) 
-                fprintf(fp, "%f\t", RM2D(plate,DIM,i,j));
+                fprintf(fp, "%f\t", RM2D(oldplate,DIM,i,j));
             fprintf(fp, "\n");
         }
     }

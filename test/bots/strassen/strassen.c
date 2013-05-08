@@ -42,8 +42,8 @@
 #include "mir_public_int.h"
 #include "helper.h"
 
-int arg_size = 2048;
-int app_cutoff_value = 64;
+int arg_size = 4096;
+int app_cutoff_value = 128;
 int cutoff_value = 3;
 
 long get_usecs(void)

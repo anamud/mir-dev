@@ -34,19 +34,19 @@ def parse_worker_files():
         prv_name = str(creation_time) + '-paraver.prv'
     prv = open(prv_name, 'w')
 
-    # Open the perfctrinfo file pci
-    if(paraver_file_suffix != ''):
-        pci_name = paraver_file_suffix + '.perfctrinfo'
-    else:
-        pci_name = str(creation_time) + '.perfctrinfo'
-    pci = open(pci_name, 'w')
+    ## Open the perfctrinfo file pci
+    #if(paraver_file_suffix != ''):
+        #pci_name = paraver_file_suffix + '.perfctrinfo'
+    #else:
+        #pci_name = str(creation_time) + '.perfctrinfo'
+    #pci = open(pci_name, 'w')
 
-    # Open the task meta info file tmi
-    if(paraver_file_suffix != ''):
-        tmi_name = paraver_file_suffix + '.taskmetainfo'
-    else:
-        tmi_name = str(creation_time) + '.taskmetainfo'
-    tmi = open(tmi_name, 'w')
+    ## Open the task meta info file tmi
+    #if(paraver_file_suffix != ''):
+        #tmi_name = paraver_file_suffix + '.taskmetainfo'
+    #else:
+        #tmi_name = str(creation_time) + '.taskmetainfo'
+    #tmi = open(tmi_name, 'w')
 
     # Paraver header data
     write_date = strftime("%d/%m/%Y at %H:%M", gmtime())
@@ -137,8 +137,8 @@ def parse_worker_files():
                     # Add paraver prv file event line
                     event_string = '2:%d:1:1:%d:%d:%d:%s\n' %(i+1,i+1,int(happening[2])-creation_time, event_dict[ed_split[0]], ed_split[1]) 
                     prv.write(event_string)
-                    if(ed_split[0] == 'DATA_CACHE_STALL'):
-                        pci.write('%s\t' %(ed_split[1]) )
+                    #if(ed_split[0] == 'PAPI_RES_STL'):
+                        #pci.write('%s\t' %(ed_split[1]) )
 
             else:
                 unknown_happenings_found = True
@@ -163,31 +163,31 @@ def parse_worker_files():
                 if(cbtime < etime and cpid == sid):
                     state_string = '1:%d:1:1:%d:%d:%d:%d\n' %(i+1,i+1,btime,cbtime,typ) 
                     prv.write(state_string)
-                    if(len(state) == 6):
-                        # Write tmi string
-                        tmi_str = 'worker=%d:%d:%d:%d:%s\n' %(i+1, btime, cbtime, typ, state[5])
-                        tmi.write(tmi_str)
+                    #if(len(state) == 6):
+                        ## Write tmi string
+                        #tmi_str = 'worker=%d:%d:%d:%d:%s\n' %(i+1, btime, cbtime, typ, state[5])
+                        #tmi.write(tmi_str)
                     btime = cetime 
                 else:
                     break
             # Write the last chunk
             state_string = '1:%d:1:1:%d:%d:%d:%d\n' %(i+1,i+1,btime,etime,typ) 
             prv.write(state_string)
-            if(len(state) == 6):
-                # Write tmi string
-                tmi_str = 'worker=%d:%d:%d:%d:%s\n' %(i+1, btime, etime, typ, state[5])
-                tmi.write(tmi_str)
+            #if(len(state) == 6):
+                ## Write tmi string
+                #tmi_str = 'worker=%d:%d:%d:%d:%s\n' %(i+1, btime, etime, typ, state[5])
+                #tmi.write(tmi_str)
     
     # Finally close the paraver prv file
     prv.close()
 
-    # Finally close the pci file
-    pci.write('\n')
-    pci.close()
+    ## Finally close the pci file
+    #pci.write('\n')
+    #pci.close()
 
-    # Finally close the tmi file
-    tmi.write('\n')
-    tmi.close()
+    ## Finally close the tmi file
+    #tmi.write('\n')
+    #tmi.close()
 
 def parse_input_file(file_name):
     global num_workers, creation_time, destruction_time

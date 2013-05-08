@@ -6,19 +6,17 @@
 #include <stdbool.h>
 
 // FIXME: WARNING AND NOTE! Update both state_name and state_name_string
-#define MIR_RECORDER_STATE_MAX_COUNT 10
+#define MIR_RECORDER_STATE_MAX_COUNT 8
 enum mir_state_name_t
 {/*{{{*/
     MIR_STATE_TIDLE = 0,
     MIR_STATE_TCREATE = 1,
-    MIR_STATE_TSUBMIT = 2,
+    MIR_STATE_TSCHED = 2,
     MIR_STATE_TEXEC = 3,
     MIR_STATE_TSYNC = 4,
-    MIR_STATE_TMOBING = 5,
-    MIR_STATE_TSTEALING = 6,
-    MIR_STATE_TCREATE_DTL = 7,
-    MIR_STATE_TSUBMIT_DEP = 8,
-    MIR_STATE_TMALLOC = 9
+    MIR_STATE_TPOP = 5,
+    MIR_STATE_TSTEAL = 6,
+    MIR_STATE_TMALLOC = 7
 };/*}}}*/
 typedef enum mir_state_name_t mir_state_name_t;
 

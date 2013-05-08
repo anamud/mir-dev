@@ -6,7 +6,6 @@
 #include "health.h"
 #include "helper.h"
 
-#define CHECK_RESULT 1
 int cutoff_value = 2;
 
 long get_usecs(void)
@@ -18,7 +17,7 @@ long get_usecs(void)
 
 int main(int argc, char *argv[])
 {/*{{{*/
-    if (argc > 2)
+    if (argc != 2)
         PABRT("Usage: %s input-file\n", argv[0]);
 
     // Init the runtime

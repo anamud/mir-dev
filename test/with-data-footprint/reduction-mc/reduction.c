@@ -3,7 +3,6 @@
 #include <stdint.h>
 #include <sys/time.h>
 #include <math.h>
-#include <unistd.h>
 
 #include "mir_public_int.h"
 #include "helper.h"
@@ -14,7 +13,6 @@ size_t PAGE_SZ = (4096/sizeof(uint64_t));
 #define SLEEP_MS 0
 #define ENABLE_FAULT_IN 1
 #define LOOP_CNT 10
-//#define SHOW_NUMA_STATS
 
 uint64_t* buffer = NULL;
 int max_depth = MAX_DEPTH_DEFAULT;
@@ -159,16 +157,16 @@ void reduce_par()
             {
                 uint64_t start = k * num_iter;
                 uint64_t end = start + num_iter - 1;
-                {
-                    struct for_task_wrapper_arg_t arg;
-                    arg.start = start;
-                    arg.end = end;
-                    arg.depth = i;
-                    arg.twc = twc;
+                /*{*/
+                    /*struct for_task_wrapper_arg_t arg;*/
+                    /*arg.start = start;*/
+                    /*arg.end = end;*/
+                    /*arg.depth = i;*/
+                    /*arg.twc = twc;*/
 
-                    struct mir_task_t* task = mir_task_create((mir_tfunc_t) for_task_wrapper, &arg, sizeof(struct for_task_wrapper_arg_t), twc, 0, NULL, NULL);
-                }
-                //for_task(start, end, i);
+                    /*struct mir_task_t* task = mir_task_create((mir_tfunc_t) for_task_wrapper, &arg, sizeof(struct for_task_wrapper_arg_t), twc, 0, NULL, NULL);*/
+                /*}*/
+                for_task(start, end, i, twc);
             }
         }
         if(num_tail_iter > 0)
@@ -176,16 +174,16 @@ void reduce_par()
             // Create epilogue task
             uint64_t start = num_workers * num_iter;
             uint64_t end = start + num_tail_iter - 1;
-            {
-                struct for_task_wrapper_arg_t arg;
-                arg.start = start;
-                arg.end = end;
-                arg.depth = i;
-                arg.twc = twc;
+            /*{*/
+                /*struct for_task_wrapper_arg_t arg;*/
+                /*arg.start = start;*/
+                /*arg.end = end;*/
+                /*arg.depth = i;*/
+                /*arg.twc = twc;*/
 
-                struct mir_task_t* task = mir_task_create((mir_tfunc_t) for_task_wrapper, &arg, sizeof(struct for_task_wrapper_arg_t), twc, 0, NULL, NULL);
-            }
-            //for_task(start, end, i);
+                /*struct mir_task_t* task = mir_task_create((mir_tfunc_t) for_task_wrapper, &arg, sizeof(struct for_task_wrapper_arg_t), twc, 0, NULL, NULL);*/
+            /*}*/
+            for_task(start, end, i, twc);
         }
 
         PDBG("Waiting for tasks to finish... \n");
@@ -240,12 +238,6 @@ int main(int argc, char *argv[])
     }
 
     reduce_init();
-
-#ifdef SHOW_NUMA_STATS
-    char cmd[256];
-    sprintf(cmd, "~/nmstat %d\n", getpid());
-    system(cmd);
-#endif
 
     long par_time_start = get_usecs();
     reduce_par();

@@ -20,4 +20,5 @@
 
 void mir_sleep_ms(uint32_t msec);
 
+void mir_sleep_us(uint32_t usec);
 #endif

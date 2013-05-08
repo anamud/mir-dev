@@ -6,3 +6,9 @@ tags
 TAGS
 mir-stats
 *.rec
+*.taskmetainfo
+*.perfctrinfo
+*.prv
+*.pcf
+*.BACK
+*.BAK

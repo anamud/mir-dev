@@ -51,13 +51,13 @@ char* mir_event_name_string[MIR_RECORDER_EVENT_MAX_COUNT]  =
 
 #else
 
-#include <papi.h>
+#include "papi.h"
 
 // FIXME: WARNING AND NOTE! Update also in recorder_create
 char* mir_event_name_string[MIR_RECORDER_EVENT_MAX_COUNT] = 
 { /*{{{*/
-    "PAPI_L3_LDM", 
-    "PAPI_TOT_INS" 
+    "PAPI_L2_DCM", 
+    "PAPI_RES_STL" 
 };/*}}}*/
 
 #endif
@@ -76,13 +76,11 @@ const char* mir_state_name_string[MIR_RECORDER_STATE_MAX_COUNT] =
 {/*{{{*/
     "TIDLE",
     "TCREATE",
-    "TSUBMIT",
+    "TSCHED",
     "TEXEC",
     "TSYNC",
-    "TMOB",
+    "TPOP",
     "TSTEAL",
-    "TCREATE_DTL",
-    "TSUBMIT_DEP",
     "TMALLOC"
 };/*}}}*/
 
@@ -139,9 +137,10 @@ struct mir_recorder_t* mir_recorder_create(uint16_t id)
 #else
 
     // Register thread with PAPI
+    //MIR_INFORM(MIR_INFORM_STR "Registering thread %d with PAPI ... \n", id);
     int retval = PAPI_register_thread();
     if ( retval != PAPI_OK )
-        MIR_ABORT(MIR_ERROR_STR "PAPI_register_thread failed!\n");
+        MIR_ABORT(MIR_ERROR_STR "PAPI_register_thread %d failed [%d]!\n", id, retval);
 
     // Create the eventset
     recorder->EventSet = PAPI_NULL;
@@ -152,10 +151,12 @@ struct mir_recorder_t* mir_recorder_create(uint16_t id)
     for(int i = 0; i < MIR_RECORDER_EVENT_MAX_COUNT; i++)
     {
         int event_code;
+        //MIR_INFORM(MIR_INFORM_STR "Recorder %d getting event code for event %s ... \n", id, mir_event_name_string[i]);
         if ( (retval = PAPI_event_name_to_code(mir_event_name_string[i], &event_code)) != PAPI_OK)
-            MIR_ABORT(MIR_ERROR_STR "PAPI_add_event failed!\n");
+            MIR_ABORT(MIR_ERROR_STR "Recorder %d PAPI_event name_to_code %s failed [%d]!\n", id, mir_event_name_string[i], retval);
+        //MIR_INFORM(MIR_INFORM_STR "Recorder %d adding event with code event %x ... \n", id, event_code);
         if ( (retval = PAPI_add_event(recorder->EventSet, event_code)) != PAPI_OK)
-            MIR_ABORT(MIR_ERROR_STR "PAPI_add_event failed!\n");
+            MIR_ABORT(MIR_ERROR_STR "Recorder %d PAPI_add_event %x failed [%d]!\n", id, event_code, retval);
     }
 
     // Start counting 

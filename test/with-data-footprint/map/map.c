@@ -9,12 +9,12 @@
 
 #define OPR_SCALE (42)
 #define SLEEP_MS 0
-#define LOOP_CNT 4
+#define LOOP_CNT 10
 //#define ENABLE_FAULT_IN 
 
 uint64_t** buffer = NULL;
 int num_tasks = (2<<12);
-int buf_sz = (2<<14);
+int buf_sz = (2<<15);
 
 size_t g_sum = 0;
 

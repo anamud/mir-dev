@@ -21,9 +21,9 @@ int main(int argc, char *argv[])
     // Init the runtime
     mir_create();
 
-    int arg_size = 32*1024*1024;
+    int arg_size = 8*1024*1024;
     if(argc>1)
-        arg_size = atoi(argv[0]);
+        arg_size = atoi(argv[1]);
 
     COMPLEX *in = NULL;
     COMPLEX *out1 = NULL;

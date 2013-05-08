@@ -38,5 +38,7 @@ void mir_data_footprint_get_dist(struct mir_mem_node_dist_t* dist, struct mir_da
         mir_mem_get_dist( dist, footprint->base, 
                 (footprint->end - footprint->start + 1) * footprint->type, 
                 footprint->part_of );
+        /*MIR_INFORM("Footprint composed of these addresses:\n");*/
+        /*MIR_INFORM("%p[%lu-%lu]\n", footprint->base, footprint->start, footprint->end);*/
     }
 }/*}}}*/

@@ -83,6 +83,18 @@ return;
 
 #else
 
+/*void* mir_malloc_int(size_t bytes)*/
+/*{[>{{{<]*/
+    /*void* memptr = malloc(bytes);*/
+    /*if (memptr)*/
+    /*{*/
+/*#ifdef MIR_MEMORY_ALLOCATOR_DEBUG*/
+        /*__sync_fetch_and_add(&g_total_allocated_memory, bytes);*/
+/*#endif*/
+    /*}*/
+    /*return memptr;*/
+/*}[>}}}<]*/
+
 void* mir_malloc_int(size_t bytes)
 {/*{{{*/
     unsigned long bytes_p2 = upper_power_of_two((unsigned long) bytes);

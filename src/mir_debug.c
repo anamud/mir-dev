@@ -27,3 +27,28 @@ void mir_sleep_ms(uint32_t msec)
     }
 #endif
 }/*}}}*/
+
+void mir_sleep_us(uint32_t usec)
+{/*{{{*/
+#ifdef __tile__
+#include <unistd.h>
+    usleep(usec);
+#else // x86 Linux
+    struct timespec timeout0;
+    struct timespec timeout1;
+    struct timespec* tmp;
+    struct timespec* t0 = &timeout0;
+    struct timespec* t1 = &timeout1;
+    //
+    // FIXME: Check this!
+    t0->tv_sec = usec / (1000 * 1000);
+    t0->tv_nsec = (usec % (1000 * 1000)) * (1000);
+
+    while ((nanosleep(t0, t1) == (-1)) && (errno == EINTR))
+    {
+        tmp = t0;
+        t0 = t1;
+        t1 = tmp;
+    }
+#endif
+}/*}}}*/
