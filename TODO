@@ -1,7 +1,7 @@
 Build with tilecc.
 Test on TILEPro64.
 Architecture specific SConstruct.
-Simulatanoes debug and release build in SConstruct. 
+Simultaneous debug and release build in SConstruct. 
 - Added debug and opt builds for mir
 - Added debug, opt and verbose builds for benchmarks
 Give git access to others.
@@ -28,3 +28,4 @@ Add a help document.
 Add the NUMA/NUCA scheduler. 
 - Done. Need to test it on the TILEPro64.
 Add a benchmark testing script
+- Done. In scripts/test.sh
