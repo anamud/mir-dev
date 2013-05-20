@@ -6,17 +6,30 @@ app_name = os.getcwd().split(os.sep)[-1]
 ######################
 
 import os
+import sys
 MIR_ROOT = os.environ.get('MIR_ROOT')
 if(MIR_ROOT == None):
     print('MIR_ROOT is not defined. Aborting!')
     Exit(2)
+
+sys.path.append(MIR_ROOT + '/scripts')
+import mir_utils
+
 PAPI_ROOT = os.environ.get('PAPI_ROOT')
 if(PAPI_ROOT == None):
     print('PAPI_ROOT is not defined. Aborting!')
     Exit(2)
 
+compiler = mir_utils.which('icc')
+if(len(compiler) == 0):
+    print('Could not find icc. Checking for gcc ...')
+    compiler = mir_utils.which('gcc')
+if(len(compiler) == 0):
+    print('Could not find gcc. Aborting!')
+    Exit(2)
+
 env = Environment()
-env['CC'] = ['/local/opt/intel/composer_xe_2013.3.163/bin/intel64/icc']
+env['CC'] = [compiler[0]]
 env['CCFLAGS'] = Split("""
 -std=c99
 -Wall 
