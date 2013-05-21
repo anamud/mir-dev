@@ -80,7 +80,6 @@ debug.Program(app_name +'-debug', source = debug_src)
 opt = env.Clone();
 opt['CCFLAGS'] += Split("""
 -O3
--vec-report
 """)
 opt['LIBS'] += ['mir-opt']
 opt.VariantDir('opt-build', '.', duplicate=0)
