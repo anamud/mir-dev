@@ -74,8 +74,9 @@ void map_wrapper(void* arg)
     map(warg->in, warg->out);
 }/*}}}*/
 
-void for_task(uint64_t start, uint64_t end, struct mir_twc_t* twc)
+void for_task(uint64_t start, uint64_t end/*, struct mir_twc_t* twc*/)
 {/*{{{*/
+    struct mir_twc_t* twc = mir_twc_create();
     for(uint64_t j=start; j<=end; j++)
     {/*{{{*/
         // Create task
@@ -99,19 +100,20 @@ void for_task(uint64_t start, uint64_t end, struct mir_twc_t* twc)
             struct mir_task_t* task = mir_task_create((mir_tfunc_t) map_wrapper, &arg, sizeof(struct map_wrapper_arg_t), twc, 1, &footprint, NULL);
         }
     }/*}}}*/
+    mir_twc_wait(twc);
 }/*}}}*/
 
 struct for_task_wrapper_arg_t
 {/*{{{*/
     uint64_t start;
     uint64_t end;
-    struct mir_twc_t* twc;
+    /*struct mir_twc_t* twc;*/
 };/*}}}*/
 
 void for_task_wrapper(void* arg)
 {/*{{{*/
     struct for_task_wrapper_arg_t* warg = (struct for_task_wrapper_arg_t*) arg;
-    for_task(warg->start, warg->end, warg->twc);
+    for_task(warg->start, warg->end/*, warg->twc*/);
 }/*}}}*/
 
 void map_par()
@@ -136,7 +138,7 @@ void map_par()
                 struct for_task_wrapper_arg_t arg;
                 arg.start = start;
                 arg.end = end;
-                arg.twc = twc;
+                /*arg.twc = twc;*/
 
                 struct mir_task_t* task = mir_task_create((mir_tfunc_t) for_task_wrapper, &arg, sizeof(struct for_task_wrapper_arg_t), twc, 0, NULL, NULL);
             }
@@ -151,7 +153,7 @@ void map_par()
             struct for_task_wrapper_arg_t arg;
             arg.start = start;
             arg.end = end;
-            arg.twc = twc;
+            /*arg.twc = twc;*/
 
             struct mir_task_t* task = mir_task_create((mir_tfunc_t) for_task_wrapper, &arg, sizeof(struct for_task_wrapper_arg_t), twc, 0, NULL, NULL);
         }

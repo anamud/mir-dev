@@ -194,7 +194,7 @@ int main(int argc, char *argv[])
 
     int size = 14;
 
-    if(argv[1])
+    if(argc > 1)
         size = atoi(argv[1]);
     PMSG("Computing nqueens %d ... \n", size);
 

@@ -18,12 +18,14 @@ if(PAPI_ROOT == None):
     print('PAPI_ROOT is not defined. Aborting!')
     Exit(2)
 
-compiler = mir_utils.which('icc')
+compilers = ['gcc','icc']
+compiler = ''
+for item in compilers:
+    compiler = mir_utils.which(item)
+    if(len(compiler) > 0):
+        break;
 if(len(compiler) == 0):
-    print('Could not find icc. Checking for gcc ...')
-    compiler = mir_utils.which('gcc')
-if(len(compiler) == 0):
-    print('Could not find gcc. Aborting!')
+    print('Could not find a compiler. Aborting!')
     Exit(2)
 
 env = Environment()

@@ -119,31 +119,17 @@ void for_task(uint64_t start, uint64_t end, uint64_t depth, struct mir_twc_t* tw
     }/*}}}*/
 }/*}}}*/
 
-struct for_task_wrapper_arg_t
-{/*{{{*/
-    uint64_t start;
-    uint64_t end;
-    uint64_t depth;
-    struct mir_twc_t* twc;
-};/*}}}*/
-
-void for_task_wrapper(void* arg)
-{/*{{{*/
-    struct for_task_wrapper_arg_t* warg = (struct for_task_wrapper_arg_t*) arg;
-    for_task(warg->start, warg->end, warg->depth, warg->twc);
-}/*}}}*/
-
 void reduce_par()
 {/*{{{*/
     PMSG("Parallel exec ... \n");
 
+    struct mir_twc_t* twc = mir_twc_create();
     for(uint64_t i=0; i<max_depth; i++)
     {
         PDBG("At depth %lu ... \n", i);
 
         uint64_t num_tasks_at_depth = pow(2, max_depth-(i+1));
         //PDBG("Creating %lu tasks ... \n", num_tasks_at_depth);
-        struct mir_twc_t* twc = mir_twc_create();
 
         // Split the task creation load among workers
         // Same action as worksharing omp for
@@ -157,15 +143,6 @@ void reduce_par()
             {
                 uint64_t start = k * num_iter;
                 uint64_t end = start + num_iter - 1;
-                /*{*/
-                    /*struct for_task_wrapper_arg_t arg;*/
-                    /*arg.start = start;*/
-                    /*arg.end = end;*/
-                    /*arg.depth = i;*/
-                    /*arg.twc = twc;*/
-
-                    /*struct mir_task_t* task = mir_task_create((mir_tfunc_t) for_task_wrapper, &arg, sizeof(struct for_task_wrapper_arg_t), twc, 0, NULL, NULL);*/
-                /*}*/
                 for_task(start, end, i, twc);
             }
         }
@@ -174,15 +151,6 @@ void reduce_par()
             // Create epilogue task
             uint64_t start = num_workers * num_iter;
             uint64_t end = start + num_tail_iter - 1;
-            /*{*/
-                /*struct for_task_wrapper_arg_t arg;*/
-                /*arg.start = start;*/
-                /*arg.end = end;*/
-                /*arg.depth = i;*/
-                /*arg.twc = twc;*/
-
-                /*struct mir_task_t* task = mir_task_create((mir_tfunc_t) for_task_wrapper, &arg, sizeof(struct for_task_wrapper_arg_t), twc, 0, NULL, NULL);*/
-            /*}*/
             for_task(start, end, i, twc);
         }
 

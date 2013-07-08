@@ -26,6 +26,7 @@ struct mir_runtime_t
     // Flags
     bool sig_dying;
     bool enable_stats;
+    bool enable_task_graph_gen;
     bool enable_recorder;
     bool enable_dependence_resolver;
 };

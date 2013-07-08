@@ -20,12 +20,14 @@ if(PAPI_ROOT == None):
     print('PAPI_ROOT is not defined. Aborting!')
     Exit(2)
 
-compiler = mir_utils.which('icc')
+compilers = ['gcc','icc']
+compiler = ''
+for item in compilers:
+    compiler = mir_utils.which(item)
+    if(len(compiler) > 0):
+        break;
 if(len(compiler) == 0):
-    print('Could not find icc. Checking for gcc ...')
-    compiler = mir_utils.which('gcc')
-if(len(compiler) == 0):
-    print('Could not find gcc. Aborting!')
+    print('Could not find a compiler. Aborting!')
     Exit(2)
 
 env = Environment()
@@ -85,6 +87,20 @@ opt['LIBS'] += ['mir-opt']
 opt.VariantDir('opt-build', '.', duplicate=0)
 opt_src = opt.Glob('opt-build/*.c')
 opt.Program(app_name +'-opt', source = opt_src)
+
+#################################
+# Opt noinline task environment #
+#################################
+
+opt_noi = env.Clone();
+opt_noi['CCFLAGS'] += Split("""
+-O3
+-DNOINLINE_TASK
+""")
+opt_noi['LIBS'] += ['mir-opt']
+opt_noi.VariantDir('opt_noi-build', '.', duplicate=0)
+opt_noi_src = opt_noi.Glob('opt_noi-build/*.c')
+opt_noi.Program(app_name +'-opt_noi', source = opt_noi_src)
 
 #######################
 # Verbose environment #

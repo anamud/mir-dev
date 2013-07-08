@@ -192,7 +192,7 @@ void map_init()
 #endif
 }/*}}}*/
 
-void map(uint64_t* in, uint64_t* out)
+void ATTR_NOINLINE map(uint64_t* in, uint64_t* out)
 {/*{{{*/
     size_t sum = 0;
 
@@ -362,7 +362,10 @@ int main(int argc, char *argv[])
 
 #ifdef SHOW_NUMA_STATS
     char cmd[256];
-    sprintf(cmd, "~/nmstat %d\n", getpid());
+    int pid = getpid();
+    sprintf(cmd, "~/survival_tools/bin/nmstat %d > numa_stats-%d\n", pid, pid);
+    system(cmd);
+    sprintf(cmd, "cp /proc/%d/maps maps-%d\n", pid, pid);
     system(cmd);
 #endif
 

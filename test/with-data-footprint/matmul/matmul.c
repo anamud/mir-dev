@@ -56,8 +56,23 @@ void matmul(float  *A, float *B, float *C, unsigned long NB)
 */
 
 //#pragma omp task input([NB][NB]A, [NB][NB]B) inout([NB][NB]C)
-void matmul(float *A, float *B, float *C, unsigned long NB)
+void ATTR_NOINLINE matmul(float *A, float *B, float *C, unsigned long NB)
 {/*{{{*/
+#ifdef NOINLINE_TASK
+    int i, j, k, I;
+    float tmp;
+    for (i = 0; i < NB; i++)
+    {
+        I=i*NB;
+        for (j = 0; j < NB; j++)
+        {
+            tmp=C[I+j];
+            for (k = 0; k < NB; k++)
+                tmp+=A[I+k]*B[k*NB+j];
+            C[I+j]=tmp;
+        }
+    }
+#else
     unsigned char TR='T', NT='N';
     float DONE=1.0;
 
@@ -68,7 +83,7 @@ void matmul(float *A, float *B, float *C, unsigned long NB)
             1.0, A, NB,
             B, NB,
             1.0, C, NB);
-
+#endif
 }/*}}}*/
 
 struct matmul_wrapper_arg_t 
@@ -366,7 +381,7 @@ void init (unsigned long argc, char **argv, unsigned long * N_p, unsigned long *
     B = (float **) malloc(DIM*DIM*sizeof(float *));
     C = (float **) malloc(DIM*DIM*sizeof(float *));
 
-    long tblock_malloc_start = get_usecs();
+    //long tblock_malloc_start = get_usecs();
 #ifdef BMALLOC_IN_PARALLEL
     {/*{{{*/
         PMSG("Allocating blocks in parallel ...\n");
@@ -419,13 +434,13 @@ void init (unsigned long argc, char **argv, unsigned long * N_p, unsigned long *
         C[i] = (float *) mir_mem_pol_allocate(BSIZE*BSIZE*sizeof(float));
     }
 #endif
-    print_elapsed(tblock_malloc_start, "Block malloc");
+    //print_elapsed(tblock_malloc_start, "Block malloc");
 
-    long tblock_init_start = get_usecs();
+    //long tblock_init_start = get_usecs();
     convert_to_blocks(BSIZE,DIM, N, Alin, (void *)A);
     convert_to_blocks(BSIZE,DIM, N, Blin, (void *)B);
     convert_to_blocks(BSIZE,DIM, N, Clin, (void *)C);
-    print_elapsed(tblock_init_start, "Block init");
+    //print_elapsed(tblock_init_start, "Block init");
 
     free(Alin);
     free(Blin);

@@ -59,6 +59,7 @@ void mir_preconfig_init()
     // Flags
     runtime->sig_dying = 0;
     runtime->enable_stats = 0;
+    runtime->enable_task_graph_gen = 0;
     runtime->enable_recorder = 0;
     runtime->enable_dependence_resolver = 0;
     runtime->task_inlining_limit = MIR_TASK_INLINING_LIMIT_DEFAULT;
@@ -129,12 +130,13 @@ static inline void print_help()
     "-s=<str> task scheduling policy\n"
     "-r enable recorder\n"
     "-d enable dependence resolution\n"
-    "-x=<int> task inlining limit\n"
+    "-x=<int> task inlining limit based on num tasks per worker\n"
     "-i write statistics to file\n"
     "-l=<int> stack size in MB\n"
     "-q=<int> queue capacity\n"
     "-m=<str> memory allocation policy\n"
     "-y=<csv> schedule policy specific parameters\n"
+    "-g enable task graph generation\n"
     );
 }/*}}}*/
 
@@ -189,6 +191,10 @@ void mir_config()
                     {
                         MIR_ABORT(MIR_ERROR_STR "Incorrect MIR_CONF parameter [%c]\n", c);
                     }
+                    break;
+                case 'g':
+                    runtime->enable_task_graph_gen = 1;
+                    MIR_DEBUG(MIR_DEBUG_STR "Task graph generation is enabled!\n");
                     break;
                 case 'r':
                     runtime->enable_recorder = 1;
@@ -306,6 +312,29 @@ void mir_destroy()
         // Close stats file
         fclose(stats_file);
     }/*}}}*/
+
+    // Task graph
+    if(runtime->enable_task_graph_gen == 1)
+    {
+        // Open stats file
+        FILE* task_graph_file = NULL;
+        task_graph_file = fopen(MIR_TASK_GRAPH_FILE_NAME, "w");
+        if(!task_graph_file)
+            MIR_ABORT(MIR_ERROR_STR "Cannot open task_graph file %s for writing!\n", MIR_TASK_GRAPH_FILE_NAME);
+
+        // Write header 
+        mir_task_graph_write_header_to_file(task_graph_file);
+        // Write all worker task graph nodes to file
+        for(int i=0; i<runtime->num_workers; i++) 
+        {
+            struct mir_task_graph_node_t* node = runtime->workers[i].task_graph_node;
+            mir_task_graph_write_to_file(node, task_graph_file);
+            mir_task_graph_destroy(node);
+        }
+
+        // Close task_graph file
+        fclose(task_graph_file);
+    }
 
     // Kill workers
     for(int i=0; i<runtime->num_workers; i++) 

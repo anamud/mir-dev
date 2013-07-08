@@ -13,6 +13,7 @@
 //#define MIR_TASK_DEBUG 1
 #define MIR_TASK_DEFAULT_NAME "NO_NAME"
 #define MIR_TASK_ID_START 0
+#define MIR_TASKWAIT_ID_START 0
 #define MIR_TASK_INLINING_LIMIT_DEFAULT 0
 //#define MIR_TASK_ALLOCATE_ON_STACK 1
 
@@ -35,6 +36,9 @@
 
 // Statistics
 #define MIR_STATS_FILE_NAME "mir-stats"
+
+// Task graph
+#define MIR_TASK_GRAPH_FILE_NAME "mir-task-graph"
 
 // Debug
 #define MIR_ERROR_STR "MIR_FATAL: "

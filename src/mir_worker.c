@@ -88,7 +88,7 @@ struct mir_worker_t* mir_worker_get_context()
 }/*}}}*/
 
 static int worker_get_cpu()
-{
+{/*{{{*/
     cpu_set_t set;
     CPU_ZERO(&set);
 
@@ -107,7 +107,7 @@ static int worker_get_cpu()
     }
 
     return cpu;
-}
+}/*}}}*/
 
 void mir_worker_local_init(struct mir_worker_t* worker)
 {/*{{{*/
@@ -148,6 +148,11 @@ void mir_worker_local_init(struct mir_worker_t* worker)
     if(runtime->enable_recorder)
         worker->recorder = mir_recorder_create(worker->id);
 
+    // Set current task
+    worker->current_task = NULL;
+
+    // For task graph generation
+    worker->task_graph_node = NULL;
 }/*}}}*/
 
 static inline void mir_worker_backoff_reset(struct mir_worker_t* worker)
@@ -314,3 +319,59 @@ void mir_worker_status_write_to_file(struct mir_worker_status_t* status, FILE* f
     }
 }/*}}}*/
 
+void mir_worker_update_task_graph(struct mir_worker_t* worker, struct mir_task_t* task)
+{/*{{{*/
+    if(runtime->enable_task_graph_gen == 1)
+    {
+        struct mir_task_graph_node_t* node = mir_malloc_int(sizeof(struct mir_task_graph_node_t));
+        node->task = task;
+        if(task->twc)
+            node->pass_count = task->twc->num_passes;
+        else
+            node->pass_count = 0;
+        node->next = worker->task_graph_node;
+        worker->task_graph_node = node;
+    }
+}/*}}}*/
+
+void mir_task_graph_write_header_to_file(FILE* file)
+{/*{{{*/
+    fprintf(file, "task,parent,join_node,join_node_parent,join_node_pass_count\n");
+}/*}}}*/
+
+void mir_task_graph_write_to_file(struct mir_task_graph_node_t* node, FILE* file)
+{/*{{{*/
+    struct mir_task_graph_node_t* temp = node;
+    while(temp != NULL)
+    {
+        mir_id_t task_parent, twc_parent;
+        task_parent.uid = 0;
+        twc_parent.uid = 0;
+        if(temp->task->parent)
+            task_parent.uid = temp->task->parent->id.uid;
+        if(temp->task->twc)
+            if(temp->task->twc->parent)
+                twc_parent.uid = temp->task->twc->parent->id.uid;
+
+        fprintf(file, "%" MIR_FORMSPEC_UL ",%" MIR_FORMSPEC_UL ",%" MIR_FORMSPEC_UL ",%" MIR_FORMSPEC_UL ",%lu\n", 
+                temp->task->id.uid, 
+                task_parent.uid,
+                (temp->task->twc == NULL)? 0 : temp->task->twc->id.uid,
+                twc_parent.uid,
+                temp->pass_count);
+
+        temp = temp->next;
+    }
+}/*}}}*/
+
+void mir_task_graph_destroy(struct mir_task_graph_node_t* node)
+{/*{{{*/
+    struct mir_task_graph_node_t* this = node;
+    while(this != NULL)
+    {
+        struct mir_task_graph_node_t* next = this->next;
+        mir_free_int(this, sizeof(struct mir_task_graph_node_t));
+        this = next;
+        // FIXME: Can also free the task and wait counter here!
+    }
+}/*}}}*/

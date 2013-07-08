@@ -19,6 +19,7 @@ extern struct mir_runtime_t* runtime;
 extern uint32_t g_num_tasks_waiting;
 
 static uint64_t g_tasks_uidc = MIR_TASK_ID_START + 1;
+static uint64_t g_taskwaits_uidc = MIR_TASKWAIT_ID_START + 1;
 
 static inline unsigned int mir_twc_reduce(struct mir_twc_t* twc)
 {/*{{{*/
@@ -128,6 +129,10 @@ struct mir_task_t* mir_task_create(mir_tfunc_t tfunc, void* data, size_t data_si
         task->num_data_footprints = num_data_footprints;
     }/*}}}*/
 
+    // Task parent
+    struct mir_worker_t* worker = mir_worker_get_context(); 
+    task->parent = worker->current_task;
+
     // Flags
     task->done = 0;
 
@@ -185,8 +190,20 @@ void mir_task_execute(struct mir_task_t* task)
     MIR_RECORDER_EVENT(&event_meta_data[0], MIR_RECORDER_EVENT_META_DATA_MAX_SIZE-1);
     MIR_RECORDER_STATE_BEGIN( MIR_STATE_TEXEC);
 
+    // Save task context of worker
+    struct mir_task_t* temp = worker->current_task;
+
+    // Update task context of worker
+    worker->current_task = task;
+
     // Execute task function
     task->func(task->data);
+
+    // Add to task graph
+    mir_worker_update_task_graph(worker, task);
+
+    // Restore task context of worker
+    worker->current_task = temp;
 
     //MIR_INFORM(MIR_INFORM_STR "Task %" MIR_FORMSPEC_UL " executed on worker %d\n", task->id.uid, worker->id);
 
@@ -272,6 +289,15 @@ struct mir_twc_t* mir_twc_create()
 
    twc->count = 0;
 
+    // Task wait unique id
+    // A running number
+    twc->id.uid = __sync_fetch_and_add(&(g_taskwaits_uidc), 1);
+
+    // Reset num times passed
+   twc->num_passes = 0;
+
+   twc->parent = mir_worker_get_context()->current_task;
+
    return twc;
 }/*}}}*/
 
@@ -293,6 +319,9 @@ void mir_twc_wait(struct mir_twc_t* twc)
         mir_worker_do_work(worker, false);
 #endif
     }
+
+    // Update num times passed
+    twc->num_passes++;
 
     MIR_RECORDER_STATE_END(NULL, 0);
     return;

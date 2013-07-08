@@ -10,12 +10,22 @@
 #include "mir_defines.h"
 #include "mir_lock.h"
 #include "mir_recorder.h"
+#include "mir_task.h"
 
 extern uint32_t g_worker_status_board;
 extern uint32_t g_num_tasks_waiting;
 
 //struct mir_recorder_t;
 //struct mir_lock_t;
+
+// For task graph generation
+struct mir_task_graph_node_t;
+struct mir_task_graph_node_t
+{
+    struct mir_task_t* task;
+    unsigned long pass_count;
+    struct mir_task_graph_node_t* next;
+};
 
 struct mir_worker_status_t
 {
@@ -40,8 +50,11 @@ struct mir_worker_t
     uint16_t bias;
     uint32_t backoff_us;
     struct mir_lock_t sig_die;
+    struct mir_task_t* current_task;
     struct mir_worker_status_t* status;
     struct mir_recorder_t* recorder;
+    // For task graph generation
+    struct mir_task_graph_node_t* task_graph_node;
 };
 
 void mir_worker_update_bias(struct mir_worker_t* worker);
@@ -67,4 +80,12 @@ void mir_worker_status_update_comm_cost(struct mir_worker_status_t* status, unsi
 void mir_worker_status_write_header_to_file(FILE* file);
 
 void mir_worker_status_write_to_file(struct mir_worker_status_t* status, FILE* file);
+
+void mir_worker_update_task_graph(struct mir_worker_t* worker, struct mir_task_t* task);
+
+void mir_task_graph_write_header_to_file(FILE* file);
+
+void mir_task_graph_write_to_file(struct mir_task_graph_node_t* node, FILE* file);
+
+void mir_task_graph_destroy(struct mir_task_graph_node_t* node);
 #endif 

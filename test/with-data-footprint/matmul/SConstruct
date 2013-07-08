@@ -84,6 +84,20 @@ opt.VariantDir('opt-build', '.', duplicate=0)
 opt_src = opt.Glob('opt-build/*.c')
 opt.Program(app_name +'-opt', source = opt_src)
 
+#################################
+# Opt noinline task environment #
+#################################
+
+opt_noi = env.Clone();
+opt_noi['CCFLAGS'] += Split("""
+-O3
+-DNOINLINE_TASK
+""")
+opt_noi['LIBS'] += ['mir-opt']
+opt_noi.VariantDir('opt_noi-build', '.', duplicate=0)
+opt_noi_src = opt_noi.Glob('opt_noi-build/*.c')
+opt_noi.Program(app_name +'-opt_noi', source = opt_noi_src)
+
 #######################
 # Verbose environment #
 #######################

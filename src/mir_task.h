@@ -14,10 +14,16 @@
 // The task function pointer type
 typedef void* (*mir_tfunc_t)(void*);
 
+// Forward declaration
+struct mir_task_t;
+
 // The task wait counter
 struct mir_twc_t 
 {/*{{{*/
     unsigned long count;
+    unsigned long num_passes;
+    mir_id_t id;
+    struct mir_task_t* parent;
     unsigned int count_per_worker[MIR_WORKER_MAX_COUNT];
 };/*}}}*/
 
@@ -31,6 +37,7 @@ struct mir_task_t
     struct mir_twc_t* twc;
     unsigned long comm_cost;
     char name[MIR_SHORT_NAME_LEN];
+    struct mir_task_t* parent;
 
     // Flags
     uint32_t done;
