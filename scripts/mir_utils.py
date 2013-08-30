@@ -3,6 +3,9 @@
 import os
 
 def which(name, flags=os.X_OK):
+    # Original code from twisted python.procutils
+    # Copyright (c) Twisted Matrix Laboratories.
+    # See LICENSE for details.
     result = []
     exts = filter(None, os.environ.get('PATHEXT', '').split(os.pathsep))
     path = os.environ.get('PATH', None)
