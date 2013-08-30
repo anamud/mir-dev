@@ -85,18 +85,25 @@ opt_src = opt.Glob('opt-build/*.c')
 opt.Program(app_name +'-opt', source = opt_src)
 
 #################################
-# Opt noinline task environment #
+# Profile environment #
 #################################
 
-opt_noi = env.Clone();
-opt_noi['CCFLAGS'] += Split("""
--O3
--DNOINLINE_TASK
+prof = env.Clone();
+prof['CC'] = 'gcc'
+prof['CCFLAGS'] += Split("""
+-O2
+-DNDEBUG
+-fno-inline-functions
+-fno-inline-functions-called-once
+-fno-optimize-sibling-calls
+-fno-omit-frame-pointer
+-g
+-DNO_BLAS
 """)
-opt_noi['LIBS'] += ['mir-opt']
-opt_noi.VariantDir('opt_noi-build', '.', duplicate=0)
-opt_noi_src = opt_noi.Glob('opt_noi-build/*.c')
-opt_noi.Program(app_name +'-opt_noi', source = opt_noi_src)
+prof['LIBS'] += ['mir-opt']
+prof.VariantDir('prof-build', '.', duplicate=0)
+prof_src = prof.Glob('prof-build/*.c')
+prof.Program(app_name +'-prof', source = prof_src)
 
 #######################
 # Verbose environment #

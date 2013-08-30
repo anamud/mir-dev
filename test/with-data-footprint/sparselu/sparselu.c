@@ -1,5 +1,3 @@
-/*{{{*/
-
 /**********************************************************************************************/
 /*  This program is part of the Barcelona OpenMP Tasks Suite                                  */
 /*  Copyright (C) 2009 Barcelona Supercomputing Center - Centro Nacional de Supercomputacion  */
@@ -20,13 +18,8 @@
 /*  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA            */
 /**********************************************************************************************/
 
-/*
- * Modified 
- * Author: Ananya Muddukrishna
- * E-mail: ananya@kth.se
- */
+/* Ananya Muddukrishna (ananya@kth.se) ported to MIR */
 
-/*}}}*/
 #include <sys/types.h>
 #include <stdio.h>
 #include <stdint.h>

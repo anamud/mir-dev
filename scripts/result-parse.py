@@ -59,7 +59,6 @@ def speedup(plot):
         else:
             splot.append(float(plot[0])/float(item))
     return splot
-                
 
 def write_csv():
     temp_dict = defaultdict(set)

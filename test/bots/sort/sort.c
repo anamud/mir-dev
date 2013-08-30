@@ -1,3 +1,68 @@
+/**********************************************************************************************/
+/*  This program is part of the Barcelona OpenMP Tasks Suite                                  */
+/*  Copyright (C) 2009 Barcelona Supercomputing Center - Centro Nacional de Supercomputacion  */
+/*  Copyright (C) 2009 Universitat Politecnica de Catalunya                                   */
+/*                                                                                            */
+/*  This program is free software; you can redistribute it and/or modify                      */
+/*  it under the terms of the GNU General Public License as published by                      */
+/*  the Free Software Foundation; either version 2 of the License, or                         */
+/*  (at your option) any later version.                                                       */
+/*                                                                                            */
+/*  This program is distributed in the hope that it will be useful,                           */
+/*  but WITHOUT ANY WARRANTY; without even the implied warranty of                            */
+/*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the                             */
+/*  GNU General Public License for more details.                                              */
+/*                                                                                            */
+/*  You should have received a copy of the GNU General Public License                         */
+/*  along with this program; if not, write to the Free Software                               */
+/*  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA            */
+/**********************************************************************************************/
+
+/*
+ *  Original code from the Cilk project
+ *
+ * Copyright (c) 2000 Massachusetts Institute of Technology
+ * Copyright (c) 2000 Matteo Frigo
+ */
+
+/*
+ * this program uses an algorithm that we call `cilksort'.
+ * The algorithm is essentially mergesort:
+ *
+ *   cilksort(in[1..n]) =
+ *       spawn cilksort(in[1..n/2], tmp[1..n/2])
+ *       spawn cilksort(in[n/2..n], tmp[n/2..n])
+ *       sync
+ *       spawn cilkmerge(tmp[1..n/2], tmp[n/2..n], in[1..n])
+ *
+ *
+ * The procedure cilkmerge does the following:
+ *       
+ *       cilkmerge(A[1..n], B[1..m], C[1..(n+m)]) =
+ *          find the median of A \union B using binary
+ *          search.  The binary search gives a pair
+ *          (ma, mb) such that ma + mb = (n + m)/2
+ *          and all elements in A[1..ma] are smaller than
+ *          B[mb..m], and all the B[1..mb] are smaller
+ *          than all elements in A[ma..n].
+ *
+ *          spawn cilkmerge(A[1..ma], B[1..mb], C[1..(n+m)/2])
+ *          spawn cilkmerge(A[ma..m], B[mb..n], C[(n+m)/2 .. (n+m)])
+ *          sync
+ *
+ * The algorithm appears for the first time (AFAIK) in S. G. Akl and
+ * N. Santoro, "Optimal Parallel Merging and Sorting Without Memory
+ * Conflicts", IEEE Trans. Comp., Vol. C-36 No. 11, Nov. 1987 .  The
+ * paper does not express the algorithm using recursion, but the
+ * idea of finding the median is there.
+ *
+ * For cilksort of n elements, T_1 = O(n log n) and
+ * T_\infty = O(log^3 n).  There is a way to shave a
+ * log factor in the critical path (left as homework).
+ */
+
+/* Ananya Muddukrishna (ananya@kth.se) ported to MIR */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

@@ -1,4 +1,4 @@
-/**********************************************************************************************//*{{{*/
+/**********************************************************************************************/
 /*  This program is part of the Barcelona OpenMP Tasks Suite                                  */
 /*  Copyright (C) 2009 Barcelona Supercomputing Center - Centro Nacional de Supercomputacion  */
 /*  Copyright (C) 2009 Universitat Politecnica de Catalunya                                   */
@@ -16,7 +16,10 @@
 /*  You should have received a copy of the GNU General Public License                         */
 /*  along with this program; if not, write to the Free Software                               */
 /*  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA            */
-/**********************************************************************************************//*}}}*/
+/**********************************************************************************************/
+
+/* Ananya Muddukrishna (ananya@kth.se) ported to MIR */
+
 #ifndef _STRASSEN_H
 #define _STRASSEN_H
 /* ******************************************************************* */

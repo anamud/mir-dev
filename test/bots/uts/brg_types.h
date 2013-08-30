@@ -1,4 +1,4 @@
-/**********************************************************************************************//*{{{*/
+/**********************************************************************************************/
 /*  This program is part of the Barcelona OpenMP Tasks Suite                                  */
 /*  Copyright (C) 2009 Barcelona Supercomputing Center - Centro Nacional de Supercomputacion  */
 /*  Copyright (C) 2009 Universitat Politecnica de Catalunya                                   */
@@ -42,7 +42,9 @@
  since the latter are of the form uint<nn>_t, a regular expression search
  and replace (in VC++ search on 'uint_{:z}t' and replace with 'uint\1_t')
  can be used to convert the types used here to the C99 standard types.
-*//*}}}*/
+*/
+
+/* Ananya Muddukrishna (ananya@kth.se) ported to MIR */
 
 #ifndef BRG_TYPES_H
 #define BRG_TYPES_H

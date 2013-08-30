@@ -12,6 +12,8 @@
  *  ** THIS IS A PRE-RELEASE VERSION OF UTS. **
  */
 
+/* Ananya Muddukrishna (ananya@kth.se) ported to MIR */
+
 #ifndef _UTS_H
 #define _UTS_H
 

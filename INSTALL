@@ -1,4 +1,4 @@
 Scons (www.scons.org) is needed to build mir.
-Run scons from src directory.
-Use the SConstruct file in the src directory to roll out a Makefile in the case that scons is not available.
+Run scons from /src directory.
+Use the SConstruct file in the /src directory to roll out a Makefile in the case that scons is not available.
 

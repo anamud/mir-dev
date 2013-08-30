@@ -1,3 +1,7 @@
+/* Original version by Alejandro Rico of BSC */
+
+/* Ananya Muddukrishna (ananya@kth.se) ported to MIR */
+
 #include <errno.h>
 #include <math.h>
 #include <stdio.h>
@@ -56,9 +60,9 @@ void matmul(float  *A, float *B, float *C, unsigned long NB)
 */
 
 //#pragma omp task input([NB][NB]A, [NB][NB]B) inout([NB][NB]C)
-void ATTR_NOINLINE matmul(float *A, float *B, float *C, unsigned long NB)
+void matmul(float *A, float *B, float *C, unsigned long NB)
 {/*{{{*/
-#ifdef NOINLINE_TASK
+#ifdef NO_BLAS
     int i, j, k, I;
     float tmp;
     for (i = 0; i < NB; i++)

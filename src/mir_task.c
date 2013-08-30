@@ -8,6 +8,7 @@
 #include "mir_debug.h"
 #include "mir_memory.h"
 #include "mir_data_footprint.h"
+#include "mir_perf.h"
 
 #include <stdint.h>
 #include <stdlib.h>
@@ -37,6 +38,12 @@ static inline bool inline_task()
 {/*{{{*/
     if(runtime->task_inlining_limit == 0)
         return false;
+
+    // Temporary solution to enable inlining unconditionally
+    // FIXME: Make this better. Maybe a negative number based condition 
+    // ... or based on a number gt num_workers
+    if(runtime->task_inlining_limit == 1)
+        return true;
 
     if(0 == strcmp(runtime->sched_pol->name, "numa"))
         return false;
@@ -81,6 +88,9 @@ struct mir_task_t* mir_task_create(mir_tfunc_t tfunc, void* data, size_t data_si
     // Task unique id
     // A running number
     task->id.uid = __sync_fetch_and_add(&(g_tasks_uidc), 1);
+
+    // Creation time
+    task->creation_time = mir_get_cycles();
 
     // Task name
     strcpy(task->name, MIR_TASK_DEFAULT_NAME);
@@ -195,6 +205,9 @@ void mir_task_execute(struct mir_task_t* task)
 
     // Update task context of worker
     worker->current_task = task;
+
+    // Execution start time
+    task->execution_start_time = mir_get_cycles();
 
     // Execute task function
     task->func(task->data);

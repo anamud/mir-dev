@@ -15,9 +15,9 @@
 #define OPR_SCALE (42)
 //#define SLEEP_MS 0
 #define LOOP_CNT 10
-#define REUSE_CNT 1
+#define REUSE_CNT 4
 //#define SHOW_NUMA_STATS 1
-#define ENABLE_FAULT_IN 
+//#define ENABLE_FAULT_IN 
 //#define ENABLE_PREFETCH 1
 
 #include <xmmintrin.h>
@@ -192,7 +192,7 @@ void map_init()
 #endif
 }/*}}}*/
 
-void ATTR_NOINLINE map(uint64_t* in, uint64_t* out)
+void map(uint64_t* in, uint64_t* out)
 {/*{{{*/
     size_t sum = 0;
 
@@ -271,18 +271,36 @@ void map_par()
 
     struct mir_twc_t* twc = mir_twc_create();
 
-    // Split the task creation load among workers
-    // Same action as worksharing omp for
-    uint32_t num_workers = mir_get_num_threads();
-    uint64_t num_iter = num_tasks / num_workers;
-    uint64_t num_tail_iter = num_tasks % num_workers;
-    if(num_iter > 0)
+    for(int r=0; r<REUSE_CNT; r++)
     {
-        // Create prologue tasks
-        for(uint32_t k=0; k<num_workers; k++)
+        // Split the task creation load among workers
+        // Same action as worksharing omp for
+        uint32_t num_workers = mir_get_num_threads();
+        uint64_t num_iter = num_tasks / num_workers;
+        uint64_t num_tail_iter = num_tasks % num_workers;
+        if(num_iter > 0)
         {
-            uint64_t start = k * num_iter;
-            uint64_t end = start + num_iter - 1;
+            // Create prologue tasks
+            for(uint32_t k=0; k<num_workers; k++)
+            {
+                uint64_t start = k * num_iter;
+                uint64_t end = start + num_iter - 1;
+                /*{*/
+                    /*struct for_task_wrapper_arg_t arg;*/
+                    /*arg.start = start;*/
+                    /*arg.end = end;*/
+                    /*arg.twc = twc;*/
+
+                    /*struct mir_task_t* task = mir_task_create((mir_tfunc_t) for_task_wrapper, &arg, sizeof(struct for_task_wrapper_arg_t), twc, 0, NULL, NULL);*/
+                /*}*/
+                for_task(start, end, twc);
+            }
+        }
+        if(num_tail_iter > 0)
+        {
+            // Create epilogue task
+            uint64_t start = num_workers * num_iter;
+            uint64_t end = start + num_tail_iter - 1;
             /*{*/
                 /*struct for_task_wrapper_arg_t arg;*/
                 /*arg.start = start;*/
@@ -293,24 +311,9 @@ void map_par()
             /*}*/
             for_task(start, end, twc);
         }
-    }
-    if(num_tail_iter > 0)
-    {
-        // Create epilogue task
-        uint64_t start = num_workers * num_iter;
-        uint64_t end = start + num_tail_iter - 1;
-        /*{*/
-            /*struct for_task_wrapper_arg_t arg;*/
-            /*arg.start = start;*/
-            /*arg.end = end;*/
-            /*arg.twc = twc;*/
 
-            /*struct mir_task_t* task = mir_task_create((mir_tfunc_t) for_task_wrapper, &arg, sizeof(struct for_task_wrapper_arg_t), twc, 0, NULL, NULL);*/
-        /*}*/
-        for_task(start, end, twc);
+        mir_twc_wait(twc);
     }
-
-    mir_twc_wait(twc);
     PDBG(" ... done! \n");
 }/*}}}*/
 
@@ -370,10 +373,7 @@ int main(int argc, char *argv[])
 #endif
 
     long par_time_start = get_usecs();
-#if 1
-    for(int r=0; r<REUSE_CNT; r++)
-        map_par();
-#endif
+    map_par();
     long par_time_end = get_usecs();
     double par_time = (double)( par_time_end - par_time_start) / 1000000;
 

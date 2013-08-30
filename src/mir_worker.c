@@ -336,7 +336,7 @@ void mir_worker_update_task_graph(struct mir_worker_t* worker, struct mir_task_t
 
 void mir_task_graph_write_header_to_file(FILE* file)
 {/*{{{*/
-    fprintf(file, "task,parent,join_node,join_node_parent,join_node_pass_count\n");
+    fprintf(file, "task,parent,join_node,join_node_parent,join_node_pass_count,execution_start_time\n");
 }/*}}}*/
 
 void mir_task_graph_write_to_file(struct mir_task_graph_node_t* node, FILE* file)
@@ -353,12 +353,13 @@ void mir_task_graph_write_to_file(struct mir_task_graph_node_t* node, FILE* file
             if(temp->task->twc->parent)
                 twc_parent.uid = temp->task->twc->parent->id.uid;
 
-        fprintf(file, "%" MIR_FORMSPEC_UL ",%" MIR_FORMSPEC_UL ",%" MIR_FORMSPEC_UL ",%" MIR_FORMSPEC_UL ",%lu\n", 
+        fprintf(file, "%" MIR_FORMSPEC_UL ",%" MIR_FORMSPEC_UL ",%" MIR_FORMSPEC_UL ",%" MIR_FORMSPEC_UL ",%lu" ",%" MIR_FORMSPEC_UL "\n", 
                 temp->task->id.uid, 
                 task_parent.uid,
                 (temp->task->twc == NULL)? 0 : temp->task->twc->id.uid,
                 twc_parent.uid,
-                temp->pass_count);
+                temp->pass_count,
+                temp->task->execution_start_time);
 
         temp = temp->next;
     }

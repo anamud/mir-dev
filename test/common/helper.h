@@ -33,16 +33,16 @@
 #define TRUE 1
 #endif
 
-// This is useful for pin-tool profiling
-#ifdef NOINLINE_TASK
-//#if defined __INTEL_COMPILER
+//// This is useful for pin-tool profiling
+//#ifdef NOINLINE_TASK
+////#if defined __INTEL_COMPILER
+////#define ATTR_NOINLINE
+////#elif defined __GUNC__
+//#define ATTR_NOINLINE __attribute__((noinline))
+////#endif
+//#else
 //#define ATTR_NOINLINE
-//#elif defined __GUNC__
-#define ATTR_NOINLINE __attribute__((noinline))
 //#endif
-#else
-#define ATTR_NOINLINE
-#endif
 
 #endif /* end of include guard: HELPER_H_ATGBOPN5 */
 

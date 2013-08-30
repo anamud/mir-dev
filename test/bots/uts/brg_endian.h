@@ -1,4 +1,4 @@
-/**********************************************************************************************//*{{{*/
+/**********************************************************************************************/
 /*  This program is part of the Barcelona OpenMP Tasks Suite                                  */
 /*  Copyright (C) 2009 Barcelona Supercomputing Center - Centro Nacional de Supercomputacion  */
 /*  Copyright (C) 2009 Universitat Politecnica de Catalunya                                   */
@@ -33,7 +33,9 @@
  and/or fitness for purpose.
  ---------------------------------------------------------------------------
  Issue 20/10/2006
-*//*}}}*/
+*/
+
+/* Ananya Muddukrishna (ananya@kth.se) ported to MIR */
 
 #ifndef BRG_ENDIAN_H
 #define BRG_ENDIAN_H

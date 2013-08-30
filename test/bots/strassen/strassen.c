@@ -1,4 +1,4 @@
-/**********************************************************************************************//*{{{*/
+/**********************************************************************************************/
 /*  This program is part of the Barcelona OpenMP Tasks Suite                                  */
 /*  Copyright (C) 2009 Barcelona Supercomputing Center - Centro Nacional de Supercomputacion  */
 /*  Copyright (C) 2009 Universitat Politecnica de Catalunya                                   */
@@ -32,7 +32,10 @@
  * prior written authorization from the Massachusetts Institute of
  * Technology.
  *
- *//*}}}*/
+ */
+
+/* Ananya Muddukrishna (ananya@kth.se) ported to MIR */
+
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>

@@ -21,6 +21,8 @@
 /* Original code from the Application Kernel Matrix by Cray */
 /* that was based on the ClustalW application */
 
+/* Ananya Muddukrishna (ananya@kth.se) ported to MIR */
+
 #ifndef SEQUENCE_EXTERN_H
 #define SEQUENCE_EXTERN_H
 

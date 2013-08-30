@@ -35,6 +35,8 @@
  Issue Date: 01/08/2005
 */
 
+/* Ananya Muddukrishna (ananya@kth.se) ported to MIR */
+
 #ifndef _SHA1_H
 #define _SHA1_H
 

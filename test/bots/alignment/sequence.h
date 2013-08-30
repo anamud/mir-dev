@@ -1,4 +1,4 @@
-/**********************************************************************************************//*{{{*/
+/**********************************************************************************************/
 /*  This program is part of the Barcelona OpenMP Tasks Suite                                  */
 /*  Copyright (C) 2009 Barcelona Supercomputing Center - Centro Nacional de Supercomputacion  */
 /*  Copyright (C) 2009 Universitat Politecnica de Catalunya                                   */
@@ -19,7 +19,9 @@
 /**********************************************************************************************/
 
 /* Original code from the Application Kernel Matrix by Cray */
-/* that was based on the ClustalW application *//*}}}*/
+/* that was based on the ClustalW application */
+
+/* Ananya Muddukrishna (ananya@kth.se) ported to MIR */
 
 #ifndef SEQUENCE_H
 #define SEQUENCE_H

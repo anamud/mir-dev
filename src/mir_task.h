@@ -34,6 +34,8 @@ struct mir_task_t
     mir_ba_sbuf_t data;
     size_t data_size;
     mir_id_t id;
+    uint64_t creation_time;
+    uint64_t execution_start_time;
     struct mir_twc_t* twc;
     unsigned long comm_cost;
     char name[MIR_SHORT_NAME_LEN];

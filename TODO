@@ -6,26 +6,33 @@ Simultaneous debug and release build in SConstruct.
 - Added debug, opt and verbose builds for benchmarks
 Give git access to others.
 - Have decided to use ssh public id to give access to interested users
-Setup git permissions (
+- Have now setup gitolite. Intrested users will have to send ssh public key for access.
+Setup git permissions 
 - How? Dev and public repos?
+- Gitolite to the rescue!
 Find a good license. 
 - How about GPL? Check with BSC about Mercurium and BOTS.
+- Apache License 2.0 looks good.
 Get started with clang support.
 Strengthen Mercurium support.
 Work on UTS.
-- Scaling is poor. 
-- Uninteresting. Benchmark stresses fine grained execution. 
+- Scaling is poor.
+- Why am I even bothering with this? Benchmark stresses fine grained execution. 
 Work on benchmarks with data dependences.
 - Added benchmarks with data footprint
 Get a gimp to parallelize BOTS FFT and Strassen. 
 - Done. Gimp = Me.
-Add a clean user interface to the library (
+Add a clean user interface to the library 
 - How? Machine generate the interface?
 Find and add a good deque implementation. 
+- Cannot find a lock-free or a single lock deque!
 - Ask Shavit and Maged.
-Cleanup dependence resolution support.
+Add runtime dependence resolution support.
 Add a help document.
+- URGENT!
 Add the NUMA/NUCA scheduler. 
 - Done. Need to test it on the TILEPro64.
 Add a benchmark testing script
 - Done. In scripts/test.sh
+Add dependence graph generation support
+- Done. 
