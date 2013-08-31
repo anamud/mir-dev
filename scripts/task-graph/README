@@ -3,14 +3,16 @@ The tool, called "mir_routine_trace.so" essentially instruments functions.
 In the MIR world, tasks instances are function calls.
 Therefore the tool applies.
 
-The tool instruments functions and produces the following details:
-function call start instant, number of instructions executed, memory footprint size, computation to communication ratio, computation to load ratio, number of load instructions, number of store instructions
+The tool instruments functions and produces the following details in csv format:
+function call start time instant, number of instructions executed, memory footprint size, computation to communication ratio, computation to load ratio, number of load instructions, number of store instructions
 
 The tool optionally provides information regarding memory sharing between functions.
 
-Details produced by the tool can be tied to the task graph produced by MIR using the R script "mir-callgraph-taskgraph-id-bind.R".
+Details produced by the tool can be bound to the task graph produced by MIR using the R script "mir-callgraph-taskgraph-id-bind.R". 
+The script produces a table in csv format which correlates task ids with call graph ids.
 
-Currently, the tool output is intended to be analysed manually.
+Currently, the tool output is intended to be analysed manually. 
+The analyser can get information about a task node in the task graph by looking up the task id in the table produced by the bind script.
 In the future, we intend to produce a GUI/API based framework which supports retrieving information about task graph elements in a intuitive manner.
 
 === Requirements ===
