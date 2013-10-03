@@ -59,6 +59,8 @@ typedef struct _MIR_ROUTINE_STAT_
 {/*{{{*/
     UINT64 creation_time;
     UINT64 ins_count;
+    UINT64 stack_read;
+    UINT64 stack_write;
     UINT64 ccr; // Computation to communication ratio
     UINT64 clr; // Computation to load ratio
     std::vector<VOID*> mrefs_read;
@@ -74,17 +76,32 @@ std::stack<MIR_ROUTINE_STAT*> g_stat_stack;
 
 VOID MIRRoutineUpdateMemRefRead(VOID* memp)
 {/*{{{*/
-    g_current_stat->mrefs_read.push_back(memp);
+    if(g_current_stat)
+        g_current_stat->mrefs_read.push_back(memp);
 }/*}}}*/
 
 VOID MIRRoutineUpdateMemRefWrite(VOID* memp)
 {/*{{{*/
-    g_current_stat->mrefs_write.push_back(memp);
+    if(g_current_stat)
+        g_current_stat->mrefs_write.push_back(memp);
 }/*}}}*/
 
 VOID MIRRoutineUpdateInsCount()
 {/*{{{*/
-    g_current_stat->ins_count++;
+    if(g_current_stat)
+        g_current_stat->ins_count++;
+}/*}}}*/
+
+VOID MIRRoutineUpdateStackRead()
+{/*{{{*/
+    if(g_current_stat)
+        g_current_stat->stack_read++;
+}/*}}}*/
+
+VOID MIRRoutineUpdateStackWrite()
+{/*{{{*/
+    if(g_current_stat)
+        g_current_stat->stack_write++;
 }/*}}}*/
 
 VOID MIRRoutineEntry()
@@ -93,12 +110,17 @@ VOID MIRRoutineEntry()
     MIR_ROUTINE_STAT* stat = new MIR_ROUTINE_STAT;
     stat->creation_time = get_cycles();
     stat->ins_count = 0;
+    stat->stack_read = 0;
+    stat->stack_write = 0;
     stat->next = g_stat_list;
     g_stat_list = stat;
     
     // Save context
     g_stat_stack.push(g_stat_list);
     g_current_stat = g_stat_list;
+
+    // Debug
+    //std::cout << "Routine entered!\n";
 }/*}}}*/
 
 VOID MIRRoutineExit()
@@ -107,6 +129,9 @@ VOID MIRRoutineExit()
     g_stat_stack.pop();
     if(!g_stat_stack.empty())
         g_current_stat = g_stat_stack.top();
+
+    // Debug
+    //std::cout << "Routine exited!\n";
 }/*}}}*/
 
 VOID Image(IMG img, VOID *v)
@@ -120,6 +145,7 @@ VOID Image(IMG img, VOID *v)
     tokenize(traced_routines_csv, delims, traced_routines);
     for(it = traced_routines.begin(); it != traced_routines.end(); it++)
     {
+        //std::cout << "Analyzing traced routine: " << *it << std::endl;
         RTN mirRtn = RTN_FindByName(img, (*it).c_str());
         if (RTN_Valid(mirRtn))
         {/*{{{*/
@@ -133,6 +159,13 @@ VOID Image(IMG img, VOID *v)
             for (INS ins = RTN_InsHead(mirRtn); INS_Valid(ins); ins = INS_Next(ins))
             {
                 INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)MIRRoutineUpdateInsCount, IARG_END);
+
+                // Instrument stack accesses
+                // If instruction operates using the SP or FP, its a stack operation
+                if(INS_IsStackRead(ins))
+                    INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)MIRRoutineUpdateStackRead, IARG_END);
+                if(INS_IsStackWrite(ins))
+                    INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)MIRRoutineUpdateStackWrite, IARG_END);
 
                 // Get memory operands of instruction
                 UINT32 memOperands = INS_MemoryOperandCount(ins);
@@ -173,15 +206,23 @@ VOID Image(IMG img, VOID *v)
     tokenize(called_routines_csv, delims, called_routines);
     for(it = called_routines.begin(); it != called_routines.end(); it++)
     {
+        //std::cout << "Analyzing called routine: " << *it << std::endl;
         RTN mirRtn = RTN_FindByName(img, (*it).c_str());
         if (RTN_Valid(mirRtn))
-        {
+        {/*{{{*/
             RTN_Open(mirRtn);
 
             // For each instruction of the routine, update entries in the stats counter
             for (INS ins = RTN_InsHead(mirRtn); INS_Valid(ins); ins = INS_Next(ins))
             {
                 INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)MIRRoutineUpdateInsCount, IARG_END);
+
+                // Instrument stack accesses
+                // If instruction operates using the SP or FP, its a stack operation
+                if(INS_IsStackRead(ins))
+                    INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)MIRRoutineUpdateStackRead, IARG_END);
+                if(INS_IsStackWrite(ins))
+                    INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)MIRRoutineUpdateStackWrite, IARG_END);
 
                 // Get memory operands of instruction
                 UINT32 memOperands = INS_MemoryOperandCount(ins);
@@ -213,7 +254,7 @@ VOID Image(IMG img, VOID *v)
             }
 
             RTN_Close(mirRtn);
-        }
+        }/*}}}*/
     }
 }/*}}}*/
 
@@ -360,11 +401,13 @@ VOID Fini(INT32 code, VOID *v)
     out.open(filename.c_str());
     std::cout << "Writing detail to file: " << filename << " ..." << std::endl;
     // Write detail as csv
-    out << "creation_time,ins_count,mem_fp,ccr,clr,mem_read,mem_write" << std::endl;
+    out << "creation_time,ins_count,stack_read,stack_write,mem_fp,ccr,clr,mem_read,mem_write" << std::endl;
     for (MIR_ROUTINE_STAT* stat = g_stat_list; stat; stat = stat->next)
     {
         out << stat->creation_time << "," 
             << stat->ins_count << ","
+            << stat->stack_read<< ","
+            << stat->stack_write<< ","
             << stat->mem_fp.size() << ","
             << stat->ccr << ","
             << stat->clr << ","

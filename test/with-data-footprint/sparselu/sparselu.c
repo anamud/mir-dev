@@ -238,7 +238,7 @@ struct  nanos_args_2_t
   int kk;
 };/*}}}*/
 
-static void smp_ol_sparselu_par_call_0_unpacked(int *const NB, float ***const BENCH, int *const jj, int *const kk)
+/*static*/ void smp_ol_sparselu_par_call_0_unpacked(int *const NB, float ***const BENCH, int *const jj, int *const kk)
 {/*{{{*/
   {
     {
@@ -247,14 +247,14 @@ static void smp_ol_sparselu_par_call_0_unpacked(int *const NB, float ***const BE
   }
 }/*}}}*/
 
-static void smp_ol_sparselu_par_call_0(struct nanos_args_0_t *const args)
+/*static*/ void smp_ol_sparselu_par_call_0(struct nanos_args_0_t *const args)
 {/*{{{*/
   {
     smp_ol_sparselu_par_call_0_unpacked((*args).NB, (*args).BENCH, &((*args).jj), &((*args).kk));
   }
 }/*}}}*/
 
-static void smp_ol_sparselu_par_call_1_unpacked(int *const NB, float ***const BENCH, int *const ii, int *const kk)
+/*static*/ void smp_ol_sparselu_par_call_1_unpacked(int *const NB, float ***const BENCH, int *const ii, int *const kk)
 {/*{{{*/
   {
     {
@@ -263,14 +263,14 @@ static void smp_ol_sparselu_par_call_1_unpacked(int *const NB, float ***const BE
   }
 }/*}}}*/
 
-static void smp_ol_sparselu_par_call_1(struct nanos_args_1_t *const args)
+/*static*/ void smp_ol_sparselu_par_call_1(struct nanos_args_1_t *const args)
 {/*{{{*/
   {
     smp_ol_sparselu_par_call_1_unpacked((*args).NB, (*args).BENCH, &((*args).ii), &((*args).kk));
   }
 }/*}}}*/
 
-static void smp_ol_sparselu_par_call_2_unpacked(int *const NB, float ***const BENCH, int *const ii, int *const jj, int *const kk)
+/*static*/ void smp_ol_sparselu_par_call_2_unpacked(int *const NB, float ***const BENCH, int *const ii, int *const jj, int *const kk)
 {/*{{{*/
   {
     {
@@ -281,7 +281,7 @@ static void smp_ol_sparselu_par_call_2_unpacked(int *const NB, float ***const BE
   }
 }/*}}}*/
 
-static void smp_ol_sparselu_par_call_2(struct nanos_args_2_t *const args)
+/*static*/ void smp_ol_sparselu_par_call_2(struct nanos_args_2_t *const args)
 {/*{{{*/
   {
     smp_ol_sparselu_par_call_2_unpacked((*args).NB, (*args).BENCH, &((*args).ii), &((*args).jj), &((*args).kk));

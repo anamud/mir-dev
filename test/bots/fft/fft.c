@@ -438,481 +438,481 @@ struct  nanos_args_39_t
 /*}}}*/
 
 /*{{{*/
-static void smp_ol_compute_w_coefficients_0_unpacked(int *const n, int *const a, COMPLEX **const W, int *const ab)
+/*static*/ void smp_ol_compute_w_coefficients_0_unpacked(int *const n, int *const a, COMPLEX **const W, int *const ab)
 {
   {
     compute_w_coefficients((*n), (*a), (*ab), (*W));
   }
 }
-static void smp_ol_compute_w_coefficients_0(struct nanos_args_0_t *const args)
+/*static*/ void smp_ol_compute_w_coefficients_0(struct nanos_args_0_t *const args)
 {
   {
     smp_ol_compute_w_coefficients_0_unpacked(&((*args).n), &((*args).a), &((*args).W), &((*args).ab));
   }
 }
-static void smp_ol_compute_w_coefficients_1_unpacked(int *const n, int *const b, COMPLEX **const W, int *const ab)
+/*static*/ void smp_ol_compute_w_coefficients_1_unpacked(int *const n, int *const b, COMPLEX **const W, int *const ab)
 {
   {
     compute_w_coefficients((*n), (*ab) + 1, (*b), (*W));
   }
 }
-static void smp_ol_compute_w_coefficients_1(struct nanos_args_1_t *const args)
+/*static*/ void smp_ol_compute_w_coefficients_1(struct nanos_args_1_t *const args)
 {
   {
     smp_ol_compute_w_coefficients_1_unpacked(&((*args).n), &((*args).b), &((*args).W), &((*args).ab));
   }
 }
-static void smp_ol_unshuffle_2_unpacked(int *const a, COMPLEX **const in, COMPLEX **const out, int *const r, int *const m, int *const ab)
+/*static*/ void smp_ol_unshuffle_2_unpacked(int *const a, COMPLEX **const in, COMPLEX **const out, int *const r, int *const m, int *const ab)
 {
   {
     unshuffle((*a), (*ab), (*in), (*out), (*r), (*m));
   }
 }
-static void smp_ol_unshuffle_2(struct nanos_args_2_t *const args)
+/*static*/ void smp_ol_unshuffle_2(struct nanos_args_2_t *const args)
 {
   {
     smp_ol_unshuffle_2_unpacked(&((*args).a), &((*args).in), &((*args).out), &((*args).r), &((*args).m), &((*args).ab));
   }
 }
-static void smp_ol_unshuffle_3_unpacked(int *const b, COMPLEX **const in, COMPLEX **const out, int *const r, int *const m, int *const ab)
+/*static*/ void smp_ol_unshuffle_3_unpacked(int *const b, COMPLEX **const in, COMPLEX **const out, int *const r, int *const m, int *const ab)
 {
   {
     unshuffle((*ab), (*b), (*in), (*out), (*r), (*m));
   }
 }
-static void smp_ol_unshuffle_3(struct nanos_args_3_t *const args)
+/*static*/ void smp_ol_unshuffle_3(struct nanos_args_3_t *const args)
 {
   {
     smp_ol_unshuffle_3_unpacked(&((*args).b), &((*args).in), &((*args).out), &((*args).r), &((*args).m), &((*args).ab));
   }
 }
-static void smp_ol_fft_twiddle_gen_4_unpacked(int *const i, COMPLEX **const in, COMPLEX **const out, COMPLEX **const W, int *const nW, int *const nWdn, int *const r, int *const m)
+/*static*/ void smp_ol_fft_twiddle_gen_4_unpacked(int *const i, COMPLEX **const in, COMPLEX **const out, COMPLEX **const W, int *const nW, int *const nWdn, int *const r, int *const m)
 {
   {
     fft_twiddle_gen1((*in) + (*i), (*out) + (*i), (*W), (*r), (*m), (*nW), (*nWdn) * (*i), (*nWdn) * (*m));
   }
 }
-static void smp_ol_fft_twiddle_gen_4(struct nanos_args_4_t *const args)
+/*static*/ void smp_ol_fft_twiddle_gen_4(struct nanos_args_4_t *const args)
 {
   {
     smp_ol_fft_twiddle_gen_4_unpacked(&((*args).i), &((*args).in), &((*args).out), &((*args).W), &((*args).nW), &((*args).nWdn), &((*args).r), &((*args).m));
   }
 }
-static void smp_ol_fft_twiddle_gen_5_unpacked(int *const i, COMPLEX **const in, COMPLEX **const out, COMPLEX **const W, int *const nW, int *const nWdn, int *const r, int *const m, int *const i2)
+/*static*/ void smp_ol_fft_twiddle_gen_5_unpacked(int *const i, COMPLEX **const in, COMPLEX **const out, COMPLEX **const W, int *const nW, int *const nWdn, int *const r, int *const m, int *const i2)
 {
   {
     fft_twiddle_gen((*i), (*i2), (*in), (*out), (*W), (*nW), (*nWdn), (*r), (*m));
   }
 }
-static void smp_ol_fft_twiddle_gen_5(struct nanos_args_5_t *const args)
+/*static*/ void smp_ol_fft_twiddle_gen_5(struct nanos_args_5_t *const args)
 {
   {
     smp_ol_fft_twiddle_gen_5_unpacked(&((*args).i), &((*args).in), &((*args).out), &((*args).W), &((*args).nW), &((*args).nWdn), &((*args).r), &((*args).m), &((*args).i2));
   }
 }
-static void smp_ol_fft_twiddle_gen_6_unpacked(int *const i1, COMPLEX **const in, COMPLEX **const out, COMPLEX **const W, int *const nW, int *const nWdn, int *const r, int *const m, int *const i2)
+/*static*/ void smp_ol_fft_twiddle_gen_6_unpacked(int *const i1, COMPLEX **const in, COMPLEX **const out, COMPLEX **const W, int *const nW, int *const nWdn, int *const r, int *const m, int *const i2)
 {
   {
     fft_twiddle_gen((*i2), (*i1), (*in), (*out), (*W), (*nW), (*nWdn), (*r), (*m));
   }
 }
-static void smp_ol_fft_twiddle_gen_6(struct nanos_args_6_t *const args)
+/*static*/ void smp_ol_fft_twiddle_gen_6(struct nanos_args_6_t *const args)
 {
   {
     smp_ol_fft_twiddle_gen_6_unpacked(&((*args).i1), &((*args).in), &((*args).out), &((*args).W), &((*args).nW), &((*args).nWdn), &((*args).r), &((*args).m), &((*args).i2));
   }
 }
-static void smp_ol_fft_twiddle_2_7_unpacked(int *const a, COMPLEX **const in, COMPLEX **const out, COMPLEX **const W, int *const nW, int *const nWdn, int *const m, int *const ab)
+/*static*/ void smp_ol_fft_twiddle_2_7_unpacked(int *const a, COMPLEX **const in, COMPLEX **const out, COMPLEX **const W, int *const nW, int *const nWdn, int *const m, int *const ab)
 {
   {
     fft_twiddle_2((*a), (*ab), (*in), (*out), (*W), (*nW), (*nWdn), (*m));
   }
 }
-static void smp_ol_fft_twiddle_2_7(struct nanos_args_7_t *const args)
+/*static*/ void smp_ol_fft_twiddle_2_7(struct nanos_args_7_t *const args)
 {
   {
     smp_ol_fft_twiddle_2_7_unpacked(&((*args).a), &((*args).in), &((*args).out), &((*args).W), &((*args).nW), &((*args).nWdn), &((*args).m), &((*args).ab));
   }
 }
-static void smp_ol_fft_twiddle_2_8_unpacked(int *const b, COMPLEX **const in, COMPLEX **const out, COMPLEX **const W, int *const nW, int *const nWdn, int *const m, int *const ab)
+/*static*/ void smp_ol_fft_twiddle_2_8_unpacked(int *const b, COMPLEX **const in, COMPLEX **const out, COMPLEX **const W, int *const nW, int *const nWdn, int *const m, int *const ab)
 {
   {
     fft_twiddle_2((*ab), (*b), (*in), (*out), (*W), (*nW), (*nWdn), (*m));
   }
 }
-static void smp_ol_fft_twiddle_2_8(struct nanos_args_8_t *const args)
+/*static*/ void smp_ol_fft_twiddle_2_8(struct nanos_args_8_t *const args)
 {
   {
     smp_ol_fft_twiddle_2_8_unpacked(&((*args).b), &((*args).in), &((*args).out), &((*args).W), &((*args).nW), &((*args).nWdn), &((*args).m), &((*args).ab));
   }
 }
-static void smp_ol_fft_unshuffle_2_9_unpacked(int *const a, COMPLEX **const in, COMPLEX **const out, int *const m, int *const ab)
+/*static*/ void smp_ol_fft_unshuffle_2_9_unpacked(int *const a, COMPLEX **const in, COMPLEX **const out, int *const m, int *const ab)
 {
   {
     fft_unshuffle_2((*a), (*ab), (*in), (*out), (*m));
   }
 }
-static void smp_ol_fft_unshuffle_2_9(struct nanos_args_9_t *const args)
+/*static*/ void smp_ol_fft_unshuffle_2_9(struct nanos_args_9_t *const args)
 {
   {
     smp_ol_fft_unshuffle_2_9_unpacked(&((*args).a), &((*args).in), &((*args).out), &((*args).m), &((*args).ab));
   }
 }
-static void smp_ol_fft_unshuffle_2_10_unpacked(int *const b, COMPLEX **const in, COMPLEX **const out, int *const m, int *const ab)
+/*static*/ void smp_ol_fft_unshuffle_2_10_unpacked(int *const b, COMPLEX **const in, COMPLEX **const out, int *const m, int *const ab)
 {
   {
     fft_unshuffle_2((*ab), (*b), (*in), (*out), (*m));
   }
 }
-static void smp_ol_fft_unshuffle_2_10(struct nanos_args_10_t *const args)
+/*static*/ void smp_ol_fft_unshuffle_2_10(struct nanos_args_10_t *const args)
 {
   {
     smp_ol_fft_unshuffle_2_10_unpacked(&((*args).b), &((*args).in), &((*args).out), &((*args).m), &((*args).ab));
   }
 }
-static void smp_ol_fft_twiddle_4_11_unpacked(int *const a, COMPLEX **const in, COMPLEX **const out, COMPLEX **const W, int *const nW, int *const nWdn, int *const m, int *const ab)
+/*static*/ void smp_ol_fft_twiddle_4_11_unpacked(int *const a, COMPLEX **const in, COMPLEX **const out, COMPLEX **const W, int *const nW, int *const nWdn, int *const m, int *const ab)
 {
   {
     fft_twiddle_4((*a), (*ab), (*in), (*out), (*W), (*nW), (*nWdn), (*m));
   }
 }
-static void smp_ol_fft_twiddle_4_11(struct nanos_args_11_t *const args)
+/*static*/ void smp_ol_fft_twiddle_4_11(struct nanos_args_11_t *const args)
 {
   {
     smp_ol_fft_twiddle_4_11_unpacked(&((*args).a), &((*args).in), &((*args).out), &((*args).W), &((*args).nW), &((*args).nWdn), &((*args).m), &((*args).ab));
   }
 }
-static void smp_ol_fft_twiddle_4_12_unpacked(int *const b, COMPLEX **const in, COMPLEX **const out, COMPLEX **const W, int *const nW, int *const nWdn, int *const m, int *const ab)
+/*static*/ void smp_ol_fft_twiddle_4_12_unpacked(int *const b, COMPLEX **const in, COMPLEX **const out, COMPLEX **const W, int *const nW, int *const nWdn, int *const m, int *const ab)
 {
   {
     fft_twiddle_4((*ab), (*b), (*in), (*out), (*W), (*nW), (*nWdn), (*m));
   }
 }
-static void smp_ol_fft_twiddle_4_12(struct nanos_args_12_t *const args)
+/*static*/ void smp_ol_fft_twiddle_4_12(struct nanos_args_12_t *const args)
 {
   {
     smp_ol_fft_twiddle_4_12_unpacked(&((*args).b), &((*args).in), &((*args).out), &((*args).W), &((*args).nW), &((*args).nWdn), &((*args).m), &((*args).ab));
   }
 }
-static void smp_ol_fft_unshuffle_4_13_unpacked(int *const a, COMPLEX **const in, COMPLEX **const out, int *const m, int *const ab)
+/*static*/ void smp_ol_fft_unshuffle_4_13_unpacked(int *const a, COMPLEX **const in, COMPLEX **const out, int *const m, int *const ab)
 {
   {
     fft_unshuffle_4((*a), (*ab), (*in), (*out), (*m));
   }
 }
-static void smp_ol_fft_unshuffle_4_13(struct nanos_args_13_t *const args)
+/*static*/ void smp_ol_fft_unshuffle_4_13(struct nanos_args_13_t *const args)
 {
   {
     smp_ol_fft_unshuffle_4_13_unpacked(&((*args).a), &((*args).in), &((*args).out), &((*args).m), &((*args).ab));
   }
 }
-static void smp_ol_fft_unshuffle_4_14_unpacked(int *const b, COMPLEX **const in, COMPLEX **const out, int *const m, int *const ab)
+/*static*/ void smp_ol_fft_unshuffle_4_14_unpacked(int *const b, COMPLEX **const in, COMPLEX **const out, int *const m, int *const ab)
 {
   {
     fft_unshuffle_4((*ab), (*b), (*in), (*out), (*m));
   }
 }
-static void smp_ol_fft_unshuffle_4_14(struct nanos_args_14_t *const args)
+/*static*/ void smp_ol_fft_unshuffle_4_14(struct nanos_args_14_t *const args)
 {
   {
     smp_ol_fft_unshuffle_4_14_unpacked(&((*args).b), &((*args).in), &((*args).out), &((*args).m), &((*args).ab));
   }
 }
-static void smp_ol_fft_twiddle_8_15_unpacked(int *const a, COMPLEX **const in, COMPLEX **const out, COMPLEX **const W, int *const nW, int *const nWdn, int *const m, int *const ab)
+/*static*/ void smp_ol_fft_twiddle_8_15_unpacked(int *const a, COMPLEX **const in, COMPLEX **const out, COMPLEX **const W, int *const nW, int *const nWdn, int *const m, int *const ab)
 {
   {
     fft_twiddle_8((*a), (*ab), (*in), (*out), (*W), (*nW), (*nWdn), (*m));
   }
 }
-static void smp_ol_fft_twiddle_8_15(struct nanos_args_15_t *const args)
+/*static*/ void smp_ol_fft_twiddle_8_15(struct nanos_args_15_t *const args)
 {
   {
     smp_ol_fft_twiddle_8_15_unpacked(&((*args).a), &((*args).in), &((*args).out), &((*args).W), &((*args).nW), &((*args).nWdn), &((*args).m), &((*args).ab));
   }
 }
-static void smp_ol_fft_twiddle_8_16_unpacked(int *const b, COMPLEX **const in, COMPLEX **const out, COMPLEX **const W, int *const nW, int *const nWdn, int *const m, int *const ab)
+/*static*/ void smp_ol_fft_twiddle_8_16_unpacked(int *const b, COMPLEX **const in, COMPLEX **const out, COMPLEX **const W, int *const nW, int *const nWdn, int *const m, int *const ab)
 {
   {
     fft_twiddle_8((*ab), (*b), (*in), (*out), (*W), (*nW), (*nWdn), (*m));
   }
 }
-static void smp_ol_fft_twiddle_8_16(struct nanos_args_16_t *const args)
+/*static*/ void smp_ol_fft_twiddle_8_16(struct nanos_args_16_t *const args)
 {
   {
     smp_ol_fft_twiddle_8_16_unpacked(&((*args).b), &((*args).in), &((*args).out), &((*args).W), &((*args).nW), &((*args).nWdn), &((*args).m), &((*args).ab));
   }
 }
-static void smp_ol_fft_unshuffle_8_17_unpacked(int *const a, COMPLEX **const in, COMPLEX **const out, int *const m, int *const ab)
+/*static*/ void smp_ol_fft_unshuffle_8_17_unpacked(int *const a, COMPLEX **const in, COMPLEX **const out, int *const m, int *const ab)
 {
   {
     fft_unshuffle_8((*a), (*ab), (*in), (*out), (*m));
   }
 }
-static void smp_ol_fft_unshuffle_8_17(struct nanos_args_17_t *const args)
+/*static*/ void smp_ol_fft_unshuffle_8_17(struct nanos_args_17_t *const args)
 {
   {
     smp_ol_fft_unshuffle_8_17_unpacked(&((*args).a), &((*args).in), &((*args).out), &((*args).m), &((*args).ab));
   }
 }
-static void smp_ol_fft_unshuffle_8_18_unpacked(int *const b, COMPLEX **const in, COMPLEX **const out, int *const m, int *const ab)
+/*static*/ void smp_ol_fft_unshuffle_8_18_unpacked(int *const b, COMPLEX **const in, COMPLEX **const out, int *const m, int *const ab)
 {
   {
     fft_unshuffle_8((*ab), (*b), (*in), (*out), (*m));
   }
 }
-static void smp_ol_fft_unshuffle_8_18(struct nanos_args_18_t *const args)
+/*static*/ void smp_ol_fft_unshuffle_8_18(struct nanos_args_18_t *const args)
 {
   {
     smp_ol_fft_unshuffle_8_18_unpacked(&((*args).b), &((*args).in), &((*args).out), &((*args).m), &((*args).ab));
   }
 }
-static void smp_ol_fft_twiddle_16_19_unpacked(int *const a, COMPLEX **const in, COMPLEX **const out, COMPLEX **const W, int *const nW, int *const nWdn, int *const m, int *const ab)
+/*static*/ void smp_ol_fft_twiddle_16_19_unpacked(int *const a, COMPLEX **const in, COMPLEX **const out, COMPLEX **const W, int *const nW, int *const nWdn, int *const m, int *const ab)
 {
   {
     fft_twiddle_16((*a), (*ab), (*in), (*out), (*W), (*nW), (*nWdn), (*m));
   }
 }
-static void smp_ol_fft_twiddle_16_19(struct nanos_args_19_t *const args)
+/*static*/ void smp_ol_fft_twiddle_16_19(struct nanos_args_19_t *const args)
 {
   {
     smp_ol_fft_twiddle_16_19_unpacked(&((*args).a), &((*args).in), &((*args).out), &((*args).W), &((*args).nW), &((*args).nWdn), &((*args).m), &((*args).ab));
   }
 }
-static void smp_ol_fft_twiddle_16_20_unpacked(int *const b, COMPLEX **const in, COMPLEX **const out, COMPLEX **const W, int *const nW, int *const nWdn, int *const m, int *const ab)
+/*static*/ void smp_ol_fft_twiddle_16_20_unpacked(int *const b, COMPLEX **const in, COMPLEX **const out, COMPLEX **const W, int *const nW, int *const nWdn, int *const m, int *const ab)
 {
   {
     fft_twiddle_16((*ab), (*b), (*in), (*out), (*W), (*nW), (*nWdn), (*m));
   }
 }
-static void smp_ol_fft_twiddle_16_20(struct nanos_args_20_t *const args)
+/*static*/ void smp_ol_fft_twiddle_16_20(struct nanos_args_20_t *const args)
 {
   {
     smp_ol_fft_twiddle_16_20_unpacked(&((*args).b), &((*args).in), &((*args).out), &((*args).W), &((*args).nW), &((*args).nWdn), &((*args).m), &((*args).ab));
   }
 }
-static void smp_ol_fft_unshuffle_16_21_unpacked(int *const a, COMPLEX **const in, COMPLEX **const out, int *const m, int *const ab)
+/*static*/ void smp_ol_fft_unshuffle_16_21_unpacked(int *const a, COMPLEX **const in, COMPLEX **const out, int *const m, int *const ab)
 {
   {
     fft_unshuffle_16((*a), (*ab), (*in), (*out), (*m));
   }
 }
-static void smp_ol_fft_unshuffle_16_21(struct nanos_args_21_t *const args)
+/*static*/ void smp_ol_fft_unshuffle_16_21(struct nanos_args_21_t *const args)
 {
   {
     smp_ol_fft_unshuffle_16_21_unpacked(&((*args).a), &((*args).in), &((*args).out), &((*args).m), &((*args).ab));
   }
 }
-static void smp_ol_fft_unshuffle_16_22_unpacked(int *const b, COMPLEX **const in, COMPLEX **const out, int *const m, int *const ab)
+/*static*/ void smp_ol_fft_unshuffle_16_22_unpacked(int *const b, COMPLEX **const in, COMPLEX **const out, int *const m, int *const ab)
 {
   {
     fft_unshuffle_16((*ab), (*b), (*in), (*out), (*m));
   }
 }
-static void smp_ol_fft_unshuffle_16_22(struct nanos_args_22_t *const args)
+/*static*/ void smp_ol_fft_unshuffle_16_22(struct nanos_args_22_t *const args)
 {
   {
     smp_ol_fft_unshuffle_16_22_unpacked(&((*args).b), &((*args).in), &((*args).out), &((*args).m), &((*args).ab));
   }
 }
-static void smp_ol_fft_twiddle_32_23_unpacked(int *const a, COMPLEX **const in, COMPLEX **const out, COMPLEX **const W, int *const nW, int *const nWdn, int *const m, int *const ab)
+/*static*/ void smp_ol_fft_twiddle_32_23_unpacked(int *const a, COMPLEX **const in, COMPLEX **const out, COMPLEX **const W, int *const nW, int *const nWdn, int *const m, int *const ab)
 {
   {
     fft_twiddle_32((*a), (*ab), (*in), (*out), (*W), (*nW), (*nWdn), (*m));
   }
 }
-static void smp_ol_fft_twiddle_32_23(struct nanos_args_23_t *const args)
+/*static*/ void smp_ol_fft_twiddle_32_23(struct nanos_args_23_t *const args)
 {
   {
     smp_ol_fft_twiddle_32_23_unpacked(&((*args).a), &((*args).in), &((*args).out), &((*args).W), &((*args).nW), &((*args).nWdn), &((*args).m), &((*args).ab));
   }
 }
-static void smp_ol_fft_twiddle_32_24_unpacked(int *const b, COMPLEX **const in, COMPLEX **const out, COMPLEX **const W, int *const nW, int *const nWdn, int *const m, int *const ab)
+/*static*/ void smp_ol_fft_twiddle_32_24_unpacked(int *const b, COMPLEX **const in, COMPLEX **const out, COMPLEX **const W, int *const nW, int *const nWdn, int *const m, int *const ab)
 {
   {
     fft_twiddle_32((*ab), (*b), (*in), (*out), (*W), (*nW), (*nWdn), (*m));
   }
 }
-static void smp_ol_fft_twiddle_32_24(struct nanos_args_24_t *const args)
+/*static*/ void smp_ol_fft_twiddle_32_24(struct nanos_args_24_t *const args)
 {
   {
     smp_ol_fft_twiddle_32_24_unpacked(&((*args).b), &((*args).in), &((*args).out), &((*args).W), &((*args).nW), &((*args).nWdn), &((*args).m), &((*args).ab));
   }
 }
-static void smp_ol_fft_unshuffle_32_25_unpacked(int *const a, COMPLEX **const in, COMPLEX **const out, int *const m, int *const ab)
+/*static*/ void smp_ol_fft_unshuffle_32_25_unpacked(int *const a, COMPLEX **const in, COMPLEX **const out, int *const m, int *const ab)
 {
   {
     fft_unshuffle_32((*a), (*ab), (*in), (*out), (*m));
   }
 }
-static void smp_ol_fft_unshuffle_32_25(struct nanos_args_25_t *const args)
+/*static*/ void smp_ol_fft_unshuffle_32_25(struct nanos_args_25_t *const args)
 {
   {
     smp_ol_fft_unshuffle_32_25_unpacked(&((*args).a), &((*args).in), &((*args).out), &((*args).m), &((*args).ab));
   }
 }
-static void smp_ol_fft_unshuffle_32_26_unpacked(int *const b, COMPLEX **const in, COMPLEX **const out, int *const m, int *const ab)
+/*static*/ void smp_ol_fft_unshuffle_32_26_unpacked(int *const b, COMPLEX **const in, COMPLEX **const out, int *const m, int *const ab)
 {
   {
     fft_unshuffle_32((*ab), (*b), (*in), (*out), (*m));
   }
 }
-static void smp_ol_fft_unshuffle_32_26(struct nanos_args_26_t *const args)
+/*static*/ void smp_ol_fft_unshuffle_32_26(struct nanos_args_26_t *const args)
 {
   {
     smp_ol_fft_unshuffle_32_26_unpacked(&((*args).b), &((*args).in), &((*args).out), &((*args).m), &((*args).ab));
   }
 }
-static void smp_ol_fft_aux_27_unpacked(COMPLEX **const in, COMPLEX **const out, int *const m)
+/*static*/ void smp_ol_fft_aux_27_unpacked(COMPLEX **const in, COMPLEX **const out, int *const m)
 {
   {
     fft_unshuffle_32(0, (*m), (*in), (*out), (*m));
   }
 }
-static void smp_ol_fft_aux_27(struct nanos_args_27_t *const args)
+/*static*/ void smp_ol_fft_aux_27(struct nanos_args_27_t *const args)
 {
   {
     smp_ol_fft_aux_27_unpacked(&((*args).in), &((*args).out), &((*args).m));
   }
 }
-static void smp_ol_fft_aux_28_unpacked(COMPLEX **const in, COMPLEX **const out, int *const m)
+/*static*/ void smp_ol_fft_aux_28_unpacked(COMPLEX **const in, COMPLEX **const out, int *const m)
 {
   {
     fft_unshuffle_16(0, (*m), (*in), (*out), (*m));
   }
 }
-static void smp_ol_fft_aux_28(struct nanos_args_28_t *const args)
+/*static*/ void smp_ol_fft_aux_28(struct nanos_args_28_t *const args)
 {
   {
     smp_ol_fft_aux_28_unpacked(&((*args).in), &((*args).out), &((*args).m));
   }
 }
-static void smp_ol_fft_aux_29_unpacked(COMPLEX **const in, COMPLEX **const out, int *const m)
+/*static*/ void smp_ol_fft_aux_29_unpacked(COMPLEX **const in, COMPLEX **const out, int *const m)
 {
   {
     fft_unshuffle_8(0, (*m), (*in), (*out), (*m));
   }
 }
-static void smp_ol_fft_aux_29(struct nanos_args_29_t *const args)
+/*static*/ void smp_ol_fft_aux_29(struct nanos_args_29_t *const args)
 {
   {
     smp_ol_fft_aux_29_unpacked(&((*args).in), &((*args).out), &((*args).m));
   }
 }
-static void smp_ol_fft_aux_30_unpacked(COMPLEX **const in, COMPLEX **const out, int *const m)
+/*static*/ void smp_ol_fft_aux_30_unpacked(COMPLEX **const in, COMPLEX **const out, int *const m)
 {
   {
     fft_unshuffle_4(0, (*m), (*in), (*out), (*m));
   }
 }
-static void smp_ol_fft_aux_30(struct nanos_args_30_t *const args)
+/*static*/ void smp_ol_fft_aux_30(struct nanos_args_30_t *const args)
 {
   {
     smp_ol_fft_aux_30_unpacked(&((*args).in), &((*args).out), &((*args).m));
   }
 }
-static void smp_ol_fft_aux_31_unpacked(COMPLEX **const in, COMPLEX **const out, int *const m)
+/*static*/ void smp_ol_fft_aux_31_unpacked(COMPLEX **const in, COMPLEX **const out, int *const m)
 {
   {
     fft_unshuffle_2(0, (*m), (*in), (*out), (*m));
   }
 }
-static void smp_ol_fft_aux_31(struct nanos_args_31_t *const args)
+/*static*/ void smp_ol_fft_aux_31(struct nanos_args_31_t *const args)
 {
   {
     smp_ol_fft_aux_31_unpacked(&((*args).in), &((*args).out), &((*args).m));
   }
 }
-static void smp_ol_fft_aux_32_unpacked(COMPLEX **const in, COMPLEX **const out, int **const factors, COMPLEX **const W, int *const nW, int *const m, int *const k)
+/*static*/ void smp_ol_fft_aux_32_unpacked(COMPLEX **const in, COMPLEX **const out, int **const factors, COMPLEX **const W, int *const nW, int *const m, int *const k)
 {
   {
     fft_aux((*m), (*out) + (*k), (*in) + (*k), (*factors) + 1, (*W), (*nW));
   }
 }
-static void smp_ol_fft_aux_32(struct nanos_args_32_t *const args)
+/*static*/ void smp_ol_fft_aux_32(struct nanos_args_32_t *const args)
 {
   {
     smp_ol_fft_aux_32_unpacked(&((*args).in), &((*args).out), &((*args).factors), &((*args).W), &((*args).nW), &((*args).m), &((*args).k));
   }
 }
-static void smp_ol_fft_aux_33_unpacked(int *const n, COMPLEX **const in, COMPLEX **const out, COMPLEX **const W, int *const nW, int *const m)
+/*static*/ void smp_ol_fft_aux_33_unpacked(int *const n, COMPLEX **const in, COMPLEX **const out, COMPLEX **const W, int *const nW, int *const m)
 {
   {
     fft_twiddle_2(0, (*m), (*in), (*out), (*W), (*nW), (*nW) / (*n), (*m));
   }
 }
-static void smp_ol_fft_aux_33(struct nanos_args_33_t *const args)
+/*static*/ void smp_ol_fft_aux_33(struct nanos_args_33_t *const args)
 {
   {
     smp_ol_fft_aux_33_unpacked(&((*args).n), &((*args).in), &((*args).out), &((*args).W), &((*args).nW), &((*args).m));
   }
 }
-static void smp_ol_fft_aux_34_unpacked(int *const n, COMPLEX **const in, COMPLEX **const out, COMPLEX **const W, int *const nW, int *const m)
+/*static*/ void smp_ol_fft_aux_34_unpacked(int *const n, COMPLEX **const in, COMPLEX **const out, COMPLEX **const W, int *const nW, int *const m)
 {
   {
     fft_twiddle_4(0, (*m), (*in), (*out), (*W), (*nW), (*nW) / (*n), (*m));
   }
 }
-static void smp_ol_fft_aux_34(struct nanos_args_34_t *const args)
+/*static*/ void smp_ol_fft_aux_34(struct nanos_args_34_t *const args)
 {
   {
     smp_ol_fft_aux_34_unpacked(&((*args).n), &((*args).in), &((*args).out), &((*args).W), &((*args).nW), &((*args).m));
   }
 }
-static void smp_ol_fft_aux_35_unpacked(int *const n, COMPLEX **const in, COMPLEX **const out, COMPLEX **const W, int *const nW, int *const m)
+/*static*/ void smp_ol_fft_aux_35_unpacked(int *const n, COMPLEX **const in, COMPLEX **const out, COMPLEX **const W, int *const nW, int *const m)
 {
   {
     fft_twiddle_8(0, (*m), (*in), (*out), (*W), (*nW), (*nW) / (*n), (*m));
   }
 }
-static void smp_ol_fft_aux_35(struct nanos_args_35_t *const args)
+/*static*/ void smp_ol_fft_aux_35(struct nanos_args_35_t *const args)
 {
   {
     smp_ol_fft_aux_35_unpacked(&((*args).n), &((*args).in), &((*args).out), &((*args).W), &((*args).nW), &((*args).m));
   }
 }
-static void smp_ol_fft_aux_36_unpacked(int *const n, COMPLEX **const in, COMPLEX **const out, COMPLEX **const W, int *const nW, int *const m)
+/*static*/ void smp_ol_fft_aux_36_unpacked(int *const n, COMPLEX **const in, COMPLEX **const out, COMPLEX **const W, int *const nW, int *const m)
 {
   {
     fft_twiddle_16(0, (*m), (*in), (*out), (*W), (*nW), (*nW) / (*n), (*m));
   }
 }
-static void smp_ol_fft_aux_36(struct nanos_args_36_t *const args)
+/*static*/ void smp_ol_fft_aux_36(struct nanos_args_36_t *const args)
 {
   {
     smp_ol_fft_aux_36_unpacked(&((*args).n), &((*args).in), &((*args).out), &((*args).W), &((*args).nW), &((*args).m));
   }
 }
-static void smp_ol_fft_aux_37_unpacked(int *const n, COMPLEX **const in, COMPLEX **const out, COMPLEX **const W, int *const nW, int *const m)
+/*static*/ void smp_ol_fft_aux_37_unpacked(int *const n, COMPLEX **const in, COMPLEX **const out, COMPLEX **const W, int *const nW, int *const m)
 {
   {
     fft_twiddle_32(0, (*m), (*in), (*out), (*W), (*nW), (*nW) / (*n), (*m));
   }
 }
-static void smp_ol_fft_aux_37(struct nanos_args_37_t *const args)
+/*static*/ void smp_ol_fft_aux_37(struct nanos_args_37_t *const args)
 {
   {
     smp_ol_fft_aux_37_unpacked(&((*args).n), &((*args).in), &((*args).out), &((*args).W), &((*args).nW), &((*args).m));
   }
 }
-static void smp_ol_fft_aux_38_unpacked(int *const n, COMPLEX **const in, COMPLEX **const out, COMPLEX **const W, int *const nW, int *const r, int *const m)
+/*static*/ void smp_ol_fft_aux_38_unpacked(int *const n, COMPLEX **const in, COMPLEX **const out, COMPLEX **const W, int *const nW, int *const r, int *const m)
 {
   {
     fft_twiddle_gen(0, (*m), (*in), (*out), (*W), (*nW), (*nW) / (*n), (*r), (*m));
   }
 }
-static void smp_ol_fft_aux_38(struct nanos_args_38_t *const args)
+/*static*/ void smp_ol_fft_aux_38(struct nanos_args_38_t *const args)
 {
   {
     smp_ol_fft_aux_38_unpacked(&((*args).n), &((*args).in), &((*args).out), &((*args).W), &((*args).nW), &((*args).r), &((*args).m));
   }
 }
-static void smp_ol_fft_39_unpacked(int *const n, COMPLEX **const W)
+/*static*/ void smp_ol_fft_39_unpacked(int *const n, COMPLEX **const W)
 {
   {
     compute_w_coefficients((*n), 0, (*n) / 2, (*W));
   }
 }
-static void smp_ol_fft_39(struct nanos_args_39_t *const args)
+/*static*/ void smp_ol_fft_39(struct nanos_args_39_t *const args)
 {
   {
     smp_ol_fft_39_unpacked((*args).n, (*args).W);

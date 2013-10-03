@@ -402,7 +402,7 @@ double tracepath(int tsb1, int tsb2, int *print_ptr, int *displ, int seq1, int s
     return (100.0 * (double) count);
 }/*}}}*/
 
-static void smp_ol_pairalign_0_unpacked(int *const gap_pos1, int *const gap_pos2, int *const mat_avscore, int *const nseqs, int **const seqlen_array, int **const bench_output, double *const pw_go_penalty, double *const pw_ge_penalty, char ***const seq_array, double *const gap_open_scale, double *const gap_extend_scale, int *const dnaFlag, int *const n, int *const m, int *const si, int *const sj, int *const len1)
+/*static*/ void smp_ol_pairalign_0_unpacked(int *const gap_pos1, int *const gap_pos2, int *const mat_avscore, int *const nseqs, int **const seqlen_array, int **const bench_output, double *const pw_go_penalty, double *const pw_ge_penalty, char ***const seq_array, double *const gap_open_scale, double *const gap_extend_scale, int *const dnaFlag, int *const n, int *const m, int *const si, int *const sj, int *const len1)
 {/*{{{*/
     int i;
     int len2;
@@ -477,14 +477,14 @@ struct  nanos_args_0_t
     int len1;
 };/*}}}*/
 
-static void smp_ol_pairalign_0(struct nanos_args_0_t *const args)
+/*static*/ void smp_ol_pairalign_0(struct nanos_args_0_t *const args)
 {/*{{{*/
     {
         smp_ol_pairalign_0_unpacked((*args).gap_pos1, (*args).gap_pos2, (*args).mat_avscore, (*args).nseqs, (*args).seqlen_array, (*args).bench_output, (*args).pw_go_penalty, (*args).pw_ge_penalty, (*args).seq_array, (*args).gap_open_scale, (*args).gap_extend_scale, (*args).dnaFlag, &((*args).n), &((*args).m), &((*args).si), &((*args).sj), &((*args).len1));
     }
 }/*}}}*/
 
-static void smp_ol_pairalign_1_unpacked(int *const gap_pos1, int *const gap_pos2, int *const mat_avscore, int *const nseqs, int **const seqlen_array, int **const bench_output, double *const pw_go_penalty, double *const pw_ge_penalty, char ***const seq_array, double *const gap_open_scale, double *const gap_extend_scale, int *const dnaFlag, int *const i, int *const n, int *const m, int *const si, int *const sj, int *const len1, int *const len2, double *const gg, double *const mm_score)
+/*static*/ void smp_ol_pairalign_1_unpacked(int *const gap_pos1, int *const gap_pos2, int *const mat_avscore, int *const nseqs, int **const seqlen_array, int **const bench_output, double *const pw_go_penalty, double *const pw_ge_penalty, char ***const seq_array, double *const gap_open_scale, double *const gap_extend_scale, int *const dnaFlag, int *const i, int *const n, int *const m, int *const si, int *const sj, int *const len1, int *const len2, double *const gg, double *const mm_score)
 {/*{{{*/
     struct mir_twc_t* twc = mir_twc_create();
 
@@ -558,7 +558,7 @@ struct  nanos_args_1_t
     double *mm_score;
 };/*}}}*/
 
-static void smp_ol_pairalign_1(struct nanos_args_1_t *const args)
+/*static*/ void smp_ol_pairalign_1(struct nanos_args_1_t *const args)
 {/*{{{*/
     {
         smp_ol_pairalign_1_unpacked((*args).gap_pos1, (*args).gap_pos2, (*args).mat_avscore, (*args).nseqs, (*args).seqlen_array, (*args).bench_output, (*args).pw_go_penalty, (*args).pw_ge_penalty, (*args).seq_array, (*args).gap_open_scale, (*args).gap_extend_scale, (*args).dnaFlag, (*args).i, (*args).n, (*args).m, (*args).si, (*args).sj, (*args).len1, (*args).len2, (*args).gg, (*args).mm_score);

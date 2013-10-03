@@ -420,14 +420,14 @@ struct  nanos_args_0_t
   struct Village *vlist;
 };/*}}}*/
 
-static void smp_ol_sim_village_par_0_unpacked(struct Village **const vlist)
+/*static*/ void smp_ol_sim_village_par_0_unpacked(struct Village **const vlist)
 {/*{{{*/
   {
     sim_village_par((*vlist));
   }
 }/*}}}*/
 
-static void smp_ol_sim_village_par_0(struct nanos_args_0_t *const args)
+/*static*/ void smp_ol_sim_village_par_0(struct nanos_args_0_t *const args)
 {/*{{{*/
   {
     smp_ol_sim_village_par_0_unpacked(&((*args).vlist));

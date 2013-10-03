@@ -22,6 +22,11 @@ MIR revision from 2013 August or later
 [Optional] Graphviz
 [Optional] ZGRViewer
 
+=== Pin setup ===
+Edit /local/ananya/survival_tools/pin-2.12-58423-gcc.4.4.7-linux/source/tools/Config/makefile.unix.config
+
+Add -fopenmp to these variables: TOOL_LDFLAGS_NOOPT, TOOL_CXXFLAGS_NOOPT
+
 === Build ===
 [ananya@gothmog]$ make PIN_ROOT=/local/ananya/survival_tools/pin-2.12-58423-gcc.4.4.7-linux
 
@@ -59,7 +64,7 @@ Updating statistics in parallel ...
 Using 48 threads
 Updating memory footprint ...
 Writing detail to file: fib_call_graph.detail.csv ...
-[ananya@gothmog]$ mv mir-task-graph fib_call_graph
+[ananya@gothmog]$ mv mir-task-graph fib_task_graph
 [ananya@gothmog]$ Rscript mir-callgraph-taskgraph-id-bind.R fib_task_graph fib_call_graph.detail.csv 
 [1] "Writing file fib_call_graph.detail.csv.bind.csv"
 [ananya@gothmog]$ Rscript mir-task-graph-plot.R fib_task_graph 

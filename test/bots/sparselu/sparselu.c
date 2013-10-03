@@ -207,7 +207,7 @@ typedef struct _nx_data_env_0_t_tag
     int kk_0;
 } _nx_data_env_0_t;/*}}}*/
 
-static void _smp__ol_sparselu_par_call_0(void* arg)
+/*static*/ void _smp__ol_sparselu_par_call_0(void* arg)
 {/*{{{*/
     _nx_data_env_0_t* _args = (_nx_data_env_0_t* ) arg;  
     int *NB_0 = (int *) (_args->NB_0);
@@ -225,7 +225,7 @@ typedef struct _nx_data_env_1_t_tag
     int kk_0;
 } _nx_data_env_1_t;/*}}}*/
 
-static void _smp__ol_sparselu_par_call_1(void* arg)
+/*static*/ void _smp__ol_sparselu_par_call_1(void* arg)
 {/*{{{*/
     _nx_data_env_1_t* _args = (_nx_data_env_1_t* ) arg; 
     int *NB_0 = (int *) (_args->NB_0);
@@ -244,7 +244,7 @@ typedef struct _nx_data_env_2_t_tag
     int kk_0;
 } _nx_data_env_2_t;/*}}}*/
 
-static void _smp__ol_sparselu_par_call_2(void* arg)
+/*static*/ void _smp__ol_sparselu_par_call_2(void* arg)
 {/*{{{*/
     _nx_data_env_2_t* _args = (_nx_data_env_2_t* ) arg; 
     int *NB_0 = (int *) (_args->NB_0);
@@ -265,7 +265,7 @@ typedef struct _nx_data_env_3_t_tag
     int kk_0;
 } _nx_data_env_3_t;/*}}}*/
 
-static void _smp__ol_sparselu_par_call_3(void* arg)
+/*static*/ void _smp__ol_sparselu_par_call_3(void* arg)
 {/*{{{*/
     // Task wait counter 
     struct mir_twc_t* twc = mir_twc_create();

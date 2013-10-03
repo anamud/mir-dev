@@ -597,7 +597,7 @@ struct  nanos_args_0_t
   REAL *M2;
 };/*}}}*/
 
-static void smp_ol_OptimizedStrassenMultiply_par_0(struct nanos_args_0_t *const args);
+/*static*/ void smp_ol_OptimizedStrassenMultiply_par_0(struct nanos_args_0_t *const args);
 
 struct  nanos_args_1_t
 {/*{{{*/
@@ -608,7 +608,7 @@ struct  nanos_args_1_t
   REAL *M5;
 };/*}}}*/
 
-static void smp_ol_OptimizedStrassenMultiply_par_1(struct nanos_args_1_t *const args);
+/*static*/ void smp_ol_OptimizedStrassenMultiply_par_1(struct nanos_args_1_t *const args);
 
 struct  nanos_args_2_t
 {/*{{{*/
@@ -619,7 +619,7 @@ struct  nanos_args_2_t
   REAL *T1sMULT;
 };/*}}}*/
 
-static void smp_ol_OptimizedStrassenMultiply_par_2(struct nanos_args_2_t *const args);
+/*static*/ void smp_ol_OptimizedStrassenMultiply_par_2(struct nanos_args_2_t *const args);
 
 struct  nanos_args_3_t
 {/*{{{*/
@@ -631,7 +631,7 @@ struct  nanos_args_3_t
   REAL *S7;
 };/*}}}*/
 
-static void smp_ol_OptimizedStrassenMultiply_par_3(struct nanos_args_3_t *const args);
+/*static*/ void smp_ol_OptimizedStrassenMultiply_par_3(struct nanos_args_3_t *const args);
 
 struct  nanos_args_4_t
 {/*{{{*/
@@ -645,7 +645,7 @@ struct  nanos_args_4_t
   REAL *B21;
 };/*}}}*/
 
-static void smp_ol_OptimizedStrassenMultiply_par_4(struct nanos_args_4_t *const args);
+/*static*/ void smp_ol_OptimizedStrassenMultiply_par_4(struct nanos_args_4_t *const args);
 
 struct  nanos_args_5_t
 {/*{{{*/
@@ -658,7 +658,7 @@ struct  nanos_args_5_t
   REAL *S4;
 };/*}}}*/
 
-static void smp_ol_OptimizedStrassenMultiply_par_5(struct nanos_args_5_t *const args);
+/*static*/ void smp_ol_OptimizedStrassenMultiply_par_5(struct nanos_args_5_t *const args);
 
 struct  nanos_args_6_t
 {/*{{{*/
@@ -671,100 +671,100 @@ struct  nanos_args_6_t
   REAL *S8;
 };/*}}}*/
 
-static void smp_ol_OptimizedStrassenMultiply_par_6(struct nanos_args_6_t *const args);
+/*static*/ void smp_ol_OptimizedStrassenMultiply_par_6(struct nanos_args_6_t *const args);
 
-static void smp_ol_OptimizedStrassenMultiply_par_0_unpacked(REAL **const A, REAL **const B, unsigned int *const RowWidthA, unsigned int *const RowWidthB, int *const Depth, unsigned int *const QuadrantSize, REAL **const M2)
+/*static*/ void smp_ol_OptimizedStrassenMultiply_par_0_unpacked(REAL **const A, REAL **const B, unsigned int *const RowWidthA, unsigned int *const RowWidthB, int *const Depth, unsigned int *const QuadrantSize, REAL **const M2)
 {/*{{{*/
   {
     OptimizedStrassenMultiply_par((*M2), (*A), (*B), (*QuadrantSize), (*QuadrantSize), (*RowWidthA), (*RowWidthB), (*Depth) + 1);
   }
 }/*}}}*/
 
-static void smp_ol_OptimizedStrassenMultiply_par_0(struct nanos_args_0_t *const args)
+/*static*/ void smp_ol_OptimizedStrassenMultiply_par_0(struct nanos_args_0_t *const args)
 {/*{{{*/
   {
     smp_ol_OptimizedStrassenMultiply_par_0_unpacked(&((*args).A), &((*args).B), &((*args).RowWidthA), &((*args).RowWidthB), &((*args).Depth), &((*args).QuadrantSize), &((*args).M2));
   }
 }/*}}}*/
 
-static void smp_ol_OptimizedStrassenMultiply_par_1_unpacked(int *const Depth, unsigned int *const QuadrantSize, REAL **const S1, REAL **const S5, REAL **const M5)
+/*static*/ void smp_ol_OptimizedStrassenMultiply_par_1_unpacked(int *const Depth, unsigned int *const QuadrantSize, REAL **const S1, REAL **const S5, REAL **const M5)
 {/*{{{*/
   {
     OptimizedStrassenMultiply_par((*M5), (*S1), (*S5), (*QuadrantSize), (*QuadrantSize), (*QuadrantSize), (*QuadrantSize), (*Depth) + 1);
   }
 }/*}}}*/
 
-static void smp_ol_OptimizedStrassenMultiply_par_1(struct nanos_args_1_t *const args)
+/*static*/ void smp_ol_OptimizedStrassenMultiply_par_1(struct nanos_args_1_t *const args)
 {/*{{{*/
   {
     smp_ol_OptimizedStrassenMultiply_par_1_unpacked(&((*args).Depth), &((*args).QuadrantSize), &((*args).S1), &((*args).S5), &((*args).M5));
   }
 }/*}}}*/
 
-static void smp_ol_OptimizedStrassenMultiply_par_2_unpacked(int *const Depth, unsigned int *const QuadrantSize, REAL **const S2, REAL **const S6, REAL **const T1sMULT)
+/*static*/ void smp_ol_OptimizedStrassenMultiply_par_2_unpacked(int *const Depth, unsigned int *const QuadrantSize, REAL **const S2, REAL **const S6, REAL **const T1sMULT)
 {/*{{{*/
   {
     OptimizedStrassenMultiply_par((*T1sMULT), (*S2), (*S6), (*QuadrantSize), (*QuadrantSize), (*QuadrantSize), (*QuadrantSize), (*Depth) + 1);
   }
 }/*}}}*/
 
-static void smp_ol_OptimizedStrassenMultiply_par_2(struct nanos_args_2_t *const args)
+/*static*/ void smp_ol_OptimizedStrassenMultiply_par_2(struct nanos_args_2_t *const args)
 {/*{{{*/
   {
     smp_ol_OptimizedStrassenMultiply_par_2_unpacked(&((*args).Depth), &((*args).QuadrantSize), &((*args).S2), &((*args).S6), &((*args).T1sMULT));
   }
 }/*}}}*/
 
-static void smp_ol_OptimizedStrassenMultiply_par_3_unpacked(unsigned int *const RowWidthC, int *const Depth, unsigned int *const QuadrantSize, REAL **const C22, REAL **const S3, REAL **const S7)
+/*static*/ void smp_ol_OptimizedStrassenMultiply_par_3_unpacked(unsigned int *const RowWidthC, int *const Depth, unsigned int *const QuadrantSize, REAL **const C22, REAL **const S3, REAL **const S7)
 {/*{{{*/
   {
     OptimizedStrassenMultiply_par((*C22), (*S3), (*S7), (*QuadrantSize), (*RowWidthC), (*QuadrantSize), (*QuadrantSize), (*Depth) + 1);
   }
 }/*}}}*/
 
-static void smp_ol_OptimizedStrassenMultiply_par_3(struct nanos_args_3_t *const args)
+/*static*/ void smp_ol_OptimizedStrassenMultiply_par_3(struct nanos_args_3_t *const args)
 {/*{{{*/
   {
     smp_ol_OptimizedStrassenMultiply_par_3_unpacked(&((*args).RowWidthC), &((*args).Depth), &((*args).QuadrantSize), &((*args).C22), &((*args).S3), &((*args).S7));
   }
 }/*}}}*/
 
-static void smp_ol_OptimizedStrassenMultiply_par_4_unpacked(REAL **const C, unsigned int *const RowWidthC, unsigned int *const RowWidthA, unsigned int *const RowWidthB, int *const Depth, unsigned int *const QuadrantSize, REAL **const A12, REAL **const B21)
+/*static*/ void smp_ol_OptimizedStrassenMultiply_par_4_unpacked(REAL **const C, unsigned int *const RowWidthC, unsigned int *const RowWidthA, unsigned int *const RowWidthB, int *const Depth, unsigned int *const QuadrantSize, REAL **const A12, REAL **const B21)
 {/*{{{*/
   {
     OptimizedStrassenMultiply_par((*C), (*A12), (*B21), (*QuadrantSize), (*RowWidthC), (*RowWidthA), (*RowWidthB), (*Depth) + 1);
   }
 }/*}}}*/
 
-static void smp_ol_OptimizedStrassenMultiply_par_4(struct nanos_args_4_t *const args)
+/*static*/ void smp_ol_OptimizedStrassenMultiply_par_4(struct nanos_args_4_t *const args)
 {/*{{{*/
   {
     smp_ol_OptimizedStrassenMultiply_par_4_unpacked(&((*args).C), &((*args).RowWidthC), &((*args).RowWidthA), &((*args).RowWidthB), &((*args).Depth), &((*args).QuadrantSize), &((*args).A12), &((*args).B21));
   }
 }/*}}}*/
 
-static void smp_ol_OptimizedStrassenMultiply_par_5_unpacked(unsigned int *const RowWidthC, unsigned int *const RowWidthB, int *const Depth, unsigned int *const QuadrantSize, REAL **const C12, REAL **const B22, REAL **const S4)
+/*static*/ void smp_ol_OptimizedStrassenMultiply_par_5_unpacked(unsigned int *const RowWidthC, unsigned int *const RowWidthB, int *const Depth, unsigned int *const QuadrantSize, REAL **const C12, REAL **const B22, REAL **const S4)
 {/*{{{*/
   {
     OptimizedStrassenMultiply_par((*C12), (*S4), (*B22), (*QuadrantSize), (*RowWidthC), (*QuadrantSize), (*RowWidthB), (*Depth) + 1);
   }
 }/*}}}*/
 
-static void smp_ol_OptimizedStrassenMultiply_par_5(struct nanos_args_5_t *const args)
+/*static*/ void smp_ol_OptimizedStrassenMultiply_par_5(struct nanos_args_5_t *const args)
 {/*{{{*/
   {
     smp_ol_OptimizedStrassenMultiply_par_5_unpacked(&((*args).RowWidthC), &((*args).RowWidthB), &((*args).Depth), &((*args).QuadrantSize), &((*args).C12), &((*args).B22), &((*args).S4));
   }
 }/*}}}*/
 
-static void smp_ol_OptimizedStrassenMultiply_par_6_unpacked(unsigned int *const RowWidthC, unsigned int *const RowWidthA, int *const Depth, unsigned int *const QuadrantSize, REAL **const C21, REAL **const A22, REAL **const S8)
+/*static*/ void smp_ol_OptimizedStrassenMultiply_par_6_unpacked(unsigned int *const RowWidthC, unsigned int *const RowWidthA, int *const Depth, unsigned int *const QuadrantSize, REAL **const C21, REAL **const A22, REAL **const S8)
 {/*{{{*/
   {
     OptimizedStrassenMultiply_par((*C21), (*A22), (*S8), (*QuadrantSize), (*RowWidthC), (*RowWidthA), (*QuadrantSize), (*Depth) + 1);
   }
 }/*}}}*/
 
-static void smp_ol_OptimizedStrassenMultiply_par_6(struct nanos_args_6_t *const args)
+/*static*/ void smp_ol_OptimizedStrassenMultiply_par_6(struct nanos_args_6_t *const args)
 {/*{{{*/
   {
     smp_ol_OptimizedStrassenMultiply_par_6_unpacked(&((*args).RowWidthC), &((*args).RowWidthA), &((*args).Depth), &((*args).QuadrantSize), &((*args).C21), &((*args).A22), &((*args).S8));

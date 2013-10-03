@@ -98,7 +98,7 @@ static void my_srand(unsigned long seed)
     rand_nxt = seed;
 }/*}}}*/
 
-static  ELM med3(ELM a, ELM b, ELM c)
+/*static*/  ELM med3(ELM a, ELM b, ELM c)
 {/*{{{*/
     if (a < b)
     {
@@ -130,12 +130,12 @@ static  ELM med3(ELM a, ELM b, ELM c)
     }
 }/*}}}*/
 
-static  ELM choose_pivot(ELM *low, ELM *high)
+/*static*/  ELM choose_pivot(ELM *low, ELM *high)
 {/*{{{*/
     return med3(*low, *high, low[(high - low) / 2]);
 }/*}}}*/
 
-static ELM *seqpart(ELM *low, ELM *high)
+/*static*/ ELM *seqpart(ELM *low, ELM *high)
 {/*{{{*/
     ELM pivot;
     ELM h, l;
@@ -159,7 +159,7 @@ static ELM *seqpart(ELM *low, ELM *high)
         return curr_high - 1;
 }/*}}}*/
 
-static void insertion_sort(ELM *low, ELM *high)
+/*static*/ void insertion_sort(ELM *low, ELM *high)
 {/*{{{*/
     ELM *p, *q;
     ELM a, b;
@@ -279,7 +279,7 @@ typedef struct _nx_data_env_0_t_tag
 
 void cilkmerge_par(ELM *low1, ELM *high1, ELM *low2, ELM *high2, ELM *lowdest);
 
-static void _smp__ol_cilkmerge_par_0(void* arg)
+/*static*/ void _smp__ol_cilkmerge_par_0(void* arg)
 {/*{{{*/
     _nx_data_env_0_t* _args = (_nx_data_env_0_t* ) arg; 
     cilkmerge_par((_args->low1_0), (_args->split1_0) - 1, (_args->low2_0), (_args->split2_0), (_args->lowdest_0));
@@ -295,7 +295,7 @@ typedef struct _nx_data_env_1_t_tag
         long int lowsize_0;
 } _nx_data_env_1_t;/*}}}*/
 
-static void _smp__ol_cilkmerge_par_1(void* arg)
+/*static*/ void _smp__ol_cilkmerge_par_1(void* arg)
 {/*{{{*/
     _nx_data_env_1_t* _args = (_nx_data_env_1_t* ) arg; 
     cilkmerge_par((_args->split1_0) + 1, (_args->high1_0), (_args->split2_0) + 1, (_args->high2_0), (_args->lowdest_0) + (_args->lowsize_0) + 2);
@@ -374,7 +374,7 @@ typedef struct _nx_data_env_2_t_tag
 
 void cilksort_par(ELM *low, ELM *tmp, long size);
 
-static void _smp__ol_cilksort_par_2(void* arg)
+/*static*/ void _smp__ol_cilksort_par_2(void* arg)
 {/*{{{*/
     _nx_data_env_2_t* _args = (_nx_data_env_2_t* ) arg; 
     cilksort_par((_args->A_0), (_args->tmpA_0), (_args->quarter_0));
@@ -387,7 +387,7 @@ typedef struct _nx_data_env_3_t_tag
         long int *tmpB_0;
 } _nx_data_env_3_t;/*}}}*/
 
-static void _smp__ol_cilksort_par_3(void* arg)
+/*static*/ void _smp__ol_cilksort_par_3(void* arg)
 {/*{{{*/
     _nx_data_env_3_t* _args = (_nx_data_env_3_t* ) arg; 
     cilksort_par((_args->B_0), (_args->tmpB_0), (_args->quarter_0));
@@ -400,7 +400,7 @@ typedef struct _nx_data_env_4_t_tag
         long int *tmpC_0;
 } _nx_data_env_4_t;/*}}}*/
 
-static void _smp__ol_cilksort_par_4(void* arg)
+/*static*/ void _smp__ol_cilksort_par_4(void* arg)
 {/*{{{*/
     _nx_data_env_4_t* _args = (_nx_data_env_4_t* ) arg; 
     cilksort_par((_args->C_0), (_args->tmpC_0), (_args->quarter_0));
@@ -414,7 +414,7 @@ typedef struct _nx_data_env_5_t_tag
         long int *tmpD_0;
 } _nx_data_env_5_t;/*}}}*/
 
-static void _smp__ol_cilksort_par_5(void* arg)
+/*static*/ void _smp__ol_cilksort_par_5(void* arg)
 {/*{{{*/
     _nx_data_env_5_t* _args = (_nx_data_env_5_t* ) arg; 
     cilksort_par((_args->D_0), (_args->tmpD_0), (_args->size_0) - 3 * (_args->quarter_0));
@@ -428,7 +428,7 @@ typedef struct _nx_data_env_6_t_tag
         long int *tmpA_0;
 } _nx_data_env_6_t;/*}}}*/
 
-static void _smp__ol_cilksort_par_6(void* arg)
+/*static*/ void _smp__ol_cilksort_par_6(void* arg)
 {/*{{{*/
     _nx_data_env_6_t* _args = (_nx_data_env_6_t* ) arg; 
     cilkmerge_par((_args->A_0), (_args->A_0) + (_args->quarter_0) - 1, (_args->B_0), (_args->B_0) + (_args->quarter_0) - 1, (_args->tmpA_0));
@@ -444,7 +444,7 @@ typedef struct _nx_data_env_7_t_tag
         long int *tmpC_0;
 } _nx_data_env_7_t;/*}}}*/
 
-static void _smp__ol_cilksort_par_7(void* arg)
+/*static*/ void _smp__ol_cilksort_par_7(void* arg)
 {/*{{{*/
     _nx_data_env_7_t* _args = (_nx_data_env_7_t* ) arg; 
     cilkmerge_par((_args->C_0), (_args->C_0) + (_args->quarter_0) - 1, (_args->D_0), (_args->low_0) + (_args->size_0) - 1, (_args->tmpC_0));
@@ -593,7 +593,7 @@ typedef struct _nx_data_env_8_t_tag
         long int **tmp_0;
 } _nx_data_env_8_t;/*}}}*/
 
-static void _smp__ol_sort_par_8(void* arg)
+/*static*/ void _smp__ol_sort_par_8(void* arg)
 {/*{{{*/
     _nx_data_env_8_t* _args = (_nx_data_env_8_t* ) arg; 
     unsigned long *arg_size_0 = (unsigned long *) (_args->arg_size_0);

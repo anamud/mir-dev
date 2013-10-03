@@ -128,7 +128,7 @@ struct  nanos_args_0_t
 };/*}}}*/
 
 void nqueens(int n, int j, char *a, int *solutions, int depth);
-static void smp_ol_nqueens_0_unpacked(int *const n, int *const j, char **const a, int *const depth, int **const csols, int *const i)
+/*static*/ void smp_ol_nqueens_0_unpacked(int *const n, int *const j, char **const a, int *const depth, int **const csols, int *const i)
 {/*{{{*/
   {
     {
@@ -141,7 +141,7 @@ static void smp_ol_nqueens_0_unpacked(int *const n, int *const j, char **const a
   }
 }/*}}}*/
 
-static void smp_ol_nqueens_0(struct nanos_args_0_t *const args)
+/*static*/ void smp_ol_nqueens_0(struct nanos_args_0_t *const args)
 {/*{{{*/
   {
     smp_ol_nqueens_0_unpacked(&((*args).n), &((*args).j), &((*args).a), &((*args).depth), &((*args).csols), &((*args).i));

@@ -47,5 +47,18 @@ tg.file.out <- paste(gsub(". $", "", tg.file), ".dot", sep="")
 print(paste("Writing file", tg.file.out))
 res <- write.graph(tg, file=tg.file.out, format="dot")
 
+### Information
+sink(paste(gsub(". $", "", tg.file), ".info", sep=""))
+cat("num_tasks: ")
+cat(length(V(tg)[!grepl("\\.", V(tg)$name)]))
+cat("\n")
+cat("join_degree_summary: ")
+cat(summary(degree(tg, V(tg)[join_nodes_index], mode="in")))
+cat("\n")
+cat("fork_degree_summary: ")
+cat(summary(degree(tg, V(tg)[!join_nodes_index], mode="out")))
+cat("\n")
+sink()
+
 # Quit
 quit("no", 0)
