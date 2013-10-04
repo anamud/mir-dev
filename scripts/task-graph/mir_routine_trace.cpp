@@ -149,6 +149,7 @@ VOID Image(IMG img, VOID *v)
         RTN mirRtn = RTN_FindByName(img, (*it).c_str());
         if (RTN_Valid(mirRtn))
         {/*{{{*/
+            //std::cout << "Routine " << *it << " is valid" << std::endl;
             RTN_Open(mirRtn);
 
             // Create new stats counter for each entry and exit of mir_execute_task
@@ -210,6 +211,7 @@ VOID Image(IMG img, VOID *v)
         RTN mirRtn = RTN_FindByName(img, (*it).c_str());
         if (RTN_Valid(mirRtn))
         {/*{{{*/
+            //std::cout << "Routine " << *it << " is valid" << std::endl;
             RTN_Open(mirRtn);
 
             // For each instruction of the routine, update entries in the stats counter

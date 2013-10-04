@@ -15,7 +15,8 @@
 #include "helper.h"
 
 #ifndef BSIZE
-#define BSIZE 128
+//#define BSIZE 128
+#define BSIZE 64
 #endif
 
 //#define BMALLOC_IN_PARALLEL 1
