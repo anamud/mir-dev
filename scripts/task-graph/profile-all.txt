@@ -9,11 +9,11 @@ cd ${MIR_ROOT}/test/fib/ && ./profile.sh > profile.stdout 2>&1
 
 cd ${MIR_ROOT}/test/bintree/ && ./profile.sh > profile.stdout 2>&1
 
-cd ${MIR_ROOT}/test/with-data-footprint/reduction/ && ./profile.sh > profile.stdout 2>&1
+#cd ${MIR_ROOT}/test/with-data-footprint/reduction/ && ./profile.sh > profile.stdout 2>&1
 #cd ${MIR_ROOT}/test/with-data-footprint/reduction-mc/ && ./profile.sh > profile.stdout 2>&1
-cd ${MIR_ROOT}/test/with-data-footprint/map/ && ./profile.sh > profile.stdout 2>&1
+#cd ${MIR_ROOT}/test/with-data-footprint/map/ && ./profile.sh > profile.stdout 2>&1
 #cd ${MIR_ROOT}/test/with-data-footprint/map-mc/ && ./profile.sh > profile.stdout 2>&1
-cd ${MIR_ROOT}/test/with-data-footprint/jacobi/ && ./profile.sh > profile.stdout 2>&1
+#cd ${MIR_ROOT}/test/with-data-footprint/jacobi/ && ./profile.sh > profile.stdout 2>&1
 #cd ${MIR_ROOT}/test/with-data-footprint/jacobi-cont/ && ./profile.sh > profile.stdout 2>&1
-cd ${MIR_ROOT}/test/with-data-footprint/matmul/ && ./profile.sh > profile.stdout 2>&1
+#cd ${MIR_ROOT}/test/with-data-footprint/matmul/ && ./profile.sh > profile.stdout 2>&1
 #cd ${MIR_ROOT}/test/with-data-footprint/sparselu/ && ./profile.sh > profile.stdout 2>&1
