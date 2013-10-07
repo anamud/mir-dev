@@ -195,14 +195,14 @@ struct  nanos_args_2_t
   int i;
 };/*}}}*/
 
-static void smp_ol_parTreeSearch_2_unpacked(const int *const mcc_vla_1, unsigned long long int *const partialCount, int *const depth, Node **const nodePtr, int *const i)
+/*static*/ void smp_ol_parTreeSearch_2_unpacked(const int *const mcc_vla_1, unsigned long long int *const partialCount, int *const depth, Node **const nodePtr, int *const i)
 {/*{{{*/
   {
     partialCount[(*i)] = parTreeSearch((*depth) + 1, (*nodePtr), (*(*nodePtr)).numChildren);
   }
 }/*}}}*/
 
-static void smp_ol_parTreeSearch_2(struct nanos_args_2_t *const args)
+/*static*/ void smp_ol_parTreeSearch_2(struct nanos_args_2_t *const args)
 {/*{{{*/
   {
     smp_ol_parTreeSearch_2_unpacked(&((*args).mcc_vla_1), *((unsigned long long int (*)[(*args).mcc_vla_1])(*args).partialCount), &((*args).depth), &((*args).nodePtr), &((*args).i));

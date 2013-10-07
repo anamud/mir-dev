@@ -1,0 +1,10 @@
+10000 0.35 2 40 1 1 1 1
+# Order:
+# root branching factor
+# probability of non-leaf node
+# number of children for non-leaf node
+# root seed 0 <= r < 2^31
+# compute granularity
+# Expected binomial tree size
+# Expected tree depth
+# Expected num leaves
