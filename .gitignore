@@ -12,3 +12,10 @@ mir-stats
 *.pcf
 *.BACK
 *.BAK
+*.pyc
+*.csv
+*.dot
+*.mmap
+*.stdout
+*.stderr
+*.info
