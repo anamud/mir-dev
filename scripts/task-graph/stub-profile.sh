@@ -4,6 +4,9 @@
 # This is a generic stub. 
 # Inputs (such as TASK,CALLED_FUNCS,APP,INPUT,MIR_CONF,OPF) come from application to be profiled.
 
+# Check if PIN_ROOT is set
+${PIN_ROOT:?"PIN_ROOT is not set! Aborting!"}
+
 # Profile tasks of application
 echo "Profiling tasks of application ${APP} using input ${INPUT} ..."
 LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$PIN_ROOT/intel64/runtime \
