@@ -61,11 +61,13 @@ typedef struct _MIR_ROUTINE_STAT_
     UINT64 ins_count;
     UINT64 stack_read;
     UINT64 stack_write;
+    UINT64 mem_read;
+    UINT64 mem_write;
+    std::set<VOID*> mem_fp;
     UINT64 ccr; // Computation to communication ratio
     UINT64 clr; // Computation to load ratio
-    std::vector<VOID*> mrefs_read;
-    std::vector<VOID*> mrefs_write;
-    std::set<VOID*> mem_fp;
+    //std::vector<VOID*> mrefs_read;
+    //std::vector<VOID*> mrefs_write;
     std::vector<UINT64> mem_share;
     struct _MIR_ROUTINE_STAT_ * next;
 } MIR_ROUTINE_STAT;/*}}}*/
@@ -77,13 +79,21 @@ std::stack<MIR_ROUTINE_STAT*> g_stat_stack;
 VOID MIRRoutineUpdateMemRefRead(VOID* memp)
 {/*{{{*/
     if(g_current_stat)
-        g_current_stat->mrefs_read.push_back(memp);
+    {
+        g_current_stat->mem_read++;
+        g_current_stat->mem_fp.insert(memp);
+        //g_current_stat->mrefs_read.push_back(memp);
+    }
 }/*}}}*/
 
 VOID MIRRoutineUpdateMemRefWrite(VOID* memp)
 {/*{{{*/
     if(g_current_stat)
-        g_current_stat->mrefs_write.push_back(memp);
+    {
+        g_current_stat->mem_write++;
+        g_current_stat->mem_fp.insert(memp);
+        //g_current_stat->mrefs_write.push_back(memp);
+    }
 }/*}}}*/
 
 VOID MIRRoutineUpdateInsCount()
@@ -112,6 +122,8 @@ VOID MIRRoutineEntry()
     stat->ins_count = 0;
     stat->stack_read = 0;
     stat->stack_write = 0;
+    stat->mem_read = 0;
+    stat->mem_write = 0;
     stat->next = g_stat_list;
     g_stat_list = stat;
     
@@ -265,18 +277,19 @@ VOID MIRRoutineUpdateMemFp(MIR_ROUTINE_STAT * stat)
     // Mem footprint count
     // Uniquify read and write refs to get sets R and W
     // Union of R and W is the footprint
-    std::set<VOID*> mem_read_ref_set(stat->mrefs_read.begin(), stat->mrefs_read.end());
-    std::set<VOID*> mem_write_ref_set(stat->mrefs_write.begin(), stat->mrefs_write.end());
-    std::insert_iterator< std::set<VOID*> > ins_it(stat->mem_fp, stat->mem_fp.begin());
-    std::set_union(mem_read_ref_set.begin(), mem_read_ref_set.end(), mem_write_ref_set.begin(), mem_write_ref_set.end(), ins_it);
+    //std::set<VOID*> mem_read_ref_set(stat->mrefs_read.begin(), stat->mrefs_read.end());
+    //std::set<VOID*> mem_write_ref_set(stat->mrefs_write.begin(), stat->mrefs_write.end());
+    //std::insert_iterator< std::set<VOID*> > ins_it(stat->mem_fp, stat->mem_fp.begin());
+    //std::set_union(mem_read_ref_set.begin(), mem_read_ref_set.end(), mem_write_ref_set.begin(), mem_write_ref_set.end(), ins_it);
 
     // Also update computation to (commuincation,load) ratios
-    UINT64 communication = stat->mrefs_read.size() + stat->mrefs_write.size();
+    //UINT64 communication = stat->mrefs_read.size() + stat->mrefs_write.size();
+    UINT64 communication = stat->mem_read + stat->mem_write;
     if(communication == 0)
         stat->ccr = stat->ins_count;
     else
         stat->ccr = (int)((double)(stat->ins_count) / communication + 0.5);
-    UINT64 load = stat->mrefs_read.size();
+    UINT64 load = stat->mem_read;
     if(load == 0)
         stat->clr = stat->ins_count;
     else
@@ -364,21 +377,21 @@ VOID Fini(INT32 code, VOID *v)
 {
 #pragma omp single
 {
-    std::cout << "Using " << omp_get_num_threads() << " threads" << std::endl;
     std::cout << "Updating memory footprint ..." << std::endl;
     for (MIR_ROUTINE_STAT* stat = g_stat_list; stat; stat = stat->next)
     {
         num_instances++;
-#pragma omp task
+//#pragma omp task
         {
             // Update memory footprint
             MIRRoutineUpdateMemFp(stat);
         }
     }
-#pragma omp taskwait
+//#pragma omp taskwait
     if(KnobCalcMemShare)
     {
         std::cout << "Updating memory sharing ..." << std::endl;
+        std::cout << "Using " << omp_get_num_threads() << " threads" << std::endl;
         size_t cutoff = 0;
         for (MIR_ROUTINE_STAT* stat = g_stat_list; stat; stat = stat->next, cutoff++)
         {
@@ -413,8 +426,10 @@ VOID Fini(INT32 code, VOID *v)
             << stat->mem_fp.size() << ","
             << stat->ccr << ","
             << stat->clr << ","
-            << stat->mrefs_read.size() << ","
-            << stat->mrefs_write.size() << std::endl;
+            //<< stat->mrefs_read.size() << ","
+            //<< stat->mrefs_write.size() << std::endl;
+            << stat->mem_read << ","
+            << stat->mem_write << std::endl;
     }
 
     if(KnobCalcMemShare)
