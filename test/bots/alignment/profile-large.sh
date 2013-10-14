@@ -3,7 +3,7 @@
 APP=alignment
 TASKS=smp_ol_pairalign_0_unpacked
 CALLED_FUNCS=diff,add,del,forward_pass,reverse_pass,calc_score,tracepath
-INPUT="./inputs/prot.60.aa"
+INPUT="./inputs/prot.30.aa"
 MIR_CONF="-w=1 -i -g"
 OPF="large"
 BIND_TASK_GRAPH=0
