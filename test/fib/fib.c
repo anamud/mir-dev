@@ -131,13 +131,13 @@ typedef struct data_env_1_t_tag
     }/*}}}*/
     else
     {/*{{{*/
-        char s[256] = {};
-        for(int j=0; j<d; j++)
-            s[j] = '-';
-        s[d] = '\0';
-        PALWAYS("%s(%d)\n", s, n-1);
+        /*char s[256] = {};*/
+        /*for(int j=0; j<d; j++)*/
+            /*s[j] = '-';*/
+        /*s[d] = '\0';*/
+        /*PALWAYS("%s(%d)\n", s, n-1);*/
         x = fib_seq(n - 1);
-        PALWAYS("%s(%d)\n", s, n-2);
+        /*PALWAYS("%s(%d)\n", s, n-2);*/
         y = fib_seq(n - 2);
     }/*}}}*/
 

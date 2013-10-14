@@ -7,6 +7,9 @@
 # Check if PIN_ROOT is set
 ${PIN_ROOT:?"PIN_ROOT is not set! Aborting!"}
 
+# Build once
+scons
+
 # Profile tasks of application
 echo "Profiling tasks of application ${APP} using input ${INPUT} ..."
 LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$PIN_ROOT/intel64/runtime \

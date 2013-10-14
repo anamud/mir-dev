@@ -90,18 +90,16 @@ cat("\n")
 sink()
 
 ### Write dot file
-tg.file.out <- paste(gsub(". $", "", tg.file), ".dot", sep="")
-print(paste("Writing file", tg.file.out))
-res <- write.graph(tg, file=tg.file.out, format="dot")
+#tg.file.out <- paste(gsub(". $", "", tg.file), ".dot", sep="")
+#print(paste("Writing file", tg.file.out))
+#res <- write.graph(tg, file=tg.file.out, format="dot")
 
 ### Write pdf file
-lyt <- layout.fruchterman.reingold(tg,niter=500,area=vcount(tg)^2,coolexp=3,repulserad=vcount(tg)^3,maxdelta=vcount(tg))
-tg.file.pdf.out <- paste(gsub(". $", "", tg.file), ".pdf", sep="")
-#x11()
-pdf(file=tg.file.pdf.out)
-plot(tg, layout=lyt)
-#dev.copy2pdf(file=tg.file.pdf.out)
-dev.off()
+#lyt <- layout.fruchterman.reingold(tg,niter=500,area=vcount(tg)^2,coolexp=3,repulserad=vcount(tg)^3,maxdelta=vcount(tg))
+#tg.file.pdf.out <- paste(gsub(". $", "", tg.file), ".pdf", sep="")
+#pdf(file=tg.file.pdf.out)
+#plot(tg, layout=lyt)
+#dev.off()
 
 ### Quit
 quit("no", 0)
