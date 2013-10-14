@@ -180,31 +180,34 @@ VOID Image(IMG img, VOID *v)
                 if(INS_IsStackWrite(ins))
                     INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)MIRRoutineUpdateStackWrite, IARG_END);
 
-                // Get memory operands of instruction
-                UINT32 memOperands = INS_MemoryOperandCount(ins);
-                // Iterate over each memory operand of the instruction.
-                for (UINT32 memOp = 0; memOp < memOperands; memOp++)
+                if(!INS_IsStackRead(ins) && !INS_IsStackWrite(ins))
                 {
-                    if (INS_MemoryOperandIsRead(ins, memOp))
+                    // Get memory operands of instruction
+                    UINT32 memOperands = INS_MemoryOperandCount(ins);
+                    // Iterate over each memory operand of the instruction.
+                    for (UINT32 memOp = 0; memOp < memOperands; memOp++)
                     {
-                        INS_InsertPredicatedCall(
-                            ins, IPOINT_BEFORE, (AFUNPTR)MIRRoutineUpdateMemRefRead,
-                            //IARG_INST_PTR,
-                            IARG_MEMORYOP_EA, memOp,
-                            //IARG_REG_VALUE, REG_STACK_PTR,
-                            IARG_END);
-                    }
-                    // Note that in some architectures a single memory operand can be 
-                    // both read and written (for instance incl (%eax) on IA-32)
-                    // In that case we instrument it once for read and once for write.
-                    if (INS_MemoryOperandIsWritten(ins, memOp))
-                    {
-                        INS_InsertPredicatedCall(
-                            ins, IPOINT_BEFORE, (AFUNPTR)MIRRoutineUpdateMemRefWrite,
-                            //IARG_INST_PTR,
-                            IARG_MEMORYOP_EA, memOp,
-                            //IARG_REG_VALUE, REG_STACK_PTR,
-                            IARG_END);
+                        if (INS_MemoryOperandIsRead(ins, memOp))
+                        {
+                            INS_InsertPredicatedCall(
+                                ins, IPOINT_BEFORE, (AFUNPTR)MIRRoutineUpdateMemRefRead,
+                                //IARG_INST_PTR,
+                                IARG_MEMORYOP_EA, memOp,
+                                //IARG_REG_VALUE, REG_STACK_PTR,
+                                IARG_END);
+                        }
+                        // Note that in some architectures a single memory operand can be 
+                        // both read and written (for instance incl (%eax) on IA-32)
+                        // In that case we instrument it once for read and once for write.
+                        if (INS_MemoryOperandIsWritten(ins, memOp))
+                        {
+                            INS_InsertPredicatedCall(
+                                ins, IPOINT_BEFORE, (AFUNPTR)MIRRoutineUpdateMemRefWrite,
+                                //IARG_INST_PTR,
+                                IARG_MEMORYOP_EA, memOp,
+                                //IARG_REG_VALUE, REG_STACK_PTR,
+                                IARG_END);
+                        }
                     }
                 }
             }
