@@ -91,7 +91,7 @@ opt.Program(app_name +'-opt', source = opt_src)
 prof = env.Clone();
 prof['CC'] = 'gcc'
 prof['CCFLAGS'] += Split("""
--O2
+-O1
 -DNDEBUG
 -fno-inline-functions
 -fno-inline-functions-called-once
