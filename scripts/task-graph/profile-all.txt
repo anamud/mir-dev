@@ -1,13 +1,14 @@
-cd ${MIR_ROOT}/test/bots/alignment/ && ./profile.sh > profile.stdout 2>&1
-cd ${MIR_ROOT}/test/bots/sort/ && ./profile.sh > profile.stdout 2>&1
-cd ${MIR_ROOT}/test/bots/sparselu/ && ./profile.sh > profile.stdout 2>&1
-cd ${MIR_ROOT}/test/bots/health/ && ./profile.sh > profile.stdout 2>&1
-cd ${MIR_ROOT}/test/bots/fft/ && ./profile.sh > profile.stdout 2>&1
-cd ${MIR_ROOT}/test/bots/strassen/ && ./profile.sh > profile.stdout 2>&1
-cd ${MIR_ROOT}/test/bots/nqueens/ && ./profile.sh > profile.stdout 2>&1
-cd ${MIR_ROOT}/test/fib/ && ./profile.sh > profile.stdout 2>&1
+#cd ${MIR_ROOT}/test/bots/alignment/ && ./profile.sh > profile.stdout 2>&1
+#cd ${MIR_ROOT}/test/bots/sort/ && ./profile.sh > profile.stdout 2>&1
+#cd ${MIR_ROOT}/test/bots/sparselu/ && ./profile.sh > profile.stdout 2>&1
+#cd ${MIR_ROOT}/test/bots/health/ && ./profile.sh > profile.stdout 2>&1
+#cd ${MIR_ROOT}/test/bots/fft/ && ./profile.sh > profile.stdout 2>&1
+#cd ${MIR_ROOT}/test/bots/strassen/ && ./profile.sh > profile.stdout 2>&1
+#cd ${MIR_ROOT}/test/bots/nqueens/ && ./profile.sh > profile.stdout 2>&1
+#cd ${MIR_ROOT}/test/bots/uts/ && ./profile.sh > profile.stdout 2>&1
+#cd ${MIR_ROOT}/test/fib/ && ./profile.sh > profile.stdout 2>&1
 
-cd ${MIR_ROOT}/test/bintree/ && ./profile.sh > profile.stdout 2>&1
+#cd ${MIR_ROOT}/test/bintree/ && ./profile.sh > profile.stdout 2>&1
 
 #cd ${MIR_ROOT}/test/with-data-footprint/reduction/ && ./profile.sh > profile.stdout 2>&1
 #cd ${MIR_ROOT}/test/with-data-footprint/reduction-mc/ && ./profile.sh > profile.stdout 2>&1

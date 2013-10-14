@@ -77,7 +77,7 @@ typedef struct data_env_0_t_tag
         int d_0;
 } data_env_0_t;/*}}}*/
 
-static void ol_fib_0(void* arg)
+/*static*/ void ol_fib_0(void* arg)
 {/*{{{*/
     data_env_0_t * _args = (data_env_0_t*) arg;
     uint64_t *x_0 = (uint64_t  *) (_args->x_0);
@@ -91,14 +91,14 @@ typedef struct data_env_1_t_tag
         int d_0;
 } data_env_1_t;/*}}}*/
 
-static void ol_fib_1(data_env_1_t * arg)
+/*static*/ void ol_fib_1(data_env_1_t * arg)
 {/*{{{*/
     data_env_1_t *_args = (data_env_1_t* ) arg;
     uint64_t  *y_0 = (uint64_t  *) (_args->y_0);
     (*y_0) = fib((_args->n_0) - 2, (_args->d_0) + 1);
 }/*}}}*/
 
-static uint64_t fib(int n, int d)
+/*static*/ uint64_t fib(int n, int d)
 {/*{{{*/
     uint64_t  x, y;
     if (n < 2)
@@ -131,7 +131,13 @@ static uint64_t fib(int n, int d)
     }/*}}}*/
     else
     {/*{{{*/
+        char s[256] = {};
+        for(int j=0; j<d; j++)
+            s[j] = '-';
+        s[d] = '\0';
+        PALWAYS("%s(%d)\n", s, n-1);
         x = fib_seq(n - 1);
+        PALWAYS("%s(%d)\n", s, n-2);
         y = fib_seq(n - 2);
     }/*}}}*/
 
