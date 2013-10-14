@@ -1,8 +1,8 @@
 #!/bin/bash
 
 APP=fib
-TASKS=fib
-CALLED_FUNCS=fib_seq
+TASKS=ol_fib_0,ol_fib_1
+CALLED_FUNCS=fib,fib_seq
 INPUT="42 12"
 MIR_CONF="-w=1 -i -g"
 OPF="large"
