@@ -21,6 +21,8 @@ KNOB<string>   KnobCalledRoutineNames(KNOB_MODE_WRITEONCE, "pintool",
 KNOB<BOOL>   KnobCalcMemShare(KNOB_MODE_WRITEONCE, "pintool",
     "m", "0", "calculate memory sharing (a time consuming process!)");
 
+#define EXCLUDE_STACK_INS_FROM_MEM_FP 1
+
 //std::vector<std::string> &split(const std::string &s, char delim, std::vector<std::string> &elems) 
 //{
     //std::stringstream ss(s);
@@ -180,8 +182,10 @@ VOID Image(IMG img, VOID *v)
                 if(INS_IsStackWrite(ins))
                     INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)MIRRoutineUpdateStackWrite, IARG_END);
 
+#ifdef EXCLUDE_STACK_INS_FROM_MEM_FP 
                 if(!INS_IsStackRead(ins) && !INS_IsStackWrite(ins))
                 {
+#endif
                     // Get memory operands of instruction
                     UINT32 memOperands = INS_MemoryOperandCount(ins);
                     // Iterate over each memory operand of the instruction.
@@ -209,7 +213,9 @@ VOID Image(IMG img, VOID *v)
                                 IARG_END);
                         }
                     }
+#ifdef EXCLUDE_STACK_INS_FROM_MEM_FP 
                 }
+#endif
             }
 
             RTN_Close(mirRtn);
@@ -241,33 +247,40 @@ VOID Image(IMG img, VOID *v)
                 if(INS_IsStackWrite(ins))
                     INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)MIRRoutineUpdateStackWrite, IARG_END);
 
-                // Get memory operands of instruction
-                UINT32 memOperands = INS_MemoryOperandCount(ins);
-                // Iterate over each memory operand of the instruction.
-                for (UINT32 memOp = 0; memOp < memOperands; memOp++)
+#ifdef EXCLUDE_STACK_INS_FROM_MEM_FP 
+                if(!INS_IsStackRead(ins) && !INS_IsStackWrite(ins))
                 {
-                    if (INS_MemoryOperandIsRead(ins, memOp))
+#endif
+                    // Get memory operands of instruction
+                    UINT32 memOperands = INS_MemoryOperandCount(ins);
+                    // Iterate over each memory operand of the instruction.
+                    for (UINT32 memOp = 0; memOp < memOperands; memOp++)
                     {
-                        INS_InsertPredicatedCall(
-                            ins, IPOINT_BEFORE, (AFUNPTR)MIRRoutineUpdateMemRefRead,
-                            //IARG_INST_PTR,
-                            IARG_MEMORYOP_EA, memOp,
-                            //IARG_REG_VALUE, REG_STACK_PTR,
-                            IARG_END);
+                        if (INS_MemoryOperandIsRead(ins, memOp))
+                        {
+                            INS_InsertPredicatedCall(
+                                ins, IPOINT_BEFORE, (AFUNPTR)MIRRoutineUpdateMemRefRead,
+                                //IARG_INST_PTR,
+                                IARG_MEMORYOP_EA, memOp,
+                                //IARG_REG_VALUE, REG_STACK_PTR,
+                                IARG_END);
+                        }
+                        // Note that in some architectures a single memory operand can be 
+                        // both read and written (for instance incl (%eax) on IA-32)
+                        // In that case we instrument it once for read and once for write.
+                        if (INS_MemoryOperandIsWritten(ins, memOp))
+                        {
+                            INS_InsertPredicatedCall(
+                                ins, IPOINT_BEFORE, (AFUNPTR)MIRRoutineUpdateMemRefWrite,
+                                //IARG_INST_PTR,
+                                IARG_MEMORYOP_EA, memOp,
+                                //IARG_REG_VALUE, REG_STACK_PTR,
+                                IARG_END);
+                        }
                     }
-                    // Note that in some architectures a single memory operand can be 
-                    // both read and written (for instance incl (%eax) on IA-32)
-                    // In that case we instrument it once for read and once for write.
-                    if (INS_MemoryOperandIsWritten(ins, memOp))
-                    {
-                        INS_InsertPredicatedCall(
-                            ins, IPOINT_BEFORE, (AFUNPTR)MIRRoutineUpdateMemRefWrite,
-                            //IARG_INST_PTR,
-                            IARG_MEMORYOP_EA, memOp,
-                            //IARG_REG_VALUE, REG_STACK_PTR,
-                            IARG_END);
-                    }
+#ifdef EXCLUDE_STACK_INS_FROM_MEM_FP 
                 }
+#endif
             }
 
             RTN_Close(mirRtn);
