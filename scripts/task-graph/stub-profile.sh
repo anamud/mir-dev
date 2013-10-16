@@ -65,5 +65,8 @@ echo "Copying profile information to prof_results_"${OPF}_$((max + 1))
 mv ${APP}_${OPF}_* prof_results_${OPF}_$((max + 1))
 cp profile-${OPF}.sh prof_results_${OPF}_$((max + 1))
 
+# Set context for upper level
+LATEST_OUTDIR=prof_results_${OPF}_$((max + 1))
+
 echo "Done!"
 
