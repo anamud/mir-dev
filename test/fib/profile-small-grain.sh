@@ -1,11 +1,11 @@
 #!/bin/bash
 
-APP=bintree
-TASKS=ol_node_0,ol_node_1
-CALLED_FUNCS=fib,node
-INPUT="4 20"
-MIR_CONF="-w=1 -i -g"
-OPF="small"
+APP=fib
+TASKS=ol_fib_0,ol_fib_1
+CALLED_FUNCS=fib,fib_seq
+INPUT="42 12"
+MIR_CONF="-w=1 -i -g -l=32"
+OPF="small-grain"
 BIND_TASK_GRAPH=0
 PLOT_TASK_GRAPH=1
 

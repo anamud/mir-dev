@@ -22,7 +22,22 @@ $PIN_ROOT/intel64/bin/pinbin \
 -- ./${APP}-prof ${INPUT}
 
 # Give the task graph an appropriate name
-mv mir-task-graph ${APP}_${OPF}_task_graph
+if [[ "${MIR_CONF}" == *-g* ]]
+then
+if [ -f mir-task-graph ];
+then
+    mv mir-task-graph ${APP}_${OPF}_task_graph
+fi
+fi
+
+# Rename mir-stats
+if [[ "${MIR_CONF}" == *-i* ]]
+then
+if [ -f mir-stats ];
+then
+    mv mir-stats ${APP}_${OPF}_mir-stats
+fi
+fi
 
 if [ ${BIND_TASK_GRAPH} -eq 1 ]
 then
@@ -42,5 +57,16 @@ then
 else
     echo "Not plotting the task graph!"
 fi
+
+# Copy files
+max=`ls -1d prof_results_${OPF}_* | tr -dc '[0-9\n]' | sort -k 1,1n | tail -1`
+mkdir prof_results_${OPF}_$((max + 1))
+echo "Copying profile information to prof_results_"${OPF}_$((max + 1))
+mv ${APP}_${OPF}_* prof_results_${OPF}_$((max + 1))
+cp profile-${OPF}.sh prof_results_${OPF}_$((max + 1))
+
+# Set context for upper level
+LATEST_OUTDIR=prof_results_${OPF}_$((max + 1))
+
 echo "Done!"
 

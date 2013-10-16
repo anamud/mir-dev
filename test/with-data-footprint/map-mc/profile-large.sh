@@ -11,6 +11,3 @@ PLOT_TASK_GRAPH=1
 
 . ${MIR_ROOT}/scripts/task-graph/stub-profile.sh
 
-# Rename stats file
-mv mir-stats ${APP}_${OPF}_mir-stats
-
