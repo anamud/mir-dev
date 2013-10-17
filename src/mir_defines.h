@@ -15,6 +15,7 @@
 #define MIR_TASK_ID_START 0
 #define MIR_TASKWAIT_ID_START 0
 #define MIR_TASK_INLINING_LIMIT_DEFAULT 0
+#define MIR_TASK_DATA_MAX_SIZE 256
 //#define MIR_TASK_ALLOCATE_ON_STACK 1
 
 // Queue
@@ -26,7 +27,6 @@
 #define MIR_SHORT_NAME_LEN 32
 #define MIR_LONG_NAME_LEN 256
 #define MIR_SBUF_SIZE 32
-#define MIR_BA_SBUF_SIZE 256
 
 // Misc
 #ifdef __tile__

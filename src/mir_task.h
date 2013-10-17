@@ -31,7 +31,7 @@ struct mir_twc_t
 struct mir_task_t
 {/*{{{*/
     mir_tfunc_t func;
-    mir_ba_sbuf_t data;
+    char data[MIR_TASK_DATA_MAX_SIZE];
     size_t data_size;
     mir_id_t id;
     uint64_t creation_time;
