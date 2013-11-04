@@ -58,6 +58,15 @@ else
     echo "Not plotting the task graph!"
 fi
 
+if [ ${SUMMARIZE_TASK_GRAPH} -eq 1 ]
+then
+    # Summarize task graph
+    echo "Summarizing task graph ..."
+    Rscript ${MIR_ROOT}/scripts/task-graph/mir-task-graph-info.R ${APP}_${OPF}_task_graph 
+else
+    echo "Not summarizing the task graph!"
+fi
+
 # Copy files
 max=`ls -1d prof_results_${OPF}_* | tr -dc '[0-9\n]' | sort -k 1,1n | tail -1`
 mkdir prof_results_${OPF}_$((max + 1))

@@ -63,7 +63,7 @@ for(node in unique_join_nodes)
     par <- paste(s[3], as.character(join_count), sep=".")
   else
     par <- s[3]
-  #print(paste('Connecting parent',par,'to',node,sep=" "));     
+  #print(paste('Connecting parent',par,'to',node,sep=" "));
   tg[from=par, to=node, attr='kind'] <- 'scope';
   tg[from=par, to=node, attr='color'] <- scope_edge_color
 }
@@ -76,18 +76,19 @@ tg <- simplify(tg, edge.attr.comb=toString)
 ### Remove vertex join labels
 V(tg)[join_nodes_index]$label <- "J"
 
-### Information
-sink(paste(gsub(". $", "", tg.file), ".info", sep=""))
-cat("num_tasks: ")
-cat(length(V(tg)[!grepl("\\.", V(tg)$name)]))
-cat("\n")
-cat("join_degree_summary: ")
-cat(summary(degree(tg, unique_join_nodes, mode="in")))
-cat("\n")
-cat("fork_degree_summary: ")
-cat(summary(degree(tg, unique_parent_nodes, mode="out")))
-cat("\n")
-sink()
+### Information (Not needed anymore)
+### This is now written by mir-task-plot-info.R
+#sink(paste(gsub(". $", "", tg.file), ".info", sep=""))
+#cat("num_tasks: ")
+#cat(length(V(tg)[!grepl("\\.", V(tg)$name)]))
+#cat("\n")
+#cat("join_degree_summary: ")
+#cat(summary(degree(tg, unique_join_nodes, mode="in")))
+#cat("\n")
+#cat("fork_degree_summary: ")
+#cat(summary(degree(tg, unique_parent_nodes, mode="out")))
+#cat("\n")
+#sink()
 
 ### Write dot file
 #tg.file.out <- paste(gsub(". $", "", tg.file), ".dot", sep="")

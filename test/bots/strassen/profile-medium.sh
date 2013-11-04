@@ -7,7 +7,8 @@ INPUT="1024 32 10"
 MIR_CONF="-w=1 -i -g"
 OPF="medium"
 BIND_TASK_GRAPH=0
-PLOT_TASK_GRAPH=1
+PLOT_TASK_GRAPH=0
+SUMMARIZE_TASK_GRAPH=1
 
 # Profile and generate data
 . ${MIR_ROOT}/scripts/task-graph/stub-profile.sh

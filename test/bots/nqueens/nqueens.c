@@ -215,8 +215,8 @@ int verify_queens (int size)
 
 int main(int argc, char *argv[])
 {/*{{{*/
-    if (argc > 2)
-        PABRT("Usage: nqueens board-size\n");
+    if (argc > 3)
+        PABRT("Usage: nqueens board-size cutoff\n");
 
     // Init the runtime
     mir_create();
@@ -225,7 +225,9 @@ int main(int argc, char *argv[])
 
     if(argc > 1)
         size = atoi(argv[1]);
-    PMSG("Computing nqueens %d ... \n", size);
+    if(argc > 2)
+        cutoff_value = atoi(argv[2]);
+    PMSG("Computing nqueens %d %d ... \n", size, cutoff_value);
 
     long par_time_start = get_usecs();
     find_queens(size);
