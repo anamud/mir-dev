@@ -18,6 +18,4 @@ struct mir_sbuf_t
     uint16_t size;
 };/*}}}*/
 
-typedef char mir_ba_sbuf_t[MIR_BA_SBUF_SIZE];
-
 #endif   

@@ -81,7 +81,7 @@ struct mir_task_t* mir_task_create(mir_tfunc_t tfunc, void* data, size_t data_si
 
     // Task function and argument data
     task->func = tfunc;
-    MIR_ASSERT(data_size <= MIR_BA_SBUF_SIZE);
+    MIR_ASSERT(data_size <= MIR_TASK_DATA_MAX_SIZE);
     task->data_size = data_size;
     memcpy((void*)&task->data[0], data, data_size);
 
