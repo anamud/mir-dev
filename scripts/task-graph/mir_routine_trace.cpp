@@ -1,5 +1,6 @@
 #include "pin.H"
 #include "portability.H"
+#include <string.h>
 #include <iostream>
 #include <fstream>
 #include <vector>
@@ -22,6 +23,7 @@ KNOB<BOOL>   KnobCalcMemShare(KNOB_MODE_WRITEONCE, "pintool",
     "m", "0", "calculate memory sharing (a time consuming process!)");
 
 #define EXCLUDE_STACK_INS_FROM_MEM_FP 1
+//#define GET_INS_MIX 1
 
 //std::vector<std::string> &split(const std::string &s, char delim, std::vector<std::string> &elems) 
 //{
@@ -57,6 +59,7 @@ UINT64 get_cycles() {
     return ((uint64_t)a) | (((uint64_t)d) << 32);
 }
 
+#define NAME_SIZE 256
 typedef struct _MIR_ROUTINE_STAT_
 {/*{{{*/
     UINT64 creation_time;
@@ -66,6 +69,10 @@ typedef struct _MIR_ROUTINE_STAT_
     UINT64 mem_read;
     UINT64 mem_write;
     std::set<VOID*> mem_fp;
+#ifdef GET_INS_MIX
+    UINT64 ins_mix[XED_CATEGORY_LAST];
+#endif
+    char name[NAME_SIZE];
     UINT64 ccr; // Computation to communication ratio
     UINT64 clr; // Computation to load ratio
     //std::vector<VOID*> mrefs_read;
@@ -98,6 +105,14 @@ VOID MIRRoutineUpdateMemRefWrite(VOID* memp)
     }
 }/*}}}*/
 
+#ifdef GET_INS_MIX
+VOID MIRRoutineUpdateInsMix(INT32 index)
+{/*{{{*/
+    if(g_current_stat)
+        g_current_stat->ins_mix[index]++;
+}/*}}}*/
+#endif
+
 VOID MIRRoutineUpdateInsCount()
 {/*{{{*/
     if(g_current_stat)
@@ -116,7 +131,7 @@ VOID MIRRoutineUpdateStackWrite()
         g_current_stat->stack_write++;
 }/*}}}*/
 
-VOID MIRRoutineEntry()
+VOID MIRRoutineEntry(VOID* name)
 {/*{{{*/
     // Create new stat counter
     MIR_ROUTINE_STAT* stat = new MIR_ROUTINE_STAT;
@@ -126,6 +141,10 @@ VOID MIRRoutineEntry()
     stat->stack_write = 0;
     stat->mem_read = 0;
     stat->mem_write = 0;
+    memcpy(stat->name, name, sizeof(char) * NAME_SIZE);
+#ifdef GET_INS_MIX 
+    memset(&stat->ins_mix, 0, sizeof(UINT64) * XED_CATEGORY_LAST);
+#endif
     stat->next = g_stat_list;
     g_stat_list = stat;
     
@@ -167,13 +186,16 @@ VOID Image(IMG img, VOID *v)
             RTN_Open(mirRtn);
 
             // Create new stats counter for each entry and exit of mir_execute_task
-            RTN_InsertCall(mirRtn, IPOINT_BEFORE, (AFUNPTR)MIRRoutineEntry, IARG_END);
+            RTN_InsertCall(mirRtn, IPOINT_BEFORE, (AFUNPTR)MIRRoutineEntry, IARG_PTR, RTN_Name(mirRtn).c_str(), IARG_END);
             RTN_InsertCall(mirRtn, IPOINT_AFTER, (AFUNPTR)MIRRoutineExit, IARG_END);
 
             // For each instruction with routine, update entries in the stats counter
             for (INS ins = RTN_InsHead(mirRtn); INS_Valid(ins); ins = INS_Next(ins))
             {
                 INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)MIRRoutineUpdateInsCount, IARG_END);
+#ifdef GET_INS_MIX
+                INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)MIRRoutineUpdateInsMix, IARG_UINT32, INS_Category(ins), IARG_END);
+#endif
 
                 // Instrument stack accesses
                 // If instruction operates using the SP or FP, its a stack operation
@@ -239,6 +261,9 @@ VOID Image(IMG img, VOID *v)
             for (INS ins = RTN_InsHead(mirRtn); INS_Valid(ins); ins = INS_Next(ins))
             {
                 INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)MIRRoutineUpdateInsCount, IARG_END);
+#ifdef GET_INS_MIX
+                INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)MIRRoutineUpdateInsMix, IARG_UINT32, INS_Category(ins), IARG_END);
+#endif
 
                 // Instrument stack accesses
                 // If instruction operates using the SP or FP, its a stack operation
@@ -432,7 +457,11 @@ VOID Fini(INT32 code, VOID *v)
     out.open(filename.c_str());
     std::cout << "Writing detail to file: " << filename << " ..." << std::endl;
     // Write detail as csv
-    out << "creation_time,ins_count,stack_read,stack_write,mem_fp,ccr,clr,mem_read,mem_write" << std::endl;
+#ifdef GET_INS_MIX
+    out << "creation_time,ins_count,stack_read,stack_write,mem_fp,ccr,clr,mem_read,mem_write,name,[ins_mix]" << std::endl;
+#else
+    out << "creation_time,ins_count,stack_read,stack_write,mem_fp,ccr,clr,mem_read,mem_write,name" << std::endl;
+#endif
     for (MIR_ROUTINE_STAT* stat = g_stat_list; stat; stat = stat->next)
     {
         out << stat->creation_time << "," 
@@ -445,7 +474,17 @@ VOID Fini(INT32 code, VOID *v)
             //<< stat->mrefs_read.size() << ","
             //<< stat->mrefs_write.size() << std::endl;
             << stat->mem_read << ","
-            << stat->mem_write << std::endl;
+            << stat->mem_write << ","
+            << stat->name;
+#ifdef GET_INS_MIX 
+        out << ",[";
+        for(int c=0; c<XED_CATEGORY_LAST; c++)
+        {
+            out << stat->ins_mix[c] << ",";
+        }
+        out << "]";
+#endif
+        out << std::endl;
     }
 
     if(KnobCalcMemShare)
