@@ -68,7 +68,8 @@ else
 fi
 
 # Copy files
-max=`ls -1d prof_results_${OPF}_* | tr -dc '[0-9\n]' | sort -k 1,1n | tail -1`
+#max=`ls -1d prof_results_${OPF}_* | tr -dc '[0-9\n]' | sort -k 1,1n | tail -1`
+max=`ls -1d prof_results_${OPF}_* | sed -e "s/prof_results_${OPF}_//g" | tr -dc '[0-9\n]' | sort -k 1,1n | tail -1`
 mkdir prof_results_${OPF}_$((max + 1))
 echo "Copying profile information to prof_results_"${OPF}_$((max + 1))
 mv ${APP}_${OPF}_* prof_results_${OPF}_$((max + 1))
