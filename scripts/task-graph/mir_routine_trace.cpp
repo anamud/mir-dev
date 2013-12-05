@@ -148,8 +148,7 @@ VOID MIRRoutineEntry(VOID* name)
 #endif
     stat->next = g_stat_list;
     g_stat_list = stat;
-    
-    // Save context
+
     g_stat_stack.push(g_stat_list);
     g_current_stat = g_stat_list;
 
@@ -466,10 +465,11 @@ VOID Fini(INT32 code, VOID *v)
     out.open(filename.c_str());
     std::cout << "Writing detail to file: " << filename << " ..." << std::endl;
     // Write detail as csv
+    const char* fileheader = "creation_time,ins_count,stack_read,stack_write,mem_fp,ccr,clr,mem_read,mem_write,name";
 #ifdef GET_INS_MIX
-    out << "creation_time,ins_count,stack_read,stack_write,mem_fp,ccr,clr,mem_read,mem_write,name,[ins_mix]" << std::endl;
+    out << fileheader << ",[ins_mix]" << std::endl;
 #else
-    out << "creation_time,ins_count,stack_read,stack_write,mem_fp,ccr,clr,mem_read,mem_write,name" << std::endl;
+    out << fileheader << std::endl;
 #endif
     for (MIR_ROUTINE_STAT* stat = g_stat_list; stat; stat = stat->next)
     {

@@ -6,9 +6,7 @@ CALLED_FUNCS=compute_w_coefficients,factor,fft_aux,fft_base_16,fft_base_2,fft_ba
 INPUT=8388608
 MIR_CONF="-w=1 -i -g"
 OPF="5s"
-BIND_TASK_GRAPH=0
-PLOT_TASK_GRAPH=0
-SUMMARIZE_TASK_GRAPH=1
+PROCESS_TASK_GRAPH=1
 
 # Profile and generate data
 . ${MIR_ROOT}/scripts/task-graph/stub-profile.sh

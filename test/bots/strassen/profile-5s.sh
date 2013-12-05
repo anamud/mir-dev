@@ -6,9 +6,7 @@ CALLED_FUNCS=matrixmul,FastNaiveMatrixMultiply,FastAdditiveNaiveMatrixMultiply,M
 INPUT="4096 128 2000"
 MIR_CONF="-w=1 -i -g -s=central-stack"
 OPF="5s"
-BIND_TASK_GRAPH=0
-PLOT_TASK_GRAPH=0
-SUMMARIZE_TASK_GRAPH=1
+PROCESS_TASK_GRAPH=1
 
 # Profile and generate data
 . ${MIR_ROOT}/scripts/task-graph/stub-profile.sh

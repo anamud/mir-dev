@@ -6,9 +6,7 @@ CALLED_FUNCS=cilksort_par,med3,binsplit,choose_pivot,seqpart,seqquick,seqmerge,i
 INPUT=16777216
 MIR_CONF="-w=1 -i -g -l=64"
 OPF="1s"
-BIND_TASK_GRAPH=0
-PLOT_TASK_GRAPH=0
-SUMMARIZE_TASK_GRAPH=1
+PROCESS_TASK_GRAPH=1
 
 # Profile and generate data
 . ${MIR_ROOT}/scripts/task-graph/stub-profile.sh

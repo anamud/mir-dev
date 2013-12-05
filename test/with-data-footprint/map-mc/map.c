@@ -15,7 +15,7 @@
 #define OPR_SCALE (42)
 //#define SLEEP_MS 0
 #define LOOP_CNT 10
-#define REUSE_CNT 2
+#define REUSE_CNT 3
 //#define SHOW_NUMA_STATS 1
 //#define ENABLE_FAULT_IN 
 //#define ENABLE_PREFETCH 1

@@ -6,9 +6,7 @@ CALLED_FUNCS=addList,allocate_village,check_patients_assess_par,check_patients_i
 INPUT="inputs/prof-small.input"
 MIR_CONF="-w=1 -i -g"
 OPF="small"
-BIND_TASK_GRAPH=0
-PLOT_TASK_GRAPH=0
-SUMMARIZE_TASK_GRAPH=1
+PROCESS_TASK_GRAPH=1
 
 # Profile and generate data
 . ${MIR_ROOT}/scripts/task-graph/stub-profile.sh

@@ -6,9 +6,7 @@ CALLED_FUNCS=diff,add,del,forward_pass,reverse_pass,calc_score,tracepath
 INPUT="./inputs/prot.200.aa"
 MIR_CONF="-w=1 -i -g"
 OPF="5s"
-BIND_TASK_GRAPH=0
-PLOT_TASK_GRAPH=0
-SUMMARIZE_TASK_GRAPH=1
+PROCESS_TASK_GRAPH=1
 
 
 # Profile and generate data

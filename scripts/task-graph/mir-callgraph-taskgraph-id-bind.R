@@ -35,8 +35,10 @@ toc("Read data")
 
 tic(type="elapsed")
 # Compute cg.task.id to tg.task.id map
-# For each task T in cg.data, the map is the task in tg.data whose creation time 
-# ... is closest to creation time of T
+
+# -- METHOD 1 --
+## For each task T in cg.data, the map is the task in tg.data whose creation time 
+## ... is closest to creation time of T
 #get_closest <- function(x) 
 #{ 
   #k <- tg.data$execution_start_time-x; 
@@ -45,17 +47,32 @@ tic(type="elapsed")
   #res; 
 #}
 #tg_idx <- sapply(cg.data$creation_time, get_closest)
+# -- -- --
+
+# -- METHOD 2 --
 #tg_idx <- sapply(cg.data$creation_time, function(x)which.max(abs(x - tg.data$execution_start_time)))
-# nearest.vec <- function(x, vec)
-# {
-#   smallCandidate <- findInterval(x, vec, all.inside=T)
-#   largeCandidate <- smallCandidate + 1
-#   nudge is TRUE if large candidate is nearer, FALSE otherwise
-#   nudge <- 2 * x > vec[smallCandidate] + vec[largeCandidate]
-#   return(smallCandidate + nudge)
-# }
+# -- -- --
+
+# -- METHOD 3 --
+## Using nearest.vec function below based on findInterval
+#tg.data <- tg.data[order(tg.data$execution_start_time, decreasing=F),]
+#nearest.vec <- function(x, vec)
+#{
+ #smallCandidate <- findInterval(x, vec, all.inside=T)
+ #largeCandidate <- smallCandidate + 1
+ ### nudge is TRUE if large candidate is nearer, FALSE otherwise
+ #nudge <- 2 * x > vec[smallCandidate] + vec[largeCandidate]
+ #return(smallCandidate + nudge)
+#}
+#tg_idx <- nearest.vec(cg.data$creation_time, tg.data$execution_start_time)
+# -- -- --
+
+# -- METHOD 4 --
+# Using findInterval directly
 tg.data <- tg.data[order(tg.data$execution_start_time, decreasing=F),]
 tg_idx <- findInterval(cg.data$creation_time, tg.data$execution_start_time, all.inside=F)
+# -- -- --
+
 tg_id <- tg.data$task[tg_idx]
 toc("Get closest in time")
 

@@ -6,9 +6,9 @@ require(RColorBrewer, quietly=TRUE)
 require(gdata, quietly=TRUE, warn.conflicts=FALSE)
 
 # Colors
-join_color <- "coral"
-fork_color <- "seagreen"
-start_color <- "burlywood"
+join_color <- "#FF7F50"  # coral
+fork_color <- "#2E8B57"  # seagreen
+start_color <- "#DEB887" # burlywood
 create_edge_color <- fork_color
 sync_edge_color <- join_color
 scope_edge_color <-"black" 
@@ -214,16 +214,16 @@ toc("Critical path")
 
 tic(type="elapsed")
 # Write dot file
-#tg.file.out <- paste(gsub(". $", "", tg.file), ".dot", sep="")
-#print(paste("Writing file", tg.file.out))
-#res <- write.graph(tg, file=tg.file.out, format="dot")
+tg.file.out <- paste(gsub(". $", "", tg.file), ".dot", sep="")
+print(paste("Writing file", tg.file.out))
+res <- write.graph(tg, file=tg.file.out, format="dot")
 toc("Write dot")
 
 tic(type="elapsed")
 # Write gml file
-#tg.file.out <- paste(gsub(". $", "", tg.file), ".graphml", sep="")
-#print(paste("Writing file", tg.file.out))
-#res <- write.graph(tg, file=tg.file.out, format="graphml")
+tg.file.out <- paste(gsub(". $", "", tg.file), ".graphml", sep="")
+print(paste("Writing file", tg.file.out))
+res <- write.graph(tg, file=tg.file.out, format="graphml")
 toc("Write graphml")
 
 tic(type="elapsed")

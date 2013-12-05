@@ -6,9 +6,7 @@ CALLED_FUNCS=memcpy,rng_rand,rng_showstate,rng_showtype,sha1_compile,sha1_begin,
 INPUT="inputs/prof-medium.input"
 MIR_CONF="-w=1 -i -g -q=131072 -l=64"
 OPF="medium"
-BIND_TASK_GRAPH=0
-PLOT_TASK_GRAPH=0
-SUMMARIZE_TASK_GRAPH=1
+PROCESS_TASK_GRAPH=1
 
 # Profile and generate data
 . ${MIR_ROOT}/scripts/task-graph/stub-profile.sh

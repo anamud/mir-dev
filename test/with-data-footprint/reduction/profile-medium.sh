@@ -6,9 +6,7 @@ CALLED_FUNCS=reduce,for_task
 INPUT="10 512"
 MIR_CONF="-w=1 -i -g"
 OPF="medium"
-BIND_TASK_GRAPH=0
-PLOT_TASK_GRAPH=0
-SUMMARIZE_TASK_GRAPH=1
+PROCESS_TASK_GRAPH=1
 
 . ${MIR_ROOT}/scripts/task-graph/stub-profile.sh
 
