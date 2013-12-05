@@ -77,6 +77,7 @@ typedef struct _MIR_ROUTINE_STAT_
     UINT64 clr; // Computation to load ratio
     //std::vector<VOID*> mrefs_read;
     //std::vector<VOID*> mrefs_write;
+    UINT64 mem_fp_sz;
     std::vector<UINT64> mem_share;
     struct _MIR_ROUTINE_STAT_ * next;
 } MIR_ROUTINE_STAT;/*}}}*/
@@ -158,6 +159,14 @@ VOID MIRRoutineEntry(VOID* name)
 
 VOID MIRRoutineExit()
 {/*{{{*/
+    // Memory optimziation: Free the mem_fp set
+    // We are only intersted in mem_fp size for now
+    if(g_current_stat)
+    {
+        g_current_stat->mem_fp_sz = g_current_stat->mem_fp.size();
+        g_current_stat->mem_fp.clear();
+    }
+    
     // Restore context
     g_stat_stack.pop();
     if(!g_stat_stack.empty())
@@ -468,7 +477,7 @@ VOID Fini(INT32 code, VOID *v)
             << stat->ins_count << ","
             << stat->stack_read<< ","
             << stat->stack_write<< ","
-            << stat->mem_fp.size() << ","
+            << stat->mem_fp_sz << ","
             << stat->ccr << ","
             << stat->clr << ","
             //<< stat->mrefs_read.size() << ","

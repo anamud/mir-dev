@@ -1,3 +1,10 @@
+# Message
+print("THIS FEATURE IS NOT AVAILABLE AS OF NOW!")
+
+# Quit
+quit("no", 0)
+
+# Library
 require(igraph, quietly=TRUE)
 #require(tcltk, quietly=TRUE)
 require(RColorBrewer, quietly=TRUE)
@@ -60,6 +67,9 @@ res <- autocurve.edges(sg)
 sg_file_out <- paste(gsub(". $", "", sg_file), ".dot", sep="")
 print(paste("Writing file", sg_file_out))
 res <- write.graph(sg, file=sg_file_out, format="dot")
+
+# Warnings
+warnings()
             
 # Quit
 quit("no", 0)

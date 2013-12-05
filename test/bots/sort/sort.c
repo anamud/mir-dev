@@ -81,9 +81,12 @@ long get_usecs(void)
 static unsigned long arg_size;
 /*static int cutoff_value = 262144; */
 /*static int cutoff_value_1 = 524288; */
-static int cutoff_value = 2048;
-static int cutoff_value_1 = 2048;
-static int cutoff_value_2 = 20;
+/*static int cutoff_value = 2048;*/
+/*static int cutoff_value_1 = 2048;*/
+/*static int cutoff_value_2 = 20;*/
+static int cutoff_value = 4096;
+static int cutoff_value_1 = 4096;
+static int cutoff_value_2 = 128;
 static unsigned long rand_nxt = 0;
 
 typedef long ELM;
