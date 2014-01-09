@@ -72,4 +72,9 @@
 //#define MIR_PAGE_NO_L1_CACHING
 //#define MIR_PAGE_NO_L2_CACHING 1
 
+// Shared memory
+#define MIR_SHM_SIZE 16
+#define MIR_SHM_KEY 31415926
+#define MIR_SHM_SIGREAD '*'
+
 #endif

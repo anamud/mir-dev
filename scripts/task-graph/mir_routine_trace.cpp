@@ -10,6 +10,7 @@
 #include <sstream>
 #include <algorithm>
 #include <omp.h>
+#include <sys/shm.h>
 
 KNOB<string> KnobOutputFileSuffix(KNOB_MODE_WRITEONCE, "pintool",
     "o", "mir_call_graph", "specify mir routine trace file suffix");
@@ -24,6 +25,15 @@ KNOB<BOOL>   KnobCalcMemShare(KNOB_MODE_WRITEONCE, "pintool",
 
 #define EXCLUDE_STACK_INS_FROM_MEM_FP 1
 //#define GET_INS_MIX 1
+
+// MIR shared memory connection
+// DO NOT CHANGE DEFINED VALUES WITHOUT MAKING A SIMILAR CHANGE IN MIR
+#define MIR_SHM_KEY 31415926
+#define MIR_SHM_SIZE 16
+#define MIR_SHM_SIGREAD '*'
+bool g_shmat_done = false;
+int g_shmid;
+char* g_shm;
 
 //std::vector<std::string> &split(const std::string &s, char delim, std::vector<std::string> &elems) 
 //{
@@ -62,7 +72,7 @@ UINT64 get_cycles() {
 #define NAME_SIZE 256
 typedef struct _MIR_ROUTINE_STAT_
 {/*{{{*/
-    UINT64 creation_time;
+    UINT64 id;
     UINT64 ins_count;
     UINT64 stack_read;
     UINT64 stack_write;
@@ -134,9 +144,36 @@ VOID MIRRoutineUpdateStackWrite()
 
 VOID MIRRoutineEntry(VOID* name)
 {/*{{{*/
+    // Attach to MIR shared memory
+    if(g_shmat_done == false)
+    {
+        g_shmat_done = true;
+
+        if ((g_shmid = shmget(MIR_SHM_KEY, MIR_SHM_SIZE, 0666)) < 0) 
+        {
+            std::cerr << "Call to shmget failed!" << std::endl;
+            exit(1);
+        }
+
+        g_shm = (char*) shmat(g_shmid, NULL, 0);
+        if (g_shm == NULL) 
+        {
+            std::cerr << "No shared memory. Call to shmat returned NULL!" << std::endl;
+            exit(1);
+        }
+    }
+
+    // Read task id written by MIR
+    char buf[MIR_SHM_SIZE];
+    for(int i=0; i<MIR_SHM_SIZE; i++)
+        buf[i] = g_shm[i];
+    //std::cout << "MIR shared memory content: " << buf << std::endl;
+    // Signal MIR that reading is complete
+    *g_shm = MIR_SHM_SIGREAD;
+
     // Create new stat counter
     MIR_ROUTINE_STAT* stat = new MIR_ROUTINE_STAT;
-    stat->creation_time = get_cycles();
+    stat->id = atoi(buf);
     stat->ins_count = 0;
     stat->stack_read = 0;
     stat->stack_write = 0;
@@ -465,7 +502,7 @@ VOID Fini(INT32 code, VOID *v)
     out.open(filename.c_str());
     std::cout << "Writing detail to file: " << filename << " ..." << std::endl;
     // Write detail as csv
-    const char* fileheader = "creation_time,ins_count,stack_read,stack_write,mem_fp,ccr,clr,mem_read,mem_write,name";
+    const char* fileheader = "task,ins_count,stack_read,stack_write,mem_fp,ccr,clr,mem_read,mem_write,name";
 #ifdef GET_INS_MIX
     out << fileheader << ",[ins_mix]" << std::endl;
 #else
@@ -473,7 +510,7 @@ VOID Fini(INT32 code, VOID *v)
 #endif
     for (MIR_ROUTINE_STAT* stat = g_stat_list; stat; stat = stat->next)
     {
-        out << stat->creation_time << "," 
+        out << stat->id << "," 
             << stat->ins_count << ","
             << stat->stack_read<< ","
             << stat->stack_write<< ","

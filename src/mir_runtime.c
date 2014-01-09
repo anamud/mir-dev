@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <pthread.h>
+#include <sys/shm.h>
 
 #include "mir_runtime.h"
 #include "mir_debug.h"
@@ -62,6 +63,7 @@ void mir_preconfig_init()
     runtime->enable_task_graph_gen = 0;
     runtime->enable_recorder = 0;
     runtime->enable_dependence_resolver = 0;
+    runtime->enable_shmem_handshake = 0;
     runtime->task_inlining_limit = MIR_TASK_INLINING_LIMIT_DEFAULT;
 }/*}}}*/
 
@@ -73,6 +75,35 @@ void mir_postconfig_init()
     // Scheduling policy
     runtime->sched_pol->create();
     MIR_DEBUG(MIR_DEBUG_STR "Task scheduling policy set to %s\n", runtime->sched_pol->name);
+
+    // Shared memory for passing data and handshake signals
+    // The idea is to let the PIN profiling tool and MIR communicate
+    if(runtime->enable_shmem_handshake == 1)
+    {
+        // Create shared memory
+        runtime->shmid = shmget((int)(MIR_SHM_KEY), MIR_SHM_SIZE, IPC_CREAT | 0666);
+        if(runtime->shmid < 0)
+            MIR_ABORT(MIR_ERROR_STR "shmget failed [%d]!\n", runtime->shmid);
+
+        // Attach
+        runtime->shm = shmat(runtime->shmid, NULL, 0); 
+        if (runtime->shm == NULL)
+            MIR_ABORT(MIR_ERROR_STR "shmat returned NULL!\n");
+
+        /*// Test. Write something.*/
+        /*char testchar = 'A';*/
+        /*for(int i=0; i<=MIR_SHM_SIZE; i++)*/
+        /*{*/
+            /*runtime->shm[i] = testchar;*/
+            /*testchar++;*/
+        /*}*/
+        /*runtime->shm[MIR_SHM_SIZE-1] = '\0';*/
+    }
+    else
+    {
+        runtime->shmid = -1;
+        runtime->shm = NULL;
+    }
 
     // Recorder
     if(runtime->enable_recorder == 1)
@@ -136,7 +167,8 @@ static inline void print_help()
     "-q=<int> queue capacity\n"
     "-m=<str> memory allocation policy\n"
     "-y=<csv> schedule policy specific parameters\n"
-    "-g enable task graph generation\n"
+    "-g enable task graph generation [Note: Supported only for a single worker!]\n"
+    "-p enable shared memory handshake mode [Note: Supported only for a single worker!]\n"
     );
 }/*}}}*/
 
@@ -193,8 +225,15 @@ void mir_config()
                     }
                     break;
                 case 'g':
-                    runtime->enable_task_graph_gen = 1;
-                    MIR_DEBUG(MIR_DEBUG_STR "Task graph generation is enabled!\n");
+                    if(runtime->num_workers == 1)
+                    {
+                        runtime->enable_task_graph_gen = 1;
+                        MIR_DEBUG(MIR_DEBUG_STR "Task graph generation is enabled!\n");
+                    }
+                    else
+                    {
+                        MIR_ABORT(MIR_ERROR_STR "Number of workers = %d != 1. Cannot enable task graph generation!\n", runtime->num_workers);
+                    }
                     break;
                 case 'r':
                     runtime->enable_recorder = 1;
@@ -232,6 +271,18 @@ void mir_config()
                     {
                         MIR_ABORT(MIR_ERROR_STR "Incorrect MIR_CONF parameter [%c]\n", c);
                     }
+                    break;
+                case 'p':
+                    if(runtime->num_workers == 1)
+                    {
+                        runtime->enable_shmem_handshake = 1;
+                        MIR_DEBUG(MIR_DEBUG_STR "Shared memory handshake mode is enabled!\n");
+                    }
+                    else
+                    {
+                        MIR_ABORT(MIR_ERROR_STR "Number of workers = %d != 1. Cannot enable shared memory handshake mode!\n", runtime->num_workers);
+                    }
+                    break;
                 default:
                     break;
             }/*}}}*/

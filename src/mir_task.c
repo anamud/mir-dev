@@ -209,8 +209,18 @@ void mir_task_execute(struct mir_task_t* task)
     // Execution start time
     task->execution_start_time = mir_get_cycles();
 
+    // Write task id to shared memory.
+    // And wait for it to be read
+    char buf[MIR_SHM_SIZE] = {0};
+    sprintf(buf, "%" MIR_FORMSPEC_UL, task->id.uid);
+    for(int i=0; i<MIR_SHM_SIZE; i++)
+        runtime->shm[i] = buf[i];
+
     // Execute task function
     task->func(task->data);
+
+    // Make sure Pin has read the data
+    //while(*(runtime->shm) != MIR_SHM_SIGREAD) {}
 
     // Add to task graph
     mir_worker_update_task_graph(worker, task);
