@@ -37,6 +37,7 @@ struct mir_task_t
     uint64_t creation_time;
     uint64_t execution_start_time;
     struct mir_twc_t* twc;
+    struct mir_twc_t* ctwc; // Sync counter for children
     unsigned long comm_cost;
     char name[MIR_SHORT_NAME_LEN];
     struct mir_task_t* parent;
@@ -64,6 +65,8 @@ static void T_DBG(char*msg, struct mir_task_t *t)
 
 struct mir_task_t* mir_task_create(mir_tfunc_t tfunc, void* data, size_t data_size, struct mir_twc_t* twc, unsigned int num_data_footprints, struct mir_data_footprint_t* data_footprints, const char* name);
 
+struct mir_task_t* mir_task_create_pw(mir_tfunc_t tfunc, void* data, size_t data_size, unsigned int num_data_footprints, struct mir_data_footprint_t* data_footprints, const char* name);
+
 void mir_task_destroy(struct mir_task_t* task);
 
 void mir_task_schedule(struct mir_task_t* task);
@@ -79,5 +82,7 @@ void mir_task_wait(struct mir_task_t* task);
 struct mir_twc_t* mir_twc_create();
 
 void mir_twc_wait(struct mir_twc_t* twc);
+
+void mir_twc_wait_pw();
 
 #endif

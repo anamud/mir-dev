@@ -4,7 +4,7 @@ APP=nqueens
 TASKS=smp_ol_nqueens_0_unpacked 
 CALLED_FUNCS=nqueens,nqueens_ser
 INPUT="14"
-MIR_CONF="-w=1 -i -g"
+MIR_CONF="-w=1 -i -g -p"
 OPF="5s"
 PROCESS_TASK_GRAPH=1
 

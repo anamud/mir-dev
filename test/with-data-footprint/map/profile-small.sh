@@ -4,7 +4,7 @@ APP=map
 TASKS=map_wrapper,for_task_wrapper
 CALLED_FUNCS=map,for_task
 INPUT="48 128"
-MIR_CONF="-w=1 -i -g"
+MIR_CONF="-w=1 -i -g -p"
 OPF="small"
 PROCESS_TASK_GRAPH=1
 

@@ -11,6 +11,7 @@
 #include "mir_defines.h"
 #include "mir_types.h"
 #include "mir_sched_pol.h"
+#include "mir_task.h"
 
 struct mir_runtime_t
 {
@@ -22,6 +23,9 @@ struct mir_runtime_t
     struct mir_sched_pol_t *sched_pol;
     struct mir_arch_t* arch;
     uint32_t task_inlining_limit;
+    int shmid;
+    char* shm;
+    struct mir_twc_t* ctwc;
 
     // Flags
     bool sig_dying;
@@ -29,6 +33,7 @@ struct mir_runtime_t
     bool enable_task_graph_gen;
     bool enable_recorder;
     bool enable_dependence_resolver;
+    bool enable_shmem_handshake;
 };
 
 void mir_create();
