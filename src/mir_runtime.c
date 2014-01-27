@@ -146,6 +146,9 @@ wait_alive:
     goto wait_alive;
 alive:
 
+    // Global taskwait counter
+    runtime->ctwc = mir_twc_create();
+
     MIR_DEBUG(MIR_DEBUG_STR "Initialization complete!\n");
 }/*}}}*/
 
@@ -366,7 +369,7 @@ void mir_destroy()
 
     // Task graph
     if(runtime->enable_task_graph_gen == 1)
-    {
+    {/*{{{*/
         // Open stats file
         FILE* task_graph_file = NULL;
         task_graph_file = fopen(MIR_TASK_GRAPH_FILE_NAME, "w");
@@ -385,7 +388,7 @@ void mir_destroy()
 
         // Close task_graph file
         fclose(task_graph_file);
-    }
+    }/*}}}*/
 
     // Kill workers
     for(int i=0; i<runtime->num_workers; i++) 

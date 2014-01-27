@@ -4,7 +4,7 @@ APP=reduction
 TASKS=reduce_wrapper
 CALLED_FUNCS=reduce
 INPUT="12 512"
-MIR_CONF="-w=1 -i -g"
+MIR_CONF="-w=1 -i -g -p"
 OPF="large"
 PROCESS_TASK_GRAPH=1
 

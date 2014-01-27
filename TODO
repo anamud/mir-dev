@@ -27,6 +27,7 @@ Add a clean user interface to the library
 Find and add a good deque implementation. 
 - Cannot find a lock-free or a single lock deque!
 - Ask Shavit and Maged.
+- PJ found one. Integrate it!
 Add runtime dependence resolution support.
 Add a help document.
 - URGENT!
@@ -36,3 +37,5 @@ Add a benchmark testing script
 - Done. In scripts/test.sh
 Add dependence graph generation support
 - Done. 
+Add libgomp OpenMP wrapper
+- Done. Only task and taskwait contructs handled.

@@ -105,7 +105,9 @@ typedef struct data_env_1_t_tag
         return n;
     if (d < cutoff_value)
     {/*{{{*/
+#ifndef IMPLICIT_TASK_WAIT
         struct mir_twc_t* twc = mir_twc_create();
+#endif
 
         // Create task1
         data_env_0_t imm_args_0;
@@ -113,7 +115,11 @@ typedef struct data_env_1_t_tag
         imm_args_0.n_0 = n;
         imm_args_0.d_0 = d;
 
+#ifdef IMPLICIT_TASK_WAIT
+        struct mir_task_t* task_0 = mir_task_create_pw((mir_tfunc_t) ol_fib_0, (void*) &imm_args_0, sizeof(data_env_0_t), 0, NULL, NULL);
+#else
         struct mir_task_t* task_0 = mir_task_create((mir_tfunc_t) ol_fib_0, (void*) &imm_args_0, sizeof(data_env_0_t), /*NULL*/twc, 0, NULL, NULL);
+#endif
         
         // Create task2
         data_env_1_t imm_args_1;
@@ -121,13 +127,22 @@ typedef struct data_env_1_t_tag
         imm_args_1.n_0 = n;
         imm_args_1.d_0 = d;
 
+#ifdef IMPLICIT_TASK_WAIT
+        struct mir_task_t* task_1 = mir_task_create_pw((mir_tfunc_t) ol_fib_1, (void*) &imm_args_1, sizeof(data_env_1_t), 0, NULL, NULL);
+#else
         struct mir_task_t* task_1 = mir_task_create((mir_tfunc_t) ol_fib_1, (void*) &imm_args_1, sizeof(data_env_1_t), /*NULL*/twc, 0, NULL, NULL);
+#endif
 
+#ifdef IMPLICIT_TASK_WAIT
+        // Task wait
+        mir_twc_wait_pw();
+#else
         //// Wait for two tasks
         //mir_task_wait(task_0);
         //mir_task_wait(task_1);
         // Task wait
         mir_twc_wait(twc);
+#endif
     }/*}}}*/
     else
     {/*{{{*/

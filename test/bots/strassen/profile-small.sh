@@ -4,7 +4,7 @@ APP=strassen
 TASKS=smp_ol_OptimizedStrassenMultiply_par_0_unpacked,smp_ol_OptimizedStrassenMultiply_par_1_unpacked,smp_ol_OptimizedStrassenMultiply_par_2_unpacked,smp_ol_OptimizedStrassenMultiply_par_3_unpacked,smp_ol_OptimizedStrassenMultiply_par_4_unpacked,smp_ol_OptimizedStrassenMultiply_par_5_unpacked,smp_ol_OptimizedStrassenMultiply_par_6_unpacked
 CALLED_FUNCS=matrixmul,FastNaiveMatrixMultiply,FastAdditiveNaiveMatrixMultiply,MultiplyByDivideAndConquer,OptimizedStrassenMultiply_par
 INPUT="512 16 10"
-MIR_CONF="-w=1 -i -g"
+MIR_CONF="-w=1 -i -g -p"
 OPF="small"
 PROCESS_TASK_GRAPH=1
 

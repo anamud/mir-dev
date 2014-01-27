@@ -4,7 +4,7 @@ APP=matmul
 TASKS=compute_task_wrapper
 CALLED_FUNCS=matmul,compute_task
 INPUT="32"
-MIR_CONF="-w=1 -i -g"
+MIR_CONF="-w=1 -i -g -p"
 OPF="small"
 PROCESS_TASK_GRAPH=1
 

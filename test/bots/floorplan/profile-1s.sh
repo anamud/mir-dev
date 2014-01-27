@@ -4,7 +4,7 @@ APP=floorplan
 TASKS=smp_ol_add_cell_0_unpacked
 CALLED_FUNCS=starts,lay_down,add_cell_ser,add_cell,memcpy
 INPUT="./inputs/input.10 7"
-MIR_CONF="-w=1 -i -g -l=128"
+MIR_CONF="-w=1 -i -g -l=128 -p"
 OPF="1s"
 PROCESS_TASK_GRAPH=1
 

@@ -4,7 +4,7 @@ APP=jacobi-cont
 TASKS=jacobi_block_wrapper,for_task_wrapper
 CALLED_FUNCS=jacobi_point,jacobi_block,for_task
 INPUT="32 64"
-MIR_CONF="-w=1 -i -g"
+MIR_CONF="-w=1 -i -g -p"
 OPF="small"
 PROCESS_TASK_GRAPH=1
 

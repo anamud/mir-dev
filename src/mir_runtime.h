@@ -11,6 +11,7 @@
 #include "mir_defines.h"
 #include "mir_types.h"
 #include "mir_sched_pol.h"
+#include "mir_task.h"
 
 struct mir_runtime_t
 {
@@ -24,6 +25,7 @@ struct mir_runtime_t
     uint32_t task_inlining_limit;
     int shmid;
     char* shm;
+    struct mir_twc_t* ctwc;
 
     // Flags
     bool sig_dying;
