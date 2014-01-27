@@ -98,6 +98,20 @@ typedef struct data_env_1_t_tag
     (*y_0) = fib((_args->n_0) - 2, (_args->d_0) + 1);
 }/*}}}*/
 
+typedef struct data_env_2_t_tag
+{/*{{{*/
+        uint64_t *par_res_0;
+        int n_0;
+        int d_0;
+} data_env_2_t;/*}}}*/
+
+/*static*/ void ol_fib_2(data_env_2_t * arg)
+{/*{{{*/
+    data_env_2_t *_args = (data_env_2_t* ) arg;
+    uint64_t  *par_res_0 = (uint64_t  *) (_args->par_res_0);
+    (*par_res_0) = fib((_args->n_0), (_args->d_0));
+}/*}}}*/
+
 /*static*/ uint64_t fib(int n, int d)
 {/*{{{*/
     uint64_t  x, y;
@@ -183,7 +197,22 @@ int main(int argc, char **argv)
     PMSG("Computing fib %d %d ... \n", num, cutoff_value);
 
     long par_time_start = get_usecs();
-    par_res = fib(num, 0);
+    // --- IMPLICIT TASK ---
+    struct mir_twc_t* twc = mir_twc_create();
+
+    // Create task
+    data_env_2_t imm_args_2;
+    imm_args_2.par_res_0 = &(par_res);
+    imm_args_2.n_0 = num;
+    imm_args_2.d_0 = 0;
+
+    struct mir_task_t* task_2 = mir_task_create((mir_tfunc_t) ol_fib_2, (void*) &imm_args_2, sizeof(data_env_2_t), /*NULL*/twc, 0, NULL, NULL);
+    
+    // Task wait
+    mir_twc_wait(twc);
+    // --- NO IMPLICIT TASK ---
+    //par_res = fib(num, 0);
+    // ---
     long par_time_end = get_usecs();
     double par_time = (double)( par_time_end - par_time_start) / 1000000;
 
