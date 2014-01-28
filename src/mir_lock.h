@@ -11,6 +11,10 @@
 #define MIR_LOCK_INITIALIZER PTHREAD_MUTEX_INITIALIZER
 #endif
 
+#include "mir_types.h"
+
+BEGIN_C_DECLS 
+
 struct mir_lock_t
 {/*{{{*/
 #ifdef __tile__
@@ -30,6 +34,8 @@ void mir_lock_set(struct mir_lock_t* lock);
 void mir_lock_unset(struct mir_lock_t* lock);
 
 int mir_lock_tryset(struct mir_lock_t* lock);
+
+END_C_DECLS 
 
 #endif
 

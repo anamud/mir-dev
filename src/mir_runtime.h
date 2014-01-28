@@ -12,6 +12,9 @@
 #include "mir_types.h"
 #include "mir_sched_pol.h"
 #include "mir_task.h"
+#include "mir_types.h"
+
+BEGIN_C_DECLS 
 
 struct mir_runtime_t
 {
@@ -46,4 +49,5 @@ void mir_preconfig_init();
 
 void mir_postconfig_init();
 
+END_C_DECLS 
 #endif //MIR_RUNTIME_H

@@ -4,6 +4,8 @@
 #include "stdint.h"
 #include "mir_types.h"
 
+BEGIN_C_DECLS
+
 struct mir_arch_t 
 {/*{{{*/
     // Constants
@@ -24,5 +26,7 @@ struct mir_arch_t
 };/*}}}*/
 
 struct mir_arch_t* mir_arch_create_by_query();
+
+END_C_DECLS
 
 #endif //MIR_ARCH_H 1

@@ -3,6 +3,9 @@
 
 #include <stdint.h>
 #include <stdlib.h>
+#include "mir_types.h"
+
+BEGIN_C_DECLS 
 
 // Memory allocation related
 
@@ -43,6 +46,8 @@ void mir_mem_get_dist(struct mir_mem_node_dist_t* dist, void* addr, size_t sz, v
 //size_t mir_mem_node_dist_sum(struct mir_mem_node_dist_t* dist);
 
 void mir_mem_node_dist_stat(struct mir_mem_node_dist_t* dist, struct mir_mem_node_dist_stat_t* stat);
+
+END_C_DECLS
 
 #endif /* end of include guard: MIR_MEM_POL_H */
 

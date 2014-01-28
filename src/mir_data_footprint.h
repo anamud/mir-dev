@@ -4,6 +4,9 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include "mir_mem_pol.h"
+#include "mir_types.h"
+
+BEGIN_C_DECLS 
 
 enum mir_data_access_t 
 {
@@ -28,6 +31,8 @@ void mir_data_footprint_copy(struct mir_data_footprint_t* dest, struct mir_data_
 
 // Note: This adds to dist
 void mir_data_footprint_get_dist(struct mir_mem_node_dist_t* dist, struct mir_data_footprint_t* footprint);
+
+END_C_DECLS 
 
 #endif /* end of include guard: MIR_DATA_FOOTPRINT_H */
 

@@ -5,6 +5,9 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include "mir_types.h"
+
+BEGIN_C_DECLS 
 
 #ifdef MIR_QUEUE_DEBUG
 static void Q_DBG(char*msg, struct mir_queue_t *q) 
@@ -51,5 +54,7 @@ void mir_queue_pop(struct mir_queue_t* queue, void** data);
 
 // Get the cuurent queue size
 uint32_t mir_queue_size(struct mir_queue_t* queue);
+
+END_C_DECLS 
 
 #endif

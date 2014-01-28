@@ -3,6 +3,9 @@
 
 #include <stdlib.h>
 #include <stdint.h>
+#include "mir_types.h"
+
+BEGIN_C_DECLS 
 
 void* mir_malloc_int(size_t bytes);
 
@@ -17,6 +20,8 @@ uint64_t mir_get_allocated_memory();
 #include <tmc/mem.h>
 void mir_page_attr_set(tmc_alloc_t* alloc);
 #endif
+
+END_C_DECLS 
 
 #endif  
 

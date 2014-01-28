@@ -10,6 +10,9 @@
 #include "mir_types.h"
 #include "mir_defines.h"
 #include "mir_data_footprint.h"
+#include "mir_types.h"
+
+BEGIN_C_DECLS 
 
 // The task function pointer type
 typedef void* (*mir_tfunc_t)(void*);
@@ -85,4 +88,5 @@ void mir_twc_wait(struct mir_twc_t* twc);
 
 void mir_twc_wait_pw();
 
+END_C_DECLS
 #endif

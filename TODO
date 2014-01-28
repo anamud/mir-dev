@@ -39,3 +39,8 @@ Add dependence graph generation support
 - Done. 
 Add libgomp OpenMP wrapper
 - Done. Only task and taskwait contructs handled.
+Improve library interface
+- FIXME: Functionality is scattered in some places
+- FIXME: Opaque data types
+Optimizations needed
+- Inlined functions

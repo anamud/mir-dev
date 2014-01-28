@@ -4,6 +4,9 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include "mir_types.h"
+
+BEGIN_C_DECLS 
 
 // FIXME: WARNING AND NOTE! Update both state_name and state_name_string
 #define MIR_RECORDER_STATE_MAX_COUNT 8
@@ -89,4 +92,5 @@ void MIR_RECORDER_STATE_END(const char* meta_data, uint32_t meta_data_length);
 // NOTE: This interface uses thread specific structures to record 
 void MIR_RECORDER_EVENT(const char* meta_data, uint32_t meta_data_length);
 
+END_C_DECLS 
 #endif 

@@ -11,6 +11,9 @@
 #include "mir_lock.h"
 #include "mir_recorder.h"
 #include "mir_task.h"
+#include "mir_types.h"
+
+BEGIN_C_DECLS 
 
 extern uint32_t g_worker_status_board;
 extern uint32_t g_num_tasks_waiting;
@@ -88,4 +91,6 @@ void mir_task_graph_write_header_to_file(FILE* file);
 void mir_task_graph_write_to_file(struct mir_task_graph_node_t* node, FILE* file);
 
 void mir_task_graph_destroy(struct mir_task_graph_node_t* node);
+
+END_C_DECLS
 #endif 

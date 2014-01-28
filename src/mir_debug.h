@@ -5,6 +5,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <assert.h>
+#include "mir_types.h"
 
 #define MIR_ASSERT(cond) assert(cond)
 
@@ -18,7 +19,11 @@
 
 #define MIR_ABORT(...) do{ fprintf( stderr, __VA_ARGS__ ); exit(1); } while(0)
 
+BEGIN_C_DECLS 
+
 void mir_sleep_ms(uint32_t msec);
 
 void mir_sleep_us(uint32_t usec);
+
+END_C_DECLS 
 #endif

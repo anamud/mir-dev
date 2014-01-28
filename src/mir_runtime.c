@@ -327,15 +327,18 @@ void mir_destroy()
     MIR_DEBUG(MIR_DEBUG_STR "Shutting down ...\n");
 
     // Check if workers are free
+    MIR_DEBUG(MIR_DEBUG_STR "Checking if workers are done ...\n");
     mir_worker_check_done();
 
     // Freeze workers
     runtime->sig_dying = 1;
     __sync_synchronize();
+    MIR_DEBUG(MIR_DEBUG_STR "Workers are done. Sent die signal.\n");
 
     // Shutdown recorders
     if(runtime->enable_recorder == 1)
     {/*{{{*/
+        MIR_DEBUG(MIR_DEBUG_STR "Shutting down recorders ...\n");
         for (int i=0; i<runtime->num_workers; i++)
         {
             mir_recorder_write_to_file(runtime->workers[i].recorder);
@@ -346,6 +349,7 @@ void mir_destroy()
     // Dump statistics
     if(runtime->enable_stats == 1) 
     {/*{{{*/
+        MIR_DEBUG(MIR_DEBUG_STR "Dumping stats ...\n");
         // Open stats file
         FILE* stats_file = NULL;
         stats_file = fopen(MIR_STATS_FILE_NAME, "w");
@@ -370,6 +374,7 @@ void mir_destroy()
     // Task graph
     if(runtime->enable_task_graph_gen == 1)
     {/*{{{*/
+        MIR_DEBUG(MIR_DEBUG_STR "Writing task graph to file ...\n");
         // Open stats file
         FILE* task_graph_file = NULL;
         task_graph_file = fopen(MIR_TASK_GRAPH_FILE_NAME, "w");
@@ -391,6 +396,7 @@ void mir_destroy()
     }/*}}}*/
 
     // Kill workers
+    MIR_DEBUG(MIR_DEBUG_STR "Killing workers ...\n");
     for(int i=0; i<runtime->num_workers; i++) 
     {
         struct mir_worker_t* worker = &runtime->workers[i];
@@ -399,15 +405,19 @@ void mir_destroy()
     __sync_synchronize();
 
     // Deinit memory allocation policy
+    MIR_DEBUG(MIR_DEBUG_STR "Stopping memory distributer ...\n");
     mir_mem_pol_destroy();
 
     // Deinit scheduling policy
+    MIR_DEBUG(MIR_DEBUG_STR "Stopping scheduler ...\n");
     runtime->sched_pol->destroy();
 
     // Deinit architecture
+    MIR_DEBUG(MIR_DEBUG_STR "Releasing architecture memory ...\n");
     runtime->arch->destroy();
 
     // Release runtime memory
+    MIR_DEBUG(MIR_DEBUG_STR "Releasing runtime memory ...\n");
     mir_free_int(runtime, sizeof(struct mir_runtime_t));
 
     // Report allocated memory (unfreed memory)

@@ -7,6 +7,9 @@
 
 #include "mir_task.h"
 #include "mir_queue.h"
+#include "mir_types.h"
+
+BEGIN_C_DECLS 
 
 struct mir_sched_pol_t
 {
@@ -28,5 +31,7 @@ struct mir_sched_pol_t
 struct mir_sched_pol_t* mir_sched_pol_get_by_name(const char* name);
 
 unsigned long mir_sched_pol_get_comm_cost(uint16_t node, struct mir_mem_node_dist_t* dist);
+
+END_C_DECLS 
 
 #endif 
