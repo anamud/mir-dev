@@ -125,29 +125,33 @@ bool pop_ws_de (struct mir_task_t** task)
         *task = (struct mir_task_t*) popWSDeque(queue);
         if(*task)
         {
-            // Update stats
-            if(runtime->enable_stats)
+            bool grab = __sync_bool_compare_and_swap(&((*task)->taken), 0, 1);
+            if(grab)
             {
-                struct mir_mem_node_dist_t* dist = mir_task_get_footprint_dist(*task, MIR_DATA_ACCESS_READ);
-                if(dist)
+                // Update stats
+                if(runtime->enable_stats)
                 {
-                    /*MIR_INFORM("Dist for task %" MIR_FORMSPEC_UL ": ", (*task)->id.uid);*/
-                    /*for(int i=0; i<runtime->arch->num_nodes; i++)*/
-                        /*MIR_INFORM("%lu ", dist->buf[i]);*/
-                    /*MIR_INFORM("\n");*/
+                    struct mir_mem_node_dist_t* dist = mir_task_get_footprint_dist(*task, MIR_DATA_ACCESS_READ);
+                    if(dist)
+                    {
+                        /*MIR_INFORM("Dist for task %" MIR_FORMSPEC_UL ": ", (*task)->id.uid);*/
+                        /*for(int i=0; i<runtime->arch->num_nodes; i++)*/
+                            /*MIR_INFORM("%lu ", dist->buf[i]);*/
+                        /*MIR_INFORM("\n");*/
 
-                    (*task)->comm_cost = mir_sched_pol_get_comm_cost(node, dist);
-                    mir_worker_status_update_comm_cost(worker->status, (*task)->comm_cost);
+                        (*task)->comm_cost = mir_sched_pol_get_comm_cost(node, dist);
+                        mir_worker_status_update_comm_cost(worker->status, (*task)->comm_cost);
+                    }
+
+                    worker->status->num_tasks_owned++;
                 }
 
-                worker->status->num_tasks_owned++;
+                if(g_num_tasks_waiting > 0)
+                    __sync_fetch_and_sub(&g_num_tasks_waiting, 1);
+                T_DBG("Dq", *task);
+
+                found = 1;
             }
-
-            if(g_num_tasks_waiting > 0)
-                __sync_fetch_and_sub(&g_num_tasks_waiting, 1);
-            T_DBG("Dq", *task);
-
-            found = 1;
         }
     }
 
@@ -170,30 +174,34 @@ bool pop_ws_de (struct mir_task_t** task)
             *task = (struct mir_task_t*) stealWSDeque(queue);
             if(*task) 
             {
-                // Update stats
-                if(runtime->enable_stats)
+                bool grab = __sync_bool_compare_and_swap(&((*task)->taken), 0, 1);
+                if(grab)
                 {
-                    struct mir_mem_node_dist_t* dist = mir_task_get_footprint_dist(*task, MIR_DATA_ACCESS_READ);
-                    if(dist)
+                    // Update stats
+                    if(runtime->enable_stats)
                     {
-                        /*MIR_INFORM("Dist for task %" MIR_FORMSPEC_UL ": ", (*task)->id.uid);*/
-                        /*for(int i=0; i<runtime->arch->num_nodes; i++)*/
-                            /*MIR_INFORM("%lu ", dist->buf[i]);*/
-                        /*MIR_INFORM("\n");*/
+                        struct mir_mem_node_dist_t* dist = mir_task_get_footprint_dist(*task, MIR_DATA_ACCESS_READ);
+                        if(dist)
+                        {
+                            /*MIR_INFORM("Dist for task %" MIR_FORMSPEC_UL ": ", (*task)->id.uid);*/
+                            /*for(int i=0; i<runtime->arch->num_nodes; i++)*/
+                                /*MIR_INFORM("%lu ", dist->buf[i]);*/
+                            /*MIR_INFORM("\n");*/
 
-                        (*task)->comm_cost = mir_sched_pol_get_comm_cost(node, dist);
-                        mir_worker_status_update_comm_cost(worker->status, (*task)->comm_cost);
+                            (*task)->comm_cost = mir_sched_pol_get_comm_cost(node, dist);
+                            mir_worker_status_update_comm_cost(worker->status, (*task)->comm_cost);
+                        }
+
+                        worker->status->num_tasks_stolen++;
                     }
 
-                    worker->status->num_tasks_stolen++;
+                    if(g_num_tasks_waiting > 0)
+                        __sync_fetch_and_sub(&g_num_tasks_waiting, 1);
+                    T_DBG("St", *task);
+
+                    found = 1;
+                    break;
                 }
-
-                if(g_num_tasks_waiting > 0)
-                    __sync_fetch_and_sub(&g_num_tasks_waiting, 1);
-                T_DBG("St", *task);
-
-                found = 1;
-                break;
             }
         }
 

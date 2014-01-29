@@ -213,7 +213,7 @@ void mir_worker_check_done()
         //mir_sleep_ms(300); // Butterfly effect!
         //__sync_synchronize();
         // Check if worker is free and no tasks are queued up
-        MIR_DEBUG(MIR_DEBUG_STR "Tasks waiting = %u Worker status %u \n", g_num_tasks_waiting, g_worker_status_board);
+        //MIR_DEBUG(MIR_DEBUG_STR "Tasks waiting = %u Worker status %u \n", g_num_tasks_waiting, g_worker_status_board);
         if( g_num_tasks_waiting == 0 && g_worker_status_board == 0 )
             break;
     }

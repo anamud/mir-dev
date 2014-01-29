@@ -47,6 +47,7 @@ struct mir_task_t
 
     // Flags
     uint32_t done;
+    uint32_t taken;
 
     // Data footprint
     struct mir_data_footprint_t* data_footprints;
