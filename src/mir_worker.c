@@ -123,14 +123,14 @@ void mir_worker_local_init(struct mir_worker_t* worker)
     worker->backoff_us = MIR_WORKER_EXP_BOFF_RESET;
 
     // Bind the worker
-    MIR_DEBUG(MIR_DEBUG_STR "Binding worker to core %d\n", worker->id);
+    MIR_DEBUG(MIR_DEBUG_STR "Binding worker to core %d\n", worker->core_id);
 #ifdef __tile__
-    if (tmc_cpus_set_my_cpu(worker->id) != 0)
-        MIR_ABORT(MIR_ERROR_STR "Unable to bind worker to core %d\n", worker->id);
+    if (tmc_cpus_set_my_cpu(worker->core_id) != 0)
+        MIR_ABORT(MIR_ERROR_STR "Unable to bind worker to core %d\n", worker->core_id);
 #else
     cpu_set_t cpu_set;
     CPU_ZERO(&cpu_set);
-    CPU_SET(worker->id, &cpu_set);
+    CPU_SET(worker->core_id, &cpu_set);
     sched_setaffinity((pid_t)0, sizeof(cpu_set), &cpu_set);
 #endif
 
@@ -141,7 +141,7 @@ void mir_worker_local_init(struct mir_worker_t* worker)
     mir_worker_status_init(worker->status);
 
     // Wait till bound
-    while(worker->id != worker_get_cpu());
+    while(worker->core_id != worker_get_cpu());
 
     // Create worker recorder
     worker->recorder = NULL;

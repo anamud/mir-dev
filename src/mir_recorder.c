@@ -58,6 +58,8 @@ char* mir_event_name_string[MIR_RECORDER_EVENT_MAX_COUNT] =
 { /*{{{*/
     "PAPI_L2_DCM", 
     "PAPI_RES_STL" 
+    /*"PAPI_L1_DCA",*/
+    /*"PAPI_L1_DCH",*/
 };/*}}}*/
 
 #endif

@@ -8,6 +8,7 @@
 #define MIR_WORKER_EXP_BOFF_SCALE 2
 #define MIR_WORKER_EXP_BOFF_ROOF 128
 #define MIR_WORKER_BACKOFF_DURING_SYNC 1
+#define MIR_WORKER_EXPLICIT_BIND 1
 
 // Task
 //#define MIR_TASK_DEBUG 1
@@ -65,6 +66,7 @@
 
 // Memory allocation policy
 #define MIR_MEM_POL_CACHE_NODES 1
+#define MIR_MEM_POL_RESTRICT 1
 //#define MIR_MEM_POL_FAULT_IN_PAGES 1
 //#define MIR_MEM_POL_LOCK_PAGES 1
 // TILEPro64 specifc

@@ -112,7 +112,7 @@ bool pop_central (struct mir_task_t** task)
     struct mir_sched_pol_t* sp = runtime->sched_pol;
     struct mir_queue_t* queue = sp->queues[0];
     struct mir_worker_t* worker = mir_worker_get_context(); 
-    uint16_t node = runtime->arch->node_of(worker->id);
+    uint16_t node = runtime->arch->node_of(worker->core_id);
 
     if(mir_queue_size(queue) > 0)
     {

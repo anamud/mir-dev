@@ -15,8 +15,9 @@
 #include "helper.h"
 
 #ifndef BSIZE
-//#define BSIZE 128
-#define BSIZE 64
+#define BSIZE 128
+//#define BSIZE 64
+//#define BSIZE 8
 #endif
 
 //#define BMALLOC_IN_PARALLEL 1
@@ -486,7 +487,7 @@ int main(int argc, char *argv[])
     compute(&start, &stop,(unsigned long) BSIZE, DIM, (void *)A, (void *)B, (void *)C);
 
 #ifdef CHECK_RESULT
-//#if 1
+//#if 0
     struct timeval start_seq;
     struct timeval stop_seq;
     unsigned long elapsed_seq;

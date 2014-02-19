@@ -322,9 +322,9 @@ uint16_t comm_cost_of_gothmog(uint16_t from_nodeid, uint16_t to_nodeid)
     // Even and odd-numbered nodes are connected together using HT8
     // Even-to-odd connection requires two hops over HT8
     if(from_nodeid % 2 != to_nodeid % 2)
-        return 16;
-    else
         return 22;
+    else
+        return 16;
 }/*}}}*/
 
 struct mir_arch_t arch_gothmog = 

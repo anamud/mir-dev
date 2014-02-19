@@ -148,7 +148,7 @@ void push_numa (struct mir_task_t* task)
             least_cost_worker = this_worker;
             push_to_alt_queue = true;
             if(runtime->enable_stats)
-                task->comm_cost = mir_sched_pol_get_comm_cost(runtime->arch->node_of(least_cost_worker->id), dist);
+                task->comm_cost = mir_sched_pol_get_comm_cost(runtime->arch->node_of(least_cost_worker->core_id), dist);
         }
         else
         {
@@ -164,7 +164,7 @@ void push_numa (struct mir_task_t* task)
             do
             {
                 struct mir_worker_t* worker = &runtime->workers[i];
-                uint16_t node = runtime->arch->node_of(worker->id);
+                uint16_t node = runtime->arch->node_of(worker->core_id);
                 if(node != prev_node)
                 {
                     prev_node = node;
@@ -182,7 +182,7 @@ void push_numa (struct mir_task_t* task)
             if(runtime->enable_stats)
                 task->comm_cost = least_comm_cost;
 
-            /*MIR_INFORM("Task %" MIR_FORMSPEC_UL " scheduled on node %d!\n", task->id.uid, runtime->arch->node_of(least_cost_worker->id));*/
+            /*MIR_INFORM("Task %" MIR_FORMSPEC_UL " scheduled on node %d!\n", task->id.uid, runtime->arch->node_of(least_cost_worker->core_id));*/
         }
     }
     else
@@ -194,9 +194,9 @@ void push_numa (struct mir_task_t* task)
     // Push task to worker's queue
     struct mir_queue_t* queue = NULL;
     if(push_to_alt_queue == true)
-        queue = runtime->sched_pol->alt_queues[runtime->arch->node_of(least_cost_worker->id)];
+        queue = runtime->sched_pol->alt_queues[runtime->arch->node_of(least_cost_worker->core_id)];
     else
-        queue = runtime->sched_pol->queues[runtime->arch->node_of(least_cost_worker->id)];
+        queue = runtime->sched_pol->queues[runtime->arch->node_of(least_cost_worker->core_id)];
     if( false == mir_queue_push(queue, (void*) task) )
     {
 #ifdef MIR_SCHED_POL_INLINE_TASKS
@@ -227,7 +227,7 @@ bool pop_numa (struct mir_task_t** task)
     struct mir_sched_pol_t* sp = runtime->sched_pol;
     uint32_t num_queues = sp->num_queues;
     struct mir_worker_t* worker = mir_worker_get_context(); 
-    uint16_t node = runtime->arch->node_of(worker->id);
+    uint16_t node = runtime->arch->node_of(worker->core_id);
 
     // Pop from own node alt queue
     //MIR_RECORDER_STATE_BEGIN(MIR_STATE_TPOP);

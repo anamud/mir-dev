@@ -213,6 +213,10 @@ struct mir_mem_pol_t
 {/*{{{*/
     struct mir_lock_t lock;
     uint16_t node;
+#ifdef MIR_MEM_POL_RESTRICT
+    uint16_t num_nodes;
+    uint32_t* nodes;
+#endif
     uint64_t total_allocated;
 
     // Interfaces
@@ -233,8 +237,19 @@ static inline void reset_node()
 static inline void advance_node()
 {/*{{{*/
     mir_lock_set(&mem_pol->lock);
+advance:
     mem_pol->node++;
     mem_pol->node = mem_pol->node % runtime->arch->num_nodes;
+#ifdef MIR_MEM_POL_RESTRICT
+    bool allowed = false;
+    for(int i=0; i<runtime->num_workers; i++)
+        if(runtime->arch->node_of(runtime->workers[i].core_id) == mem_pol->node)
+        {
+            allowed = true;
+            break;
+        }
+    if(!allowed) goto advance;
+#endif
     mir_lock_unset(&mem_pol->lock);
 }/*}}}*/
 
@@ -310,7 +325,16 @@ static void* allocate_fine(size_t sz)
     int cur_pol;
     get_mempolicy(&cur_pol, NULL, 0, 0, 0);
     struct bitmask* mask = numa_bitmask_alloc(runtime->arch->num_nodes);
+#ifdef MIR_MEM_POL_RESTRICT
+    numa_bitmask_clearall(mask);
+    for(int i=0; i<runtime->num_workers; i++)
+    {
+        //MIR_DEBUG(MIR_DEBUG_STR "Selecting node %d for allocation\n", runtime->arch->node_of(runtime->workers[i].core_id));
+        numa_bitmask_setbit(mask, runtime->arch->node_of(runtime->workers[i].core_id));
+    }
+#else
     numa_bitmask_setall(mask);
+#endif
     numa_set_interleave_mask(mask);
     addr = numa_alloc_interleaved_subset(new_sz, mask);
     set_mempolicy(cur_pol, mask->maskp, mask->size + 1);
@@ -365,7 +389,7 @@ static void* allocate_fine(size_t sz)
         header->node_cache = NULL;
 #endif
 
-        __sync_fetch_and_add(&mem_pol->total_allocated, sz);
+        __sync_fetch_and_add(&mem_pol->total_allocated, new_sz);
     }
 
     MIR_RECORDER_STATE_END(NULL, 0);
@@ -403,7 +427,7 @@ static void* allocate_local(size_t sz)
 
     // Get this worker's node
     struct mir_worker_t* worker = mir_worker_get_context();
-    int node = runtime->arch->node_of(worker->id);
+    int node = runtime->arch->node_of(worker->core_id);
 
 #ifndef __tile__
     numa_set_bind_policy(1);
@@ -470,7 +494,9 @@ static void release_coarse(void* addr, size_t sz)
 #endif
 
     if(addr)
+    {
         __sync_fetch_and_sub(&mem_pol->total_allocated, new_sz);
+    }
 }/*}}}*/
 
 static void release_fine(void* addr, size_t sz)
@@ -561,7 +587,8 @@ void mir_mem_pol_create ()
     // Statistics
     mem_pol->total_allocated = 0;
     // Node for coarse allocation
-    mem_pol->node =0;
+    // This will be properly set during mir_mem_pol_init
+    mem_pol->node = 0;
     // Lock
     mir_lock_create(&mem_pol->lock);
     // Default allocation
@@ -575,6 +602,13 @@ void mir_mem_pol_create ()
     numa_set_strict(1);
 #endif
 }/*}}}*/
+
+void mir_mem_pol_init ()
+{
+#ifdef MIR_MEM_POL_RESTRICT 
+    mem_pol->node = runtime->arch->node_of(runtime->workers[0].core_id);
+#endif
+}
 
 void mir_mem_pol_destroy ()
 {/*{{{*/

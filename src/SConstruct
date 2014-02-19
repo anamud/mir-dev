@@ -35,6 +35,7 @@ env['CCFLAGS'] = Split("""
 -Werror 
 -Wno-unused-function 
 -Wno-unused-variable 
+-Wno-unused-label
 -fPIC 
 -std=c99 
 -D_GNU_SOURCE 

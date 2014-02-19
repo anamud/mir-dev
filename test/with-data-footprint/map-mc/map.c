@@ -15,8 +15,8 @@
 #define OPR_SCALE (42)
 //#define SLEEP_MS 0
 #define LOOP_CNT 10
-#define REUSE_CNT 3
-//#define SHOW_NUMA_STATS 1
+#define REUSE_CNT 1
+#define SHOW_NUMA_STATS 1
 //#define ENABLE_FAULT_IN 
 //#define ENABLE_PREFETCH 1
 
@@ -366,7 +366,7 @@ int main(int argc, char *argv[])
 #ifdef SHOW_NUMA_STATS
     char cmd[256];
     int pid = getpid();
-    sprintf(cmd, "~/survival_tools/bin/nmstat %d > numa_stats-%d\n", pid, pid);
+    sprintf(cmd, "numastat %d > numa_stats-%d\n", pid, pid);
     system(cmd);
     sprintf(cmd, "cp /proc/%d/maps maps-%d\n", pid, pid);
     system(cmd);

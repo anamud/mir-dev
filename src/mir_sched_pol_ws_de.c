@@ -68,6 +68,7 @@ void create_ws_de ()
 
 void destroy_ws_de ()
 {/*{{{*/
+    return; // FIXME: Bad exit. Workers bang on queues which are freed.
     struct mir_sched_pol_t* sp = runtime->sched_pol;
     
     // Free queues
@@ -114,7 +115,7 @@ bool pop_ws_de (struct mir_task_t** task)
     struct mir_sched_pol_t* sp = runtime->sched_pol;
     uint32_t num_queues = sp->num_queues;
     struct mir_worker_t* worker = mir_worker_get_context(); 
-    uint16_t node = runtime->arch->node_of(worker->id);
+    uint16_t node = runtime->arch->node_of(worker->core_id);
 
     // First try to pop from own queue
     //MIR_RECORDER_STATE_BEGIN(MIR_STATE_TPOP);

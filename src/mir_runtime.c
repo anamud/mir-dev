@@ -53,6 +53,9 @@ void mir_preconfig_init()
 
     // Workers
     runtime->num_workers = runtime->arch->num_cores;
+    runtime->worker_core_map = mir_malloc_int(sizeof(uint16_t) * runtime->arch->num_cores);
+    for(int i=0; i<runtime->num_workers; i++)
+        runtime->worker_core_map[i] = (uint16_t) i;
     int rval = pthread_key_create(&runtime->worker_index, NULL); 
     if (rval != 0)
         MIR_ABORT(MIR_ERROR_STR "Unable to create worker TLS key!\n");
@@ -79,7 +82,7 @@ void mir_postconfig_init()
     // Shared memory for passing data and handshake signals
     // The idea is to let the PIN profiling tool and MIR communicate
     if(runtime->enable_shmem_handshake == 1)
-    {
+    {/*{{{*/
         // Create shared memory
         runtime->shmid = shmget((int)(MIR_SHM_KEY), MIR_SHM_SIZE, IPC_CREAT | 0666);
         if(runtime->shmid < 0)
@@ -98,16 +101,16 @@ void mir_postconfig_init()
             /*testchar++;*/
         /*}*/
         /*runtime->shm[MIR_SHM_SIZE-1] = '\0';*/
-    }
+    }/*}}}*/
     else
-    {
+    {/*{{{*/
         runtime->shmid = -1;
         runtime->shm = NULL;
-    }
+    }/*}}}*/
 
     // Recorder
     if(runtime->enable_recorder == 1)
-    {
+    {/*{{{*/
 #ifdef MIR_RECORDER_USE_HW_PERF_COUNTERS
 #ifndef __tile__
         // PAPI
@@ -119,7 +122,7 @@ void mir_postconfig_init()
             MIR_ABORT(MIR_ERROR_STR "PAPI_thread_init failed [%d]!\n", retval);
 #endif
 #endif
-    }
+    }/*}}}*/
 
     // Workers
     __sync_fetch_and_add(&g_sig_worker_alive, runtime->num_workers-1);
@@ -128,11 +131,39 @@ void mir_postconfig_init()
 #else
     __sync_synchronize();
 #endif
+#ifdef MIR_WORKER_EXPLICIT_BIND
+    const char* worker_core_map_str = getenv("MIR_WORKER_CORE_MAP");
+    if(worker_core_map_str)
+        if(strlen(worker_core_map_str) > 0)
+        {
+            MIR_DEBUG(MIR_DEBUG_STR "Reading worker to core map ...\n");
+
+            // Copy to buf
+            char str[MIR_LONG_NAME_LEN];
+            strcpy(str, worker_core_map_str);
+
+            // Parse for core ids
+            uint16_t tok_cnt = 0;
+            char* tok = strtok (str, ",");
+            while (tok != NULL && tok_cnt < runtime->num_workers)
+            {
+                int id;
+                sscanf (tok, "%d", &id);
+                //MIR_DEBUG(MIR_DEBUG_STR "Read token %d ...\n", id);
+                runtime->worker_core_map[tok_cnt] = (uint16_t) id;
+                tok_cnt++;
+                tok = strtok (NULL, ",");
+            }
+            if(tok_cnt != runtime->num_workers)
+                MIR_ABORT(MIR_ERROR_STR "MIR_WORKER_CORE_MAP incompletely specified!\n");
+        }
+#endif
     for (uint32_t i=0; i<runtime->num_workers; i++) 
     {
         // FIXME: Master thread stack size, how to set?
         struct mir_worker_t* worker = &runtime->workers[i];
         worker->id = i;
+        worker->core_id = runtime->worker_core_map[i];
         if(worker->id != 0)
             mir_worker_master_init(worker);
         if(worker->id == 0)
@@ -148,6 +179,11 @@ alive:
 
     // Global taskwait counter
     runtime->ctwc = mir_twc_create();
+
+    // Memory allocation policy
+    // Init memory distributer only after workers are bound.
+    // Node restrictions can then be correctly inferred.
+    mir_mem_pol_init();
 
     MIR_DEBUG(MIR_DEBUG_STR "Initialization complete!\n");
 }/*}}}*/
@@ -418,6 +454,7 @@ void mir_destroy()
 
     // Release runtime memory
     MIR_DEBUG(MIR_DEBUG_STR "Releasing runtime memory ...\n");
+    mir_free_int(runtime->worker_core_map, sizeof(uint16_t) * runtime->arch->num_cores);
     mir_free_int(runtime, sizeof(struct mir_runtime_t));
 
     // Report allocated memory (unfreed memory)
