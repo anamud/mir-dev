@@ -130,7 +130,7 @@ static inline bool is_data_dist_significant(struct mir_mem_node_dist_t* dist)
 
 void push_numa (struct mir_task_t* task)
 {/*{{{*/
-    MIR_RECORDER_STATE_BEGIN(MIR_STATE_TSCHED);
+    //MIR_RECORDER_STATE_BEGIN(MIR_STATE_TSCHED);
 
     struct mir_worker_t* least_cost_worker = NULL;
     struct mir_worker_t* this_worker = mir_worker_get_context();
@@ -218,7 +218,7 @@ void push_numa (struct mir_task_t* task)
             this_worker->status->num_tasks_created++;
     }
 
-    MIR_RECORDER_STATE_END(NULL, 0);
+    //MIR_RECORDER_STATE_END(NULL, 0);
 }/*}}}*/
 
 bool pop_numa (struct mir_task_t** task)

@@ -78,7 +78,7 @@ long get_usecs(void)
     return t.tv_sec * 1000000 + t.tv_usec;
 }/*}}}*/
 
-static unsigned long arg_size;
+static unsigned long arg_size = 0;
 /*static int cutoff_value = 262144; */
 /*static int cutoff_value_1 = 524288; */
 /*static int cutoff_value = 2048;*/
@@ -634,15 +634,20 @@ int sort_verify(void)
 
 int main(int argc, char **argv)
 {/*{{{*/
-    if (argc > 2)
-        PABRT("Usage: %s num_elements\n", argv[0]);
+    if (argc > 5)
+        PABRT("Usage: %s [num_elements=%lu] [merge_cutoff_size=%d] [quicksort_cutoff_size=%d] [insertionsort_cutoff_size=%d]\n", argv[0], arg_size, cutoff_value, cutoff_value_1, cutoff_value_2);
+
+    if(argc > 1)
+        arg_size = atoi(argv[1]);
+    if(argc > 2)
+        cutoff_value = atoi(argv[2]);
+    if(argc > 3)
+        cutoff_value_1 = atoi(argv[3]);
+    if(argc > 4)
+        cutoff_value_2 = atoi(argv[4]);
 
     // Init the runtime
     mir_create();
-
-    arg_size = 33554432;
-    if(argc == 2)
-        arg_size = atoi(argv[1]);
 
     sort_init();
     long par_time_start = get_usecs();

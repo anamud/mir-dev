@@ -1,0 +1,6 @@
+# Starting parallel
+parallel -j2 --nice 17 --joblog prof-all.log < profile-all.txt
+# Status parallel
+killall -USR1 parallel 
+# Terminate parallel
+killall -TERM parallel

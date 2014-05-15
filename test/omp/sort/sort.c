@@ -85,7 +85,7 @@ static unsigned long arg_size;
 /*static int cutoff_value = 2048;*/
 /*static int cutoff_value_1 = 2048;*/
 /*static int cutoff_value_2 = 20;*/
-static int cutoff_value = 4096;
+static int cutoff_value = 262144; //4096
 static int cutoff_value_1 = 4096;
 static int cutoff_value_2 = 128;
 static unsigned long rand_nxt = 0;
@@ -433,15 +433,19 @@ int sort_verify(void)
 
 int main(int argc, char **argv)
 {/*{{{*/
-    if (argc > 2)
-        PABRT("Usage: %s num_elements\n", argv[0]);
+    arg_size = 33554432;
+    if (argc > 4)
+        PABRT("Usage: %s [num_elements=%lu] [merge_cutoff_size=%d] [quicksort_cutoff_size=%d]\n", argv[0], arg_size, cutoff_value, cutoff_value_1);
 
     // Init the runtime
     mir_create();
 
-    arg_size = 33554432;
-    if(argc == 2)
+    if(argc > 1)
         arg_size = atoi(argv[1]);
+    if(argc > 2)
+        cutoff_value = atoi(argv[2]);
+    if(argc > 3)
+        cutoff_value_1 = atoi(argv[3]);
 
     sort_init();
     long par_time_start = get_usecs();

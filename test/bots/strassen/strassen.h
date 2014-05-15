@@ -34,6 +34,7 @@
 
 /*FIXME: at the moment we use a constant value, change to parameter ???*/
 /* Below this cut off  strassen uses FastAdditiveNaiveMatrixMultiply algorithm */
+//#define SizeAtWhichNaiveAlgorithmIsMoreEfficient 16
 #define SizeAtWhichNaiveAlgorithmIsMoreEfficient 16
 
 /***********************************************************************
