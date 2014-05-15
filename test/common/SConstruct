@@ -30,6 +30,7 @@ if(len(compiler) == 0):
     print('Could not find a compiler. Aborting!')
     Exit(2)
 
+#-Wno-implicit-function-declaration
 env = Environment()
 env['CC'] = [compiler[0]]
 env['CCFLAGS'] = Split("""
@@ -39,7 +40,9 @@ env['CCFLAGS'] = Split("""
 -Wno-unused-function 
 -Wno-unused-variable
 -Wno-unused-but-set-variable
+-Wno-maybe-uninitialized
 -fopenmp
+-DLINUX
 """)
 env['CFLAGS'] += ['-I' + MIR_ROOT+'/src']
 env['CFLAGS'] += ['-I' + MIR_ROOT+'/test/common']

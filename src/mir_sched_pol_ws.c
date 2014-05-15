@@ -78,7 +78,7 @@ void destroy_ws ()
 
 void push_ws (struct mir_task_t* task)
 {/*{{{*/
-    MIR_RECORDER_STATE_BEGIN(MIR_STATE_TSCHED);
+    //MIR_RECORDER_STATE_BEGIN(MIR_STATE_TSCHED);
 
     // Get this worker!
     struct mir_worker_t* worker = mir_worker_get_context(); 
@@ -104,7 +104,7 @@ void push_ws (struct mir_task_t* task)
             worker->status->num_tasks_created++;
     }
 
-    MIR_RECORDER_STATE_END(NULL, 0);
+    //MIR_RECORDER_STATE_END(NULL, 0);
 }/*}}}*/
 
 bool pop_ws (struct mir_task_t** task)

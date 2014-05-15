@@ -66,6 +66,11 @@ struct mir_recorder_t
 #endif
 #endif
 
+    // For recording time spent in states
+    uint64_t state_time[MIR_RECORDER_STATE_MAX_COUNT];
+    uint64_t this_state_trans_time;
+    mir_state_name_t prev_state, this_state;
+
     // For recording states, I use a stack and a buffer
     struct mir_state_t state_buffer[MIR_RECORDER_BUFFER_MAX_SIZE];
     uint64_t state_buffer_head;
@@ -82,6 +87,8 @@ struct mir_recorder_t* mir_recorder_create(uint16_t id);
 void mir_recorder_destroy(struct mir_recorder_t* recorder);
 
 void mir_recorder_write_to_file(struct mir_recorder_t* recorder);
+
+void mir_recorder_state_transition(struct mir_recorder_t* recorder, mir_state_name_t next_state);
 
 // NOTE: This interface uses thread specific structures to record 
 void MIR_RECORDER_STATE_BEGIN(mir_state_name_t name);

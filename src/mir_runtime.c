@@ -362,6 +362,10 @@ void mir_destroy()
 
     MIR_DEBUG(MIR_DEBUG_STR "Shutting down ...\n");
 
+    // FIXME: ws-de causes never-ending shutdown
+    if(0 == strcmp(runtime->sched_pol->name, "ws-de"))
+        goto shutdown;
+
     // Check if workers are free
     MIR_DEBUG(MIR_DEBUG_STR "Checking if workers are done ...\n");
     mir_worker_check_done();
@@ -460,6 +464,7 @@ void mir_destroy()
     // Report allocated memory (unfreed memory)
     MIR_DEBUG(MIR_DEBUG_STR "Total unfreed memory=%" MIR_FORMSPEC_UL " bytes\n", mir_get_allocated_memory());
 
+shutdown:
     MIR_DEBUG(MIR_DEBUG_STR "Shutdown complete!\n");
     return;
 }/*}}}*/
