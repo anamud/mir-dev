@@ -1,4 +1,93 @@
-Scons (www.scons.org) is needed to build mir.
-Run scons from /src directory.
-Use the SConstruct file in the /src directory to roll out a Makefile in the case that scons is not available.
+=== Requirements ===
+* Linux with kernel later than 2012 January
+* x86 machine
+* Scons 
+* PAPI
+* Paraver
+* Python
+* Pin
+* R 
+* R packages: igraph, gdata, RColorBrewer, plyr
+* Graphviz
+* hwloc
+* libnuma
 
+=== MIR runtime system ===
+
+* Setup these shell environment variables:
+MIR_ROOT=<<MIR clone path>>
+PAPI_ROOT=<<PAPI install path>>
+PIN_ROOT=<<Pin source path>>
+LD_LIBRARY_PATH=$LD_LIBRARY_PATH:<<Pin install path>>
+
+* Run these commands to build MIR:
+$ cd $MIR_ROOT/src
+Ensure SConstruct file matches your machine configuration and build intention
+$ scons 
+
+* MIR needs topology information for NUMA-aware scheduling
+$ cd $MIR_ROOT/src
+$ cp mir_arch_adk.c mir_arch_<<your machine name>>.c
+Adopt mir_arch_<<your machine name>>.c to your system topology
+Update mir_arch.c with your adoption
+Rebuild MIR
+
+=== MIR test === 
+* Run the fibonacci application:
+$ cd $MIR_ROOT/test/fib
+$ scons 
+$ ./fib-verbose
+
+=== MIR per-task profiling ===
+* Edit PIN_ROOT/source/tools/Config/makefile.unix.config
+Add -fopenmp to these variables: TOOL_LDFLAGS_NOOPT, TOOL_CXXFLAGS_NOOPT
+
+* Build MIR pin tool
+$ cd $MIR_ROOT/scripts/task-graph
+$ make PIN_ROOT=<<Expand PIN_ROOT>>
+View tool options using:
+$ $PIN_ROOT/intel64/bin/pinbin -t $MIR_ROOT/scripts/task-graph/obj-intel64/mir_routine_trace.so -h -- ls
+
+=== MIR traces === 
+MIR dumps detailed runtime information in different trace files.
+
+* Build fibonacci application:
+$ cd $MIR_ROOT/test/fib
+$ scons 
+
+* For thread state info, run:
+$ MIR_CONF="-i" ./fib-opt
+View mir-stats file created in invocation path
+
+* For detailed thread state info viewable on Paraver, run:
+$ MIR_CONF="-r" ./fib-opt
+A set of <<unix time>>*.rec files will be created in the invocation path
+$ MIR_ROOT/scripts/mirtoparaver.py <<unix time>>-config.rec
+$ wxparaver <<unix time>>-paraver.prv
+
+Also a set of <<unix time>>-state-time*.rec files will be created in the invocation path. The files contain thraed state duration information. Accumulate them using:
+
+$ MIR_ROOT/scripts/get-state-stats.sh <<unix time>>
+
+* For performance counter information along with detailed thread state info viewable on Paraver:
+$ cd $MIR_ROOT/src
+Enable definition MIR_RECORDER_USE_HW_PERF_COUNTERS in mir_defines.h
+Adopt mir_recorder.{c|h} to the counters you want to view
+Rebuild MIR
+MIR trace files will now contain performance counter values When you generate traces using the -r option in MIR_CONF
+
+Get hardware event counts using the paraver file obtained from mirtoparaver.py
+$ MIR_ROOT/scripts/get-event-counts.sh <<prv-file>>
+
+* For task graph structural info, run:
+MIR_CONF="-g -w=1" ./fib-opt
+
+* For detailed task graph info:
+$ ./profile-test.sh
+A set of graph files will be created in a new result directory in the invocation path
+
+=== MIR configuration ===
+MIR has several configurable options. View them using:
+$ cd $MIR_ROOT/test/fib
+$ scons 
+$ MIR_CONF="-h" ./fib-opt
