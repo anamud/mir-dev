@@ -13,6 +13,8 @@ void mir_mem_pol_config (const char* conf_str);
 
 void mir_mem_pol_create ();
 
+void mir_mem_pol_init ();
+
 void mir_mem_pol_reset ();
 
 void mir_mem_pol_destroy ();

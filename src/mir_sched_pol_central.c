@@ -77,7 +77,7 @@ void destroy_central ()
 
 void push_central (struct mir_task_t* task)
 {/*{{{*/
-    MIR_RECORDER_STATE_BEGIN(MIR_STATE_TSCHED);
+    //MIR_RECORDER_STATE_BEGIN(MIR_STATE_TSCHED);
     struct mir_worker_t* worker = mir_worker_get_context(); 
 
     // Push task to central queue
@@ -101,7 +101,7 @@ void push_central (struct mir_task_t* task)
             worker->status->num_tasks_created++;
     }
 
-    MIR_RECORDER_STATE_END(NULL, 0);
+    //MIR_RECORDER_STATE_END(NULL, 0);
 }/*}}}*/
 
 bool pop_central (struct mir_task_t** task)
@@ -112,7 +112,7 @@ bool pop_central (struct mir_task_t** task)
     struct mir_sched_pol_t* sp = runtime->sched_pol;
     struct mir_queue_t* queue = sp->queues[0];
     struct mir_worker_t* worker = mir_worker_get_context(); 
-    uint16_t node = runtime->arch->node_of(worker->id);
+    uint16_t node = runtime->arch->node_of(worker->core_id);
 
     if(mir_queue_size(queue) > 0)
     {

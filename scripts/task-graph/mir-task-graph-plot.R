@@ -6,17 +6,31 @@ require(RColorBrewer, quietly=TRUE)
 require(gdata, quietly=TRUE, warn.conflicts=FALSE)
 
 # Colors
-join_color <- "#FF7F50"  # coral
-fork_color <- "#2E8B57"  # seagreen
-start_color <- "#DEB887" # burlywood
-create_edge_color <- fork_color
-sync_edge_color <- join_color
+# --- COLOR ---
+#join_color <- "#FF7F50"  # coral
+#fork_color <- "#2E8B57"  # seagreen
+#start_color <- "#DEB887" # burlywood
+#create_edge_color <- fork_color
+#sync_edge_color <- join_color
+# --- GRAY ---
+join_color <- "#FFFAFA"  # snow
+fork_color <- "#FFFAFA"  # snow
+start_color <- "#FFFAFA" # snow
+create_edge_color <- "black"
+sync_edge_color <- "black"
+# --- END ---
+
 scope_edge_color <-"black" 
 cont_edge_color <- "black"
 
 # Task colors
 task_color_bins <- 10
-colorf <- colorRampPalette(c("lightskyblue", "steelblue"))
+# --- COLOR ---
+#colorf <- colorRampPalette(c("lightskyblue", "steelblue"))
+# --- GRAY ---
+#colorf <- colorRampPalette(c("gray80", "gray30"))
+colorf <- colorRampPalette(c("gray80", "gray80"))
+# --- END ---
 task_color_pal <- colorf(task_color_bins)
 
 # Sizes
@@ -208,8 +222,12 @@ tic(type="elapsed")
 # Can only get the length of the path 
 span <- shortest.paths(tg, v=start_index, to=end_index, mode="out")
 work <- sum(as.numeric(tg.data$ins_count))
+tg.file.out <- paste(gsub(". $", "", tg.file), ".graph-info", sep="")
+print(paste("Writing file", tg.file.out))
+sink(tg.file.out)
 print("span,work,parallelism")
 print(c(-span, work, work/(-span)))
+sink()
 toc("Critical path")
 
 tic(type="elapsed")

@@ -68,6 +68,7 @@ void create_ws_de ()
 
 void destroy_ws_de ()
 {/*{{{*/
+    return; // FIXME: Bad exit. Workers bang on queues which are freed.
     struct mir_sched_pol_t* sp = runtime->sched_pol;
     
     // Free queues
@@ -79,7 +80,7 @@ void destroy_ws_de ()
 
 void push_ws_de (struct mir_task_t* task)
 {/*{{{*/
-    MIR_RECORDER_STATE_BEGIN(MIR_STATE_TSCHED);
+    //MIR_RECORDER_STATE_BEGIN(MIR_STATE_TSCHED);
 
     // Get this worker!
     struct mir_worker_t* worker = mir_worker_get_context(); 
@@ -105,7 +106,7 @@ void push_ws_de (struct mir_task_t* task)
             worker->status->num_tasks_created++;
     }
 
-    MIR_RECORDER_STATE_END(NULL, 0);
+    //MIR_RECORDER_STATE_END(NULL, 0);
 }/*}}}*/
 
 bool pop_ws_de (struct mir_task_t** task)
@@ -114,7 +115,7 @@ bool pop_ws_de (struct mir_task_t** task)
     struct mir_sched_pol_t* sp = runtime->sched_pol;
     uint32_t num_queues = sp->num_queues;
     struct mir_worker_t* worker = mir_worker_get_context(); 
-    uint16_t node = runtime->arch->node_of(worker->id);
+    uint16_t node = runtime->arch->node_of(worker->core_id);
 
     // First try to pop from own queue
     //MIR_RECORDER_STATE_BEGIN(MIR_STATE_TPOP);
@@ -125,29 +126,33 @@ bool pop_ws_de (struct mir_task_t** task)
         *task = (struct mir_task_t*) popWSDeque(queue);
         if(*task)
         {
-            // Update stats
-            if(runtime->enable_stats)
+            bool grab = __sync_bool_compare_and_swap(&((*task)->taken), 0, 1);
+            if(grab)
             {
-                struct mir_mem_node_dist_t* dist = mir_task_get_footprint_dist(*task, MIR_DATA_ACCESS_READ);
-                if(dist)
+                // Update stats
+                if(runtime->enable_stats)
                 {
-                    /*MIR_INFORM("Dist for task %" MIR_FORMSPEC_UL ": ", (*task)->id.uid);*/
-                    /*for(int i=0; i<runtime->arch->num_nodes; i++)*/
-                        /*MIR_INFORM("%lu ", dist->buf[i]);*/
-                    /*MIR_INFORM("\n");*/
+                    struct mir_mem_node_dist_t* dist = mir_task_get_footprint_dist(*task, MIR_DATA_ACCESS_READ);
+                    if(dist)
+                    {
+                        /*MIR_INFORM("Dist for task %" MIR_FORMSPEC_UL ": ", (*task)->id.uid);*/
+                        /*for(int i=0; i<runtime->arch->num_nodes; i++)*/
+                            /*MIR_INFORM("%lu ", dist->buf[i]);*/
+                        /*MIR_INFORM("\n");*/
 
-                    (*task)->comm_cost = mir_sched_pol_get_comm_cost(node, dist);
-                    mir_worker_status_update_comm_cost(worker->status, (*task)->comm_cost);
+                        (*task)->comm_cost = mir_sched_pol_get_comm_cost(node, dist);
+                        mir_worker_status_update_comm_cost(worker->status, (*task)->comm_cost);
+                    }
+
+                    worker->status->num_tasks_owned++;
                 }
 
-                worker->status->num_tasks_owned++;
+                if(g_num_tasks_waiting > 0)
+                    __sync_fetch_and_sub(&g_num_tasks_waiting, 1);
+                T_DBG("Dq", *task);
+
+                found = 1;
             }
-
-            if(g_num_tasks_waiting > 0)
-                __sync_fetch_and_sub(&g_num_tasks_waiting, 1);
-            T_DBG("Dq", *task);
-
-            found = 1;
         }
     }
 
@@ -170,30 +175,34 @@ bool pop_ws_de (struct mir_task_t** task)
             *task = (struct mir_task_t*) stealWSDeque(queue);
             if(*task) 
             {
-                // Update stats
-                if(runtime->enable_stats)
+                bool grab = __sync_bool_compare_and_swap(&((*task)->taken), 0, 1);
+                if(grab)
                 {
-                    struct mir_mem_node_dist_t* dist = mir_task_get_footprint_dist(*task, MIR_DATA_ACCESS_READ);
-                    if(dist)
+                    // Update stats
+                    if(runtime->enable_stats)
                     {
-                        /*MIR_INFORM("Dist for task %" MIR_FORMSPEC_UL ": ", (*task)->id.uid);*/
-                        /*for(int i=0; i<runtime->arch->num_nodes; i++)*/
-                            /*MIR_INFORM("%lu ", dist->buf[i]);*/
-                        /*MIR_INFORM("\n");*/
+                        struct mir_mem_node_dist_t* dist = mir_task_get_footprint_dist(*task, MIR_DATA_ACCESS_READ);
+                        if(dist)
+                        {
+                            /*MIR_INFORM("Dist for task %" MIR_FORMSPEC_UL ": ", (*task)->id.uid);*/
+                            /*for(int i=0; i<runtime->arch->num_nodes; i++)*/
+                                /*MIR_INFORM("%lu ", dist->buf[i]);*/
+                            /*MIR_INFORM("\n");*/
 
-                        (*task)->comm_cost = mir_sched_pol_get_comm_cost(node, dist);
-                        mir_worker_status_update_comm_cost(worker->status, (*task)->comm_cost);
+                            (*task)->comm_cost = mir_sched_pol_get_comm_cost(node, dist);
+                            mir_worker_status_update_comm_cost(worker->status, (*task)->comm_cost);
+                        }
+
+                        worker->status->num_tasks_stolen++;
                     }
 
-                    worker->status->num_tasks_stolen++;
+                    if(g_num_tasks_waiting > 0)
+                        __sync_fetch_and_sub(&g_num_tasks_waiting, 1);
+                    T_DBG("St", *task);
+
+                    found = 1;
+                    break;
                 }
-
-                if(g_num_tasks_waiting > 0)
-                    __sync_fetch_and_sub(&g_num_tasks_waiting, 1);
-                T_DBG("St", *task);
-
-                found = 1;
-                break;
             }
         }
 

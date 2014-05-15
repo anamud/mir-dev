@@ -58,6 +58,8 @@ char* mir_event_name_string[MIR_RECORDER_EVENT_MAX_COUNT] =
 { /*{{{*/
     "PAPI_L2_DCM", 
     "PAPI_RES_STL" 
+    /*"PAPI_L1_DCA",*/
+    /*"PAPI_L1_DCH",*/
 };/*}}}*/
 
 #endif
@@ -100,6 +102,13 @@ struct mir_recorder_t* mir_recorder_create(uint16_t id)
     // Record id
     recorder->id = id;
     fprintf(recorder->buffer_file, "%%recorder_id=%d%%\n", id);
+
+    // Reset state time related
+    for(int i=0; i<MIR_RECORDER_STATE_MAX_COUNT; i++)
+        recorder->state_time[i] = 0;
+    recorder->prev_state = 0;
+    recorder->this_state = 0;
+    recorder->this_state_trans_time = mir_get_cycles();
 
     // Record states and events
     for(int i=0; i<MIR_RECORDER_STATE_MAX_COUNT; i++)
@@ -171,6 +180,32 @@ struct mir_recorder_t* mir_recorder_create(uint16_t id)
 
 void mir_recorder_destroy(struct mir_recorder_t* recorder)
 {/*{{{*/
+    // Update state time
+    mir_recorder_state_transition(recorder, 0);
+
+    // Write state time to file
+    char state_time_filename[MIR_LONG_NAME_LEN];
+    sprintf(state_time_filename, "%" MIR_FORMSPEC_UL "-state-time-%d.rec", runtime->init_time, recorder->id);
+
+    // Open state_time_file
+    FILE* state_time_file = fopen(state_time_filename, "w");
+    if(!state_time_file)
+        MIR_ABORT(MIR_ERROR_STR "Cannot open recorder state time file for writing!\n");
+
+    // Write state time
+    fprintf(state_time_file, "%d", recorder->id);
+    for(int i=0; i<MIR_RECORDER_STATE_MAX_COUNT; i++)
+        fprintf(state_time_file, ",%" MIR_FORMSPEC_UL "", recorder->state_time[i]);
+    fprintf(state_time_file, "\n");
+    if(recorder->id == 0)
+    {
+        fprintf(state_time_file, "THREAD");
+        for(int i=0; i<MIR_RECORDER_STATE_MAX_COUNT; i++)
+            fprintf(state_time_file, ",%s", mir_state_name_string[i]);
+        fprintf(state_time_file, "\n");
+    }
+    fclose(state_time_file);
+
 #if defined(MIR_RECORDER_USE_HW_PERF_COUNTERS)
 #ifndef __tile__
     PAPI_unregister_thread();
@@ -198,7 +233,7 @@ void mir_recorder_destroy(struct mir_recorder_t* recorder)
             PAPI_shutdown();
 #endif
 #endif
-}
+    }
 
     fclose(recorder->buffer_file);
     mir_free_int(recorder, sizeof(struct mir_recorder_t));
@@ -241,6 +276,16 @@ void mir_recorder_write_to_file(struct mir_recorder_t* recorder)
 
 }/*}}}*/
 
+void mir_recorder_state_transition(struct mir_recorder_t* recorder, mir_state_name_t next_state)
+{/*{{{*/
+    //printf("%s->%s\n", mir_state_name_string[recorder->this_state], mir_state_name_string[next_state]);
+    uint64_t this_instant = mir_get_cycles();
+    recorder->state_time[recorder->this_state] += (this_instant - recorder->this_state_trans_time);
+    recorder->prev_state = recorder->this_state;
+    recorder->this_state = next_state;
+    recorder->this_state_trans_time = this_instant;
+}/*}}}*/
+
 void MIR_RECORDER_STATE_BEGIN(mir_state_name_t name) 
 {/*{{{*/
     // Get this worker
@@ -250,6 +295,9 @@ void MIR_RECORDER_STATE_BEGIN(mir_state_name_t name)
     struct mir_recorder_t* r = worker->recorder;
     if(!r)
         return;
+
+    // Update state time
+    mir_recorder_state_transition(r, name);
 
     // Increase state count
     r->num_states++;
@@ -284,6 +332,10 @@ void MIR_RECORDER_STATE_END(const char* meta_data, uint32_t meta_data_length)
 
     struct mir_state_t* state = &r->state_buffer[r->state_buffer_head];
     struct mir_state_t* ending_state = &r->state_stack[r->state_stack_head];
+
+    // Update state time
+    struct mir_state_t* next_state = &r->state_stack[(r->state_stack_head)-1];
+    mir_recorder_state_transition(r, next_state->name);
 
     // Copy from state state_stack to state_buffer
     state->end_time = mir_get_cycles();

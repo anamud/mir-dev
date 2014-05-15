@@ -32,7 +32,7 @@ struct mir_task_graph_node_t
 
 struct mir_worker_status_t
 {
-    uint32_t id;
+    uint16_t id;
     uint32_t num_tasks_created;
     // FIXME: Owned? Think of a better word. Well, owned is opposite of stolen.
     uint32_t num_tasks_owned;
@@ -50,6 +50,7 @@ struct mir_worker_t
 {
     pthread_t pthread;
     uint16_t id;
+    uint16_t core_id;
     uint16_t bias;
     uint32_t backoff_us;
     struct mir_lock_t sig_die;

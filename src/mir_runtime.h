@@ -20,6 +20,7 @@ struct mir_runtime_t
 {
     // Data
     uint16_t num_workers;
+    uint16_t* worker_core_map;
     pthread_key_t worker_index;
     uint64_t init_time;
     struct mir_worker_t workers[MIR_WORKER_MAX_COUNT];

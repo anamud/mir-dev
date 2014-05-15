@@ -81,7 +81,11 @@ struct mir_task_t* mir_task_create(mir_tfunc_t tfunc, void* data, size_t data_si
 
     // Task function and argument data
     task->func = tfunc;
+#ifdef MIR_TASK_VARIABLE_DATA_SIZE
+    task->data = mir_malloc_int(sizeof(char) * data_size);
+#else
     MIR_ASSERT(data_size <= MIR_TASK_DATA_MAX_SIZE);
+#endif
     task->data_size = data_size;
     memcpy((void*)&task->data[0], data, data_size);
 
@@ -150,10 +154,10 @@ struct mir_task_t* mir_task_create(mir_tfunc_t tfunc, void* data, size_t data_si
     // Task is now created
     T_DBG("Cr", task);
 
-    MIR_RECORDER_STATE_END(NULL, 0);
-
     // Schedule task
     mir_task_schedule(task);
+
+    MIR_RECORDER_STATE_END(NULL, 0);
 
     return task;
 }/*}}}*/
@@ -185,7 +189,11 @@ struct mir_task_t* mir_task_create_pw(mir_tfunc_t tfunc, void* data, size_t data
 
     // Task function and argument data
     task->func = tfunc;
+#ifdef MIR_TASK_VARIABLE_DATA_SIZE
+    task->data = mir_malloc_int (sizeof(char) * data_size);
+#else
     MIR_ASSERT(data_size <= MIR_TASK_DATA_MAX_SIZE);
+#endif
     task->data_size = data_size;
     memcpy((void*)&task->data[0], data, data_size);
 
@@ -249,14 +257,15 @@ struct mir_task_t* mir_task_create_pw(mir_tfunc_t tfunc, void* data, size_t data
 
     // Flags
     task->done = 0;
+    task->taken = 0;
 
     // Task is now created
     T_DBG("Cr", task);
 
-    MIR_RECORDER_STATE_END(NULL, 0);
-
     // Schedule task
     mir_task_schedule(task);
+
+    MIR_RECORDER_STATE_END(NULL, 0);
 
     return task;
 }/*}}}*/
@@ -299,6 +308,8 @@ void mir_task_execute(struct mir_task_t* task)
     char event_meta_data[MIR_RECORDER_EVENT_META_DATA_MAX_SIZE-1] = {0};
     //char* event_meta_data = alloca(sizeof(char) * MIR_SHORT_NAME_LEN);
     sprintf(event_meta_data, "%" MIR_FORMSPEC_UL ",%s", task->id.uid, task->name);
+
+    //MIR_DEBUG("%" MIR_FORMSPEC_UL ",%s\n", task->id.uid, task->name);
 
     // Record event and state
     MIR_RECORDER_EVENT(&event_meta_data[0], MIR_RECORDER_EVENT_META_DATA_MAX_SIZE-1);

@@ -34,7 +34,11 @@ struct mir_twc_t
 struct mir_task_t
 {/*{{{*/
     mir_tfunc_t func;
+#ifdef MIR_TASK_VARIABLE_DATA_SIZE
+    char* data;
+#else
     char data[MIR_TASK_DATA_MAX_SIZE];
+#endif
     size_t data_size;
     mir_id_t id;
     uint64_t creation_time;
@@ -47,6 +51,7 @@ struct mir_task_t
 
     // Flags
     uint32_t done;
+    uint32_t taken;
 
     // Data footprint
     struct mir_data_footprint_t* data_footprints;
