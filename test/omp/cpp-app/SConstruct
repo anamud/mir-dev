@@ -1,0 +1,130 @@
+import os
+app_name = os.getcwd().split(os.sep)[-1]
+
+print('NOTE: THIS IS A CUSTOM BUILD!')
+
+######################
+# Common environment #
+######################
+
+import os
+import sys
+MIR_ROOT = os.environ.get('MIR_ROOT')
+if(MIR_ROOT == None):
+    print('MIR_ROOT is not defined. Aborting!')
+    Exit(2)
+
+sys.path.append(MIR_ROOT + '/scripts')
+import mir_utils
+
+PAPI_ROOT = os.environ.get('PAPI_ROOT')
+if(PAPI_ROOT == None):
+    print('PAPI_ROOT is not defined. Aborting!')
+    Exit(2)
+
+compilers = ['g++']
+compiler = ''
+for item in compilers:
+    compiler = mir_utils.which(item)
+    if(len(compiler) > 0):
+        break;
+if(len(compiler) == 0):
+    print('Could not find a compiler. Aborting!')
+    Exit(2)
+
+#-Wno-implicit-function-declaration
+env = Environment()
+env['CC'] = [compiler[0]]
+env['CPPFLAGS'] = Split("""
+-Wall 
+-Werror 
+-Wno-unused-function 
+-Wno-unused-variable
+-Wno-unused-but-set-variable
+-Wno-maybe-uninitialized
+-fopenmp
+-DLINUX
+""")
+env['CPPFLAGS'] += ['-I' + MIR_ROOT+'/src']
+env['CPPFLAGS'] += ['-I' + MIR_ROOT+'/test/common']
+env['LINKFLAGS'] = ['']
+env['LIBS'] = Split("""
+pthread
+papi
+numa
+m
+""")
+env['LIBPATH'] = [MIR_ROOT + '/src']
+env['LIBPATH'] += [PAPI_ROOT + '/lib']
+
+#####################
+# Debug environment #
+#####################
+
+debug = env.Clone();
+debug['CPPFLAGS'] += Split("""
+-O0
+-g
+-ggdb
+-DALLOW_DEBUG_MESSAGES
+-fdump-tree-optimized
+""")
+debug['LIBS'] += ['mir-debug']
+debug.VariantDir('debug-build', '.', duplicate=0)
+debug_src = debug.Glob('debug-build/*.cpp')
+debug.Program(app_name +'-debug', source = debug_src)
+
+###################
+# Opt environment #
+###################
+
+#-vec-
+#-axsse4.2
+#-opt-prefetch
+#-vec-report
+#-opt-report3
+#-opt-report-phase hlo
+#-O3
+opt = env.Clone();
+opt['CPPFLAGS'] += Split("""
+-O3
+""")
+opt['LIBS'] += ['mir-opt']
+opt.VariantDir('opt-build', '.', duplicate=0)
+opt_src = opt.Glob('opt-build/*.cpp')
+opt.Program(app_name +'-opt', source = opt_src)
+
+#################################
+# Profile environment #
+#################################
+
+prof = env.Clone();
+prof['CC'] = 'g++'
+prof['CPPFLAGS'] += Split("""
+-O1
+-DNDEBUG
+-fno-inline-functions
+-fno-inline-functions-called-once
+-fno-optimize-sibling-calls
+-fno-omit-frame-pointer
+-g
+""")
+prof['LIBS'] += ['mir-opt']
+prof.VariantDir('prof-build', '.', duplicate=0)
+prof_src = prof.Glob('prof-build/*.cpp')
+prof.Program(app_name +'-prof', source = prof_src)
+
+#######################
+# Verbose environment #
+#######################
+
+verbose = env.Clone();
+verbose['CPPFLAGS'] += Split("""
+-O3
+-DALLOW_MESSAGES
+-DCHECK_RESULT
+""")
+verbose['LIBS'] += ['mir-opt']
+verbose.VariantDir('verbose-build', '.', duplicate=0)
+verbose_src = verbose.Glob('verbose-build/*.cpp')
+verbose.Program(app_name +'-verbose', source = verbose_src)

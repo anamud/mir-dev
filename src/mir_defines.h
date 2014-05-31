@@ -15,7 +15,6 @@
 #define MIR_TASK_DEFAULT_NAME "NO_NAME"
 #define MIR_TASK_ID_START 0
 #define MIR_TASKWAIT_ID_START 0
-#define MIR_TASK_INLINING_LIMIT_DEFAULT 0
 #define MIR_TASK_DATA_MAX_SIZE 256
 // For Floorplan
 //#define MIR_TASK_VARIABLE_DATA_SIZE
@@ -26,8 +25,8 @@
 
 // Queue
 //#define MIR_QUEUE_DEBUG 1
-//#define MIR_QUEUE_MAX_CAPACITY 8192
-#define MIR_QUEUE_MAX_CAPACITY 65536
+#define MIR_QUEUE_MAX_CAPACITY 8192
+//#define MIR_QUEUE_MAX_CAPACITY 65536
 
 // Types
 #define MIR_SHORT_NAME_LEN 32
@@ -64,8 +63,13 @@
 #define MIR_RECORDER_EVENT_META_DATA_MAX_SIZE 32
 
 // Scheduling policy
-#define MIR_SCHED_POL_DEFAULT "central"
-#define MIR_SCHED_POL_INLINE_TASKS 1
+#define MIR_SCHED_POL_DEFAULT "central-stack"
+#define MIR_SCHED_POL_CENTRAL_STACK_PROCESS_STACK_SIZE 128
+
+// Dynamic inlining
+#define MIR_INLINE_TASK_IF_QUEUE_FULL 1
+// Creation inline: 0 = never, 1 = always, >1 = inlined if num tasks waiting per worker exceeds
+#define MIR_INLINE_TASK_DURING_CREATION 0
 
 // Memory allocation policy
 #define MIR_MEM_POL_CACHE_NODES 1

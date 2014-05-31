@@ -87,7 +87,7 @@ void push_ws (struct mir_task_t* task)
     struct mir_queue_t* queue = runtime->sched_pol->queues[worker->id];
     if( false == mir_queue_push(queue, (void*) task) )
     {
-#ifdef MIR_SCHED_POL_INLINE_TASKS
+#ifdef MIR_INLINE_TASK_IF_QUEUE_FULL 
         mir_task_execute(task);
         // Update stats
         if(runtime->enable_stats)

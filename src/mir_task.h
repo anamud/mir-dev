@@ -73,13 +73,17 @@ static void T_DBG(char*msg, struct mir_task_t *t)
 
 struct mir_task_t* mir_task_create(mir_tfunc_t tfunc, void* data, size_t data_size, struct mir_twc_t* twc, unsigned int num_data_footprints, struct mir_data_footprint_t* data_footprints, const char* name);
 
+struct mir_task_t* mir_task_create_on(mir_tfunc_t tfunc, void* data, size_t data_size, struct mir_twc_t* twc, unsigned int num_data_footprints, struct mir_data_footprint_t* data_footprints, const char* name, unsigned int target);
+
 struct mir_task_t* mir_task_create_pw(mir_tfunc_t tfunc, void* data, size_t data_size, unsigned int num_data_footprints, struct mir_data_footprint_t* data_footprints, const char* name);
+
+struct mir_task_t* mir_task_create_on_pw(mir_tfunc_t tfunc, void* data, size_t data_size, unsigned int num_data_footprints, struct mir_data_footprint_t* data_footprints, const char* name, unsigned int target);
 
 void mir_task_destroy(struct mir_task_t* task);
 
 void mir_task_schedule(struct mir_task_t* task);
 
-void mir_task_schedule_int(struct mir_task_t* task);
+void mir_task_schedule_on(struct mir_task_t* task, unsigned int target);
 
 void mir_task_execute(struct mir_task_t* task);
 

@@ -153,6 +153,9 @@ void mir_worker_local_init(struct mir_worker_t* worker)
 
     // For task graph generation
     worker->task_graph_node = NULL;
+
+    // Create private task queue
+    worker->private_queue = mir_queue_create(runtime->sched_pol->queue_capacity);
 }/*}}}*/
 
 static inline void mir_worker_backoff_reset(struct mir_worker_t* worker)
@@ -167,11 +170,44 @@ static inline void mir_worker_backoff(struct mir_worker_t* worker)
         worker->backoff_us *= MIR_WORKER_EXP_BOFF_SCALE;
 }/*}}}*/
 
+void mir_worker_push(struct mir_worker_t* worker, struct mir_task_t* task)
+{/*{{{*/
+    if( false == mir_queue_push(worker->private_queue, (void*) task) )
+        MIR_ABORT(MIR_ERROR_STR "Cannot enque task into private queue. Increase queue capacity using MIR_CONF.\n");
+
+    __sync_fetch_and_add(&g_num_tasks_waiting, 1);
+    // Update stats
+    if(runtime->enable_stats)
+        worker->status->num_tasks_created++;
+}/*}}}*/
+
+static inline bool mir_worker_pop(struct mir_worker_t* worker, struct mir_task_t** task)
+{/*{{{*/
+    bool found = 0;
+    struct mir_queue_t* queue = worker->private_queue;
+    if(mir_queue_size(queue) > 0)
+    {
+        mir_queue_pop(queue, (void**)&(*task));
+        if(*task)
+        {
+            __sync_fetch_and_sub(&g_num_tasks_waiting, 1);
+            T_DBG("Dq", *task);
+
+            found = 1;
+
+        }
+    }
+
+    return found;
+}/*}}}*/
+
 void mir_worker_do_work(struct mir_worker_t* worker, bool backoff)
 {/*{{{*/
     // Try to find tasks to execute
     struct mir_task_t* task = NULL;
-    bool work_available = runtime->sched_pol->pop(&task);
+    bool work_available = 0;
+
+    work_available = mir_worker_pop(worker, &task);
     if(work_available == 1) 
     {
         // Update busy counter
@@ -183,21 +219,36 @@ void mir_worker_do_work(struct mir_worker_t* worker, bool backoff)
         // Update busy counter
         __sync_fetch_and_sub(&g_worker_status_board, 1);
 
-        /*if(backoff)*/
-        /*{*/
-            // Update backoff
-            mir_worker_backoff_reset(worker);
-        /*}*/
+        // Update backoff
+        mir_worker_backoff_reset(worker);
+
+        return;
     }
-    else 
-    { 
-        // Do other useful things such as ...
-        // Release independant tasks
-        // For now we backoff
-        if(backoff)
-        {
-            mir_worker_backoff(worker);
-        }
+    
+    work_available = runtime->sched_pol->pop(&task);
+    if(work_available == 1) 
+    {
+        // Update busy counter
+        __sync_fetch_and_add(&g_worker_status_board, 1);
+
+        // Execute task
+        mir_task_execute(task);
+
+        // Update busy counter
+        __sync_fetch_and_sub(&g_worker_status_board, 1);
+
+        // Update backoff
+        mir_worker_backoff_reset(worker);
+
+        return;
+    }
+    
+    // Do other useful things such as ...
+    // Release independant tasks
+    // For now we backoff
+    if(backoff)
+    {
+        mir_worker_backoff(worker);
     }
 }/*}}}*/
 

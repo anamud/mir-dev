@@ -67,7 +67,7 @@ void mir_preconfig_init()
     runtime->enable_recorder = 0;
     runtime->enable_dependence_resolver = 0;
     runtime->enable_shmem_handshake = 0;
-    runtime->task_inlining_limit = MIR_TASK_INLINING_LIMIT_DEFAULT;
+    runtime->task_inlining_limit = MIR_INLINE_TASK_DURING_CREATION;
 }/*}}}*/
 
 void mir_postconfig_init()
@@ -206,7 +206,7 @@ static inline void print_help()
     "-q=<int> queue capacity\n"
     "-m=<str> memory allocation policy\n"
     "-y=<csv> schedule policy specific parameters\n"
-    "-g enable task graph generation [Note: Supported only for a single worker!]\n"
+    "-g enable fork-join graph generation [Note: Supported only for a single worker!]\n"
     "-p enable shared memory handshake mode [Note: Supported only for a single worker!]\n"
     );
 }/*}}}*/
@@ -267,7 +267,7 @@ void mir_config()
                     if(runtime->num_workers == 1)
                     {
                         runtime->enable_task_graph_gen = 1;
-                        MIR_DEBUG(MIR_DEBUG_STR "Task graph generation is enabled!\n");
+                        MIR_DEBUG(MIR_DEBUG_STR "Fork-join graph generation is enabled!\n");
                     }
                     else
                     {

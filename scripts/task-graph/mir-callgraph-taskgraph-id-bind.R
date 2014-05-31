@@ -21,6 +21,9 @@ toc <- function(message)
   invisible(toc)
 }
 
+# Abort on error
+abort_on_error <- T
+
 # Read args
 args <- commandArgs(TRUE)
 if(length(args) != 2) quit("no", 1)
@@ -42,6 +45,11 @@ sum.row.has.na <- sum(row.has.na)
 print(sprintf("Note: %d rows contained NAs in the extended graph.", sum.row.has.na ))
 if(sum.row.has.na > 0)
 {
+  if(abort_on_error == T)
+  {
+      print("Aborting on error!")
+      quit("no", 1)
+  }
   print("Warning! Converting NAs in the extended task graph to zero. This will probably skew the plot. For example, vertex size based on mean values.")
   ext.tg[is.na(ext.tg)] <- 0
 }

@@ -6,6 +6,7 @@
 #include "mir_recorder.h"
 #include "mir_memory.h"
 #include "mir_debug.h"
+#include "mir_utils.h"
 #include "mir_defines.h"
 
 #include <stdbool.h>
@@ -49,6 +50,13 @@ void config_central_stack (const char* conf_str)
         }
         tok = strtok(NULL, " ");
     }
+
+    // Set process stack size
+    int ps_sz = MIR_SCHED_POL_CENTRAL_STACK_PROCESS_STACK_SIZE * 1024 *1024;
+    if(0 == mir_pstack_set_size(ps_sz))
+        MIR_DEBUG(MIR_DEBUG_STR "Process stack size set to %d bytes\n", ps_sz);
+    else
+        MIR_DEBUG(MIR_DEBUG_STR "Could not set process stack size to %d bytes!\n", ps_sz);
 }/*}}}*/
 
 void create_central_stack ()
@@ -84,7 +92,7 @@ void push_central_stack (struct mir_task_t* task)
     struct mir_stack_t* queue = (struct mir_stack_t*)(runtime->sched_pol->queues[0]);
     if( false == mir_stack_push(queue, (void*) task) )
     {
-#ifdef MIR_SCHED_POL_INLINE_TASKS
+#ifdef MIR_INLINE_TASK_IF_QUEUE_FULL 
         mir_task_execute(task);
         // Update stats
         if(runtime->enable_stats)

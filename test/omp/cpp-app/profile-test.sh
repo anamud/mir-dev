@@ -1,9 +1,9 @@
 #!/bin/bash
 
-APP=fib
-TASKS=ol_fib_0,ol_fib_1,ol_fib_2
-CALLED_FUNCS=fib,fib_seq
-INPUT="8 3"
+APP=cpp-app
+TASKS=_ZN4POBJC2Ei._omp_fn.0,_ZN4POBJC2Ei._omp_fn.1
+CALLED_FUNCS=printf
+INPUT=""
 MIR_CONF="-w=1 -i -g -p"
 OPF="test"
 PROCESS_TASK_GRAPH=1

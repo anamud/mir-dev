@@ -206,10 +206,10 @@ tg <- set.vertex.attribute(tg, name='label', index=fork_nodes_index, value='^')
 tg <- set.edge.attribute(tg, name="weight", index=which(is.na(E(tg)$weight)), value=0)
 toc("Attribute setting")
 
-tic(type="elapsed")
+#tic(type="elapsed")
 # Simplify - DO NOT USE. Fucks up the critical path analysis.
 #tg <- simplify(tg, edge.attr.comb=toString)
-toc("Simplify")
+#toc("Simplify")
 
 tic(type="elapsed")
 # Critical path
