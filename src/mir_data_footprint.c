@@ -1,6 +1,6 @@
 #include "mir_data_footprint.h"
 #include "mir_mem_pol.h"
-#include "mir_debug.h"
+#include "mir_utils.h"
 
 void mir_data_footprint_copy(struct mir_data_footprint_t* dest, struct mir_data_footprint_t* src)
 {/*{{{*/

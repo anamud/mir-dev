@@ -5,10 +5,9 @@
 #include "mir_recorder.h"
 #include "mir_runtime.h"
 #include "mir_sched_pol.h"
-#include "mir_debug.h"
+#include "mir_utils.h"
 #include "mir_memory.h"
 #include "mir_data_footprint.h"
-#include "mir_perf.h"
 #include "mir_queue.h"
 
 #include <stdint.h>

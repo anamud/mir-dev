@@ -6,7 +6,7 @@
 #include "mir_dequeue.h"
 #include "mir_recorder.h"
 #include "mir_memory.h"
-#include "mir_debug.h"
+#include "mir_utils.h"
 #include "mir_defines.h"
 
 #include <stdbool.h>

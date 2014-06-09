@@ -44,7 +44,7 @@ DAMAGE.
 #define MIR_DEQUEUE_H
 
 #include <stdlib.h>
-#include "mir_debug.h"
+#include "mir_utils.h"
 #include "mir_memory.h"
 #include "mir_types.h"
 

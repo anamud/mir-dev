@@ -1,6 +1,6 @@
 #include "mir_omp_int.h"
 #include "mir_task.h"
-#include "mir_debug.h"
+#include "mir_utils.h"
 #include "mir_runtime.h"
 #include "mir_worker.h"
 

@@ -1,6 +1,6 @@
 #include "mir_arch.h"
 #include "mir_types.h"
-#include "mir_debug.h"
+#include "mir_utils.h"
 
 void config_tilepro64(const char* conf_str)
 {/*{{{*/

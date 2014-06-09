@@ -4,7 +4,7 @@
 #include "mir_sched_pol.h"
 #include "mir_runtime.h"
 #include "mir_memory.h"
-#include "mir_debug.h"
+#include "mir_utils.h"
 #include "mir_lock.h"
 #include "mir_defines.h"
 
