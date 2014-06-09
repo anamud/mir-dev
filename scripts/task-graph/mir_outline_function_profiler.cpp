@@ -13,15 +13,15 @@
 #include <sys/shm.h>
 
 KNOB<string> KnobOutputFileSuffix(KNOB_MODE_WRITEONCE, "pintool",
-    "o", "mir_call_graph", "specify mir routine trace file suffix");
+    "o", "mir_outline_function", "specify output file suffix");
 KNOB<BOOL>   KnobPid(KNOB_MODE_WRITEONCE, "pintool",
     "i", "0", "append pid to output");
-KNOB<string>   KnobRoutineNames(KNOB_MODE_WRITEONCE, "pintool",
-    "s", "", "specify routines (csv) to trace");
-KNOB<string>   KnobCalledRoutineNames(KNOB_MODE_WRITEONCE, "pintool",
-    "c", "", "specify routines (csv) that are called from traced routines");
+KNOB<string>   KnobFunctionNames(KNOB_MODE_WRITEONCE, "pintool",
+    "s", "", "specify outline functions (csv)");
+KNOB<string>   KnobCalledFunctionNames(KNOB_MODE_WRITEONCE, "pintool",
+    "c", "", "specify functions called (csv) from outline functions");
 KNOB<BOOL>   KnobCalcMemShare(KNOB_MODE_WRITEONCE, "pintool",
-    "m", "0", "calculate memory sharing (a time consuming process!)");
+    "m", "0", "calculate memory sharing (NOTE: a time consuming process!)");
 
 #define EXCLUDE_STACK_INS_FROM_MEM_FP 1
 //#define GET_INS_MIX 1
@@ -70,7 +70,7 @@ UINT64 get_cycles() {
 }
 
 #define NAME_SIZE 256
-typedef struct _MIR_ROUTINE_STAT_
+typedef struct _MIR_FUNCTION_STAT_
 {/*{{{*/
     UINT64 id;
     UINT64 ins_count;
@@ -89,14 +89,14 @@ typedef struct _MIR_ROUTINE_STAT_
     //std::vector<VOID*> mrefs_write;
     UINT64 mem_fp_sz;
     std::vector<UINT64> mem_share;
-    struct _MIR_ROUTINE_STAT_ * next;
-} MIR_ROUTINE_STAT;/*}}}*/
+    struct _MIR_FUNCTION_STAT_ * next;
+} MIR_FUNCTION_STAT;/*}}}*/
 
-MIR_ROUTINE_STAT* g_stat_list = NULL;
-MIR_ROUTINE_STAT* g_current_stat = NULL;
-std::stack<MIR_ROUTINE_STAT*> g_stat_stack;
+MIR_FUNCTION_STAT* g_stat_list = NULL;
+MIR_FUNCTION_STAT* g_current_stat = NULL;
+std::stack<MIR_FUNCTION_STAT*> g_stat_stack;
 
-VOID MIRRoutineUpdateMemRefRead(VOID* memp)
+VOID MIRFunctionUpdateMemRefRead(VOID* memp)
 {/*{{{*/
     if(g_current_stat)
     {
@@ -106,7 +106,7 @@ VOID MIRRoutineUpdateMemRefRead(VOID* memp)
     }
 }/*}}}*/
 
-VOID MIRRoutineUpdateMemRefWrite(VOID* memp)
+VOID MIRFunctionUpdateMemRefWrite(VOID* memp)
 {/*{{{*/
     if(g_current_stat)
     {
@@ -117,32 +117,32 @@ VOID MIRRoutineUpdateMemRefWrite(VOID* memp)
 }/*}}}*/
 
 #ifdef GET_INS_MIX
-VOID MIRRoutineUpdateInsMix(INT32 index)
+VOID MIRFunctionUpdateInsMix(INT32 index)
 {/*{{{*/
     if(g_current_stat)
         g_current_stat->ins_mix[index]++;
 }/*}}}*/
 #endif
 
-VOID MIRRoutineUpdateInsCount()
+VOID MIRFunctionUpdateInsCount()
 {/*{{{*/
     if(g_current_stat)
         g_current_stat->ins_count++;
 }/*}}}*/
 
-VOID MIRRoutineUpdateStackRead()
+VOID MIRFunctionUpdateStackRead()
 {/*{{{*/
     if(g_current_stat)
         g_current_stat->stack_read++;
 }/*}}}*/
 
-VOID MIRRoutineUpdateStackWrite()
+VOID MIRFunctionUpdateStackWrite()
 {/*{{{*/
     if(g_current_stat)
         g_current_stat->stack_write++;
 }/*}}}*/
 
-VOID MIRRoutineEntry(VOID* name)
+VOID MIRFunctionEntry(VOID* name)
 {/*{{{*/
     // Attach to MIR shared memory
     if(g_shmat_done == false)
@@ -172,7 +172,7 @@ VOID MIRRoutineEntry(VOID* name)
     *g_shm = MIR_SHM_SIGREAD;
 
     // Create new stat counter
-    MIR_ROUTINE_STAT* stat = new MIR_ROUTINE_STAT;
+    MIR_FUNCTION_STAT* stat = new MIR_FUNCTION_STAT;
     stat->id = atoi(buf);
     stat->ins_count = 0;
     stat->stack_read = 0;
@@ -190,10 +190,10 @@ VOID MIRRoutineEntry(VOID* name)
     g_current_stat = g_stat_list;
 
     // Debug
-    //std::cout << "Routine entered!\n";
+    //std::cout << "Function entered!\n";
 }/*}}}*/
 
-VOID MIRRoutineExit()
+VOID MIRFunctionExit()
 {/*{{{*/
     // Memory optimziation: Free the mem_fp set
     // We are only intersted in mem_fp size for now
@@ -209,7 +209,7 @@ VOID MIRRoutineExit()
         g_current_stat = g_stat_stack.top();
 
     // Debug
-    //std::cout << "Routine exited!\n";
+    //std::cout << "Function exited!\n";
 }/*}}}*/
 
 VOID Image(IMG img, VOID *v)
@@ -217,37 +217,37 @@ VOID Image(IMG img, VOID *v)
     std::string delims = ",";
     std::vector<string>::iterator it;
 
-    // The traced routines
-    std::string traced_routines_csv = KnobRoutineNames.Value();
-    std::vector<std::string> traced_routines;
-    tokenize(traced_routines_csv, delims, traced_routines);
-    for(it = traced_routines.begin(); it != traced_routines.end(); it++)
+    // The traced functions
+    std::string traced_functions_csv = KnobFunctionNames.Value();
+    std::vector<std::string> traced_functions;
+    tokenize(traced_functions_csv, delims, traced_functions);
+    for(it = traced_functions.begin(); it != traced_functions.end(); it++)
     {
-        //std::cout << "Analyzing traced routine: " << *it << std::endl;
+        //std::cout << "Analyzing traced function: " << *it << std::endl;
         RTN mirRtn = RTN_FindByName(img, (*it).c_str());
         if (RTN_Valid(mirRtn))
         {/*{{{*/
-            //std::cout << "Routine " << *it << " is valid" << std::endl;
+            //std::cout << "Function " << *it << " is valid" << std::endl;
             RTN_Open(mirRtn);
 
             // Create new stats counter for each entry and exit of mir_execute_task
-            RTN_InsertCall(mirRtn, IPOINT_BEFORE, (AFUNPTR)MIRRoutineEntry, IARG_PTR, RTN_Name(mirRtn).c_str(), IARG_END);
-            RTN_InsertCall(mirRtn, IPOINT_AFTER, (AFUNPTR)MIRRoutineExit, IARG_END);
+            RTN_InsertCall(mirRtn, IPOINT_BEFORE, (AFUNPTR)MIRFunctionEntry, IARG_PTR, RTN_Name(mirRtn).c_str(), IARG_END);
+            RTN_InsertCall(mirRtn, IPOINT_AFTER, (AFUNPTR)MIRFunctionExit, IARG_END);
 
-            // For each instruction with routine, update entries in the stats counter
+            // For each instruction with function, update entries in the stats counter
             for (INS ins = RTN_InsHead(mirRtn); INS_Valid(ins); ins = INS_Next(ins))
             {
-                INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)MIRRoutineUpdateInsCount, IARG_END);
+                INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)MIRFunctionUpdateInsCount, IARG_END);
 #ifdef GET_INS_MIX
-                INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)MIRRoutineUpdateInsMix, IARG_UINT32, INS_Category(ins), IARG_END);
+                INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)MIRFunctionUpdateInsMix, IARG_UINT32, INS_Category(ins), IARG_END);
 #endif
 
                 // Instrument stack accesses
                 // If instruction operates using the SP or FP, its a stack operation
                 if(INS_IsStackRead(ins))
-                    INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)MIRRoutineUpdateStackRead, IARG_END);
+                    INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)MIRFunctionUpdateStackRead, IARG_END);
                 if(INS_IsStackWrite(ins))
-                    INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)MIRRoutineUpdateStackWrite, IARG_END);
+                    INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)MIRFunctionUpdateStackWrite, IARG_END);
 
 #ifdef EXCLUDE_STACK_INS_FROM_MEM_FP 
                 if(!INS_IsStackRead(ins) && !INS_IsStackWrite(ins))
@@ -261,7 +261,7 @@ VOID Image(IMG img, VOID *v)
                         if (INS_MemoryOperandIsRead(ins, memOp))
                         {
                             INS_InsertPredicatedCall(
-                                ins, IPOINT_BEFORE, (AFUNPTR)MIRRoutineUpdateMemRefRead,
+                                ins, IPOINT_BEFORE, (AFUNPTR)MIRFunctionUpdateMemRefRead,
                                 //IARG_INST_PTR,
                                 IARG_MEMORYOP_EA, memOp,
                                 //IARG_REG_VALUE, REG_STACK_PTR,
@@ -273,7 +273,7 @@ VOID Image(IMG img, VOID *v)
                         if (INS_MemoryOperandIsWritten(ins, memOp))
                         {
                             INS_InsertPredicatedCall(
-                                ins, IPOINT_BEFORE, (AFUNPTR)MIRRoutineUpdateMemRefWrite,
+                                ins, IPOINT_BEFORE, (AFUNPTR)MIRFunctionUpdateMemRefWrite,
                                 //IARG_INST_PTR,
                                 IARG_MEMORYOP_EA, memOp,
                                 //IARG_REG_VALUE, REG_STACK_PTR,
@@ -289,33 +289,33 @@ VOID Image(IMG img, VOID *v)
         }/*}}}*/
     }
 
-    // The routines called by the traced routines
-    std::string called_routines_csv = KnobCalledRoutineNames.Value();
-    std::vector<std::string> called_routines;
-    tokenize(called_routines_csv, delims, called_routines);
-    for(it = called_routines.begin(); it != called_routines.end(); it++)
+    // The functions called by the traced functions
+    std::string called_functions_csv = KnobCalledFunctionNames.Value();
+    std::vector<std::string> called_functions;
+    tokenize(called_functions_csv, delims, called_functions);
+    for(it = called_functions.begin(); it != called_functions.end(); it++)
     {
-        //std::cout << "Analyzing called routine: " << *it << std::endl;
+        //std::cout << "Analyzing called function: " << *it << std::endl;
         RTN mirRtn = RTN_FindByName(img, (*it).c_str());
         if (RTN_Valid(mirRtn))
         {/*{{{*/
-            //std::cout << "Routine " << *it << " is valid" << std::endl;
+            //std::cout << "Function " << *it << " is valid" << std::endl;
             RTN_Open(mirRtn);
 
-            // For each instruction of the routine, update entries in the stats counter
+            // For each instruction of the function, update entries in the stats counter
             for (INS ins = RTN_InsHead(mirRtn); INS_Valid(ins); ins = INS_Next(ins))
             {
-                INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)MIRRoutineUpdateInsCount, IARG_END);
+                INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)MIRFunctionUpdateInsCount, IARG_END);
 #ifdef GET_INS_MIX
-                INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)MIRRoutineUpdateInsMix, IARG_UINT32, INS_Category(ins), IARG_END);
+                INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)MIRFunctionUpdateInsMix, IARG_UINT32, INS_Category(ins), IARG_END);
 #endif
 
                 // Instrument stack accesses
                 // If instruction operates using the SP or FP, its a stack operation
                 if(INS_IsStackRead(ins))
-                    INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)MIRRoutineUpdateStackRead, IARG_END);
+                    INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)MIRFunctionUpdateStackRead, IARG_END);
                 if(INS_IsStackWrite(ins))
-                    INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)MIRRoutineUpdateStackWrite, IARG_END);
+                    INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)MIRFunctionUpdateStackWrite, IARG_END);
 
 #ifdef EXCLUDE_STACK_INS_FROM_MEM_FP 
                 if(!INS_IsStackRead(ins) && !INS_IsStackWrite(ins))
@@ -329,7 +329,7 @@ VOID Image(IMG img, VOID *v)
                         if (INS_MemoryOperandIsRead(ins, memOp))
                         {
                             INS_InsertPredicatedCall(
-                                ins, IPOINT_BEFORE, (AFUNPTR)MIRRoutineUpdateMemRefRead,
+                                ins, IPOINT_BEFORE, (AFUNPTR)MIRFunctionUpdateMemRefRead,
                                 //IARG_INST_PTR,
                                 IARG_MEMORYOP_EA, memOp,
                                 //IARG_REG_VALUE, REG_STACK_PTR,
@@ -341,7 +341,7 @@ VOID Image(IMG img, VOID *v)
                         if (INS_MemoryOperandIsWritten(ins, memOp))
                         {
                             INS_InsertPredicatedCall(
-                                ins, IPOINT_BEFORE, (AFUNPTR)MIRRoutineUpdateMemRefWrite,
+                                ins, IPOINT_BEFORE, (AFUNPTR)MIRFunctionUpdateMemRefWrite,
                                 //IARG_INST_PTR,
                                 IARG_MEMORYOP_EA, memOp,
                                 //IARG_REG_VALUE, REG_STACK_PTR,
@@ -358,7 +358,7 @@ VOID Image(IMG img, VOID *v)
     }
 }/*}}}*/
 
-VOID MIRRoutineUpdateMemFp(MIR_ROUTINE_STAT * stat)
+VOID MIRFunctionUpdateMemFp(MIR_FUNCTION_STAT * stat)
 {/*{{{*/
     // Mem footprint count
     // Uniquify read and write refs to get sets R and W
@@ -383,13 +383,13 @@ VOID MIRRoutineUpdateMemFp(MIR_ROUTINE_STAT * stat)
     // std::cout << communication << ", " << load << ", " << stat->ins_count << std::endl;
 }/*}}}*/
 
-VOID MIRRoutineUpdateMemShare(MIR_ROUTINE_STAT * this_stat, size_t cutoff)
+VOID MIRFunctionUpdateMemShare(MIR_FUNCTION_STAT * this_stat, size_t cutoff)
 {/*{{{*/
     // Mem footprint share
     // Intersection of this instance's memory footprint with all other instances within cutoff
     // Cutoff is used to limit number of intersections computed
     size_t sz = 0;
-    for (MIR_ROUTINE_STAT* stat = g_stat_list; sz <= cutoff; stat = stat->next, sz++)
+    for (MIR_FUNCTION_STAT* stat = g_stat_list; sz <= cutoff; stat = stat->next, sz++)
     {
         if(sz != cutoff)
         {
@@ -405,13 +405,6 @@ VOID MIRRoutineUpdateMemShare(MIR_ROUTINE_STAT * this_stat, size_t cutoff)
     }
 }/*}}}*/
 
-//// Anonymous memory map range
-//typedef struct _anon_map_range
-//{
-    //UINT64 start;
-    //UINT64 end;
-//} anon_map_range;
-
 VOID Fini(INT32 code, VOID *v)
 {/*{{{*/
     std::cout << "Finalizing ..." << std::endl;
@@ -422,39 +415,11 @@ VOID Fini(INT32 code, VOID *v)
     filename = KnobOutputFileSuffix.Value();
     if( KnobPid )
         filename += "." + decstr( getpid_portable() );
-    filename += ".mmap";
+    filename += "-mem_map";
     std::cout << "Writing memory map (/proc/<pid>/maps) to file: " << filename << " ..." << std::endl;
     char cmd[256];
     sprintf(cmd, "cat /proc/%d/maps > %s", getpid_portable(), filename.c_str());
     system(cmd);
-
-    // Get anonympus page maps
-    //filename.clear();
-    //filename = "/proc/" + decstr(getpid_portable()) + "/maps";
-    //std::ifstream maps_file;
-    //maps_file.open(filename.c_str());
-    //std::string maps_line;
-    //std::vector<anon_map_range> vamr;
-    //while(std::getline(maps_file, maps_line))
-    //{
-        //std::string delim = " ";
-        //std::vector<std::string> columns;
-        //tokenize(maps_line, delim, columns);
-        //// Anonymous mappings have one five columns
-        //// FIXME: Fragile! Might break.
-        //if(columns.size() == 5) 
-        //{
-            //std::vector<std::string> ranges;
-            //std::string delim = "-";
-            //tokenize(columns[0], delim, ranges);
-            ////std::cout << ranges[0] << delim << ranges[1] << std::endl;
-            //anon_map_range amr;
-            //amr.start = atoi(ranges[0].c_str());
-            //amr.end = atoi(ranges[1].c_str());
-            //vamr.push_back(amr);
-        //}
-    //}
-    //maps_file.close();
 
     // Update instances in parallel
     std::cout << "Updating statistics in parallel ..." << std::endl;
@@ -464,13 +429,13 @@ VOID Fini(INT32 code, VOID *v)
 #pragma omp single
 {
     std::cout << "Updating memory footprint ..." << std::endl;
-    for (MIR_ROUTINE_STAT* stat = g_stat_list; stat; stat = stat->next)
+    for (MIR_FUNCTION_STAT* stat = g_stat_list; stat; stat = stat->next)
     {
         num_instances++;
 //#pragma omp task
         {
             // Update memory footprint
-            MIRRoutineUpdateMemFp(stat);
+            MIRFunctionUpdateMemFp(stat);
         }
     }
 //#pragma omp taskwait
@@ -479,12 +444,12 @@ VOID Fini(INT32 code, VOID *v)
         std::cout << "Updating memory sharing ..." << std::endl;
         std::cout << "Using " << omp_get_num_threads() << " threads" << std::endl;
         size_t cutoff = 0;
-        for (MIR_ROUTINE_STAT* stat = g_stat_list; stat; stat = stat->next, cutoff++)
+        for (MIR_FUNCTION_STAT* stat = g_stat_list; stat; stat = stat->next, cutoff++)
         {
 #pragma omp task
             {
                 // Update memory sharing
-                MIRRoutineUpdateMemShare(stat, cutoff);
+                MIRFunctionUpdateMemShare(stat, cutoff);
             }
         }
 #pragma omp taskwait
@@ -492,23 +457,23 @@ VOID Fini(INT32 code, VOID *v)
 }
 }
 
-    // Open detail file
+    // Open call graph file
     filename.clear();
-    filename = KnobOutputFileSuffix.Value(); // + "." + KnobRoutineName.Value();
+    filename = KnobOutputFileSuffix.Value(); // + "." + KnobFunctionName.Value();
     if( KnobPid )
         filename += "." + decstr( getpid_portable() );
-    filename += ".detail.csv";
+    filename += "-call_graph";
     std::ofstream out;
     out.open(filename.c_str());
-    std::cout << "Writing detail to file: " << filename << " ..." << std::endl;
-    // Write detail as csv
+    std::cout << "Writing call graph information to file: " << filename << " ..." << std::endl;
+    // Write as csv
     const char* fileheader = "task,ins_count,stack_read,stack_write,mem_fp,ccr,clr,mem_read,mem_write,name";
 #ifdef GET_INS_MIX
     out << fileheader << ",[ins_mix]" << std::endl;
 #else
     out << fileheader << std::endl;
 #endif
-    for (MIR_ROUTINE_STAT* stat = g_stat_list; stat; stat = stat->next)
+    for (MIR_FUNCTION_STAT* stat = g_stat_list; stat; stat = stat->next)
     {
         out << stat->id << "," 
             << stat->ins_count << ","
@@ -537,14 +502,14 @@ VOID Fini(INT32 code, VOID *v)
     {
         // Open memory share file
         filename.clear();
-        filename = KnobOutputFileSuffix.Value(); // + "." + KnobRoutineNames.Value();
+        filename = KnobOutputFileSuffix.Value(); // + "." + KnobFunctionNames.Value();
         if( KnobPid )
             filename += "." + decstr( getpid_portable() );
-        filename += ".mem_share.csv";
+        filename += "-mem_share";
         out.open(filename.c_str());
-        std::cout << "Writing memory sharing detail to file: " << filename << " ..." << std::endl;
+        std::cout << "Writing memory sharing information to file: " << filename << " ..." << std::endl;
         // Write mem share per task to file
-        for (MIR_ROUTINE_STAT* stat = g_stat_list; stat; stat = stat->next)
+        for (MIR_FUNCTION_STAT* stat = g_stat_list; stat; stat = stat->next)
         {
             UINT64 count = num_instances;
             std::vector<UINT64>::iterator it;
@@ -570,7 +535,7 @@ VOID Fini(INT32 code, VOID *v)
 
 INT32 Usage()
 {/*{{{*/
-    cerr << "This tool produces a trace of calls specified using the below syntax." << endl;
+    cerr << "This PIN tool profiles calls to task outlined functions. Usage:" << endl;
     cerr << endl << KNOB_BASE::StringKnobSummary() << endl;
     return -1;
 }/*}}}*/

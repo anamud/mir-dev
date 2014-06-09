@@ -8,11 +8,13 @@ tg.file <- args[1]
 tg.data <- read.csv(tg.file, header=TRUE)
 
 ### Summarize
-sink(paste(gsub(". $", "", tg.file), ".info", sep=""))
+out.file <- paste(gsub(". $", "", tg.file), ".info", sep="")
+print(paste("Writing file", out.file))
+sink(out.file)
 cat("num_tasks: ")
 cat(max(tg.data$task))
 cat("\n")
-cat("join_degree_summary: ")
-cat(summary(count(tg.data, c('join_node','join_node_pass_count'))$freq))
+cat("joins_at_summary: ")
+cat(summary(count(tg.data, c('parent','joins_at'))$freq))
 cat("\n")
 sink()

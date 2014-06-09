@@ -26,23 +26,23 @@ abort_on_error <- T
 
 # Read args
 args <- commandArgs(TRUE)
-if(length(args) != 2) quit("no", 1)
+if(length(args) != 3) quit("no", 1)
 tg.file <- args[1]
 cg.file <- args[2]
+atg.file.suffix <- args[3]
 
 tic(type="elapsed")
 # Read data
 tg.data <- read.csv(tg.file, header=TRUE)
 cg.data <- read.csv(cg.file, header=TRUE)
-toc("Read data")
+toc("Read data time")
 
 tic(type="elapsed")
-# Create extended task graph
-ext.tg <- subset(tg.data, select=c(task, parent, join_node_pass_count))
-ext.tg <- merge(ext.tg, cg.data, by.x="task", by.y="task", all=T)
-row.has.na <- apply(ext.tg, 1, function(x){any(is.na(x))})
+# Create annotated task graph
+annot.tg <- subset(tg.data, select=c(task, parent, joins_at))
+annot.tg <- merge(annot.tg, cg.data, by.x="task", by.y="task", all=T)
+row.has.na <- apply(annot.tg, 1, function(x){any(is.na(x))})
 sum.row.has.na <- sum(row.has.na)
-print(sprintf("Note: %d rows contained NAs in the extended graph.", sum.row.has.na ))
 if(sum.row.has.na > 0)
 {
   if(abort_on_error == T)
@@ -50,17 +50,21 @@ if(sum.row.has.na > 0)
       print("Aborting on error!")
       quit("no", 1)
   }
-  print("Warning! Converting NAs in the extended task graph to zero. This will probably skew the plot. For example, vertex size based on mean values.")
-  ext.tg[is.na(ext.tg)] <- 0
+  else
+  {
+      print(sprintf("Note: %d rows contained NAs in the annotated graph.", sum.row.has.na ))
+      print("Warning! Converting NAs in the annotated task graph to zero. This will probably skew the plot. For example, vertex size based on mean values.")
+      annot.tg[is.na(annot.tg)] <- 0
+  }
 }
-toc("Creating extended task graph")
+toc("Create annotated task graph time")
 
 tic(type="elapsed")
 # Write out csv
-ext.tg.file <- paste(gsub(". $", "", tg.file), "-ext", sep="")
-print(paste("Writing file", ext.tg.file))
-write.csv(ext.tg, ext.tg.file, row.names=FALSE)
-toc("Write result")
+annot.tg.file <- paste(atg.file.suffix, "-annotated_task_graph", sep="")
+print(paste("Writing file", annot.tg.file))
+write.csv(annot.tg, annot.tg.file, row.names=FALSE)
+toc("Write file time")
 
 # Warn
 warnings()

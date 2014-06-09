@@ -72,17 +72,17 @@ toc("Read data")
 tic(type="elapsed")
 # Increment join node pass counts 
 # The pass count starts at 0
-tg.data$join_node_pass_count_plus_one <- tg.data$join_node_pass_count + 1
+tg.data$joins_at_plus_one <- tg.data$joins_at + 1
 
 # Create join node list
-join_nodes <- mapply(function(x, y, z) {paste('j', x, y, sep='.')}, x=tg.data$parent, y=tg.data$join_node_pass_count_plus_one)
+join_nodes <- mapply(function(x, y, z) {paste('j', x, y, sep='.')}, x=tg.data$parent, y=tg.data$joins_at_plus_one)
 join_nodes_unique <- unique(unlist(join_nodes, use.names=FALSE))
 
 # Create parent nodes list
 parent_nodes_unique <- unique(tg.data$parent)
 
 # Create fork nodes list
-fork_nodes <- mapply(function(x, y, z) {paste('f', x, y, sep='.')}, x=tg.data$parent, y=tg.data$join_node_pass_count)
+fork_nodes <- mapply(function(x, y, z) {paste('f', x, y, sep='.')}, x=tg.data$parent, y=tg.data$joins_at)
 fork_nodes_unique <- unique(unlist(fork_nodes, use.names=FALSE))
 toc("Node list creation")
 
@@ -144,7 +144,7 @@ find_next_fork <- function(node)
     # Next fork is part of grandfather
     parent_index <- match(parent, tg.data$task)
     gfather <- tg.data[parent_index,]$parent
-    gfather_join <- paste('j', as.character(gfather), as.character(tg.data[parent_index,]$join_node_pass_count_plus_one), sep=".")
+    gfather_join <- paste('j', as.character(gfather), as.character(tg.data[parent_index,]$joins_at_plus_one), sep=".")
 
     if(is.na(match(gfather_join, join_nodes_unique)) == F)
     {
@@ -222,7 +222,7 @@ tic(type="elapsed")
 # Can only get the length of the path 
 span <- shortest.paths(tg, v=start_index, to=end_index, mode="out")
 work <- sum(as.numeric(tg.data$ins_count))
-tg.file.out <- paste(gsub(". $", "", tg.file), ".graph-info", sep="")
+tg.file.out <- paste(gsub(". $", "", tg.file), ".info", sep="")
 print(paste("Writing file", tg.file.out))
 sink(tg.file.out)
 print("span,work,parallelism")
@@ -244,14 +244,33 @@ print(paste("Writing file", tg.file.out))
 res <- write.graph(tg, file=tg.file.out, format="graphml")
 toc("Write graphml")
 
-tic(type="elapsed")
+# tic(type="elapsed")
 # # Write pdf file
 # lyt <- layout.fruchterman.reingold(tg,niter=500,area=vcount(tg)^2,coolexp=3,repulserad=vcount(tg)^3,maxdelta=vcount(tg))
-# tg.file.pdf.out <- paste(gsub(". $", "", tg.file), ".pdf", sep="")
-# pdf(file=tg.file.pdf.out)
+# tg.file.out <- paste(gsub(". $", "", tg.file), ".pdf", sep="")
+# print(paste("Writing file", tg.file.out))
+# pdf(file=tg.file.out)
 # plot(tg, layout=lyt)
 # dev.off()
-toc("Write pdf")
+# toc("Write pdf")
+
+tic(type="elapsed")
+# Write adjacency matrix file
+tg.file.out <- paste(gsub(". $", "", tg.file), ".adjm", sep="")
+print(paste("Writing file", tg.file.out))
+sink(tg.file.out)
+print(get.adjacency(tg,names=T))
+sink()
+toc("Write adjacency matrix")
+
+tic(type="elapsed")
+# Write edgelist file
+tg.file.out <- paste(gsub(". $", "", tg.file), ".edgelist", sep="")
+print(paste("Writing file", tg.file.out))
+sink(tg.file.out)
+print(get.edgelist(tg, names=T))
+sink()
+toc("Write edgelist")
 
 # Warn
 warnings()
