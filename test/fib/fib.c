@@ -119,21 +119,13 @@ typedef struct data_env_2_t_tag
         return n;
     if (d < cutoff_value)
     {/*{{{*/
-#ifndef IMPLICIT_TASK_WAIT
-        struct mir_twc_t* twc = mir_twc_create();
-#endif
-
         // Create task1
         data_env_0_t imm_args_0;
         imm_args_0.x_0 = &(x);
         imm_args_0.n_0 = n;
         imm_args_0.d_0 = d;
 
-#ifdef IMPLICIT_TASK_WAIT
-        struct mir_task_t* task_0 = mir_task_create_pw((mir_tfunc_t) ol_fib_0, (void*) &imm_args_0, sizeof(data_env_0_t), 0, NULL, NULL);
-#else
-        struct mir_task_t* task_0 = mir_task_create((mir_tfunc_t) ol_fib_0, (void*) &imm_args_0, sizeof(data_env_0_t), /*NULL*/twc, 0, NULL, NULL);
-#endif
+        struct mir_task_t* task_0 = mir_task_create((mir_tfunc_t) ol_fib_0, (void*) &imm_args_0, sizeof(data_env_0_t), 0, NULL, NULL);
         
         // Create task2
         data_env_1_t imm_args_1;
@@ -141,22 +133,10 @@ typedef struct data_env_2_t_tag
         imm_args_1.n_0 = n;
         imm_args_1.d_0 = d;
 
-#ifdef IMPLICIT_TASK_WAIT
-        struct mir_task_t* task_1 = mir_task_create_pw((mir_tfunc_t) ol_fib_1, (void*) &imm_args_1, sizeof(data_env_1_t), 0, NULL, NULL);
-#else
-        struct mir_task_t* task_1 = mir_task_create((mir_tfunc_t) ol_fib_1, (void*) &imm_args_1, sizeof(data_env_1_t), /*NULL*/twc, 0, NULL, NULL);
-#endif
+        struct mir_task_t* task_1 = mir_task_create((mir_tfunc_t) ol_fib_1, (void*) &imm_args_1, sizeof(data_env_1_t), 0, NULL, NULL);
 
-#ifdef IMPLICIT_TASK_WAIT
         // Task wait
-        mir_twc_wait_pw();
-#else
-        //// Wait for two tasks
-        //mir_task_wait(task_0);
-        //mir_task_wait(task_1);
-        // Task wait
-        mir_twc_wait(twc);
-#endif
+        mir_twc_wait();
     }/*}}}*/
     else
     {/*{{{*/
@@ -213,32 +193,21 @@ int main(int argc, char **argv)
 
     long par_time_start = get_usecs();
     // --- IMPLICIT TASK ---
-    struct mir_twc_t* twc = mir_twc_create();
-
     // Create task
     data_env_2_t imm_args_2;
     imm_args_2.par_res_0 = &(par_res);
     imm_args_2.n_0 = num;
     imm_args_2.d_0 = 0;
 
-    struct mir_task_t* task_2 = mir_task_create((mir_tfunc_t) ol_fib_2, (void*) &imm_args_2, sizeof(data_env_2_t), /*NULL*/twc, 0, NULL, NULL);
+    struct mir_task_t* task_2 = mir_task_create((mir_tfunc_t) ol_fib_2, (void*) &imm_args_2, sizeof(data_env_2_t), 0, NULL, NULL);
     
     // Task wait
-    mir_twc_wait(twc);
+    mir_twc_wait();
     // --- NO IMPLICIT TASK ---
     //par_res = fib(num, 0);
     // ---
     long par_time_end = get_usecs();
     double par_time = (double)( par_time_end - par_time_start) / 1000000;
-
-#ifdef SHOW_NUMA_STATS
-    char cmd[256];
-    int pid = getpid();
-    sprintf(cmd, "~/survival_tools/bin/nmstat %d > numa_stats-%d\n", pid, pid);
-    system(cmd);
-    sprintf(cmd, "cp /proc/%d/maps maps-%d\n", pid, pid);
-    system(cmd);
-#endif
 
     int check = TEST_NOT_PERFORMED;
 #ifdef CHECK_RESULT
