@@ -388,7 +388,7 @@ void mir_worker_update_task_graph(struct mir_worker_t* worker, struct mir_task_t
 
 void mir_task_graph_write_header_to_file(FILE* file)
 {/*{{{*/
-    fprintf(file, "task,parent,joins_at,execution_start_time,tgpid\n");
+    fprintf(file, "task,parent,joins_at,tgpid\n");
 }/*}}}*/
 
 void mir_task_graph_write_to_file(struct mir_task_graph_node_t* node, FILE* file)
