@@ -15,10 +15,8 @@
 BEGIN_C_DECLS 
 
 // Task identifer based on position in task graph
-#define TGPID_SIZE 512
 typedef unsigned int* TGPID;
-
-void tgpid_print(TGPID id, FILE* fp, int cr);
+void tgpid_fprint(TGPID id, FILE* fp, int cr);
 
 // The task function pointer type
 typedef void* (*mir_tfunc_t)(void*);
@@ -53,6 +51,7 @@ struct mir_task_t
     unsigned long comm_cost;
     char name[MIR_SHORT_NAME_LEN];
     struct mir_task_t* parent;
+    uint16_t core_id; 
 
     // Flags
     uint32_t done;

@@ -10,8 +10,7 @@ join_size <- 10
 fork_size <- join_size
 start_size <- 15
 end_size <- start_size
-task_size_mult <- 8
-task_size_bins <- 10
+task_size <- 30
 
 # Timing functions
 tic <- function(gcFirst = TRUE, type=c("elapsed", "user.self", "sys.self"))
@@ -71,9 +70,10 @@ if(tg.color == "color") {
 scope_edge_color <-"black" 
 cont_edge_color <- "black"
 
-# Task color binning
+# Task colors
 task_color_bins <- 10
 task_color_pal <- colorf(task_color_bins)
+
 toc("Setting colors")
 
 tic(type="elapsed")
@@ -114,7 +114,7 @@ parent_first_forks <- as.vector(sapply(fork_nodes_unique[first_forks_index], fun
 first_forks <- fork_nodes_unique[first_forks_index]
 tg[to=first_forks, from=parent_first_forks, attr='kind'] <- 'scope'
 tg[to=first_forks, from=parent_first_forks, attr='color'] <- scope_edge_color   
-tg[to=first_forks, from=parent_first_forks, attr='weight'] <- -as.numeric(tg.data[match(parent_first_forks, tg.data$task),]$ins_count)
+tg[to=first_forks, from=parent_first_forks, attr='weight'] <- -as.numeric(tg.data[match(parent_first_forks, tg.data$task),]$execution_time)
 toc("Connect parent to first fork")
 
 tic(type="elapsed")
@@ -123,7 +123,7 @@ leaf_tasks <- setdiff(tg.data$task, parent_nodes_unique)
 leaf_join_nodes <- join_nodes[match(leaf_tasks, tg.data$task)]
 tg[from=leaf_tasks, to=leaf_join_nodes, attr='kind'] <- 'sync'
 tg[from=leaf_tasks, to=leaf_join_nodes, attr='color'] <- sync_edge_color
-tg[from=leaf_tasks, to=leaf_join_nodes, attr='weight'] <- -as.numeric(tg.data[match(leaf_tasks, tg.data$task),]$ins_count)
+tg[from=leaf_tasks, to=leaf_join_nodes, attr='weight'] <- -as.numeric(tg.data[match(leaf_tasks, tg.data$task),]$execution_time)
 toc("Connect leaf task to join node")
 
 tic(type="elapsed")
@@ -178,14 +178,10 @@ V(tg)$label <- V(tg)$name
 
 # Set task vertex attributes
 task_index <- match(as.character(tg.data$task), V(tg)$name)
-# Set width of task nodes in proportion to average ins count
-#mean_val <- mean(tg.data$ins_count)
-#task_size <- task_size_mult * (tg.data$ins_count/mean_val)
-task_size <- task_size_mult * as.numeric(cut(tg.data$ins_count, task_size_bins))
+# Set width to constant
 tg <- set.vertex.attribute(tg, name='size', index=task_index, value=task_size)
-# Set color of task nodes in proportion to average mem fp
-task_color <- task_color_pal[as.numeric(cut(tg.data$mem_fp, task_color_bins))]
-tg <- set.vertex.attribute(tg, name='color', index=task_index, value=task_color)
+# Set color to indicate core_id
+tg <- set.vertex.attribute(tg, name='color', index=task_index, value='red')
 
 # Set label and color of 'task 0'
 start_index <- V(tg)$name == '0'
@@ -210,32 +206,9 @@ tg <- set.vertex.attribute(tg, name='color', index=fork_nodes_index, value=fork_
 tg <- set.vertex.attribute(tg, name='label', index=fork_nodes_index, value='^')
 
 # Set edge attributes
+# Zero weight
 tg <- set.edge.attribute(tg, name="weight", index=which(is.na(E(tg)$weight)), value=0)
 toc("Attribute setting")
-
-#tic(type="elapsed")
-# Simplify - DO NOT USE. Fucks up the critical path analysis.
-#tg <- simplify(tg, edge.attr.comb=toString)
-#toc("Simplify")
-
-tic(type="elapsed")
-# Critical path
-# get.shortest.paths does not work for negative edge weights (R-3.0.2)
-#cp <- get.shortest.paths(tg, from=start_index, to=end_index, mode="out", output="both")
-#cp_vertex <- unlist(cp$vpath)
-#tg <- set.vertex.attribute(tg, name='frame.color', index=V(tg), value="black")
-#tg <- set.vertex.attribute(tg, name='frame.color', index=cp_vertex, value="yellow")
-#span <- sum(tg.data[match(V(tg)[cp_vertex]$name, tg.data$task),]$ins_count, na.rm=T)
-# Can only get the length of the path 
-span <- shortest.paths(tg, v=start_index, to=end_index, mode="out")
-work <- sum(as.numeric(tg.data$ins_count))
-tg.file.out <- paste(gsub(". $", "", tg.file), ".info", sep="")
-print(paste("Writing file", tg.file.out))
-sink(tg.file.out)
-print("span,work,parallelism")
-print(c(-span, work, work/(-span)))
-sink()
-toc("Critical path")
 
 tic(type="elapsed")
 # Write dot file

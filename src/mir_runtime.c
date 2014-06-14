@@ -204,8 +204,8 @@ static inline void print_help()
     "-q=<int> queue capacity\n"
     "-m=<str> memory allocation policy\n"
     "-y=<csv> schedule policy specific parameters\n"
-    "-g enable fork-join graph generation [Note: Supported only for a single worker!]\n"
-    "-p enable shared memory handshake mode [Note: Supported only for a single worker!]\n"
+    "-g enable fork-join graph generation \n"
+    "-p enable handshake with Pin profiler [Note: Supported only for a single worker!]\n"
     );
 }/*}}}*/
 
@@ -262,15 +262,15 @@ void mir_config()
                     }
                     break;
                 case 'g':
-                    if(runtime->num_workers == 1)
-                    {
+                    /*if(runtime->num_workers == 1)*/
+                    /*{*/
                         runtime->enable_task_graph_gen = 1;
                         MIR_DEBUG(MIR_DEBUG_STR "Fork-join graph generation is enabled!\n");
-                    }
-                    else
-                    {
-                        MIR_ABORT(MIR_ERROR_STR "Number of workers = %d != 1. Cannot enable task graph generation!\n", runtime->num_workers);
-                    }
+                    /*}*/
+                    /*else*/
+                    /*{*/
+                        /*MIR_ABORT(MIR_ERROR_STR "Number of workers = %d != 1. Cannot enable task graph generation!\n", runtime->num_workers);*/
+                    /*}*/
                     break;
                 case 'r':
                     runtime->enable_recorder = 1;

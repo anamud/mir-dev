@@ -44,12 +44,15 @@ then
     # Summarize fork join task graph
     echo "Summarizing fork join task graph ..."
     Rscript ${MIR_ROOT}/scripts/task-graph/mir-fork-join-graph-info.R ${APP}_${OPF}-fork_join_task_graph 
+    # Plot fork join task graph 
+    echo "Plotting fork join task graph ..."
+    Rscript ${MIR_ROOT}/scripts/task-graph/mir-fork-join-graph-plot.R ${APP}_${OPF}-fork_join_task_graph color
     # Annotate fork join task graph with profiling information
     echo "Annotating fork join task graph ..."
     Rscript ${MIR_ROOT}/scripts/task-graph/mir-annotate-graph.R ${APP}_${OPF}-fork_join_task_graph ${APP}_${OPF}-call_graph ${APP}_${OPF}
     # Plot annotated task graph 
     echo "Plotting annotated task graph ..."
-    Rscript ${MIR_ROOT}/scripts/task-graph/mir-annotated-graph-plot.R ${APP}_${OPF}-annotated_task_graph
+    Rscript ${MIR_ROOT}/scripts/task-graph/mir-annotated-graph-plot.R ${APP}_${OPF}-annotated_task_graph color
 else
     echo "Not processing the task graph!"
 fi

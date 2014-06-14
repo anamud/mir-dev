@@ -55,38 +55,38 @@ static inline bool inline_task()
 
 static inline TGPID tgpid_create()
 {/*{{{*/
-    return mir_malloc_int(sizeof(unsigned int) * TGPID_SIZE);
+    return mir_malloc_int(sizeof(unsigned int) * MIR_TGPID_SIZE);
 }/*}}}*/
 
 static inline void tgpid_destroy(TGPID id)
 {/*{{{*/
-    mir_free_int(id, sizeof(unsigned int) * TGPID_SIZE);
+    mir_free_int(id, sizeof(unsigned int) * MIR_TGPID_SIZE);
 }/*}}}*/
 
 static inline void tgpid_reset(TGPID id)
 {/*{{{*/
-    memset(id, 0, sizeof(unsigned int) * TGPID_SIZE);
+    memset(id, 0, sizeof(unsigned int) * MIR_TGPID_SIZE);
 }/*}}}*/
 
 static inline void tgpid_verify(TGPID id)
 {/*{{{*/
     // Check if the last two values are 0
-    MIR_ASSERT(id[TGPID_SIZE-1] == 0 && id[TGPID_SIZE-2] == 0);
+    MIR_ASSERT(id[MIR_TGPID_SIZE-1] == 0 && id[MIR_TGPID_SIZE-2] == 0);
 }/*}}}*/
 
 static inline void tgpid_set(TGPID id, struct mir_task_t* parent)
 {/*{{{*/
     // Copy parent id shifted by one
-    memcpy(id+1, parent->tgpid, sizeof(unsigned int) * TGPID_SIZE);
+    memcpy(id+1, parent->tgpid, sizeof(unsigned int) * MIR_TGPID_SIZE);
     // Verify
     tgpid_verify(id);
     // Add child count
     id[0] = parent->num_children;
 }/*}}}*/
 
-void tgpid_print(TGPID id, FILE* fp, int cr)
+void tgpid_fprint(TGPID id, FILE* fp, int cr)
 {/*{{{*/
-    for(int i=0; i<TGPID_SIZE-2; i++)
+    for(int i=0; i<MIR_TGPID_SIZE-2; i++)
     {
         fprintf(fp, "%u.", id[i]);
         if(id[i+1] == 0 && id[i+2] == 0)
@@ -94,6 +94,18 @@ void tgpid_print(TGPID id, FILE* fp, int cr)
     }
     if(cr == 1)
         fprintf(fp, "\n");
+}/*}}}*/
+
+void tgpid_sprint(TGPID id, char* buf, int cr)
+{/*{{{*/
+    for(int i=0; i<MIR_TGPID_SIZE-2; i++)
+    {
+        sprintf(buf, "%u.", id[i]);
+        if(id[i+1] == 0 && id[i+2] == 0)
+            break;
+    }
+    if(cr == 1)
+        sprintf(buf, "\n");
 }/*}}}*/
 
 static inline struct mir_task_t* mir_task_create_common(mir_tfunc_t tfunc, void* data, size_t data_size, unsigned int num_data_footprints, struct mir_data_footprint_t* data_footprints, const char* name)
@@ -287,7 +299,6 @@ void mir_task_execute(struct mir_task_t* task)
 
     // Compose event metadata
     char event_meta_data[MIR_RECORDER_EVENT_META_DATA_MAX_SIZE-1] = {0};
-    //char* event_meta_data = alloca(sizeof(char) * MIR_SHORT_NAME_LEN);
     sprintf(event_meta_data, "%" MIR_FORMSPEC_UL ",%s", task->id.uid, task->name);
 
     //MIR_DEBUG("%" MIR_FORMSPEC_UL ",%s\n", task->id.uid, task->name);
@@ -312,10 +323,13 @@ void mir_task_execute(struct mir_task_t* task)
             runtime->shm[i] = buf[i];
     }
 
-    //tgpid_print(task->tgpid, stderr, 1);
-
+    //tgpid_fprint(task->tgpid, stderr, 1);
+    
     // Execute task function
     task->func(task->data);
+
+    // Record where executed
+    task->core_id = worker->core_id;
 
     // Add to task graph
     mir_worker_update_task_graph(worker, task);
@@ -341,6 +355,7 @@ void mir_task_execute(struct mir_task_t* task)
     __sync_synchronize();
 
     // FIXME Destroy task !
+    // NOTE: Destroying task upsets task graph structure
 }/*}}}*/
 
 struct mir_mem_node_dist_t* mir_task_get_footprint_dist(struct mir_task_t* task, mir_data_access_t access)
