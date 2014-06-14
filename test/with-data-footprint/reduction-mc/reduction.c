@@ -65,7 +65,7 @@ void reduce_wrapper(void* arg)
     reduce(warg->in1, warg->in2, warg->out, warg->size);
 }/*}}}*/
 
-void for_task(uint64_t start, uint64_t end, uint64_t depth, struct mir_twc_t* twc)
+void for_task(uint64_t start, uint64_t end, uint64_t depth)
 {/*{{{*/
     uint64_t page = pow(2, depth + 1) * start;
 
@@ -114,7 +114,7 @@ void for_task(uint64_t start, uint64_t end, uint64_t depth, struct mir_twc_t* tw
             footprints[2].data_access = MIR_DATA_ACCESS_WRITE;
             footprints[2].part_of = buffer;
 
-            struct mir_task_t* task = mir_task_create((mir_tfunc_t) reduce_wrapper, &arg, sizeof(struct reduce_wrapper_arg_t), twc, 3, footprints, NULL);
+            struct mir_task_t* task = mir_task_create((mir_tfunc_t) reduce_wrapper, &arg, sizeof(struct reduce_wrapper_arg_t), 3, footprints, NULL);
         }
     }/*}}}*/
 }/*}}}*/
@@ -123,7 +123,6 @@ void reduce_par()
 {/*{{{*/
     PMSG("Parallel exec ... \n");
 
-    struct mir_twc_t* twc = mir_twc_create();
     for(uint64_t i=0; i<max_depth; i++)
     {
         PDBG("At depth %lu ... \n", i);
@@ -143,7 +142,7 @@ void reduce_par()
             {
                 uint64_t start = k * num_iter;
                 uint64_t end = start + num_iter - 1;
-                for_task(start, end, i, twc);
+                for_task(start, end, i);
             }
         }
         if(num_tail_iter > 0)
@@ -151,11 +150,11 @@ void reduce_par()
             // Create epilogue task
             uint64_t start = num_workers * num_iter;
             uint64_t end = start + num_tail_iter - 1;
-            for_task(start, end, i, twc);
+            for_task(start, end, i);
         }
 
         PDBG("Waiting for tasks to finish... \n");
-        mir_twc_wait(twc);
+        mir_twc_wait();
     }
 }/*}}}*/
 

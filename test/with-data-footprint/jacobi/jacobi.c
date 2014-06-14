@@ -541,6 +541,7 @@ void jacobi_par_worksharing()
 
 int main(int argc, char* argv[])
 {/*{{{*/
+    PABRT("This program uses explict taskwait and is currently not supported.\n");
     PMSG("Getting args ...\n");
     if(argc > 3)/*{{{*/
         PABRT("Usage: %s DIM BS\n", argv[0]);

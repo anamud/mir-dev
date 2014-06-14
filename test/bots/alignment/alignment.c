@@ -486,7 +486,6 @@ struct  nanos_args_0_t
 
 /*static*/ void smp_ol_pairalign_1_unpacked(int *const gap_pos1, int *const gap_pos2, int *const mat_avscore, int *const nseqs, int **const seqlen_array, int **const bench_output, double *const pw_go_penalty, double *const pw_ge_penalty, char ***const seq_array, double *const gap_open_scale, double *const gap_extend_scale, int *const dnaFlag, int *const i, int *const n, int *const m, int *const si, int *const sj, int *const len1, int *const len2, double *const gg, double *const mm_score)
 {/*{{{*/
-    struct mir_twc_t* twc = mir_twc_create();
 
     for ((*si) = 0; (*si) < (*nseqs); (*si)++)
     {
@@ -525,12 +524,12 @@ struct  nanos_args_0_t
                 imm_args.sj = (*sj);
                 imm_args.len1 = (*len1);
 
-                struct mir_task_t* task_0 = mir_task_create((mir_tfunc_t) smp_ol_pairalign_0, (void*) &imm_args, sizeof(struct nanos_args_0_t), twc, 0, NULL, NULL);
+                struct mir_task_t* task_0 = mir_task_create((mir_tfunc_t) smp_ol_pairalign_0, (void*) &imm_args, sizeof(struct nanos_args_0_t), 0, NULL, NULL);
             }
         }
     }
 
-    mir_twc_wait(twc);
+    mir_twc_wait();
 }/*}}}*/
 
 struct  nanos_args_1_t
@@ -587,8 +586,6 @@ int pairalign()
 
     PMSG("Start aligning ");
 
-    struct mir_twc_t* twc = mir_twc_create();
-
     struct nanos_args_1_t imm_args;
     imm_args.gap_pos1 = &gap_pos1;
     imm_args.gap_pos2 = &gap_pos2;
@@ -612,9 +609,9 @@ int pairalign()
     imm_args.gg = &gg;
     imm_args.mm_score = &mm_score;
 
-    struct mir_task_t* task = mir_task_create((mir_tfunc_t) smp_ol_pairalign_1, (void*) &imm_args, sizeof(struct nanos_args_1_t), twc, 0, NULL, NULL);
+    struct mir_task_t* task = mir_task_create((mir_tfunc_t) smp_ol_pairalign_1, (void*) &imm_args, sizeof(struct nanos_args_1_t), 0, NULL, NULL);
 
-    mir_twc_wait(twc);
+    mir_twc_wait();
 
     PMSG(" completed!\n");
 

@@ -89,5 +89,7 @@ struct mir_twc_t* mir_twc_create();
 
 void mir_twc_wait();
 
+void mir_task_wait();
+
 END_C_DECLS
 #endif

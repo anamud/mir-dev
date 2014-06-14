@@ -405,7 +405,6 @@ mir_lock_unset(&(add_cell_lock));
 
     nnc = nnl = 0;
 
-    struct mir_twc_t* twc = mir_twc_create();
     mir_lock_create(&add_cell_lock);
 
     /* for each possible shape */
@@ -503,11 +502,11 @@ mir_lock_unset(&(add_cell_lock));
             imm_args.nn = nn;
             __builtin_memcpy(&imm_args.NWS, &NWS, sizeof(int [64][2]));
 
-            struct mir_task_t* task_0 = mir_task_create((mir_tfunc_t) smp_ol_add_cell_0, (void*) &imm_args, sizeof(struct nanos_args_0_t), twc, 0, NULL, NULL);
+            struct mir_task_t* task_0 = mir_task_create((mir_tfunc_t) smp_ol_add_cell_0, (void*) &imm_args, sizeof(struct nanos_args_0_t), 0, NULL, NULL);
         }
     }
 //#pragma omp taskwait
-    mir_twc_wait(twc);
+    mir_twc_wait();
 
     return nnc+nnl;
 }/*}}}*/

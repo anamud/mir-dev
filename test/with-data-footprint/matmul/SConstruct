@@ -8,6 +8,11 @@ print('This is a SPECIALIZED BUILD. \n')
 
 import os
 import sys
+
+if(os.path.isfile('NOT_SUPPORTED')):
+    print('NOT_SUPPORTED file present. Aborting!')
+    Exit(2)
+
 MIR_ROOT = os.environ.get('MIR_ROOT')
 if(MIR_ROOT == None):
     print('MIR_ROOT is not defined. Aborting!')

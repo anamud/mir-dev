@@ -68,7 +68,9 @@ int main(int argc, char **argv)
     PMSG("Running %s %d ... \n", argv[0], num);
 
     long par_time_start = get_usecs();
+#pragma omp task
     test(num);
+#pragma omp taskwait
     long par_time_end = get_usecs();
     double par_time = (double)( par_time_end - par_time_start) / 1000000;
 

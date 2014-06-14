@@ -433,3 +433,8 @@ void mir_twc_wait()
     MIR_RECORDER_STATE_END(NULL, 0);
     return;
 }/*}}}*/
+
+void mir_task_wait()
+{
+    mir_twc_wait();
+}

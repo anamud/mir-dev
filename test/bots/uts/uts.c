@@ -215,8 +215,6 @@ unsigned long long parTreeSearch(int depth, Node *parent, int numChildren)
     int i, j;
     unsigned long long subtreesize = 1, partialCount[numChildren];
 
-    struct mir_twc_t* twc = mir_twc_create();
-
     // Recurse on the children
     for (i = 0; i < numChildren; i++) {
         nodePtr = &n[i];
@@ -237,10 +235,10 @@ unsigned long long parTreeSearch(int depth, Node *parent, int numChildren)
         imm_args.nodePtr = nodePtr;
         imm_args.i = i;
 
-        struct mir_task_t* task_0 = mir_task_create((mir_tfunc_t) smp_ol_parTreeSearch_2, (void*) &imm_args, sizeof(struct nanos_args_2_t), twc, 0, NULL, NULL);
+        struct mir_task_t* task_0 = mir_task_create((mir_tfunc_t) smp_ol_parTreeSearch_2, (void*) &imm_args, sizeof(struct nanos_args_2_t), 0, NULL, NULL);
     }
 
-    mir_twc_wait(twc);
+    mir_twc_wait();
 
     for (i = 0; i < numChildren; i++) {
         subtreesize += partialCount[i];

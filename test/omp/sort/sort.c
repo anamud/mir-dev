@@ -449,7 +449,9 @@ int main(int argc, char **argv)
 
     sort_init();
     long par_time_start = get_usecs();
+#pragma omp task
     sort_par();
+#pragma omp taskwait
     long par_time_end = get_usecs();
     double par_time = (double)( par_time_end - par_time_start) / 1000000;
 

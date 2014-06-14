@@ -140,7 +140,15 @@ int main(int argc, char **argv)
     PMSG("Computing fib %d %d ... \n", num, cutoff_value);
 
     long par_time_start = get_usecs();
+//#pragma omp parallel
+//{
+//#pragma omp single
+//{
+#pragma omp task
     par_res = fib(num, 0);
+#pragma omp taskwait
+//}
+//}
     long par_time_end = get_usecs();
     double par_time = (double)( par_time_end - par_time_start) / 1000000;
 
