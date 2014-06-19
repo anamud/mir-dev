@@ -50,6 +50,13 @@
 \begin{lstlisting}[style=BashInputStyle]
 $ cd $MIR_ROOT/test/fib
 
+$ echo "Examining executable for names of outline and callable functions ..."
+$ $MIR_ROOT/scripts/task-graph/profiler_params.py prof-build/*.o
+Using "._omp_fn.|ol_" as outline function name pattern
+Processing file: prof-build/fib.o
+OUTLINE_FUNCTIONS=ol_fib_0,ol_fib_1,ol_fib_2
+CALLABLE_FUNCTIONS=fib_seq,fib,get_usecs,main
+
 $ LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$PIN_ROOT/intel64/runtime \
     MIR_CONF="-w=1 -g -p" \
     $PIN_ROOT/intel64/bin/pinbin \
