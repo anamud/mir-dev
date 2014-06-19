@@ -1,0 +1,183 @@
+\documentclass[11pt,a4paper,notitlepage]{report}
+\usepackage[utf8]{inputenc}
+\usepackage{graphicx}
+\usepackage{enumerate}
+\definecolor{bg}{rgb}{0.95,0.95,0.95}
+\usepackage{ulem}
+\usepackage{listings}
+
+\author{Ananya Muddukrishna (ananya@kth.se)}
+\title{MIR: Installation and Usage}
+
+\begin{document}
+\maketitle
+
+MIR is a task-based runtime system library.
+Written using C99, MIR provides good scalability and easy-to-use interface for writing task-based programs.
+A subset of OpenMP 3.0 tasking is also supported.
+MIR is flexible - the user can experiment with different scheduling policies.
+MIR supports extensive performance analysis and profiling features.
+Users can quickly solve performance problems using detailed thread-based and task-based performance information provided by MIR.
+
+\section{Requirements}
+Building and using MIR as a basic task-based runtime system requires:
+\begin{itemize}
+\item Machine with x86 architecture
+\item Linux kernel later than January 2012
+\item GCC and Binutils
+\item Scons - a build system
+\end{itemize}
+
+\subsection{Optional requirements}
+Install below software if you need extended features of MIR such as profiling and locality-aware scheduling:
+\begin{itemize}
+\item libnuma - for data-distribution and locality-aware scheduling on NUMA systems
+\item PAPI - for reading hardware performance counters during thread-based profiling
+\item Paraver - for visualizing thread execution traces
+\item Python - for executing profiling scripts
+\item Intel Pin \textbg{sources} - for profiling instructions executed by tasks during task-based profiling
+\item R - for executing profiling scripts
+\item These R packages: 
+\begin{itemize}
+\item igraph - for task graph processing
+\item RColorBrewer - for colors
+\item gdata, plyr - for data structure transformations
+\end{itemize}
+\item Graphviz - for task graph plotting
+\end{itemize}
+
+\section{Directory Structure}
+The MIR source repository contains these directories:
+\begin{enumerate}[$\triangleright$]
+\item src - core source files
+\begin{enumerate}[$\triangleright$]
+\item arch - architecture-based source files
+\item scheduling - scheduling policy source files
+\end{enumerate}
+\item scripts - various profiling and testing scripts
+\begin{enumerate}[$\triangleright$]
+\item task-graph - scripts for task-based profiling
+\end{enumerate}
+\item test - programs for testing 
+\begin{enumerate}[$\triangleright$]
+\item omp - OpenMP programs
+\item bots - BOTS programs written using MIR programming interface
+\item with-data-footprint - Programs where tasks have explicit data footprint 
+\end{enumerate}
+\end{enumerate}
+
+\section{Building}
+Building the basic MIR library is simple. Follow below steps:
+\begin{enumerate}
+\item Point MIR\_ROOT environment variable to MIR repository
+\begin{lstlisting}
+$ export MIR_ROOT=<<MIR source repository path>>
+\end{lstlisting}
+\item Ensure $MIR_ROOT/src/SConstruct matches your build intention
+\item Build
+\begin{lstlisting}
+$ cd $MIR_ROOT/src
+$ scons 
+\end{lstlisting}
+\end{enumerate}
+
+\subsection{Data-distibution and locality-aware scheduling on NUMA systems}
+Follow below steps to enable support for NUMA systems~\cite{XXX}.
+\begin{enumerate}
+    \item Install libnuma and numactl
+    \item Create an empty file called HAVE\_LIBNUMA
+\begin{lstlisting}
+$ touch $MIR_ROOT/src/HAVE_LIBNUMA
+\end{lstlisting}
+    \item Clean and rebuild MIR
+\begin{lstlisting}
+$ cd $MIR_ROOT/src
+$ scons -c
+$ scons 
+\end{lstlisting}
+\end{enumerate}
+
+\section{Task-based Programming Interface}
+MIR provides a basic interface for task-based programming.
+\begin{lstlisting}
+Basic interface
+\end{lstlisting}
+
+A simple program to illustrate task-based programming wth the MIR interface is shown below.
+
+Programs written using a subset of OpenMP tasks are also supported.
+
+
+
+Look at test programs in $MIR\_ROOT/test for mpore advanced usage.
+
+\section{Testing}
+Run the fibonacci application:
+\begin{lstlisting}
+$ cd $MIR_ROOT/test/fib
+$ scons 
+$ ./fib-verbose
+\end{lstlisting}
+
+\section{Profiling}
+
+\subsection{Thread-based profiling}
+PAPI_ROOT=<<PAPI install path>>
+
+\subsection{Task-based profiling}
+PIN_ROOT=<<Pin source path>>
+LD_LIBRARY_PATH=$LD_LIBRARY_PATH:<<Pin install path>>
+
+* Edit PIN_ROOT/source/tools/Config/makefile.unix.config
+Add -fopenmp to these variables: TOOL_LDFLAGS_NOOPT, TOOL_CXXFLAGS_NOOPT
+
+* Build MIR pin tool
+$ cd $MIR_ROOT/scripts/task-graph
+$ make PIN_ROOT=<<Expand PIN_ROOT>>
+View tool options using:
+$ $PIN_ROOT/intel64/bin/pinbin -t $MIR_ROOT/scripts/task-graph/obj-intel64/mir_routine_trace.so -h -- ls
+
+\section{Performance Analysis}
+=== MIR traces === 
+MIR dumps detailed runtime information in different trace files.
+
+* Build fibonacci application:
+$ cd $MIR_ROOT/test/fib
+$ scons 
+
+* For thread state info, run:
+$ MIR_CONF="-i" ./fib-opt
+View mir-stats file created in invocation path
+
+* For detailed thread state info viewable on Paraver, run:
+$ MIR_CONF="-r" ./fib-opt
+A set of <<unix time>>*.rec files will be created in the invocation path
+$ MIR_ROOT/scripts/mirtoparaver.py <<unix time>>-config.rec
+$ wxparaver <<unix time>>-paraver.prv
+
+Also a set of <<unix time>>-state-time*.rec files will be created in the invocation path. The files contain thraed state duration information. Accumulate them using:
+
+$ MIR_ROOT/scripts/get-state-stats.sh <<unix time>>
+
+* For performance counter information along with detailed thread state info viewable on Paraver:
+$ cd $MIR_ROOT/src
+Enable definition MIR_RECORDER_USE_HW_PERF_COUNTERS in mir_defines.h
+Adopt mir_recorder.{c|h} to the counters you want to view
+Rebuild MIR
+MIR trace files will now contain performance counter values When you generate traces using the -r option in MIR_CONF
+
+Get hardware event counts using the paraver file obtained from mirtoparaver.py
+$ MIR_ROOT/scripts/get-event-counts.sh <<prv-file>>
+
+* For task graph structural info, run:
+MIR_CONF="-g -w=1" ./fib-opt
+
+* For detailed task graph info:
+$ ./profile-test.sh
+A set of graph files will be created in a new result directory in the invocation path
+
+=== MIR configuration ===
+MIR has several configurable options. View them using:
+$ cd $MIR_ROOT/test/fib
+$ scons 
+$ MIR_CONF="-h" ./fib-opt

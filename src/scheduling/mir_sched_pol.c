@@ -1,7 +1,9 @@
-#include "mir_sched_pol.h"
+#include "scheduling/mir_sched_pol.h"
+#ifdef MIR_MEM_POL_ENABLE
 #include "mir_mem_pol.h"
+#endif
 #include "mir_runtime.h"
-#include "mir_arch.h"
+#include "arch/mir_arch.h"
 
 #include <string.h>
 #include <stdint.h>
@@ -9,7 +11,9 @@
 
 extern struct mir_sched_pol_t policy_central;
 extern struct mir_sched_pol_t policy_ws;
+#ifdef MIR_MEM_POL_ENABLE
 extern struct mir_sched_pol_t policy_numa;
+#endif
 extern struct mir_sched_pol_t policy_central_stack;
 extern struct mir_sched_pol_t policy_ws_de;
 
@@ -21,8 +25,10 @@ struct mir_sched_pol_t* mir_sched_pol_get_by_name(const char* name)
         return &policy_central;
     else if(0 == strcmp(name, "ws"))
         return &policy_ws;
+#ifdef MIR_MEM_POL_ENABLE
     else if(0 == strcmp(name, "numa"))
         return &policy_numa;
+#endif
     else if(0 == strcmp(name, "central-stack"))
         return &policy_central_stack;
     else if(0 == strcmp(name, "ws-de"))
@@ -31,6 +37,7 @@ struct mir_sched_pol_t* mir_sched_pol_get_by_name(const char* name)
         return NULL;
 }/*}}}*/
 
+#ifdef MIR_MEM_POL_ENABLE
 unsigned long mir_sched_pol_get_comm_cost(uint16_t node, struct mir_mem_node_dist_t* dist)
 {/*{{{*/
     unsigned long comm_cost = 0;
@@ -43,6 +50,7 @@ unsigned long mir_sched_pol_get_comm_cost(uint16_t node, struct mir_mem_node_dis
 
     return comm_cost;
 }/*}}}*/
+#endif
 
 
 

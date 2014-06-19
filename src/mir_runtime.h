@@ -7,10 +7,10 @@
 #include <stdbool.h>
 
 #include "mir_worker.h"
-#include "mir_arch.h"
+#include "arch/mir_arch.h"
 #include "mir_defines.h"
 #include "mir_types.h"
-#include "mir_sched_pol.h"
+#include "scheduling/mir_sched_pol.h"
 #include "mir_task.h"
 #include "mir_types.h"
 

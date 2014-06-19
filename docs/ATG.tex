@@ -1,0 +1,188 @@
+\documentclass[11pt,a4paper,notitlepage]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{graphicx}
+\usepackage{enumerate}
+\usepackage{xcolor}
+\definecolor{bg}{rgb}{0.95,0.95,0.95}
+\usepackage{ulem}
+\usepackage{listings}
+\usepackage{vhistory}
+
+\lstdefinestyle{BashInputStyle}{
+  language=bash,
+  basicstyle=\small\sffamily,
+  commentstyle=\color{black},    
+  numberstyle=\tiny\color{black}, 
+  keywordstyle=\color{black},       
+  extendedchars=true,              
+  numbers=left,
+  numbersep=3pt,
+  frame=tb,
+  columns=fullflexible,
+  backgroundcolor=\color{yellow!20},
+  linewidth=\linewidth,
+  breaklines=true,
+  breakatwhitespace=false,           
+  showspaces=false,
+  keepspaces=true,                 
+  captionpos=b,                    
+  showspaces=false,                
+  showstringspaces=false,          
+  showtabs=false,                  
+  tabsize=2,                       
+}
+
+\author{Ananya Muddukrishna}
+\date{ananya@kth.se}
+\title{Annotated Task Graph (ATG)}
+
+\begin{document}
+\maketitle
+
+% Start of the revision history table
+\begin{versionhistory}
+\vhEntry{1.0}{2014-06-19}{ananya} {Created}
+\end{versionhistory}
+
+\section{Getting the ATG}
+
+\begin{lstlisting}[style=BashInputStyle]
+$ cd $MIR_ROOT/test/fib
+
+$ LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$PIN_ROOT/intel64/runtime \
+    MIR_CONF="-w=1 -g -p" \
+    $PIN_ROOT/intel64/bin/pinbin \
+    -t ${MIR_ROOT}/scripts/task-graph/obj-intel64/mir_outline_function_profiler.so \
+    -o fib_test \
+    -s ol_fib_0,ol_fib_1,ol_fib_2 \
+    -c fib,fib_seq \
+    -- ./fib-prof 10 4
+
+$ mv mir-task-graph fib_test-fork_join_task_graph
+
+$ echo "Summarizing fork join task graph ..."
+$ Rscript ${MIR_ROOT}/scripts/task-graph/mir-fork-join-graph-info.R fib_test-fork_join_task_graph 
+
+$ echo "Plotting fork join task graph ..."
+$ Rscript ${MIR_ROOT}/scripts/task-graph/mir-fork-join-graph-plot.R fib_test-fork_join_task_graph color
+
+$ echo "Annotating fork join task graph ..."
+$ Rscript ${MIR_ROOT}/scripts/task-graph/mir-annotate-graph.R fib_test-fork_join_task_graph fib_test-call_graph fib_test
+
+$ echo "Plotting annotated task graph ..."
+$ Rscript ${MIR_ROOT}/scripts/task-graph/mir-annotated-graph-plot.R fib_test-annotated_task_graph color
+
+$ echo "Listing ATG files ..."
+$ ls fib_test*
+\end{lstlisting}
+
+\subsection{ATG files}
+See Table~\ref{tab:atg-files}.
+
+\begin{table}[!htb]
+\begin{tabular}{|l|p{7cm}|}
+\hline
+\textbf{File name} & \textbf{Description} \\ \hline
+fib\_test-call\_graph & Instruction-level information of tasks \\ \hline
+fib\_test-mem\_map & Memory map of program execution  \\ \hline
+fib\_test-fork\_join\_task\_graph & Parent-child task relationship and tgpid information \\ \hline
+fib\_test-annotated\_task\_graph & Raw format of the ATG combining instruction-level and parent-child information \\ \hline
+fib\_test-annotated\_task\_graph.adjm & Adjacent matrix representation of the visual format of ATG \\ \hline
+fib\_test-annotated\_task\_graph.dot & Dot representation of the visual format of ATG \\ \hline
+fib\_test-annotated\_task\_graph.edgelist & Edgelist representation of the visual format of ATG \\ \hline
+fib\_test-annotated\_task\_graph.graphml & GraphML representation of the visual format of ATG \\ \hline
+fib\_test-annotated\_task\_graph.info & Summary information about visual format of the ATG. Includes work, span and critical path from Cilk theory. \\ \hline
+fib\_test-fork\_join\_task\_graph.adjm & Adjacent matrix representation of the visual format of ATG without instruction-level information \\ \hline
+fib\_test-fork\_join\_task\_graph.dot & Dot representation of the visual format of ATG without instruction-level information \\ \hline
+fib\_test-fork\_join\_task\_graph.edgelist & Edgelist representation of the visual format of ATG without instruction-level information \\ \hline
+fib\_test-fork\_join\_task\_graph.graphml & GraphML representation of the visual format of ATG without instruction-level information \\ \hline
+fib\_test-fork\_join\_task\_graph.info & Summary information about visual format of ATG without instruction-level information. Includes number of tasks and join degree distribution. \\ \hline
+\end{tabular}
+\caption{ATG files}
+\label{tab:atg-files}
+\end{table}
+
+\section{Raw format of the ATG}
+The ATG raw format is a csv file.
+
+\begin{lstlisting}[style=BashInputStyle]
+$ head fib_test-annotated_task_graph
+"task","parent","joins_at","tgpid","ins_count","stack_read","stack_write","mem_fp","ccr","clr","mem_read","mem_write","name"
+1,0,0,"0.",59,11,15,5,12,15,4,1,"ol_fib_2"
+2,1,0,"1.",60,10,15,5,12,15,4,1,"ol_fib_0"
+3,1,0,"2.",60,10,15,5,12,15,4,1,"ol_fib_1"
+4,3,0,"1.2.",60,10,15,5,12,15,4,1,"ol_fib_0"
+5,3,0,"2.2.",60,10,15,5,12,15,4,1,"ol_fib_1"
+6,5,0,"1.2.2.",60,10,15,5,12,15,4,1,"ol_fib_0"
+7,5,0,"2.2.2.",60,10,15,5,12,15,4,1,"ol_fib_1"
+8,7,0,"1.2.2.2.",68,15,15,5,14,17,4,1,"ol_fib_0"
+9,7,0,"2.2.2.2.",47,10,10,5,9,12,4,1,"ol_fib_1"
+\end{lstlisting}
+
+Each line shows properties of an explicit task executed by the program.
+The first line shows names of the properties. 
+Properties are also called annotations.
+See Table~\ref{tab:raw-format}.
+
+\begin{table}[!htb]
+\begin{tabular}{|p{2cm}|p{10cm}|}
+\hline
+\textbf{Field} & \textbf{Description} \\ \hline
+task & Identifier of the task \\ \hline
+parent & Identifier of the parent task of the task \\ \hline
+joins\_at & Indicates at which call to taskwait in the parent the task synchronized. Example: 0 indicates the task synchronized with the first call to taskwait in the parent. Several children can synchronize at the same call.  \\ \hline
+tgpid & Indicates the task graph position identifier. See details below.  \\ \hline
+ins\_count & Indicates total number of instructions executed by the task. Profiling parameters indicate which instructions to count. Typically, instructions part of runtime system calls are excluded and calls to statically-linked functions are included.  \\ \hline
+stack\_read & Indicates number of read accesses to the stack while executing instructions  \\ \hline
+stack\_read & Indicates number of write accesses to the stack while executing instructions \\ \hline
+ccr & Computation to Communication ratio. Indicates number of instructions executed per read or write access to memory  \\ \hline
+clr & Computation to Load ratio. Indicates number of instructions executed per read access to memory  \\ \hline
+mem\_read & Indicates number of read accesses to memory (excluding stack) while executing instructions  \\ \hline
+mem\_write & Indicates number of write accesses to memory (excluding stack) while executing instructions  \\ \hline
+name & Indicates name of the outline function of the task \\ \hline
+\end{tabular}
+\caption{Raw format fields}
+\label{tab:raw-format}
+\end{table}
+
+\subsection{Property tgpid}
+The tgpid uniquely identifies a task irrespective of single-thread or many-thread execution. 
+The format of tgpid is A.B.C.....
+
+\begin{itemize}
+\item 0. Represents the first task created. This is a special meaning.
+\item A. means Ath child of the first task
+\item A.B. means Ath child of task B.
+\item A.B.C. means Ath child of task B.C.
+\end{itemize}
+
+NOTE: The tgpid is an experimental feature, not fully tested and subject to change.
+
+\section{Visual format of the ATG}
+The visual format gives shape to the raw format of the ATG.
+It describes task-based execution in an intuitive manner allowing the programmer to spot performance problems.
+The visual format can be viewed using graph visualization tools such as dot, yEd and cytoscape.
+See Figure~\ref{fig:yed-atg} for visualization of the ATG on yEd and Figure~\ref{fig:dot-atg} for visualization of the ATG on Dot.
+
+\begin{lstlisting}[style=BashInputStyle]
+$ echo "Visualizing annotated task graph ..."
+$ dot -Tpng fib_test-annotated_task_graph.dot >  fib_test-annotated_task_graph.png
+$ yed fib_test-annotated_task_graph.dot 
+\end{lstlisting}
+
+\begin{figure}[!ht]
+\centering
+\includegraphics[width=\textwidth]{figures/fib_test-10_4-annotated_task_graph.pdf}
+\caption{fib\_test-annotated\_task\_graph.graphml viewed on yEd}
+\label{fig:yed-atg}
+\end{figure}
+
+\begin{figure}[!ht]
+\centering
+\includegraphics[width=\textwidth]{figures/fib_test-10_4-annotated_task_graph.png}
+\caption{fib\_test-annotated\_task\_graph.graphml visualized using Dot}
+\label{fig:dot-atg}
+\end{figure}
+
+\end{document}

@@ -1,7 +1,7 @@
 #include "mir_worker.h"
 #include "mir_task.h"
 #include "mir_recorder.h"
-#include "mir_sched_pol.h"
+#include "scheduling/mir_sched_pol.h"
 #include "mir_runtime.h"
 #include "mir_memory.h"
 #include "mir_utils.h"
@@ -290,6 +290,7 @@ void mir_worker_status_init(struct mir_worker_status_t* status)
         status->total_comm_cost = 0;
         status->lowest_comm_cost = -1; 
         status->highest_comm_cost = 0;
+#ifdef MIR_MEM_POL_ENABLE
         if(0 == strcmp(runtime->sched_pol->name, "numa") && runtime->arch->diameter > 0)
         {
             status->num_comm_tasks_stolen_by_diameter = mir_malloc_int(sizeof(uint32_t) * runtime->arch->diameter);
@@ -300,6 +301,9 @@ void mir_worker_status_init(struct mir_worker_status_t* status)
         {
             status->num_comm_tasks_stolen_by_diameter = NULL;
         }
+#else
+        status->num_comm_tasks_stolen_by_diameter = NULL;
+#endif
     }
 }/*}}}*/
 

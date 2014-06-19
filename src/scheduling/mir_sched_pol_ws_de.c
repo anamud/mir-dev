@@ -1,5 +1,5 @@
 #include "mir_runtime.h"
-#include "mir_sched_pol.h"
+#include "scheduling/mir_sched_pol.h"
 #include "mir_worker.h"
 #include "mir_task.h"
 #include "mir_queue.h"
@@ -132,6 +132,7 @@ bool pop_ws_de (struct mir_task_t** task)
                 // Update stats
                 if(runtime->enable_stats)
                 {
+#ifdef MIR_MEM_POL_ENABLE
                     struct mir_mem_node_dist_t* dist = mir_task_get_footprint_dist(*task, MIR_DATA_ACCESS_READ);
                     if(dist)
                     {
@@ -143,6 +144,7 @@ bool pop_ws_de (struct mir_task_t** task)
                         (*task)->comm_cost = mir_sched_pol_get_comm_cost(node, dist);
                         mir_worker_status_update_comm_cost(worker->status, (*task)->comm_cost);
                     }
+#endif
 
                     worker->status->num_tasks_owned++;
                 }
@@ -181,6 +183,7 @@ bool pop_ws_de (struct mir_task_t** task)
                     // Update stats
                     if(runtime->enable_stats)
                     {
+#ifdef MIR_MEM_POL_ENABLE
                         struct mir_mem_node_dist_t* dist = mir_task_get_footprint_dist(*task, MIR_DATA_ACCESS_READ);
                         if(dist)
                         {
@@ -192,6 +195,7 @@ bool pop_ws_de (struct mir_task_t** task)
                             (*task)->comm_cost = mir_sched_pol_get_comm_cost(node, dist);
                             mir_worker_status_update_comm_cost(worker->status, (*task)->comm_cost);
                         }
+#endif
 
                         worker->status->num_tasks_stolen++;
                     }

@@ -17,10 +17,13 @@
 #include "mir_types.h"
 #include "mir_recorder.h"
 #include "mir_worker.h"
-#include "mir_sched_pol.h"
-#include "mir_arch.h"
-#include "mir_mem_pol.h"
+#include "scheduling/mir_sched_pol.h"
+#include "arch/mir_arch.h"
 #include "mir_utils.h"
+
+#ifdef MIR_MEM_POL_ENABLE
+#include "mir_mem_pol.h"
+#endif
 
 #ifndef __tile__
 #include "papi.h"
@@ -46,8 +49,10 @@ void mir_preconfig_init()
     if(runtime->sched_pol == NULL)
         MIR_ABORT(MIR_ERROR_STR "Cannot select %s scheduling policy!\n", MIR_SCHED_POL_DEFAULT);
 
+#ifdef MIR_MEM_POL_ENABLE
     // Memory allocation policy
     mir_mem_pol_create();
+#endif
 
     // Workers
     runtime->num_workers = runtime->arch->num_cores;
@@ -178,10 +183,12 @@ alive:
     // Global taskwait counter
     runtime->ctwc = mir_twc_create();
 
+#ifdef MIR_MEM_POL_ENABLE
     // Memory allocation policy
     // Init memory distributer only after workers are bound.
     // Node restrictions can then be correctly inferred.
     mir_mem_pol_init();
+#endif
 
     MIR_DEBUG(MIR_DEBUG_STR "Initialization complete!\n");
 }/*}}}*/
@@ -328,7 +335,9 @@ void mir_config()
     }
 
     // Pass token string to other configurable components
+#ifdef MIR_MEM_POL_ENABLE
     mir_mem_pol_config(conf_str);
+#endif
     runtime->sched_pol->config(conf_str);
     runtime->arch->config(conf_str);
 }/*}}}*/
@@ -444,7 +453,9 @@ void mir_destroy()
 
     // Deinit memory allocation policy
     MIR_DEBUG(MIR_DEBUG_STR "Stopping memory distributer ...\n");
+#ifdef MIR_MEM_POL_ENABLE
     mir_mem_pol_destroy();
+#endif
 
     // Deinit scheduling policy
     MIR_DEBUG(MIR_DEBUG_STR "Stopping scheduler ...\n");

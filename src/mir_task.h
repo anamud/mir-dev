@@ -83,7 +83,9 @@ void mir_task_destroy(struct mir_task_t* task);
 
 void mir_task_execute(struct mir_task_t* task);
 
+#ifdef MIR_MEM_POL_ENABLE
 struct mir_mem_node_dist_t* mir_task_get_footprint_dist(struct mir_task_t* task, mir_data_access_t access);
+#endif
 
 struct mir_twc_t* mir_twc_create();
 

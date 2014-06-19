@@ -4,7 +4,7 @@
 #include "mir_worker.h"
 #include "mir_recorder.h"
 #include "mir_runtime.h"
-#include "mir_sched_pol.h"
+#include "scheduling/mir_sched_pol.h"
 #include "mir_utils.h"
 #include "mir_memory.h"
 #include "mir_data_footprint.h"
@@ -358,6 +358,7 @@ void mir_task_execute(struct mir_task_t* task)
     // NOTE: Destroying task upsets task graph structure
 }/*}}}*/
 
+#ifdef MIR_MEM_POL_ENABLE
 struct mir_mem_node_dist_t* mir_task_get_footprint_dist(struct mir_task_t* task, mir_data_access_t access)
 {/*{{{*/
     if(task->num_data_footprints == 0)
@@ -383,6 +384,7 @@ struct mir_mem_node_dist_t* mir_task_get_footprint_dist(struct mir_task_t* task,
 
     return task->dist_by_access_type[access];
 }/*}}}*/
+#endif
 
 struct mir_twc_t* mir_twc_create() 
 {/*{{{*/

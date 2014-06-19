@@ -37,6 +37,7 @@ struct mir_state_t
 #ifdef __tile__
 #define MIR_RECORDER_EVENT_MAX_COUNT 4
 #else
+// Fix this based on your architecture
 #define MIR_RECORDER_EVENT_MAX_COUNT 2
 #endif
 #else
@@ -59,7 +60,7 @@ struct mir_recorder_t
 #ifdef MIR_RECORDER_USE_HW_PERF_COUNTERS
 #ifdef __tile__
     // Tilera HW events
-    int tilecounter[4];
+    int tilecounter[MIR_RECORDER_EVENT_MAX_COUNT];
 #else
     // PAPI hw counters
     int EventSet;

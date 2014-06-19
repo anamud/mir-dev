@@ -6,6 +6,7 @@
 #include "mir_runtime.h"
 #include "mir_worker.h"
 
+#ifdef MIR_MEM_POL_ENABLE
 #ifndef __tile__
 #include <numa.h>
 #include <numaif.h>
@@ -603,11 +604,11 @@ void mir_mem_pol_create ()
 }/*}}}*/
 
 void mir_mem_pol_init ()
-{
+{/*{{{*/
 #ifdef MIR_MEM_POL_RESTRICT 
     mem_pol->node = runtime->arch->node_of(runtime->workers[0].core_id);
 #endif
-}
+}/*}}}*/
 
 void mir_mem_pol_destroy ()
 {/*{{{*/
@@ -636,3 +637,4 @@ void mir_mem_pol_reset ()
 {/*{{{*/
     mem_pol->reset();
 }/*}}}*/
+#endif

@@ -1,5 +1,5 @@
 #include "mir_runtime.h"
-#include "mir_sched_pol.h"
+#include "scheduling/mir_sched_pol.h"
 #include "mir_worker.h"
 #include "mir_task.h"
 #include "mir_queue.h"
@@ -13,6 +13,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#ifdef MIR_MEM_POL_ENABLE
 extern uint32_t g_num_tasks_waiting;
 extern struct mir_runtime_t* runtime;
 
@@ -412,4 +413,5 @@ struct mir_sched_pol_t policy_numa =
     .push = push_numa,
     .pop = pop_numa
 };/*}}}*/
+#endif
 

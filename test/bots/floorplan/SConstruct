@@ -24,10 +24,11 @@ if(MIR_ROOT == None):
 sys.path.append(MIR_ROOT + '/scripts')
 import mir_utils
 
-PAPI_ROOT = os.environ.get('PAPI_ROOT')
-if(PAPI_ROOT == None):
-    print('PAPI_ROOT is not defined. Aborting!')
-    Exit(2)
+if os.path.isfile(MIR_ROOT+'/src/HAVE_PAPI'):
+    PAPI_ROOT = os.environ.get('PAPI_ROOT')
+    if(PAPI_ROOT == None):
+        print('PAPI_ROOT is not defined. Aborting!')
+        Exit(2)
 
 compilers = ['gcc','icc']
 compiler = ''
@@ -54,12 +55,17 @@ env['CFLAGS'] += ['-I' + MIR_ROOT+'/test/common']
 env['LINKFLAGS'] = ['']
 env['LIBS'] = Split("""
 pthread
-papi
-numa
 m
 """)
 env['LIBPATH'] = ['./']
-env['LIBPATH'] += [PAPI_ROOT + '/lib']
+
+if os.path.isfile(MIR_ROOT+'/src/HAVE_LIBNUMA'):
+    env['LIBS'] += ['numa']
+
+if os.path.isfile(MIR_ROOT+'/src/HAVE_PAPI'):
+    env['LIBS'] += ['papi']
+    env['LIBPATH'] += [PAPI_ROOT + '/lib']
+
 
 #####################
 # Debug environment #

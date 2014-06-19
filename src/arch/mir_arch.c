@@ -1,4 +1,4 @@
-#include "mir_arch.h"
+#include "arch/mir_arch.h"
 #include "mir_utils.h"
 #include "mir_defines.h"
 #include "mir_types.h"
@@ -7,16 +7,18 @@
 #include <stdlib.h>
 #include <string.h>
 
-extern struct mir_arch_t arch_adk; // 1
-extern struct mir_arch_t arch_gatti; // 2
-extern struct mir_arch_t arch_firenze; // 3
-extern struct mir_arch_t arch_gothmog; // 4
-extern struct mir_arch_t arch_tilepro64; // 5
+extern struct mir_arch_t arch_this; // 1
+extern struct mir_arch_t arch_adk; // 2
+extern struct mir_arch_t arch_gatti; // 3
+extern struct mir_arch_t arch_firenze; // 4
+extern struct mir_arch_t arch_gothmog; // 5
+extern struct mir_arch_t arch_tilepro64; // 6
 
 // WARNING and NOTE: Make sure predef architecture count == num entries in predef architecture struct
-#define MIR_ARCH_NUM_PREDEF 5
+#define MIR_ARCH_NUM_PREDEF 6
 static struct mir_arch_t* mir_arch_predef[MIR_ARCH_NUM_PREDEF] = 
 {/*{{{*/
+    &arch_this,
     &arch_adk,
     &arch_gatti,
     &arch_firenze,
@@ -26,7 +28,7 @@ static struct mir_arch_t* mir_arch_predef[MIR_ARCH_NUM_PREDEF] =
 
 struct mir_arch_t* mir_arch_create_by_query()
 {/*{{{*/
-    struct mir_arch_t* arch = NULL;
+    struct mir_arch_t* arch = &arch_this;
 
 #ifdef __tile__
     arch = &arch_tilepro64;
@@ -55,4 +57,5 @@ struct mir_arch_t* mir_arch_create_by_query()
 
     return arch;
 }/*}}}*/
+
 

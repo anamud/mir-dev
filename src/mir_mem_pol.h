@@ -4,8 +4,10 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include "mir_types.h"
+#include "mir_defines.h"
 
 BEGIN_C_DECLS 
+#ifdef MIR_MEM_POL_ENABLE
 
 // Memory allocation related
 
@@ -49,7 +51,7 @@ void mir_mem_get_dist(struct mir_mem_node_dist_t* dist, void* addr, size_t sz, v
 
 void mir_mem_node_dist_stat(struct mir_mem_node_dist_t* dist, struct mir_mem_node_dist_stat_t* stat);
 
+#endif
 END_C_DECLS
 
 #endif /* end of include guard: MIR_MEM_POL_H */
-

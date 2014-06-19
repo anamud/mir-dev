@@ -13,10 +13,11 @@ if(MIR_ROOT == None):
 sys.path.append(MIR_ROOT + '/scripts')
 import mir_utils
 
-PAPI_ROOT = os.environ.get('PAPI_ROOT')
-if(PAPI_ROOT == None):
-    print('PAPI_ROOT is not defined. Aborting!')
-    Exit(2)
+if os.path.isfile('HAVE_PAPI'):
+    PAPI_ROOT = os.environ.get('PAPI_ROOT')
+    if(PAPI_ROOT == None):
+        print('PAPI_ROOT is not defined. Aborting!')
+        Exit(2)
 
 compilers = ['gcc','icc']
 compiler = ''
@@ -27,6 +28,10 @@ for item in compilers:
 if(len(compiler) == 0):
     print('Could not find a compiler. Aborting!')
     Exit(2)
+
+if not os.path.isfile('arch/mir_arch_this.c'):
+    print('Generating generic architecture description ...')
+    os.system(MIR_ROOT+'/scripts/generate_arch.py arch')
 
 env = Environment()
 env['CC'] = [compiler[0]]
@@ -41,7 +46,13 @@ env['CCFLAGS'] = Split("""
 -D_GNU_SOURCE 
 """)
 
-env['CFLAGS'] += ['-I' + PAPI_ROOT+'/include']
+env['CCFLAGS'] += ['-I' + MIR_ROOT+'/src']
+
+if os.path.isfile('HAVE_LIBNUMA'):
+    env['CCFLAGS'] += ['-DMIR_MEM_POL_ENABLE']
+
+if os.path.isfile('HAVE_PAPI'):
+    env['CCFLAGS'] += ['-I' + PAPI_ROOT+'/include']
 
 #####################
 # Debug environment #
@@ -56,6 +67,8 @@ debug['CCFLAGS'] += Split("""
 """)
 debug.VariantDir('debug-build', '.', duplicate=0)
 debug_src = debug.Glob('debug-build/*.c')
+debug_src += debug.Glob('debug-build/arch/*.c')
+debug_src += debug.Glob('debug-build/scheduling/*.c')
 debug.Library(target = 'mir-debug', source = debug_src)
 
 ###################
@@ -66,4 +79,6 @@ opt = env.Clone();
 opt['CCFLAGS'] += ['-O2']
 opt.VariantDir('opt-build', '.', duplicate=0)
 opt_src = opt.Glob('opt-build/*.c')
+opt_src += opt.Glob('opt-build/arch/*.c')
+opt_src += opt.Glob('opt-build/scheduling/*.c')
 opt.Library('mir-opt', source = opt_src)

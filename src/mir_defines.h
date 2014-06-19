@@ -33,7 +33,7 @@
 #define MIR_LONG_NAME_LEN 256
 #define MIR_SBUF_SIZE 32
 
-// Misc
+// Utils
 #ifdef __tile__
 #define MIR_FORMSPEC_UL "llu"
 #define MIR_FORMSPEC_SL "lld"
@@ -41,6 +41,9 @@
 #define MIR_FORMSPEC_UL "lu"
 #define MIR_FORMSPEC_SL "ld"
 #endif
+#define MIR_ERROR_STR "MIR_FATAL: "
+#define MIR_DEBUG_STR "MIR_DBG: "
+#define MIR_INFORM_STR "MIR_INFO: "
 
 // Statistics
 #define MIR_STATS_FILE_NAME "mir-stats"
@@ -48,11 +51,6 @@
 // Task graph
 #define MIR_TASK_GRAPH_FILE_NAME "mir-task-graph"
 #define MIR_TGPID_SIZE 512
-
-// Debug
-#define MIR_ERROR_STR "MIR_FATAL: "
-#define MIR_DEBUG_STR "MIR_DBG: "
-#define MIR_INFORM_STR "MIR_INFO: "
 
 // Memory allocator
 #define MIR_MEMORY_ALLOCATOR_DEBUG 
