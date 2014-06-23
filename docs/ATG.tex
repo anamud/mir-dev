@@ -46,6 +46,7 @@
 \end{versionhistory}
 
 \section{Getting the ATG}
+\label{sec:getting-atg}
 
 \begin{lstlisting}[style=BashInputStyle]
 $ cd $MIR_ROOT/test/fib
@@ -85,10 +86,10 @@ $ ls fib_test*
 \end{lstlisting}
 
 \subsection{ATG files}
-See Table~\ref{tab:atg-files}.
+See Table~\ref{tab:atg-files} for a description of files produced by running commands in Section~\ref{sec:getting-atg}.
 
 \begin{table}[!htb]
-\begin{tabular}{|l|p{7cm}|}
+    \begin{tabular}{|p{5.5cm}|p{7cm}|}
 \hline
 \textbf{File name} & \textbf{Description} \\ \hline
 fib\_test-call\_graph & Instruction-level information of tasks \\ \hline
@@ -155,7 +156,7 @@ name & Indicates name of the outline function of the task \\ \hline
 
 \subsection{Property tgpid}
 The tgpid uniquely identifies a task irrespective of single-thread or many-thread execution. 
-The format of tgpid is A.B.C.....
+The format of tgpid is A.B.C.....<implied 0>
 
 \begin{itemize}
 \item 0. Represents the first task created. This is a special meaning.
@@ -171,24 +172,25 @@ The visual format gives shape to the raw format of the ATG.
 It describes task-based execution in an intuitive manner allowing the programmer to spot performance problems.
 The visual format can be viewed using graph visualization tools such as dot, yEd and cytoscape.
 See Figure~\ref{fig:yed-atg} for visualization of the ATG on yEd and Figure~\ref{fig:dot-atg} for visualization of the ATG on Dot.
+Details of the visual format are subject of a scientific paper under review and will be made available soon.
 
 \begin{lstlisting}[style=BashInputStyle]
 $ echo "Visualizing annotated task graph ..."
-$ dot -Tpng fib_test-annotated_task_graph.dot >  fib_test-annotated_task_graph.png
-$ yed fib_test-annotated_task_graph.dot 
+$ dot -Tps fib_test-annotated_task_graph.dot >  fib_test-annotated_task_graph.dot.ps
+$ yed fib_test-annotated_task_graph.graphml
 \end{lstlisting}
 
 \begin{figure}[!ht]
 \centering
-\includegraphics[width=\textwidth]{figures/fib_test-10_4-annotated_task_graph.pdf}
+\includegraphics[width=\textwidth]{figures/fib_test-10_4-annotated_task_graph-yed.pdf}
 \caption{fib\_test-annotated\_task\_graph.graphml viewed on yEd}
 \label{fig:yed-atg}
 \end{figure}
 
 \begin{figure}[!ht]
 \centering
-\includegraphics[width=\textwidth]{figures/fib_test-10_4-annotated_task_graph.png}
-\caption{fib\_test-annotated\_task\_graph.graphml visualized using Dot}
+\includegraphics[width=\textwidth]{figures/fib_test-10_4-annotated_task_graph-dot.eps}
+\caption{fib\_test-annotated\_task\_graph.dot visualized using Dot}
 \label{fig:dot-atg}
 \end{figure}
 
