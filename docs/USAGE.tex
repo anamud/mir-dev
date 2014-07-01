@@ -48,8 +48,8 @@
 
 \section{Introduction}
 MIR is a task-based runtime system library.
-MIR is written using C99 and provides good scalability for medium-grained task-based programs. 
-MIR provides easy-to-use interface for writing task-based programs.
+MIR is written using C99 and scales well for medium-grained task-based programs. 
+MIR provides a direct interface for writing task-based programs.
 A subset of OpenMP 3.0 tasks is also supported.
 MIR is flexible - the user can experiment with different scheduling policies.
 Locality-aware scheduling and data distribution support for NUMA systems is also present.
@@ -84,19 +84,19 @@ Extended features of MIR such as profiling and locality-aware scheduling require
 \end{itemize}
 
 \section{Directory Structure}
-The MIR source repository is structured as shown below. Directories are shown using $\triangleright$. Nesting is shown using indentation.
-\begin{enumerate}[$\triangleright$]
+The MIR source repository is structured as shown below. Directories are shown using /. Nesting is shown using indentation.
+\begin{enumerate}[/]
 \item src - core source files
-    \begin{enumerate}[$\triangleright$]
+    \begin{enumerate}[/]
         \item arch - architecture-based source files
         \item scheduling - scheduling policy source files
     \end{enumerate}
 \item scripts - various profiling and testing scripts
-    \begin{enumerate}[$\triangleright$]
+    \begin{enumerate}[/]
         \item task-graph - scripts for task-based profiling
     \end{enumerate}
 \item test - programs for testing 
-    \begin{enumerate}[$\triangleright$]
+    \begin{enumerate}[/]
         \item omp - OpenMP programs
         \item bots - BOTS programs written using MIR programming interface
         \item with-data-footprint - Programs where tasks have explicit data footprint 
@@ -226,7 +226,7 @@ $ ./fib-opt
 Other test programs in MIR\_ROOT/test can also be used for testing.
 
 \subsection{Compiling and linking}
-Look at SConstruct - the scons build file - of each test program to understand how to compile and link with MIR. Observing scons build messages is also recommended.
+Look at SConstruct - the scons build file - of each test program to understand how to compile and link with the MIR library. Observing scons build messages is also recommended.
 
 \subsection{Configuration}
 MIR has several configurable options which can be set using the environment variable MIR\_CONF. Set the -h flag to see available configuration options.
@@ -251,7 +251,7 @@ The rec files can be inspected individually or combined and visualized using Par
 \begin{lstlisting}[style=BashInputStyle]
 $ rm *.rec *.prv *.pcf
 $ MIR_CONF="-r" ./fib-opt
-$ MIR_ROOT/scripts/mirtoparaver.py *-config.rec 
+$ $MIR_ROOT/scripts/mirtoparaver.py *-config.rec 
 $ wxparaver *-paraver.prv
 \end{lstlisting}
 
@@ -259,7 +259,7 @@ A set of files matching the pattern <<Unix time>>-state-time*.rec are also creat
 These files contain thread state duration information which can be aggregated for analysis without Paraver.
 
 \begin{lstlisting}[style=BashInputStyle]
-$ MIR_ROOT/scripts/get-state-stats.sh <<Unix time>>
+$ $MIR_ROOT/scripts/get-state-stats.sh <<Unix time>>
 $ cat state-file-acc.info
 \end{lstlisting}
 
@@ -282,7 +282,7 @@ Performance counter readings will be now be added to .rec files produced by enab
 The readings can either be viewed on Paraver or aggregated for analysis outside Paraver. 
 
 \begin{lstlisting}[style=BashInputStyle]
-$ MIR_ROOT/scripts/get-event-counts.sh <<.prv file>>
+$ $MIR_ROOT/scripts/get-event-counts.sh <<.prv file>>
 $ cat event-counts-*.txt
 \end{lstlisting}
 
@@ -323,6 +323,6 @@ View profiling options options using -h.
 $ $PIN_ROOT/intel64/bin/pinbin -t $MIR_ROOT/scripts/task-graph/obj-intel64/mir_outline_function_profiler.so -h -- echo
 \end{lstlisting}
 
-Look at ATG.pdf for more information on instruction-level profiling.
+Look at MIR\_ROOT/docs/ATG.pdf for more information on instruction-level profiling.
 Also, the file MIR\_ROOT/test/fib/profile-test.sh shows how to automate instruction-level profiling.
 \end{document}

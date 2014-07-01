@@ -8,6 +8,7 @@
 \usepackage{ulem}
 \usepackage{listings}
 \usepackage{vhistory}
+\usepackage[parfill]{parskip}
 
 \lstdefinestyle{BashInputStyle}{
   language=bash,
@@ -16,7 +17,7 @@
   numberstyle=\tiny\color{black}, 
   keywordstyle=\color{black},       
   extendedchars=true,              
-  numbers=left,
+  numbers=none,
   numbersep=3pt,
   frame=tb,
   columns=fullflexible,
@@ -44,6 +45,11 @@
 \begin{versionhistory}
 \vhEntry{1.0}{2014-06-19}{ananya} {Created}
 \end{versionhistory}
+
+\section{Introduction}
+The Annotated task Graph (ATG) refers to information obtained by the instruction-level profiling feature of the MIR runtime system library.
+
+The ATG is available in two forms - a raw form and a visual form.
 
 \section{Getting the ATG}
 \label{sec:getting-atg}
@@ -85,8 +91,7 @@ $ echo "Listing ATG files ..."
 $ ls fib_test*
 \end{lstlisting}
 
-\subsection{ATG files}
-See Table~\ref{tab:atg-files} for a description of files produced by running commands in Section~\ref{sec:getting-atg}.
+See Table~\ref{tab:atg-files} for a description of files produced by running above commands.
 
 \begin{table}[!htb]
     \begin{tabular}{|p{5.5cm}|p{7cm}|}
