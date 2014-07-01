@@ -32,6 +32,8 @@
   showstringspaces=false,          
   showtabs=false,                  
   tabsize=2,                       
+  aboveskip=\bigskipamount, 
+  belowskip=\bigskipamount,
 }
 
 \title{MIR: Installation and Usage}
@@ -181,6 +183,27 @@ int main(int argc, char *argv[])
 \end{lstlisting}
 
 MIR also supports a subset of OpenMP 3.0 tasks. 
+Only the \texttt{task} and \texttt{taskwait} constructs are currently supported.
+
+The parallel construct is deprecated.
+MIR creates a team of threads during initialization - when mir\_create is called.
+Threads are released when mir\_destoy is called.
+
+Tips to write OpenMP 3.0 task programs supported by MIR:
+\begin{itemize}
+\item Initialize and release the runtime system explicitly by calling mir\_create and mir\_destroy.
+\item Do not think in terms of threads. Think in terms of tasks.
+\item Do not use the parallel contruct to share work. 
+\item Do not use barriers to synchronize threads.
+\item Use the task contruct to parallelize work. Use clauses shared, firstprivate and private to indicate the data environment.
+\item Use taskwait to synchronize tasks.
+\item A simple technique which I use often is as follows: Create the runtime system right in the begining of the the program and release it at the end of the program. When parallel execution is required, create a \texttt{parallel} block followed immediately by a \texttt{single} block. Use the \texttt{task} construct within the \texttt{single} block to parallelize work. Synchronize the tasks using the \texttt{taskwait} construct. Before compiling, comment out the parallel and single blocks.
+\item Use mir\_lock instead of the \texttt{critical} construct. 
+\item Use gcc atomic builtins for flusing and atomic operations.
+\item Look at examples in MIR\_ROOT/test/omp.
+\end{itemize}
+
+The example above written using the OpenMP 3.0 task subset supported by MIR is shown below.
 
 \begin{lstlisting}[style=BashInputStyle]
 int main(int argc, char *argv[])
@@ -188,6 +211,10 @@ int main(int argc, char *argv[])
     // Initialize the runtime system
     mir_create();
 
+//#pragma omp parallel
+//{
+//#pragma omp single
+//{
     // Create as many tasks as there are threads
     int num_workers = mir_get_num_threads();
     for(int i=0; i<num_workers; i++)
@@ -198,7 +225,8 @@ int main(int argc, char *argv[])
         
     // Wait for tasks to finish
 #pragma omp taskwait
-
+//}
+//}
     // Release runtime system resources
     mir_destroy();
 

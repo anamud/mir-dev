@@ -32,6 +32,8 @@
   showstringspaces=false,          
   showtabs=false,                  
   tabsize=2,                       
+  aboveskip=\bigskipamount, 
+  belowskip=\bigskipamount,
 }
 
 \author{Ananya Muddukrishna}
@@ -44,6 +46,7 @@
 % Start of the revision history table
 \begin{versionhistory}
 \vhEntry{1.0}{2014-06-19}{ananya} {Created}
+\vhEntry{1.1}{2014-07-01}{ananya} {Improved ATG generation text}
 \end{versionhistory}
 
 \section{Introduction}
@@ -53,6 +56,10 @@ The ATG is available in two forms - a raw form and a visual form.
 
 \section{Getting the ATG}
 \label{sec:getting-atg}
+Instruction-level profiling is performed using a custom Pin call-graph profiling tool which takes two lists as arguments. The first argument list contains names of outline functions which represent tasks.
+The second argument list contains names of functions which are called within tasks. Instruction count of functions called within a task are added to the task instruction count.
+
+We first identify outline functions and functions called within tasks using a simple script which searches for known outline function name patterns within the object files of the program. The script also lists all function symbols within the object files as potentially callable functions. We should filter the callable function list for those which we are certainly called by tasks defined in the program. Inspecting source files is a quick way to identify certainly called functions. If in doubt or when sources are not available, we can use the entire callable function list.
 
 \begin{lstlisting}[style=BashInputStyle]
 $ cd $MIR_ROOT/test/fib
@@ -63,7 +70,14 @@ Using "._omp_fn.|ol_" as outline function name pattern
 Processing file: prof-build/fib.o
 OUTLINE_FUNCTIONS=ol_fib_0,ol_fib_1,ol_fib_2
 CALLABLE_FUNCTIONS=fib_seq,fib,get_usecs,main
+\end{lstlisting}
 
+In the case of the fib program, we can exclude main and get\_usecs from the called functions list.
+Now we invoke the Pin call-graph profiler with appropriate arguments.
+The profiler executes the fib program and provides an instruction-level profile of tasks.
+We additionally instruct MIR to provide fork-join task graph information.
+
+\begin{lstlisting}[style=BashInputStyle]
 $ LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$PIN_ROOT/intel64/runtime \
     MIR_CONF="-w=1 -g -p" \
     $PIN_ROOT/intel64/bin/pinbin \
@@ -74,27 +88,41 @@ $ LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$PIN_ROOT/intel64/runtime \
     -- ./fib-prof 10 4
 
 $ mv mir-task-graph fib_test-fork_join_task_graph
+\end{lstlisting}
 
-$ echo "Summarizing fork join task graph ..."
+Now, we can get some basic task-based infmration by processing the fork-join task graph produced by MIR.
+\begin{lstlisting}[style=BashInputStyle]
+$ echo "Summarizing fork-join task graph ..."
 $ Rscript ${MIR_ROOT}/scripts/task-graph/mir-fork-join-graph-info.R fib_test-fork_join_task_graph 
+\end{lstlisting}
 
-$ echo "Plotting fork join task graph ..."
+We can also plot the fork-join task graph. 
+\begin{lstlisting}[style=BashInputStyle]
+$ echo "Plotting fork-join task graph ..."
 $ Rscript ${MIR_ROOT}/scripts/task-graph/mir-fork-join-graph-plot.R fib_test-fork_join_task_graph color
+\end{lstlisting}
 
-$ echo "Annotating fork join task graph ..."
+Now, we combine the instruction-level profile produced by the Pin call-graph profiler with the fork-join task graph information produced by MIR. We call this process as annotating the fork-join task graph with instruction-level information. The annotation process produces the raw format of the ATG.
+
+\begin{lstlisting}[style=BashInputStyle]
+$ echo "Annotating fork-join task graph ..."
 $ Rscript ${MIR_ROOT}/scripts/task-graph/mir-annotate-graph.R fib_test-fork_join_task_graph fib_test-call_graph fib_test
+\end{lstlisting}
 
+We can plot the raw ATG format to produce the visual form of the ATG.
+\begin{lstlisting}[style=BashInputStyle]
 $ echo "Plotting annotated task graph ..."
 $ Rscript ${MIR_ROOT}/scripts/task-graph/mir-annotated-graph-plot.R fib_test-annotated_task_graph color
+\end{lstlisting}
 
+Let us list the files produced by running the above commands. See Table~\ref{tab:atg-files} for a description of files produced.
+\begin{lstlisting}[style=BashInputStyle]
 $ echo "Listing ATG files ..."
 $ ls fib_test*
 \end{lstlisting}
 
-See Table~\ref{tab:atg-files} for a description of files produced by running above commands.
-
 \begin{table}[!htb]
-    \begin{tabular}{|p{5.5cm}|p{7cm}|}
+\begin{tabular}{|p{5.5cm}|p{7cm}|}
 \hline
 \textbf{File name} & \textbf{Description} \\ \hline
 fib\_test-call\_graph & Instruction-level information of tasks \\ \hline
