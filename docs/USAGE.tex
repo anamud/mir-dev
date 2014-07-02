@@ -46,6 +46,8 @@
 % Start of the revision history table
 \begin{versionhistory}
 \vhEntry{1.0}{2014-06-19}{ananya} {Created}
+\vhEntry{1.1}{2014-07-01}{ananya} {Improved OpenMP programming documentation}
+\vhEntry{1.1}{2014-07-02}{ananya} {Simplified OpenMP programming documentation}
 \end{versionhistory}
 
 \section{Introduction}
@@ -86,19 +88,19 @@ Extended features of MIR such as profiling and locality-aware scheduling require
 \end{itemize}
 
 \section{Directory Structure}
-The MIR source repository is structured as shown below. Directories are shown using /. Nesting is shown using indentation.
+The MIR source repository is structured as shown below. Directories are shown using /. Nesting is shown using indentation and +.
 \begin{enumerate}[/]
-\item src - core source files
-    \begin{enumerate}[/]
-        \item arch - architecture-based source files
-        \item scheduling - scheduling policy source files
+\item src - Core source files
+    \begin{enumerate}[+/]
+        \item arch - Architecture-based source files
+        \item scheduling - Scheduling policy source files
     \end{enumerate}
-\item scripts - various profiling and testing scripts
-    \begin{enumerate}[/]
-        \item task-graph - scripts for task-based profiling
+\item scripts - Various profiling and testing scripts
+    \begin{enumerate}[+/]
+        \item task-graph - Scripts for task-based profiling
     \end{enumerate}
 \item test - programs for testing 
-    \begin{enumerate}[/]
+    \begin{enumerate}[+/]
         \item omp - OpenMP programs
         \item bots - BOTS programs written using MIR programming interface
         \item with-data-footprint - Programs where tasks have explicit data footprint 
@@ -137,7 +139,10 @@ $ scons
 \end{enumerate}
 
 \section{Task-based Programming Interface}
-MIR provides a basic interface for task-based programming. A simple example program is shown below. Look at MIR\_ROOT/src/mir\_public\_int.h for interface details.
+MIR provides a direct task-based programming interface and supports a subset of OpenMP 3.0 tasks.
+
+\subsection{Direct task-based programming interface}
+MIR provides a basic interface for task-based programming. Look at MIR\_ROOT/src/mir\_public\_int.h for interface details and programs in MIR\_ROOT/test for interface usage details. A simple example program is shown below. 
 
 \begin{lstlisting}[style=BashInputStyle]
 #include "mir_public_int.h"
@@ -182,28 +187,37 @@ int main(int argc, char *argv[])
 }
 \end{lstlisting}
 
+\subsection{OpenMP 3.0 task-based programming subset}
 MIR also supports a subset of OpenMP 3.0 tasks. 
 Only the \texttt{task} and \texttt{taskwait} constructs are currently supported.
 
 The parallel construct is deprecated.
 MIR creates a team of threads during initialization - when mir\_create is called.
-Threads are released when mir\_destoy is called.
+Threads are released when mir\_destroy is called.
 
 Tips to write OpenMP 3.0 task programs supported by MIR:
 \begin{itemize}
 \item Initialize and release the runtime system explicitly by calling mir\_create and mir\_destroy.
 \item Do not think in terms of threads. Think in terms of tasks.
-\item Do not use the parallel contruct to share work. 
+\item Do not use the parallel construct to share work. 
 \item Do not use barriers to synchronize threads.
-\item Use the task contruct to parallelize work. Use clauses shared, firstprivate and private to indicate the data environment.
+\item Use the task construct to parallelize work. Use clauses shared, firstprivate and private to indicate the data environment.
 \item Use taskwait to synchronize tasks.
-\item A simple technique which I use often is as follows: Create the runtime system right in the begining of the the program and release it at the end of the program. When parallel execution is required, create a \texttt{parallel} block followed immediately by a \texttt{single} block. Use the \texttt{task} construct within the \texttt{single} block to parallelize work. Synchronize the tasks using the \texttt{taskwait} construct. Before compiling, comment out the parallel and single blocks.
-\item Use mir\_lock instead of the \texttt{critical} construct. 
-\item Use gcc atomic builtins for flusing and atomic operations.
+\item Use mir\_lock instead of the \texttt{critical} construct or use native locks such as pthread\_lock.
+\item Use gcc atomic builtins for flushing and atomic operations.
 \item Look at examples in MIR\_ROOT/test/omp.
 \end{itemize}
 
-The example above written using the OpenMP 3.0 task subset supported by MIR is shown below.
+A simple set of steps we use often when producing MIR supported OpenMP programs is as follows:
+\begin{enumerate}
+\item When parallel execution is required, create a \texttt{parallel} block  with sharing(none) followed immediately by a \texttt{single} block. 
+\item Use the \texttt{task} construct within the \texttt{single} block to parallelize work. 
+\item Synchronize tasks using the \texttt{taskwait} construct explicitly. Do not rely on implicit barriers and taskwaits.
+\item Compile and link with the native OpenMP implementation (libgomp) and check if the program runs correctly. 
+\item Comment out the parallel and single blocks, initialize the MIR runtime system right in the beginning of the program and release it at the end of the program, include mir\_public\_int.h, compile and link with the appropriate MIR library (opt/debug/prof) to produce the executable.
+\end{enumerate}
+
+The directly-programmed example shown previously written using the OpenMP 3.0 task subset supported by MIR is shown below.
 
 \begin{lstlisting}[style=BashInputStyle]
 int main(int argc, char *argv[])
@@ -237,7 +251,7 @@ int main(int argc, char *argv[])
 Look at test programs in MIR\_ROOT/test for advanced usage examples.
 
 \section{Testing}
-MIR does not have a dedicated test case (unit testing) suite yet. The fibonacci test program is recommended for testing.
+MIR does not have a dedicated test case (unit testing) suite yet. The fib test program (Fibonacci number calculation) is recommended for testing.
 
 \begin{lstlisting}[style=BashInputStyle]
 $ cd $MIR_ROOT/test/fib

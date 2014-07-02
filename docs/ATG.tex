@@ -47,19 +47,47 @@
 \begin{versionhistory}
 \vhEntry{1.0}{2014-06-19}{ananya} {Created}
 \vhEntry{1.1}{2014-07-01}{ananya} {Improved ATG generation text}
+\vhEntry{1.2}{2014-07-02}{ananya} {Simplified ATG generation text}
 \end{versionhistory}
 
 \section{Introduction}
 The Annotated task Graph (ATG) refers to information obtained by the instruction-level profiling feature of the MIR runtime system library.
+Instruction-level profiling is performed using a custom Pin call-graph profiling tool.
 
 The ATG is available in two forms - a raw form and a visual form.
 
 \section{Getting the ATG}
 \label{sec:getting-atg}
-Instruction-level profiling is performed using a custom Pin call-graph profiling tool which takes two lists as arguments. The first argument list contains names of outline functions which represent tasks.
-The second argument list contains names of functions which are called within tasks. Instruction count of functions called within a task are added to the task instruction count.
+Let us obtain the ATG for the fib program in MIR\_ROOT/test/fib.
+The fib program takes two arguments. The first is the number n and the second is the depth cutoff for recursive task creation.
 
-We first identify outline functions and functions called within tasks using a simple script which searches for known outline function name patterns within the object files of the program. The script also lists all function symbols within the object files as potentially callable functions. We should filter the callable function list for those which we are certainly called by tasks defined in the program. Inspecting source files is a quick way to identify certainly called functions. If in doubt or when sources are not available, we can use the entire callable function list.
+We first have to compile the fib program without aggressive optimizations and disable inlining so that outline functions representing tasks are visible to Pin call-graph profiler. 
+Look at the SConstruct file in MIR\_ROOT/test/fib and build output to understand which arguments are supplied to the compiler to get the profiling-specialized executable called fib-prof. 
+Build output pertaining to fib-prof are show below.
+
+\begin{lstlisting}[style=BashInputStyle]
+$ cd $MIR_ROOT/test/fib
+
+$ scons 
+scons: Reading SConscript files ...
+scons: done reading SConscript files.
+scons: Building targets ...
+scons: building associated VariantDir targets: debug-build opt-build prof-build verbose-build
+...
+gcc -o prof-build/fib.o -c -std=c99 -Wall -Werror -Wno-unused-function -Wno-unused-variable -Wno-unused-but-set-variable -Wno-maybe-uninitialized -fopenmp -DLINUX -I/home/ananya/mir-dev/src -I/home/ananya/mir-dev/test/common -O1 -DNDEBUG -fno-inline-functions -fno-inline-functions-called-once -fno-optimize-sibling-calls -fno-omit-frame-pointer -g fib.c
+...
+gcc -o fib-prof prof-build/fib.o -L/home/ananya/mir-dev/src -lpthread -lm -lmir-opt
+...
+scons: done building targets.
+\end{lstlisting}
+
+We next identify outline functions and functions called within tasks of the fib program. 
+To do so, we use a simple script - profiler\_params.py - which searches for known outline function name patterns within the object files of the program fib-prof. 
+The script also lists all function symbols within the object files which we treat as potentially callable functions and filter those which are certianly called by tasks defined in the program. 
+Inspecting program source files is a quick way to identify certainly called functions. 
+By looking at fib program sources, we can exclude main and get\_usecs from the called functions list.
+If in doubt or when sources are not available, use the entire callable function list.
+Identifying function called by tasks is necessary because the instruction count of these functions are added to the calling task's instruction count.
 
 \begin{lstlisting}[style=BashInputStyle]
 $ cd $MIR_ROOT/test/fib
@@ -72,10 +100,14 @@ OUTLINE_FUNCTIONS=ol_fib_0,ol_fib_1,ol_fib_2
 CALLABLE_FUNCTIONS=fib_seq,fib,get_usecs,main
 \end{lstlisting}
 
-In the case of the fib program, we can exclude main and get\_usecs from the called functions list.
-Now we invoke the Pin call-graph profiler with appropriate arguments.
-The profiler executes the fib program and provides an instruction-level profile of tasks.
-We additionally instruct MIR to provide fork-join task graph information.
+Now we invoke the Pin call-graph profiler - mir\_outline\_function\_profiler.so - with appropriate arguments to profile fib-prof and obtain instruction-level information for tasks.
+The profiler accepts outline function names under the argument -s and names of function which are called within tasks under the argument -c. 
+The -o argument is used as suffix to file names produced during profiling.
+The $--$ argument indicates the profiled program and its arguments, which in our case is fib-prof with inputs n=10 and cutoff=4.
+Use the -h argument for help information about the profiler.
+We additionally instruct MIR to provide fork-join task graph information using MIR\_CONF="-w=1 -g -p" which is mandatory and constant for building the ATG.
+The MIR\_CONF argument -w=1 enables single-threaded execution, -g enables fork-join task graph building and -p enables hand-shaking between the MIR runtime system and the Pin call-graph profiler.
+Use the -h argument for help information about MIR\_CONF.
 
 \begin{lstlisting}[style=BashInputStyle]
 $ LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$PIN_ROOT/intel64/runtime \
@@ -90,7 +122,7 @@ $ LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$PIN_ROOT/intel64/runtime \
 $ mv mir-task-graph fib_test-fork_join_task_graph
 \end{lstlisting}
 
-Now, we can get some basic task-based infmration by processing the fork-join task graph produced by MIR.
+Now, we can get some basic task-based information by processing the fork-join task graph produced by MIR.
 \begin{lstlisting}[style=BashInputStyle]
 $ echo "Summarizing fork-join task graph ..."
 $ Rscript ${MIR_ROOT}/scripts/task-graph/mir-fork-join-graph-info.R fib_test-fork_join_task_graph 
