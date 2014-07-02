@@ -2,6 +2,7 @@
 Add TILEPro64 support.
 Add clang support.
 Improve Mercurium support.
+Improve OpenMP 3.0 support.
 Add support for implicit data dependence resolution.
 Cleanup library interface.
 Improve documents structure.
