@@ -102,7 +102,7 @@ CALLABLE_FUNCTIONS=fib_seq,fib,get_usecs,main
 
 Now we invoke the Pin call-graph profiler - mir\_outline\_function\_profiler.so - with appropriate arguments to profile fib-prof and obtain instruction-level information for tasks.
 The profiler accepts outline function names under the argument -s and names of function which are called within tasks under the argument -c. 
-The -o argument is used as suffix to file names produced during profiling.
+The -o argument is used as prefix to file names produced during profiling.
 The $--$ argument indicates the profiled program and its arguments, which in our case is fib-prof with inputs n=10 and cutoff=4.
 Use the -h argument for help information about the profiler.
 We additionally instruct MIR to provide fork-join task graph information using MIR\_CONF="-w=1 -g -p" which is mandatory and constant for building the ATG.
