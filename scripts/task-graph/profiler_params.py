@@ -1,5 +1,7 @@
 #!/usr/bin/python
 
+# NOTE: THIS SCRIPT REQUIRES PYTHON VERSION > 3
+
 import sys
 import os
 import subprocess
@@ -37,8 +39,12 @@ def get_callable(obj_fil):
     return process(raw_out)
 
 def main():
+    if sys.version_info < (3,0):
+        print("Python version < 3. Aborting!")
+        sys.exit(1)
     if(len(sys.argv) == 1):
         print('Usage: {} objfiles'.format(sys.argv[0]))
+        sys.exit(1)
     print('Using "{}" as outline function name pattern'.format(outline_func_pattern))
     num_obj = len(sys.argv) - 1
     # For each object file, extract names of outline and callable functions

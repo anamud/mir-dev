@@ -120,7 +120,6 @@ parent_first_forks <- as.vector(sapply(fork_nodes_unique[first_forks_index], fun
 first_forks <- fork_nodes_unique[first_forks_index]
 tg[to=first_forks, from=parent_first_forks, attr='kind'] <- 'scope'
 tg[to=first_forks, from=parent_first_forks, attr='color'] <- scope_edge_color   
-tg[to=first_forks, from=parent_first_forks, attr='weight'] <- -as.numeric(tg.data[match(parent_first_forks, tg.data$task),]$execution_time)
 toc("Connect parent to first fork")
 
 tic(type="elapsed")
@@ -184,7 +183,15 @@ task_index <- match(as.character(tg.data$task), V(tg)$name)
 # Set width to constant
 tg <- set.vertex.attribute(tg, name='size', index=task_index, value=task_size)
 # Set color to indicate core_id
-tg <- set.vertex.attribute(tg, name='color', index=task_index, value='red')
+core_ids <- tg.data[which(tg.data$task %in% V(tg)[task_index]$name),]$core_id
+unique_core_ids <- unique(core_ids)
+core_colors <- rainbow(max(core_ids)+1)
+tg <- set.vertex.attribute(tg, name='color', index=task_index, value=core_colors[core_ids+1])
+tg.file.out <- paste(gsub(". $", "", tg.file), ".colormap", sep="")
+print(paste("Writing file", tg.file.out))
+sink(tg.file.out)
+print(data.frame(core=unique_core_ids, color=core_colors[unique_core_ids+1]),row.names=F)
+sink()
 
 # Set label and color of 'task 0'
 start_index <- V(tg)$name == '0'

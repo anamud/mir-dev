@@ -1,5 +1,7 @@
 #!/usr/bin/python
 
+# NOTE: THIS SCRIPT REQUIRES PYTHON VERSION > 3
+
 import sys
 import os
 import multiprocessing
@@ -62,6 +64,9 @@ struct mir_arch_t arch_this =
 """.format(multiprocessing.cpu_count(),multiprocessing.cpu_count()))
 
 def main():
+    if sys.version_info < (3,0):
+        print("Python version < 3. Aborting!")
+        sys.exit(1)
     if(len(sys.argv) > 2):
         print('Usage: {} path'.format(sys.argv[0]))
         exit(2)
