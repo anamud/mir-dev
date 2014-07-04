@@ -62,6 +62,7 @@ env['LIBPATH'] = [MIR_ROOT + '/src']
 
 if os.path.isfile(MIR_ROOT+'/src/HAVE_LIBNUMA'):
     env['LIBS'] += ['numa']
+    env['CCFLAGS'] += ['-DMIR_MEM_POL_ENABLE']
 
 if os.path.isfile(MIR_ROOT+'/src/HAVE_PAPI'):
     env['LIBS'] += ['papi']

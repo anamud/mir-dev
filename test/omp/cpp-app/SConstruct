@@ -9,6 +9,11 @@ print('NOTE: THIS IS A CUSTOM BUILD!')
 
 import os
 import sys
+
+if(os.path.isfile('NOT_SUPPORTED')):
+    print('NOT_SUPPORTED file present. Aborting!')
+    Exit(2)
+
 MIR_ROOT = os.environ.get('MIR_ROOT')
 if(MIR_ROOT == None):
     print('MIR_ROOT is not defined. Aborting!')
@@ -54,10 +59,10 @@ pthread
 m
 """)
 env['LIBPATH'] = [MIR_ROOT + '/src']
-env['LIBPATH'] += [PAPI_ROOT + '/lib']
 
 if os.path.isfile(MIR_ROOT+'/src/HAVE_LIBNUMA'):
     env['LIBS'] += ['numa']
+    env['CCFLAGS'] += ['-DMIR_MEM_POL_ENABLE']
 
 if os.path.isfile(MIR_ROOT+'/src/HAVE_PAPI'):
     env['LIBS'] += ['papi']

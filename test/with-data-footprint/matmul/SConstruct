@@ -57,10 +57,10 @@ mkl_core
 mkl_rt
 """)
 env['LIBPATH'] = [MIR_ROOT + '/src']
-env['LIBPATH'] += [PAPI_ROOT + '/lib']
 
 if os.path.isfile(MIR_ROOT+'/src/HAVE_LIBNUMA'):
     env['LIBS'] += ['numa']
+    env['CCFLAGS'] += ['-DMIR_MEM_POL_ENABLE']
 
 if os.path.isfile(MIR_ROOT+'/src/HAVE_PAPI'):
     env['LIBS'] += ['papi']

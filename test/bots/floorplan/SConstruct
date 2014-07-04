@@ -50,8 +50,8 @@ env['CCFLAGS'] = Split("""
 -Wno-unused-variable
 -Wno-unused-but-set-variable
 """)
-env['CFLAGS'] += ['-I' + MIR_ROOT+'/src']
-env['CFLAGS'] += ['-I' + MIR_ROOT+'/test/common']
+env['CCFLAGS'] += ['-I' + MIR_ROOT+'/src']
+env['CCFLAGS'] += ['-I' + MIR_ROOT+'/test/common']
 env['LINKFLAGS'] = ['']
 env['LIBS'] = Split("""
 pthread
@@ -61,6 +61,7 @@ env['LIBPATH'] = ['./']
 
 if os.path.isfile(MIR_ROOT+'/src/HAVE_LIBNUMA'):
     env['LIBS'] += ['numa']
+    env['CCFLAGS'] += ['-DMIR_MEM_POL_ENABLE']
 
 if os.path.isfile(MIR_ROOT+'/src/HAVE_PAPI'):
     env['LIBS'] += ['papi']
