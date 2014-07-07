@@ -25,8 +25,10 @@
 #include "mir_mem_pol.h"
 #endif
 
+#ifdef MIR_RECORDER_USE_HW_PERF_COUNTERS
 #ifndef __tile__
 #include "papi.h"
+#endif
 #endif
 
 // The global runtime object
