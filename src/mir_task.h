@@ -48,6 +48,8 @@ struct mir_task_t
     char name[MIR_SHORT_NAME_LEN];
     struct mir_task_t* parent;
     uint16_t core_id; 
+    uint64_t exec_resume_instant;
+    uint64_t exec_cycles;
 
     // Flags
     uint32_t done;

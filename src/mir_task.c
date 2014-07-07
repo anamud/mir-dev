@@ -239,14 +239,21 @@ void mir_task_execute(struct mir_task_t* task)
     MIR_RECORDER_EVENT(&event_meta_data[0], MIR_RECORDER_EVENT_META_DATA_MAX_SIZE-1);
     MIR_RECORDER_STATE_BEGIN( MIR_STATE_TEXEC);
 
+    // Current task timing
+    if(worker->current_task)
+        worker->current_task->exec_cycles += (mir_get_cycles() - worker->current_task->exec_resume_instant);
+
     // Save task context of worker
     struct mir_task_t* temp = worker->current_task;
 
     // Update task context of worker
     worker->current_task = task;
 
+    // Current task timing
+    worker->current_task->exec_cycles = 0;
+    worker->current_task->exec_resume_instant = mir_get_cycles();
+
     // Write task id to shared memory.
-    // And wait for it to be read
     if(runtime->enable_shmem_handshake == 1)
     {
         char buf[MIR_SHM_SIZE] = {0};
@@ -261,11 +268,18 @@ void mir_task_execute(struct mir_task_t* task)
     // Record where executed
     task->core_id = worker->core_id;
 
+    // Current task timing
+    worker->current_task->exec_cycles += (mir_get_cycles() - worker->current_task->exec_resume_instant);
+
     // Add to task graph
     mir_worker_update_task_graph(worker, task);
 
     // Restore task context of worker
     worker->current_task = temp;
+
+    // Current task timing
+    if(worker->current_task)
+        worker->current_task->exec_resume_instant = mir_get_cycles();
 
     //MIR_INFORM(MIR_INFORM_STR "Task %" MIR_FORMSPEC_UL " executed on worker %d\n", task->id.uid, worker->id);
 
