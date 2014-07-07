@@ -53,61 +53,6 @@ static inline bool inline_task()
     return false;
 }/*}}}*/
 
-static inline TGPID tgpid_create()
-{/*{{{*/
-    return mir_malloc_int(sizeof(unsigned int) * MIR_TGPID_SIZE);
-}/*}}}*/
-
-static inline void tgpid_destroy(TGPID id)
-{/*{{{*/
-    mir_free_int(id, sizeof(unsigned int) * MIR_TGPID_SIZE);
-}/*}}}*/
-
-static inline void tgpid_reset(TGPID id)
-{/*{{{*/
-    memset(id, 0, sizeof(unsigned int) * MIR_TGPID_SIZE);
-}/*}}}*/
-
-static inline void tgpid_verify(TGPID id)
-{/*{{{*/
-    // Check if the last two values are 0
-    MIR_ASSERT(id[MIR_TGPID_SIZE-1] == 0 && id[MIR_TGPID_SIZE-2] == 0);
-}/*}}}*/
-
-static inline void tgpid_set(TGPID id, struct mir_task_t* parent)
-{/*{{{*/
-    // Copy parent id shifted by one
-    memcpy(id+1, parent->tgpid, sizeof(unsigned int) * MIR_TGPID_SIZE);
-    // Verify
-    tgpid_verify(id);
-    // Add child count
-    id[0] = parent->num_children;
-}/*}}}*/
-
-void tgpid_fprint(TGPID id, FILE* fp, int cr)
-{/*{{{*/
-    for(int i=0; i<MIR_TGPID_SIZE-2; i++)
-    {
-        fprintf(fp, "%u.", id[i]);
-        if(id[i+1] == 0 && id[i+2] == 0)
-            break;
-    }
-    if(cr == 1)
-        fprintf(fp, "\n");
-}/*}}}*/
-
-void tgpid_sprint(TGPID id, char* buf, int cr)
-{/*{{{*/
-    for(int i=0; i<MIR_TGPID_SIZE-2; i++)
-    {
-        sprintf(buf, "%u.", id[i]);
-        if(id[i+1] == 0 && id[i+2] == 0)
-            break;
-    }
-    if(cr == 1)
-        sprintf(buf, "\n");
-}/*}}}*/
-
 static inline struct mir_task_t* mir_task_create_common(mir_tfunc_t tfunc, void* data, size_t data_size, unsigned int num_data_footprints, struct mir_data_footprint_t* data_footprints, const char* name)
 {/*{{{*/
     struct mir_task_t* task = NULL;
@@ -184,14 +129,13 @@ static inline struct mir_task_t* mir_task_create_common(mir_tfunc_t tfunc, void*
         task->twc = runtime->ctwc;
     __sync_fetch_and_add(&(task->twc->count), 1);
     
-    // Task graph position id
+    // Task child matters
     task->num_children = 0;
-    task->tgpid = tgpid_create();
-    tgpid_reset(task->tgpid);
+    task->child_number = 0;
     if(task->parent)
     {
         __sync_fetch_and_add(&(task->parent->num_children), 1);
-        tgpid_set(task->tgpid, task->parent);
+        task->child_number = task->parent->num_children;
     }
 
     // Flags
@@ -311,8 +255,6 @@ void mir_task_execute(struct mir_task_t* task)
             runtime->shm[i] = buf[i];
     }
 
-    //tgpid_fprint(task->tgpid, stderr, 1);
-    
     // Execute task function
     task->func(task->data);
 

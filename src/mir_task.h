@@ -14,10 +14,6 @@
 
 BEGIN_C_DECLS 
 
-// Task identifer based on position in task graph
-typedef unsigned int* TGPID;
-void tgpid_fprint(TGPID id, FILE* fp, int cr);
-
 // The task function pointer type
 /*LIBINT*/ typedef void* (*mir_tfunc_t)(void*);
 
@@ -44,7 +40,7 @@ struct mir_task_t
 #endif
     size_t data_size;
     mir_id_t id;
-    TGPID tgpid;
+    unsigned int child_number;
     unsigned int num_children;
     struct mir_twc_t* twc;
     struct mir_twc_t* ctwc; // Sync counter for children
