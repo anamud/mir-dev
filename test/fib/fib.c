@@ -5,7 +5,7 @@
 #include <stdint.h>
 #include <sys/time.h>
 
-#include "mir_public_int.h"
+#include "mir_lib_int.h"
 #include "helper.h"
 
 static uint64_t  par_res, seq_res;
@@ -125,7 +125,7 @@ typedef struct data_env_2_t_tag
         imm_args_0.n_0 = n;
         imm_args_0.d_0 = d;
 
-        struct mir_task_t* task_0 = mir_task_create((mir_tfunc_t) ol_fib_0, (void*) &imm_args_0, sizeof(data_env_0_t), 0, NULL, NULL);
+        mir_task_create((mir_tfunc_t) ol_fib_0, (void*) &imm_args_0, sizeof(data_env_0_t), 0, NULL, NULL);
         
         // Create task2
         data_env_1_t imm_args_1;
@@ -133,10 +133,10 @@ typedef struct data_env_2_t_tag
         imm_args_1.n_0 = n;
         imm_args_1.d_0 = d;
 
-        struct mir_task_t* task_1 = mir_task_create((mir_tfunc_t) ol_fib_1, (void*) &imm_args_1, sizeof(data_env_1_t), 0, NULL, NULL);
+        mir_task_create((mir_tfunc_t) ol_fib_1, (void*) &imm_args_1, sizeof(data_env_1_t), 0, NULL, NULL);
 
         // Task wait
-        mir_twc_wait();
+        mir_task_wait();
     }/*}}}*/
     else
     {/*{{{*/
@@ -199,10 +199,10 @@ int main(int argc, char **argv)
     imm_args_2.n_0 = num;
     imm_args_2.d_0 = 0;
 
-    struct mir_task_t* task_2 = mir_task_create((mir_tfunc_t) ol_fib_2, (void*) &imm_args_2, sizeof(data_env_2_t), 0, NULL, NULL);
+    mir_task_create((mir_tfunc_t) ol_fib_2, (void*) &imm_args_2, sizeof(data_env_2_t), 0, NULL, NULL);
     
     // Task wait
-    mir_twc_wait();
+    mir_task_wait();
     // --- NO IMPLICIT TASK ---
     //par_res = fib(num, 0);
     // ---

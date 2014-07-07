@@ -33,6 +33,10 @@ if not os.path.isfile('arch/mir_arch_this.c'):
     print('Generating generic architecture description ...')
     os.system(MIR_ROOT+'/scripts/generate_arch.py arch')
 
+if not os.path.isfile('mir_lib_int.h'):
+    print('Generating library interface ...')
+    os.system(MIR_ROOT+'/src/generate_lib_int.sh')
+
 env = Environment()
 env['CC'] = [compiler[0]]
 env['CCFLAGS'] = Split("""

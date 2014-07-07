@@ -11,7 +11,7 @@ extern struct mir_runtime_t* runtime;
 void GOMP_barrier (void)
 {
     // Implicit tasks fuck with profiling.
-    /*mir_twc_wait();*/
+    /*mir_task_wait();*/
     MIR_ABORT(MIR_ERROR_STR "GOMP_barrier not implemented yet!\n");
 }
 bool GOMP_barrier_cancel (void)
@@ -258,7 +258,7 @@ void GOMP_parallel_start (void (*fn) (void *), void * data, unsigned num_threads
 void GOMP_parallel_end (void)
 {
     // Implicit tasks fuck with profiling.
-    /*mir_twc_wait();*/
+    /*mir_task_wait();*/
     MIR_ABORT(MIR_ERROR_STR "GOMP_parallel_end not implemented yet!\n");
 }
 void GOMP_parallel (void (*fn) (void *), void *data, unsigned num_threads, unsigned flags)
@@ -278,12 +278,11 @@ bool GOMP_cancellation_point (int a0)
 
 void GOMP_task(void (*fn)(void *), void *data, void (*copyfn)(void *, void *), long arg_size, long arg_align, bool if_clause, unsigned flags, void** deps)
 {
-    struct mir_task_t* task = mir_task_create((mir_tfunc_t) fn, (void*) data, (size_t)(arg_size), 0, NULL, NULL);
-    return;
+    mir_task_create((mir_tfunc_t) fn, (void*) data, (size_t)(arg_size), 0, NULL, NULL);
 }
 void GOMP_taskwait (void)
 {
-    mir_twc_wait();
+    mir_task_wait();
 }
 void GOMP_taskyield (void)
 {

@@ -34,7 +34,7 @@ struct mir_runtime_t* runtime = NULL;
 
 uint32_t g_sig_worker_alive = 0;
 
-void mir_preconfig_init()
+static void mir_preconfig_init()
 {/*{{{*/
     MIR_DEBUG(MIR_DEBUG_STR "Starting initialization ...\n");
     // Arch
@@ -68,12 +68,11 @@ void mir_preconfig_init()
     runtime->enable_stats = 0;
     runtime->enable_task_graph_gen = 0;
     runtime->enable_recorder = 0;
-    runtime->enable_dependence_resolver = 0;
     runtime->enable_shmem_handshake = 0;
     runtime->task_inlining_limit = MIR_INLINE_TASK_DURING_CREATION;
 }/*}}}*/
 
-void mir_postconfig_init()
+static void mir_postconfig_init()
 {/*{{{*/
     // Init time
     runtime->init_time = mir_get_cycles();
@@ -204,7 +203,6 @@ static inline void print_help()
     "-w=<int> number of workers\n"
     "-s=<str> task scheduling policy\n"
     "-r enable recorder\n"
-    "-d enable dependence resolution\n"
     "-x=<int> task inlining limit based on num tasks per worker\n"
     "-i write statistics to file\n"
     "-l=<int> stack size in MB\n"
@@ -216,7 +214,7 @@ static inline void print_help()
     );
 }/*}}}*/
 
-void mir_config()
+static void mir_config()
 {/*{{{*/
     // Get MIR_CONF environment string 
     const char* conf_str = getenv("MIR_CONF");
@@ -285,10 +283,6 @@ void mir_config()
                     break;
                 case 'i':
                     runtime->enable_stats = 1;
-                    break;
-                case 'd':
-                    MIR_ABORT(MIR_ERROR_STR "Dependence reolver not supported yet!\n");
-                    // runtime->enable_dependence_resolver = 1;
                     break;
                 case 'x':
                     if(tok[2] == '=')

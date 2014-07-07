@@ -5,7 +5,7 @@
 #include <stdint.h>
 #include <sys/time.h>
 
-#include "mir_public_int.h"
+#include "mir_lib_int.h"
 #include "helper.h"
 
 /*static*/ uint64_t  par_res;
@@ -52,17 +52,17 @@ typedef struct data_env_1_t_tag
         imm_args_0.x_0 = &(x);
         imm_args_0.d_0 = d;
 
-        struct mir_task_t* task_0 = mir_task_create((mir_tfunc_t) ol_node_0, (void*) &imm_args_0, sizeof(data_env_0_t), 0, NULL, NULL);
+        mir_task_create((mir_tfunc_t) ol_node_0, (void*) &imm_args_0, sizeof(data_env_0_t), 0, NULL, NULL);
         
         // Create task2
         data_env_1_t imm_args_1;
         imm_args_1.y_0 = &(y);
         imm_args_1.d_0 = d;
 
-        struct mir_task_t* task_1 = mir_task_create((mir_tfunc_t) ol_node_1, (void*) &imm_args_1, sizeof(data_env_1_t), 0, NULL, NULL);
+        mir_task_create((mir_tfunc_t) ol_node_1, (void*) &imm_args_1, sizeof(data_env_1_t), 0, NULL, NULL);
 
         // Task wait
-        mir_twc_wait();
+        mir_task_wait();
     }/*}}}*/
     else
     {/*{{{*/

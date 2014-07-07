@@ -19,7 +19,7 @@ typedef unsigned int* TGPID;
 void tgpid_fprint(TGPID id, FILE* fp, int cr);
 
 // The task function pointer type
-typedef void* (*mir_tfunc_t)(void*);
+/*LIBINT*/ typedef void* (*mir_tfunc_t)(void*);
 
 // Forward declaration
 struct mir_task_t;
@@ -75,11 +75,9 @@ static void T_DBG(char*msg, struct mir_task_t *t)
 #define T_DBG(x,y)
 #endif
 
-struct mir_task_t* mir_task_create(mir_tfunc_t tfunc, void* data, size_t data_size, unsigned int num_data_footprints, struct mir_data_footprint_t* data_footprints, const char* name);
+/*LIBINT*/ void mir_task_create(mir_tfunc_t tfunc, void* data, size_t data_size, unsigned int num_data_footprints, struct mir_data_footprint_t* data_footprints, const char* name);
 
-struct mir_task_t* mir_task_create_on(mir_tfunc_t tfunc, void* data, size_t data_size, unsigned int num_data_footprints, struct mir_data_footprint_t* data_footprints, const char* name, unsigned int target);
-
-void mir_task_destroy(struct mir_task_t* task);
+/*LIBINT*/ void mir_task_create_on(mir_tfunc_t tfunc, void* data, size_t data_size, unsigned int num_data_footprints, struct mir_data_footprint_t* data_footprints, const char* name, unsigned int target);
 
 void mir_task_execute(struct mir_task_t* task);
 
@@ -89,9 +87,7 @@ struct mir_mem_node_dist_t* mir_task_get_footprint_dist(struct mir_task_t* task,
 
 struct mir_twc_t* mir_twc_create();
 
-void mir_twc_wait();
-
-void mir_task_wait();
+/*LIBINT*/ void mir_task_wait();
 
 END_C_DECLS
 #endif

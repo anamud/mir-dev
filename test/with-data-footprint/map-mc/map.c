@@ -9,7 +9,7 @@
 #include <numaif.h>
 #include <sys/mman.h>
 
-#include "mir_public_int.h"
+#include "mir_lib_int.h"
 #include "helper.h"
 
 #define OPR_SCALE (42)
@@ -120,7 +120,7 @@ void for_task(uint64_t start, uint64_t end)
             footprint.data_access = MIR_DATA_ACCESS_READ;
             footprint.part_of = NULL;
 
-            struct mir_task_t* task = mir_task_create((mir_tfunc_t) map_wrapper, &arg, sizeof(struct map_wrapper_arg_t), 1, &footprint, NULL);
+            mir_task_create((mir_tfunc_t) map_wrapper, &arg, sizeof(struct map_wrapper_arg_t), 1, &footprint, NULL);
         }
     }/*}}}*/
 }/*}}}*/
@@ -166,7 +166,7 @@ void map_par()
             for_task(start, end);
         }
 
-        mir_twc_wait();
+        mir_task_wait();
     }
     PDBG(" ... done! \n");
 }/*}}}*/

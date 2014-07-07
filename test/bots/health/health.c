@@ -453,7 +453,7 @@ void sim_village_par(struct Village *village)
             struct nanos_args_0_t imm_args; 
             imm_args.vlist = vlist;
 
-            struct mir_task_t* task = mir_task_create((mir_tfunc_t) smp_ol_sim_village_par_0, (void*) &imm_args, sizeof(imm_args), 0, NULL, NULL); 
+            mir_task_create((mir_tfunc_t) smp_ol_sim_village_par_0, (void*) &imm_args, sizeof(imm_args), 0, NULL, NULL); 
         }
 /*#pragma omp task untied*/
          /*sim_village_par(vlist);*/
@@ -482,7 +482,7 @@ void sim_village_par(struct Village *village)
    if ((sim_level-village->level) < cutoff_value)
    {
 /*#pragma omp taskwait*/
-        mir_twc_wait();
+        mir_task_wait();
    }
 
    /* Uses lists v->hosp->realloc, v->hosp->asses and v->hosp->waiting */

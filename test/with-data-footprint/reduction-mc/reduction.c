@@ -114,7 +114,7 @@ void for_task(uint64_t start, uint64_t end, uint64_t depth)
             footprints[2].data_access = MIR_DATA_ACCESS_WRITE;
             footprints[2].part_of = buffer;
 
-            struct mir_task_t* task = mir_task_create((mir_tfunc_t) reduce_wrapper, &arg, sizeof(struct reduce_wrapper_arg_t), 3, footprints, NULL);
+            mir_task_create((mir_tfunc_t) reduce_wrapper, &arg, sizeof(struct reduce_wrapper_arg_t), 3, footprints, NULL);
         }
     }/*}}}*/
 }/*}}}*/
@@ -154,7 +154,7 @@ void reduce_par()
         }
 
         PDBG("Waiting for tasks to finish... \n");
-        mir_twc_wait();
+        mir_task_wait();
     }
 }/*}}}*/
 

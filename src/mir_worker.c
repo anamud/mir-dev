@@ -20,7 +20,7 @@ uint32_t g_num_tasks_waiting = 0;
 extern uint32_t g_sig_worker_alive;
 extern struct mir_runtime_t* runtime;
 
-void* mir_worker_loop(void* arg)
+static void* mir_worker_loop(void* arg)
 {/*{{{*/
     struct mir_worker_t* worker = (struct mir_worker_t*) arg;
 
@@ -251,11 +251,6 @@ void mir_worker_do_work(struct mir_worker_t* worker, bool backoff)
         mir_worker_backoff(worker);
     }
 }/*}}}*/
-
-//uint16_t mir_worker_get_id(struct mir_worker_t* worker)
-/*{[>{{{<]*/
-    /*return worker->id;*/
-/*}[>}}}<]*/
 
 void mir_worker_check_done()
 {/*{{{*/

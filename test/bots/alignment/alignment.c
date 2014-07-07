@@ -524,12 +524,12 @@ struct  nanos_args_0_t
                 imm_args.sj = (*sj);
                 imm_args.len1 = (*len1);
 
-                struct mir_task_t* task_0 = mir_task_create((mir_tfunc_t) smp_ol_pairalign_0, (void*) &imm_args, sizeof(struct nanos_args_0_t), 0, NULL, NULL);
+                mir_task_create((mir_tfunc_t) smp_ol_pairalign_0, (void*) &imm_args, sizeof(struct nanos_args_0_t), 0, NULL, NULL);
             }
         }
     }
 
-    mir_twc_wait();
+    mir_task_wait();
 }/*}}}*/
 
 struct  nanos_args_1_t
@@ -609,9 +609,9 @@ int pairalign()
     imm_args.gg = &gg;
     imm_args.mm_score = &mm_score;
 
-    struct mir_task_t* task = mir_task_create((mir_tfunc_t) smp_ol_pairalign_1, (void*) &imm_args, sizeof(struct nanos_args_1_t), 0, NULL, NULL);
+    mir_task_create((mir_tfunc_t) smp_ol_pairalign_1, (void*) &imm_args, sizeof(struct nanos_args_1_t), 0, NULL, NULL);
 
-    mir_twc_wait();
+    mir_task_wait();
 
     PMSG(" completed!\n");
 

@@ -225,12 +225,8 @@ static inline void mir_task_schedule_on(struct mir_task_t* task, unsigned int ta
     T_DBG("Sb", task);
 }/*}}}*/
 
-struct mir_task_t* mir_task_create(mir_tfunc_t tfunc, void* data, size_t data_size, unsigned int num_data_footprints, struct mir_data_footprint_t* data_footprints, const char* name)
+void mir_task_create(mir_tfunc_t tfunc, void* data, size_t data_size, unsigned int num_data_footprints, struct mir_data_footprint_t* data_footprints, const char* name)
 {/*{{{*/
-    // Check if task can be created
-    if(runtime->enable_dependence_resolver == 1 && num_data_footprints> 0) 
-        MIR_ABORT(MIR_ERROR_STR "Implicit dependence resolution not supported yet!\n");
-
     // To inline or not to line, that is the grand question!
     if(inline_task())
     {
@@ -239,7 +235,7 @@ struct mir_task_t* mir_task_create(mir_tfunc_t tfunc, void* data, size_t data_si
         struct mir_worker_t* worker = mir_worker_get_context(); 
         if(runtime->enable_stats)
             worker->status->num_tasks_inlined++;
-        return NULL;
+        return;
     }
 
     // Go on and create the task
@@ -252,16 +248,10 @@ struct mir_task_t* mir_task_create(mir_tfunc_t tfunc, void* data, size_t data_si
     mir_task_schedule(task);
 
     MIR_RECORDER_STATE_END(NULL, 0);
-
-    return task;
 }/*}}}*/
 
-struct mir_task_t* mir_task_create_on(mir_tfunc_t tfunc, void* data, size_t data_size, unsigned int num_data_footprints, struct mir_data_footprint_t* data_footprints, const char* name, unsigned int target)
+void mir_task_create_on(mir_tfunc_t tfunc, void* data, size_t data_size, unsigned int num_data_footprints, struct mir_data_footprint_t* data_footprints, const char* name, unsigned int target)
 {/*{{{*/
-    // Check if task can be created
-    if(runtime->enable_dependence_resolver == 1 && num_data_footprints> 0) 
-        MIR_ABORT(MIR_ERROR_STR "Implicit dependence resolution not supported yet!\n");
-
     // To inline or not to line, that is the grand question!
     if(inline_task())
     {
@@ -270,7 +260,7 @@ struct mir_task_t* mir_task_create_on(mir_tfunc_t tfunc, void* data, size_t data
         struct mir_worker_t* worker = mir_worker_get_context(); 
         if(runtime->enable_stats)
             worker->status->num_tasks_inlined++;
-        return NULL;
+        return;
     }
 
     // Go on and create the task
@@ -283,11 +273,9 @@ struct mir_task_t* mir_task_create_on(mir_tfunc_t tfunc, void* data, size_t data
     mir_task_schedule_on(task, target);
 
     MIR_RECORDER_STATE_END(NULL, 0);
-
-    return task;
 }/*}}}*/
 
-void mir_task_destroy(struct mir_task_t* task)
+static void mir_task_destroy(struct mir_task_t* task)
 {/*{{{*/
     // FIXME: Free the task!
 }/*}}}*/
@@ -405,7 +393,7 @@ struct mir_twc_t* mir_twc_create()
    return twc;
 }/*}}}*/
 
-void mir_twc_wait()
+void mir_task_wait()
 {/*{{{*/
     MIR_RECORDER_STATE_BEGIN(MIR_STATE_TSYNC);
 
@@ -435,8 +423,3 @@ void mir_twc_wait()
     MIR_RECORDER_STATE_END(NULL, 0);
     return;
 }/*}}}*/
-
-void mir_task_wait()
-{
-    mir_twc_wait();
-}

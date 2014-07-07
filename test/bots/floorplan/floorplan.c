@@ -502,11 +502,11 @@ mir_lock_unset(&(add_cell_lock));
             imm_args.nn = nn;
             __builtin_memcpy(&imm_args.NWS, &NWS, sizeof(int [64][2]));
 
-            struct mir_task_t* task_0 = mir_task_create((mir_tfunc_t) smp_ol_add_cell_0, (void*) &imm_args, sizeof(struct nanos_args_0_t), 0, NULL, NULL);
+            mir_task_create((mir_tfunc_t) smp_ol_add_cell_0, (void*) &imm_args, sizeof(struct nanos_args_0_t), 0, NULL, NULL);
         }
     }
 //#pragma omp taskwait
-    mir_twc_wait();
+    mir_task_wait();
 
     return nnc+nnl;
 }/*}}}*/

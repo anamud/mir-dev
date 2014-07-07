@@ -69,8 +69,6 @@ void mir_worker_master_init(struct mir_worker_t* worker);
 
 void mir_worker_local_init(struct mir_worker_t* worker);
 
-void* mir_worker_loop(void* arg);
-
 void mir_worker_do_work(struct mir_worker_t* worker, bool backoff);
 
 void mir_worker_check_done();
