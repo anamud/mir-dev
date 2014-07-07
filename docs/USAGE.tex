@@ -314,7 +314,7 @@ Next enable hardware performance counters of interest in MIR\_ROOT/src/mir\_reco
 Rebuild MIR.
 
 \begin{lstlisting}[style=BashInputStyle]
-$ export PAPI_ROOT=<<PAPI install path>>
+$ export PAPI_ROOT=<<PAPI install path, typically /usr>>
 $ touch $MIR_ROOT/src/HAVE_PAPI
 $ cat mir_defines.h mir_recorder.{c|h}
 $ scons
