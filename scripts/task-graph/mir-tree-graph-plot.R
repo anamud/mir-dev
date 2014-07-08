@@ -49,14 +49,12 @@ if(tg.color == "color") {
     start_color <- "#DEB887" # burlywood
     create_edge_color <- fork_color
     sync_edge_color <- join_color
-    colorf <- colorRampPalette(c("lightskyblue", "steelblue"))
 } else if(tg.color == "gray") {
-    join_color <- "#FFFAFA"  # snow
-    fork_color <- "#FFFAFA"  # snow
-    start_color <- "#FFFAFA" # snow
+    join_color <- "#D3D3D3"  # light gray
+    fork_color <- "#D3D3D3"  # light gray
+    start_color <- "#D3D3D3" # light gray
     create_edge_color <- "black"
     sync_edge_color <- "black"
-    colorf <- colorRampPalette(c("gray80", "gray80"))
 } else {
     print("Unsupported color format. Supported formats: color, gray. Defaulting to color.")
     join_color <- "#FF7F50"  # coral
@@ -64,15 +62,10 @@ if(tg.color == "color") {
     start_color <- "#DEB887" # burlywood
     create_edge_color <- fork_color
     sync_edge_color <- join_color
-    colorf <- colorRampPalette(c("lightskyblue", "steelblue"))
 }
 
 scope_edge_color <-"black" 
 cont_edge_color <- "black"
-
-# Task colors
-task_color_bins <- 10
-task_color_pal <- colorf(task_color_bins)
 
 toc("Setting colors")
 

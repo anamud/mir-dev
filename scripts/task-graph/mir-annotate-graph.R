@@ -39,7 +39,7 @@ toc("Read data time")
 
 tic(type="elapsed")
 # Create annotated task graph
-annot.tg <- subset(tg.data, select=c(task, parent, joins_at, tgpid))
+annot.tg <- subset(tg.data, select=c(task, parent, joins_at, child_number, num_children, core_id, exec_cycles))
 annot.tg <- merge(annot.tg, cg.data, by.x="task", by.y="task", all=T)
 row.has.na <- apply(annot.tg, 1, function(x){any(is.na(x))})
 sum.row.has.na <- sum(row.has.na)

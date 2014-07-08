@@ -52,9 +52,9 @@ if(tg.color == "color") {
     sync_edge_color <- join_color
     colorf <- colorRampPalette(c("lightskyblue", "steelblue"))
 } else if(tg.color == "gray") {
-    join_color <- "#FFFAFA"  # snow
-    fork_color <- "#FFFAFA"  # snow
-    start_color <- "#FFFAFA" # snow
+    join_color <- "#D3D3D3"  # light gray
+    fork_color <- "#D3D3D3"  # light gray
+    start_color <- "#D3D3D3" # light gray
     create_edge_color <- "black"
     sync_edge_color <- "black"
     colorf <- colorRampPalette(c("gray80", "gray80"))
