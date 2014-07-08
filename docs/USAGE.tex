@@ -7,7 +7,7 @@
 \definecolor{bg}{rgb}{0.95,0.95,0.95}
 \usepackage{ulem}
 \usepackage{listings}
-\usepackage{vhistory}
+%\usepackage{vhistory}
 \usepackage[parfill]{parskip}
 
 \lstdefinestyle{BashInputStyle}{
@@ -43,12 +43,12 @@
 \begin{document}
 \maketitle
 
-% Start of the revision history table
-\begin{versionhistory}
-\vhEntry{1.0}{2014-06-19}{ananya} {Created}
-\vhEntry{1.1}{2014-07-01}{ananya} {Improved OpenMP programming documentation}
-\vhEntry{1.1}{2014-07-02}{ananya} {Simplified OpenMP programming documentation}
-\end{versionhistory}
+%% Start of the revision history table
+%\begin{versionhistory}
+%\vhEntry{1.0}{2014-06-19}{ananya} {Created}
+%\vhEntry{1.1}{2014-07-01}{ananya} {Improved OpenMP programming documentation}
+%\vhEntry{1.1}{2014-07-02}{ananya} {Simplified OpenMP programming documentation}
+%\end{versionhistory}
 
 \section{Introduction}
 MIR is a task-based runtime system library.
@@ -75,7 +75,7 @@ Extended features of MIR such as profiling and locality-aware scheduling require
 \item libnuma - for data-distribution and locality-aware scheduling on NUMA systems
 \item PAPI - for reading hardware performance counters during thread-based profiling
 \item Paraver - for visualizing thread execution traces
-\item Python - for executing profiling scripts
+\item Python 2.X and 3.X - for executing profiling scripts
 \item Intel Pin sources - for profiling instructions executed by tasks during task-based profiling
 \item R - for executing profiling scripts
 \item These R packages: 
@@ -142,7 +142,7 @@ $ scons
 MIR provides a direct task-based programming interface and supports a subset of OpenMP 3.0 tasks.
 
 \subsection{Direct task-based programming interface}
-MIR provides a basic interface for task-based programming. Look at MIR\_ROOT/src/mir\_public\_int.h for interface details and programs in MIR\_ROOT/test for interface usage details. A simple example program is shown below. 
+MIR provides a basic interface for task-based programming. Look at mir\_public\_int.h in MIR\_ROOT/src for interface details and programs in MIR\_ROOT/test for interface usage details. A simple example program is shown below. 
 
 \begin{lstlisting}[style=BashInputStyle]
 #include "mir_public_int.h"
@@ -210,9 +210,10 @@ Tips to write OpenMP 3.0 task programs supported by MIR:
 
 A simple set of steps we use often when producing MIR supported OpenMP programs is as follows:
 \begin{enumerate}
-\item When parallel execution is required, create a \texttt{parallel} block  with sharing(none) followed immediately by a \texttt{single} block. 
+\item When parallel execution is required, create a \texttt{parallel} block  with default(none) followed immediately by a \texttt{single} block. 
 \item Use the \texttt{task} construct within the \texttt{single} block to parallelize work. 
 \item Synchronize tasks using the \texttt{taskwait} construct explicitly. Do not rely on implicit barriers and taskwaits.
+\item Parallelizing work inside a master task context is helpful while interpreting profiling results.
 \item Compile and link with the native OpenMP implementation (libgomp) and check if the program runs correctly. 
 \item Comment out the parallel and single blocks, initialize the MIR runtime system right in the beginning of the program and release it at the end of the program, include mir\_public\_int.h, compile and link with the appropriate MIR library (opt/debug/prof) to produce the executable.
 \end{enumerate}
@@ -225,11 +226,15 @@ int main(int argc, char *argv[])
     // Initialize the runtime system
     mir_create();
 
-//#pragma omp parallel
+//#pragma omp parallel default(none)
 //{
 //#pragma omp single
 //{
-    // Create as many tasks as there are threads
+// Master task context: helpful for interpreting profiling results.
+#pragma omp task
+{
+    // Now parallelize the work involved
+    // Work in this case: create as many tasks as there are threads
     int num_workers = mir_get_num_threads();
     for(int i=0; i<num_workers; i++)
     {
@@ -238,6 +243,9 @@ int main(int argc, char *argv[])
     }
         
     // Wait for tasks to finish
+    #pragma omp taskwait
+}
+// Wait for master task to finish
 #pragma omp taskwait
 //}
 //}

@@ -7,7 +7,7 @@
 \definecolor{bg}{rgb}{0.95,0.95,0.95}
 \usepackage{ulem}
 \usepackage{listings}
-\usepackage{vhistory}
+%\usepackage{vhistory}
 \usepackage[parfill]{parskip}
 
 \lstdefinestyle{BashInputStyle}{
@@ -43,12 +43,12 @@
 \begin{document}
 \maketitle
 
-% Start of the revision history table
-\begin{versionhistory}
-\vhEntry{1.0}{2014-06-19}{ananya} {Created}
-\vhEntry{1.1}{2014-07-01}{ananya} {Improved ATG generation text}
-\vhEntry{1.2}{2014-07-02}{ananya} {Simplified ATG generation text}
-\end{versionhistory}
+%% Start of the revision history table
+%\begin{versionhistory}
+%\vhEntry{1.0}{2014-06-19}{ananya} {Created}
+%\vhEntry{1.1}{2014-07-01}{ananya} {Improved ATG generation text}
+%\vhEntry{1.2}{2014-07-02}{ananya} {Simplified ATG generation text}
+%\end{versionhistory}
 
 \section{Introduction}
 The Annotated task Graph (ATG) refers to information obtained by the instruction-level profiling feature of the MIR runtime system library.
@@ -83,11 +83,13 @@ scons: done building targets.
 
 We next identify outline functions and functions called within tasks of the fib program. 
 To do so, we use a simple script - profiler\_params.py - which searches for known outline function name patterns within the object files of the program fib-prof. 
-The script also lists all function symbols within the object files which we treat as potentially callable functions and filter those which are certianly called by tasks defined in the program. 
-Inspecting program source files is a quick way to identify certainly called functions. 
-By looking at fib program sources, we can exclude main and get\_usecs from the called functions list.
-If in doubt or when sources are not available, use the entire callable function list.
-Identifying function called by tasks is necessary because the instruction count of these functions are added to the calling task's instruction count.
+The script lists outline functions names as OUTLINE\_FUNCTIONS and all function symbols within the object files as CALLABLE\_FUNCTIONS.
+We treat CALLABLE\_FUNCTIONS as potentially callable functions and filter out those which are certianly called by tasks defined in the program. 
+Inspecting program source files is a quick way to filtering out certainly called functions. 
+By looking at fib program sources, we can exclude main and get\_usecs from CALLABLE\_FUNCTIONS. 
+If in doubt or when sources are not available, use the entire list.
+Identifying functions called by tasks is necessary because the instruction count of these functions are added to the calling task's instruction count.
+Note down OUTLINE\_FUNCTIONS and those functions names you have retained in CALLABLE\_FUNCTIONS.
 
 \begin{lstlisting}[style=BashInputStyle]
 $ cd $MIR_ROOT/test/fib
@@ -102,6 +104,7 @@ CALLABLE_FUNCTIONS=fib_seq,fib,get_usecs,main
 
 Now we invoke the Pin call-graph profiler - mir\_outline\_function\_profiler.so - with appropriate arguments to profile fib-prof and obtain instruction-level information for tasks.
 The profiler accepts outline function names under the argument -s and names of function which are called within tasks under the argument -c. 
+Use these arguments to indicate the functions you have noted down using profiler\_params.py.
 The -o argument is used as prefix to file names produced during profiling.
 The $--$ argument indicates the profiled program and its arguments, which in our case is fib-prof with inputs n=10 and cutoff=4.
 Use the -h argument for help information about the profiler.
