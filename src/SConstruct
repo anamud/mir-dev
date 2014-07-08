@@ -31,11 +31,15 @@ if(len(compiler) == 0):
 
 if not os.path.isfile('arch/mir_arch_this.c'):
     print('Generating generic architecture description ...')
-    os.system(MIR_ROOT+'/scripts/generate_arch.py arch')
+    if(0 != os.system(MIR_ROOT+'/scripts/generate_arch.py arch')):
+        print('Could not generate generic architecture description. Build cannot continue!')
+        Exit(2)
 
 if not os.path.isfile('mir_lib_int.h'):
     print('Generating library interface ...')
-    os.system(MIR_ROOT+'/src/generate_lib_int.sh')
+    if(0 != os.system(MIR_ROOT+'/src/generate_lib_int.sh')):
+        print('Could not generate library interface. Build cannot continue!')
+        Exit(2)
 
 env = Environment()
 env['CC'] = [compiler[0]]

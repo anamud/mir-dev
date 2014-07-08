@@ -34,13 +34,6 @@
 #define MIR_SBUF_SIZE 32
 
 // Utils
-#ifdef __tile__
-#define MIR_FORMSPEC_UL "llu"
-#define MIR_FORMSPEC_SL "lld"
-#else
-#define MIR_FORMSPEC_UL "lu"
-#define MIR_FORMSPEC_SL "ld"
-#endif
 #define MIR_ERROR_STR "MIR_FATAL: "
 #define MIR_DEBUG_STR "MIR_DBG: "
 #define MIR_INFORM_STR "MIR_INFO: "

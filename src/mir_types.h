@@ -2,8 +2,17 @@
 #define  MIR_TYPES_H
 
 #include <stdint.h>
+#include <inttypes.h>
 #include <stdlib.h>
 #include "mir_defines.h"
+
+#ifdef __tile__
+#define MIR_FORMSPEC_UL "llu"
+#define MIR_FORMSPEC_SL "lld"
+#else
+#define MIR_FORMSPEC_UL PRIu64
+#define MIR_FORMSPEC_SL PRId64
+#endif
 
 // Interop with C++
 // Do not mangle
