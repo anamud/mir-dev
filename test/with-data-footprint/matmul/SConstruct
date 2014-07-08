@@ -46,11 +46,11 @@ env['CCFLAGS'] = Split("""
 env['CCFLAGS'] += ['-I' + MIR_ROOT+'/src']
 env['CCFLAGS'] += ['-I' + MIR_ROOT+'/test/common']
 env['LINKFLAGS'] = Split("""
+-pthread
 -L/opt/intel/mkl/lib/intel64
 -Wl,-rpath=/opt/intel/mkl/lib/intel64
 """)
 env['LIBS'] = Split("""
-pthread
 m
 mkl_sequential
 mkl_core

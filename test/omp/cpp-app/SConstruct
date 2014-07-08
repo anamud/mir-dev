@@ -53,9 +53,8 @@ env['CPPFLAGS'] = Split("""
 """)
 env['CPPFLAGS'] += ['-I' + MIR_ROOT+'/src']
 env['CPPFLAGS'] += ['-I' + MIR_ROOT+'/test/common']
-env['LINKFLAGS'] = ['']
+env['LINKFLAGS'] = ['-pthread']
 env['LIBS'] = Split("""
-pthread
 m
 """)
 env['LIBPATH'] = [MIR_ROOT + '/src']
