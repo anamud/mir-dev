@@ -189,7 +189,10 @@ int main(int argc, char *argv[])
 
 \subsection{OpenMP 3.0 task-based programming subset}
 MIR also supports a subset of OpenMP 3.0 tasks. 
-Only the \texttt{task} and \texttt{taskwait} constructs are currently supported.
+Only the \texttt{task} and \texttt{taskwait} constructs are supported.
+These constructs are sufficient for writing most task based programs.
+Note that the constructs are supported by intercepting GCC translated calls to GNU libgomp interfaces.
+Therefore OpenMP 3.0 task support is restricted to programs compiled using GCC.
 
 The parallel construct is deprecated.
 MIR creates a team of threads during initialization - when mir\_create is called.
