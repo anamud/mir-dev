@@ -53,6 +53,7 @@
 \section{Introduction}
 The Annotated task Graph (ATG) refers to information obtained by the instruction-level profiling feature of the MIR runtime system library.
 Instruction-level profiling is performed using a custom Pin call-graph profiling tool.
+Note that instruction-level task profiling is restricted to programs compiled using GCC.
 
 The ATG is available in two forms - a raw form and a visual form.
 
@@ -137,6 +138,12 @@ $ echo "Plotting fork-join task graph ..."
 $ Rscript ${MIR_ROOT}/scripts/task-graph/mir-fork-join-graph-plot.R fib_test-fork_join_task_graph color
 \end{lstlisting}
 
+Huge graphs (~50000+ tasks) take a long time to plot. We can plot the fork-join task graph as a tree to save time.
+\begin{lstlisting}[style=BashInputStyle]
+$ echo "Plotting fork-join task graph ..."
+$ Rscript ${MIR_ROOT}/scripts/task-graph/mir-tree-graph-plot.R fib_test-fork_join_task_graph color
+\end{lstlisting}
+
 Now, we combine the instruction-level profile produced by the Pin call-graph profiler with the fork-join task graph information produced by MIR. We call this process as annotating the fork-join task graph with instruction-level information. The annotation process produces the raw format of the ATG.
 
 \begin{lstlisting}[style=BashInputStyle]
@@ -162,7 +169,7 @@ $ ls fib_test*
 \textbf{File name} & \textbf{Description} \\ \hline
 fib\_test-call\_graph & Instruction-level information of tasks \\ \hline
 fib\_test-mem\_map & Memory map of program execution  \\ \hline
-fib\_test-fork\_join\_task\_graph & Parent-child task relationship and tgpid information \\ \hline
+fib\_test-fork\_join\_task\_graph & Parent-child relationship and execution information for tasks such as identification of executing cores and execution time \\ \hline
 fib\_test-annotated\_task\_graph & Raw format of the ATG combining instruction-level and parent-child information \\ \hline
 fib\_test-annotated\_task\_graph.adjm & Adjacent matrix representation of the visual format of ATG \\ \hline
 fib\_test-annotated\_task\_graph.dot & Dot representation of the visual format of ATG \\ \hline
@@ -184,16 +191,18 @@ The ATG raw format is a csv file.
 
 \begin{lstlisting}[style=BashInputStyle]
 $ head fib_test-annotated_task_graph
-"task","parent","joins_at","tgpid","ins_count","stack_read","stack_write","mem_fp","ccr","clr","mem_read","mem_write","name"
-1,0,0,"0.",59,11,15,5,12,15,4,1,"ol_fib_2"
-2,1,0,"1.",60,10,15,5,12,15,4,1,"ol_fib_0"
-3,1,0,"2.",60,10,15,5,12,15,4,1,"ol_fib_1"
-4,3,0,"1.2.",60,10,15,5,12,15,4,1,"ol_fib_0"
-5,3,0,"2.2.",60,10,15,5,12,15,4,1,"ol_fib_1"
-6,5,0,"1.2.2.",60,10,15,5,12,15,4,1,"ol_fib_0"
-7,5,0,"2.2.2.",60,10,15,5,12,15,4,1,"ol_fib_1"
-8,7,0,"1.2.2.2.",68,15,15,5,14,17,4,1,"ol_fib_0"
-9,7,0,"2.2.2.2.",47,10,10,5,9,12,4,1,"ol_fib_1"
+"task","parent","joins_at","child_number","num_children","core_id","exec_cycles","ins_count","stack_read","stack_write","mem_fp","ccr","clr","mem_read","mem_write","name"
+1,0,0,0,2,0,21826205,59,11,15,5,12,15,4,1,"ol_fib_2"
+2,1,0,1,2,0,20570,60,10,15,5,12,15,4,1,"ol_fib_0"
+3,1,0,2,2,0,3209530,60,10,15,5,12,15,4,1,"ol_fib_1"
+4,3,0,1,2,0,19360,60,10,15,5,12,15,4,1,"ol_fib_0"
+5,3,0,2,2,0,39780,60,10,15,5,12,15,4,1,"ol_fib_1"
+6,5,0,1,2,0,626305,60,10,15,5,12,15,4,1,"ol_fib_0"
+7,5,0,2,2,0,7072305,60,10,15,5,12,15,4,1,"ol_fib_1"
+8,7,0,1,0,0,8920175,68,15,15,5,14,17,4,1,"ol_fib_0"
+9,7,0,2,0,0,8363035,47,10,10,5,9,12,4,1,"ol_fib_1"
+10,6,0,1,0,0,25470,110,25,25,5,22,28,4,1,"ol_fib_0"
+11,6,0,2,0,0,15980,68,15,15,5,14,17,4,1,"ol_fib_1"
 \end{lstlisting}
 
 Each line shows properties of an explicit task executed by the program.
@@ -202,13 +211,16 @@ Properties are also called annotations.
 See Table~\ref{tab:raw-format}.
 
 \begin{table}[!htb]
-\begin{tabular}{|p{2cm}|p{10cm}|}
+\begin{tabular}{|p{2.5cm}|p{10cm}|}
 \hline
 \textbf{Field} & \textbf{Description} \\ \hline
 task & Identifier of the task \\ \hline
 parent & Identifier of the parent task of the task \\ \hline
 joins\_at & Indicates at which call to taskwait in the parent the task synchronized. Example: 0 indicates the task synchronized with the first call to taskwait in the parent. Several children can synchronize at the same call.  \\ \hline
-tgpid & Indicates the task graph position identifier. See details below.  \\ \hline
+child\_number & Indicates the order of task creation by parent \\ \hline
+num\_children & Indicates the number of child tasks created by the task \\ \hline
+exec\_cycles & Indicates the number of cycles spent executing the task including child task creation and synchronization \\ \hline
+core\_id & Indicates which core executed the task \\ \hline
 ins\_count & Indicates total number of instructions executed by the task. Profiling parameters indicate which instructions to count. Typically, instructions part of runtime system calls are excluded and calls to statically-linked functions are included.  \\ \hline
 stack\_read & Indicates number of read accesses to the stack while executing instructions  \\ \hline
 stack\_write & Indicates number of write accesses to the stack while executing instructions \\ \hline
@@ -221,19 +233,6 @@ name & Indicates name of the outline function of the task \\ \hline
 \caption{Raw format fields}
 \label{tab:raw-format}
 \end{table}
-
-\subsection{Property tgpid}
-The tgpid uniquely identifies a task irrespective of single-thread or many-thread execution. 
-The format of tgpid is A.B.C.....<implied 0>
-
-\begin{itemize}
-\item 0. Represents the first task created. This is a special meaning.
-\item A. means Ath child of the first task
-\item A.B. means Ath child of task B.
-\item A.B.C. means Ath child of task B.C.
-\end{itemize}
-
-NOTE: The tgpid is an experimental feature, not fully tested and subject to change.
 
 \section{Visual format of the ATG}
 The visual format gives shape to the raw format of the ATG.

@@ -353,7 +353,10 @@ $ MIR_CONF="-g" ./fib-opt
 $ Rscript ${MIR_ROOT}/scripts/task-graph/mir-fork-join-graph-plot.R mir-task-graph color
 \end{lstlisting}
 
-To generate an instruction-level profile of tasks, first get PIN sources and set the below environment variables.
+MIR can also generate an instruction-level profile of tasks.
+Instruction-level task profiling support is restricted to programs compiled using GCC.
+To enable instruction-level profiling support, first get PIN sources and set the below environment variables.
+
 \begin{lstlisting}[style=BashInputStyle]
 $ export PIN_ROOT=<<Pin source path>>
 $ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:<<Pin install path>>
