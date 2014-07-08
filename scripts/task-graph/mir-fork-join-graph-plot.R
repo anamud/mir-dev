@@ -177,15 +177,15 @@ V(tg)$label <- V(tg)$name
 # Set task vertex attributes
 task_index <- match(as.character(tg.data$task), V(tg)$name)
 # Set annotations
-exec_cycles <- tg.data[which(tg.data$task %in% V(tg)[task_index]$name),]$exec_cycles
-tg <- set.vertex.attribute(tg, name='exec_cycles', index=task_index, value=exec_cycles)
-tgpids <- tg.data[which(tg.data$task %in% V(tg)[task_index]$name),]$tgpid
-tg <- set.vertex.attribute(tg, name='tgpid', index=task_index, value=tgpids)
-core_ids <- tg.data[which(tg.data$task %in% V(tg)[task_index]$name),]$core_id
-tg <- set.vertex.attribute(tg, name='core_id', index=task_index, value=core_ids)
+for (annot in c('exec_cycles','child_number','num_children','core_id'))
+{
+    values <- tg.data[which(tg.data$task %in% V(tg)[task_index]$name),annot]
+    tg <- set.vertex.attribute(tg, name=annot, index=task_index, value=values)
+}
 # Set width to constant
 tg <- set.vertex.attribute(tg, name='size', index=task_index, value=task_size)
 # Set color to indicate core_id
+core_ids <- tg.data[which(tg.data$task %in% V(tg)[task_index]$name),'core_id']
 core_colors <- rainbow(max(core_ids)+1)
 tg <- set.vertex.attribute(tg, name='color', index=task_index, value=core_colors[core_ids+1])
 # Write core_id colors for reference

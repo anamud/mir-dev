@@ -178,6 +178,12 @@ V(tg)$label <- V(tg)$name
 
 # Set task vertex attributes
 task_index <- match(as.character(tg.data$task), V(tg)$name)
+# Set annotations
+for (annot in c('exec_cycles','child_number','num_children','core_id','ins_count','mem_fp'))
+{
+    values <- tg.data[which(tg.data$task %in% V(tg)[task_index]$name),][,annot]
+    tg <- set.vertex.attribute(tg, name=annot, index=task_index, value=values)
+}
 # Set width of task nodes in proportion to average ins count
 #mean_val <- mean(tg.data$ins_count)
 #task_size <- task_size_mult * (tg.data$ins_count/mean_val)
