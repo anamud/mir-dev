@@ -350,7 +350,7 @@ void cilkmerge_par(ELM *low1, ELM *high1, ELM *low2, ELM *high2, ELM *lowdest)
     imm_args_0.split1_0 = split1;
     imm_args_0.split2_0 = split2;
 
-    struct mir_task_t* task_0 = mir_task_create((mir_tfunc_t) _smp__ol_cilkmerge_par_0, (void*) &imm_args_0, sizeof(_nx_data_env_0_t), NULL, 0, NULL, NULL);
+    mir_task_create((mir_tfunc_t) _smp__ol_cilkmerge_par_0, (void*) &imm_args_0, sizeof(_nx_data_env_0_t), 0, NULL, NULL);
 
     // Create task
     _nx_data_env_1_t imm_args_1;
@@ -361,11 +361,10 @@ void cilkmerge_par(ELM *low1, ELM *high1, ELM *low2, ELM *high2, ELM *lowdest)
     imm_args_1.split2_0 = split2;
     imm_args_1.lowsize_0 = lowsize;
 
-    struct mir_task_t* task_1 = mir_task_create((mir_tfunc_t) _smp__ol_cilkmerge_par_1, (void*) &imm_args_1, sizeof(_nx_data_env_1_t), NULL, 0, NULL, NULL);
+    mir_task_create((mir_tfunc_t) _smp__ol_cilkmerge_par_1, (void*) &imm_args_1, sizeof(_nx_data_env_1_t), 0, NULL, NULL);
     
-    // Wait for two tasks
-    mir_task_wait(task_0);
-    mir_task_wait(task_1);
+    // Wait for tasks
+    mir_task_wait();
 
     return;
 }/*}}}*/
@@ -475,16 +474,13 @@ void cilksort_par(ELM *low, ELM *tmp, long size)
     D = C + quarter;
     tmpD = tmpC + quarter;
 
-    // Task wait counter 
-    struct mir_twc_t* twc = mir_twc_create();
-
     // Create task
     _nx_data_env_2_t imm_args_2;
     imm_args_2.quarter_0 = quarter;
     imm_args_2.A_0 = A;
     imm_args_2.tmpA_0 = tmpA;
 
-    struct mir_task_t* task_2 = mir_task_create((mir_tfunc_t) _smp__ol_cilksort_par_2, (void*) &imm_args_2, sizeof(_nx_data_env_2_t), twc, 0, NULL, NULL);
+    mir_task_create((mir_tfunc_t) _smp__ol_cilksort_par_2, (void*) &imm_args_2, sizeof(_nx_data_env_2_t), 0, NULL, NULL);
 
     // Create task
     _nx_data_env_3_t imm_args_3;
@@ -492,7 +488,7 @@ void cilksort_par(ELM *low, ELM *tmp, long size)
     imm_args_3.B_0 = B;
     imm_args_3.tmpB_0 = tmpB;
 
-    struct mir_task_t* task_3 = mir_task_create((mir_tfunc_t) _smp__ol_cilksort_par_3, (void*) &imm_args_3, sizeof(_nx_data_env_3_t), twc, 0, NULL, NULL);
+    mir_task_create((mir_tfunc_t) _smp__ol_cilksort_par_3, (void*) &imm_args_3, sizeof(_nx_data_env_3_t), 0, NULL, NULL);
 
     // Create task
     _nx_data_env_4_t imm_args_4;
@@ -500,7 +496,7 @@ void cilksort_par(ELM *low, ELM *tmp, long size)
     imm_args_4.C_0 = C;
     imm_args_4.tmpC_0 = tmpC;
     
-    struct mir_task_t* task_4 = mir_task_create((mir_tfunc_t) _smp__ol_cilksort_par_4, (void*) &imm_args_4, sizeof(_nx_data_env_4_t), twc, 0, NULL, NULL);
+    mir_task_create((mir_tfunc_t) _smp__ol_cilksort_par_4, (void*) &imm_args_4, sizeof(_nx_data_env_4_t), 0, NULL, NULL);
 
     // Create task
     _nx_data_env_5_t imm_args_5;
@@ -509,10 +505,10 @@ void cilksort_par(ELM *low, ELM *tmp, long size)
     imm_args_5.D_0 = D;
     imm_args_5.tmpD_0 = tmpD;
 
-    struct mir_task_t* task_5 = mir_task_create((mir_tfunc_t) _smp__ol_cilksort_par_5, (void*) &imm_args_5, sizeof(_nx_data_env_5_t), twc, 0, NULL, NULL);
+    mir_task_create((mir_tfunc_t) _smp__ol_cilksort_par_5, (void*) &imm_args_5, sizeof(_nx_data_env_5_t), 0, NULL, NULL);
 
     // Task wait 
-    mir_twc_wait(twc);
+    mir_task_wait();
 
     // Create task
     _nx_data_env_6_t imm_args_6;
@@ -521,7 +517,7 @@ void cilksort_par(ELM *low, ELM *tmp, long size)
     imm_args_6.B_0 = B;
     imm_args_6.tmpA_0 = tmpA;
     
-    struct mir_task_t* task_6 = mir_task_create((mir_tfunc_t) _smp__ol_cilksort_par_6, (void*) &imm_args_6, sizeof(_nx_data_env_6_t), twc, 0, NULL, NULL);
+    mir_task_create((mir_tfunc_t) _smp__ol_cilksort_par_6, (void*) &imm_args_6, sizeof(_nx_data_env_6_t), 0, NULL, NULL);
 
     // Create task
     _nx_data_env_7_t imm_args_7;
@@ -532,10 +528,10 @@ void cilksort_par(ELM *low, ELM *tmp, long size)
     imm_args_7.D_0 = D;
     imm_args_7.tmpC_0 = tmpC;
 
-    struct mir_task_t* task_7 = mir_task_create((mir_tfunc_t) _smp__ol_cilksort_par_7, (void*) &imm_args_7, sizeof(_nx_data_env_7_t), twc, 0, NULL, NULL);
+    mir_task_create((mir_tfunc_t) _smp__ol_cilksort_par_7, (void*) &imm_args_7, sizeof(_nx_data_env_7_t), 0, NULL, NULL);
 
     // Task wait 
-    mir_twc_wait(twc);
+    mir_task_wait();
 
     // Recurse
     cilkmerge_par(tmpA, tmpC - 1, tmpC, tmpA + size - 1, A);
@@ -615,10 +611,10 @@ void sort_par(void)
     imm_args_8.array_0 = &(array);
     imm_args_8.tmp_0 = &(tmp);
 
-    struct mir_task_t* task_8 = mir_task_create((mir_tfunc_t) _smp__ol_sort_par_8, (void*) &imm_args_8, sizeof(_nx_data_env_8_t), NULL, 0, NULL, NULL);
+    mir_task_create((mir_tfunc_t) _smp__ol_sort_par_8, (void*) &imm_args_8, sizeof(_nx_data_env_8_t), 0, NULL, NULL);
 
     // Wait for task
-    mir_task_wait(task_8);
+    mir_task_wait();
 }/*}}}*/
 
 int sort_verify(void)

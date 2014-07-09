@@ -1,46 +1,27 @@
-Build with tilecc.
-Test on TILEPro64.
-Architecture specific SConstruct.
-Simultaneous debug and release build in SConstruct. 
-- Added debug and opt builds for mir
-- Added debug, opt and verbose builds for benchmarks
-Give git access to others.
-- Have decided to use ssh public id to give access to interested users
-- Have now setup gitolite. Intrested users will have to send ssh public key for access.
-Setup git permissions 
-- How? Dev and public repos?
-- Gitolite to the rescue!
-Find a good license. 
-- How about GPL? Check with BSC about Mercurium and BOTS.
-- Apache License 2.0 looks good.
-Get started with clang support.
-Strengthen Mercurium support.
-Work on UTS.
-- Scaling is poor.
-- Why am I even bothering with this? Benchmark stresses fine grained execution. 
-Work on benchmarks with data dependences.
-- Added benchmarks with data footprint
-Get a gimp to parallelize BOTS FFT and Strassen. 
-- Done. Gimp = Me.
-Add a clean user interface to the library 
-- How? Machine generate the interface?
-Find and add a good deque implementation. 
-- Cannot find a lock-free or a single lock deque!
-- Ask Shavit and Maged.
-- PJ found one. Integrate it!
-Add runtime dependence resolution support.
-Add a help document.
-- URGENT!
-Add the NUMA/NUCA scheduler. 
-- Done. Need to test it on the TILEPro64.
-Add a benchmark testing script
-- Done. In scripts/test.sh
-Add dependence graph generation support
-- Done. 
-Add libgomp OpenMP wrapper
-- Done. Only task and taskwait contructs handled.
-Improve library interface
-- FIXME: Functionality is scattered in some places
-- FIXME: Opaque data types
-Optimizations needed
-- Inlined functions
+=== RUNTIME SYSTEM ===
+Add TILEPro64 support.
+Add clang support.
+Improve Mercurium support.
+Improve OpenMP 3.0 support.
+Add support for implicit data dependence resolution.
+Cleanup library interface.
+Improve documents structure.
+Provide more documentation.
+Improve libgomp OpenMP wrapper.
+Inline functions for speed.
+Add better help system.
+Add better parsing for MIR_CONF.
+
+=== PROFILING ===
+Cleanup recorder interfaces.
+Support Cilk-like task graph extraction.
+Test TGPID information part of ATG.
+Add dependence graph generation support.
+
+=== TEST ===
+Work on UTS scaling.
+Add benchmarks with data dependences.
+Add a simple testing suite.
+
+=== MISC === 
+Set up github repository.

@@ -1,6 +1,5 @@
 #include "mir_data_footprint.h"
-#include "mir_mem_pol.h"
-#include "mir_debug.h"
+#include "mir_utils.h"
 
 void mir_data_footprint_copy(struct mir_data_footprint_t* dest, struct mir_data_footprint_t* src)
 {/*{{{*/
@@ -17,6 +16,7 @@ void mir_data_footprint_copy(struct mir_data_footprint_t* dest, struct mir_data_
     dest->part_of = src->part_of;
 }/*}}}*/
 
+#ifdef MIR_MEM_POL_ENABLE
 void mir_data_footprint_get_dist(struct mir_mem_node_dist_t* dist, struct mir_data_footprint_t* footprint)
 {/*{{{*/
     uint64_t row_sz = footprint->row_sz;
@@ -42,3 +42,4 @@ void mir_data_footprint_get_dist(struct mir_mem_node_dist_t* dist, struct mir_da
         /*MIR_INFORM("%p[%lu-%lu]\n", footprint->base, footprint->start, footprint->end);*/
     }
 }/*}}}*/
+#endif

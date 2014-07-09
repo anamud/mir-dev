@@ -1,7 +1,7 @@
 #!/bin/bash
 
 APP=fib
-TASKS=fib._omp_fn.0,fib._omp_fn.1
+TASKS=fib._omp_fn.1,fib._omp_fn.2,main._omp_fn.0
 CALLED_FUNCS=fib,fib_seq
 INPUT="8 3"
 MIR_CONF="-w=1 -i -g -p"

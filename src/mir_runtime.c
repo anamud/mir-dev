@@ -11,21 +11,24 @@
 #include <sys/shm.h>
 
 #include "mir_runtime.h"
-#include "mir_debug.h"
 #include "mir_defines.h"
 #include "mir_lock.h"
 #include "mir_memory.h"
 #include "mir_types.h"
 #include "mir_recorder.h"
-#include "mir_perf.h"
 #include "mir_worker.h"
-#include "mir_sched_pol.h"
-#include "mir_arch.h"
-#include "mir_mem_pol.h"
+#include "scheduling/mir_sched_pol.h"
+#include "arch/mir_arch.h"
 #include "mir_utils.h"
 
+#ifdef MIR_MEM_POL_ENABLE
+#include "mir_mem_pol.h"
+#endif
+
+#ifdef MIR_RECORDER_USE_HW_PERF_COUNTERS
 #ifndef __tile__
 #include "papi.h"
+#endif
 #endif
 
 // The global runtime object
@@ -33,7 +36,7 @@ struct mir_runtime_t* runtime = NULL;
 
 uint32_t g_sig_worker_alive = 0;
 
-void mir_preconfig_init()
+static void mir_preconfig_init()
 {/*{{{*/
     MIR_DEBUG(MIR_DEBUG_STR "Starting initialization ...\n");
     // Arch
@@ -48,8 +51,10 @@ void mir_preconfig_init()
     if(runtime->sched_pol == NULL)
         MIR_ABORT(MIR_ERROR_STR "Cannot select %s scheduling policy!\n", MIR_SCHED_POL_DEFAULT);
 
+#ifdef MIR_MEM_POL_ENABLE
     // Memory allocation policy
     mir_mem_pol_create();
+#endif
 
     // Workers
     runtime->num_workers = runtime->arch->num_cores;
@@ -65,12 +70,11 @@ void mir_preconfig_init()
     runtime->enable_stats = 0;
     runtime->enable_task_graph_gen = 0;
     runtime->enable_recorder = 0;
-    runtime->enable_dependence_resolver = 0;
     runtime->enable_shmem_handshake = 0;
-    runtime->task_inlining_limit = MIR_TASK_INLINING_LIMIT_DEFAULT;
+    runtime->task_inlining_limit = MIR_INLINE_TASK_DURING_CREATION;
 }/*}}}*/
 
-void mir_postconfig_init()
+static void mir_postconfig_init()
 {/*{{{*/
     // Init time
     runtime->init_time = mir_get_cycles();
@@ -180,10 +184,12 @@ alive:
     // Global taskwait counter
     runtime->ctwc = mir_twc_create();
 
+#ifdef MIR_MEM_POL_ENABLE
     // Memory allocation policy
     // Init memory distributer only after workers are bound.
     // Node restrictions can then be correctly inferred.
     mir_mem_pol_init();
+#endif
 
     MIR_DEBUG(MIR_DEBUG_STR "Initialization complete!\n");
 }/*}}}*/
@@ -199,19 +205,18 @@ static inline void print_help()
     "-w=<int> number of workers\n"
     "-s=<str> task scheduling policy\n"
     "-r enable recorder\n"
-    "-d enable dependence resolution\n"
     "-x=<int> task inlining limit based on num tasks per worker\n"
     "-i write statistics to file\n"
     "-l=<int> stack size in MB\n"
     "-q=<int> queue capacity\n"
     "-m=<str> memory allocation policy\n"
     "-y=<csv> schedule policy specific parameters\n"
-    "-g enable task graph generation [Note: Supported only for a single worker!]\n"
-    "-p enable shared memory handshake mode [Note: Supported only for a single worker!]\n"
+    "-g enable fork-join graph generation \n"
+    "-p enable handshake with Pin profiler [Note: Supported only for a single worker!]\n"
     );
 }/*}}}*/
 
-void mir_config()
+static void mir_config()
 {/*{{{*/
     // Get MIR_CONF environment string 
     const char* conf_str = getenv("MIR_CONF");
@@ -264,15 +269,15 @@ void mir_config()
                     }
                     break;
                 case 'g':
-                    if(runtime->num_workers == 1)
-                    {
+                    /*if(runtime->num_workers == 1)*/
+                    /*{*/
                         runtime->enable_task_graph_gen = 1;
-                        MIR_DEBUG(MIR_DEBUG_STR "Task graph generation is enabled!\n");
-                    }
-                    else
-                    {
-                        MIR_ABORT(MIR_ERROR_STR "Number of workers = %d != 1. Cannot enable task graph generation!\n", runtime->num_workers);
-                    }
+                        MIR_DEBUG(MIR_DEBUG_STR "Fork-join graph generation is enabled!\n");
+                    /*}*/
+                    /*else*/
+                    /*{*/
+                        /*MIR_ABORT(MIR_ERROR_STR "Number of workers = %d != 1. Cannot enable task graph generation!\n", runtime->num_workers);*/
+                    /*}*/
                     break;
                 case 'r':
                     runtime->enable_recorder = 1;
@@ -280,10 +285,6 @@ void mir_config()
                     break;
                 case 'i':
                     runtime->enable_stats = 1;
-                    break;
-                case 'd':
-                    MIR_ABORT(MIR_ERROR_STR "Dependence reolver not supported yet!\n");
-                    // runtime->enable_dependence_resolver = 1;
                     break;
                 case 'x':
                     if(tok[2] == '=')
@@ -330,7 +331,9 @@ void mir_config()
     }
 
     // Pass token string to other configurable components
+#ifdef MIR_MEM_POL_ENABLE
     mir_mem_pol_config(conf_str);
+#endif
     runtime->sched_pol->config(conf_str);
     runtime->arch->config(conf_str);
 }/*}}}*/
@@ -446,7 +449,9 @@ void mir_destroy()
 
     // Deinit memory allocation policy
     MIR_DEBUG(MIR_DEBUG_STR "Stopping memory distributer ...\n");
+#ifdef MIR_MEM_POL_ENABLE
     mir_mem_pol_destroy();
+#endif
 
     // Deinit scheduling policy
     MIR_DEBUG(MIR_DEBUG_STR "Stopping scheduler ...\n");

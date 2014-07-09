@@ -6,8 +6,7 @@
 
 #include "mir_types.h"
 #include "mir_defines.h"
-#include "mir_perf.h"
-#include "mir_debug.h"
+#include "mir_utils.h"
 #include "mir_memory.h"
 #include "mir_recorder.h"
 #include "mir_runtime.h"
@@ -56,8 +55,10 @@ char* mir_event_name_string[MIR_RECORDER_EVENT_MAX_COUNT]  =
 // FIXME: WARNING AND NOTE! Update also in recorder_create
 char* mir_event_name_string[MIR_RECORDER_EVENT_MAX_COUNT] = 
 { /*{{{*/
-    "PAPI_L2_DCM", 
-    "PAPI_RES_STL" 
+    "PAPI_TOT_INS",
+    "PAPI_TOT_CYC",
+    /*"PAPI_L2_DCM",*/
+    /*"PAPI_RES_STL",*/
     /*"PAPI_L1_DCA",*/
     /*"PAPI_L1_DCH",*/
 };/*}}}*/

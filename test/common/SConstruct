@@ -7,6 +7,11 @@ app_name = os.getcwd().split(os.sep)[-1]
 
 import os
 import sys
+
+if(os.path.isfile('NOT_SUPPORTED')):
+    print('NOT_SUPPORTED file present. Aborting!')
+    Exit(2)
+
 MIR_ROOT = os.environ.get('MIR_ROOT')
 if(MIR_ROOT == None):
     print('MIR_ROOT is not defined. Aborting!')
@@ -15,10 +20,11 @@ if(MIR_ROOT == None):
 sys.path.append(MIR_ROOT + '/scripts')
 import mir_utils
 
-PAPI_ROOT = os.environ.get('PAPI_ROOT')
-if(PAPI_ROOT == None):
-    print('PAPI_ROOT is not defined. Aborting!')
-    Exit(2)
+if os.path.isfile(MIR_ROOT+'/src/HAVE_PAPI'):
+    PAPI_ROOT = os.environ.get('PAPI_ROOT')
+    if(PAPI_ROOT == None):
+        print('PAPI_ROOT is not defined. Aborting!')
+        Exit(2)
 
 compilers = ['gcc','icc']
 compiler = ''
@@ -44,17 +50,22 @@ env['CCFLAGS'] = Split("""
 -fopenmp
 -DLINUX
 """)
-env['CFLAGS'] += ['-I' + MIR_ROOT+'/src']
-env['CFLAGS'] += ['-I' + MIR_ROOT+'/test/common']
-env['LINKFLAGS'] = ['']
+env['CCFLAGS'] += ['-I' + MIR_ROOT+'/src']
+env['CCFLAGS'] += ['-I' + MIR_ROOT+'/test/common']
+env['LINKFLAGS'] = ['-pthread']
 env['LIBS'] = Split("""
-pthread
-papi
-numa
 m
 """)
+
 env['LIBPATH'] = [MIR_ROOT + '/src']
-env['LIBPATH'] += [PAPI_ROOT + '/lib']
+
+if os.path.isfile(MIR_ROOT+'/src/HAVE_LIBNUMA'):
+    env['LIBS'] += ['numa']
+    env['CCFLAGS'] += ['-DMIR_MEM_POL_ENABLE']
+
+if os.path.isfile(MIR_ROOT+'/src/HAVE_PAPI'):
+    env['LIBS'] += ['papi']
+    env['LIBPATH'] += [PAPI_ROOT + '/lib']
 
 #####################
 # Debug environment #

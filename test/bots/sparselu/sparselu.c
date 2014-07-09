@@ -29,8 +29,6 @@
 #include "sparselu.h"
 #include "mir_public_int.h"
 
-//#define IMPLICIT_TASKWAIT 1
-
 extern int NB, BS;
 
 int checkmat (float *M, float *N)
@@ -269,11 +267,6 @@ typedef struct _nx_data_env_3_t_tag
 
 /*static*/ void _smp__ol_sparselu_par_call_3(void* arg)
 {/*{{{*/
-    // Task wait counter 
-#ifndef IMPLICIT_TASKWAIT 
-    struct mir_twc_t* twc = mir_twc_create();
-#endif
-
     _nx_data_env_3_t* _args = (_nx_data_env_3_t* ) arg; 
     int *NB_0 = (int *) (_args->NB_0);
 
@@ -290,11 +283,7 @@ typedef struct _nx_data_env_3_t_tag
                 imm_args_0.jj_0 = (_args->jj_0);
                 imm_args_0.kk_0 = (_args->kk_0);
 
-#ifdef IMPLICIT_TASKWAIT 
-                struct mir_task_t* task_0 = mir_task_create_pw((mir_tfunc_t) _smp__ol_sparselu_par_call_0, (void*) &imm_args_0, sizeof(_nx_data_env_0_t), /*twc, */0, NULL, NULL);
-#else
-                struct mir_task_t* task_0 = mir_task_create((mir_tfunc_t) _smp__ol_sparselu_par_call_0, (void*) &imm_args_0, sizeof(_nx_data_env_0_t), twc, 0, NULL, NULL);
-#endif
+                mir_task_create((mir_tfunc_t) _smp__ol_sparselu_par_call_0, (void*) &imm_args_0, sizeof(_nx_data_env_0_t), 0, NULL, NULL);
             }
 
         for ((_args->ii_0) = (_args->kk_0) + 1; (_args->ii_0) < (*NB_0); (_args->ii_0)++)
@@ -306,19 +295,11 @@ typedef struct _nx_data_env_3_t_tag
                 imm_args_1.ii_0 = (_args->ii_0);
                 imm_args_1.kk_0 = (_args->kk_0);
 
-#ifdef IMPLICIT_TASKWAIT 
-                struct mir_task_t* task_1 = mir_task_create_pw((mir_tfunc_t) _smp__ol_sparselu_par_call_1, (void*) &imm_args_1, sizeof(_nx_data_env_1_t), /*twc, */0, NULL, NULL);
-#else
-                struct mir_task_t* task_1 = mir_task_create((mir_tfunc_t) _smp__ol_sparselu_par_call_1, (void*) &imm_args_1, sizeof(_nx_data_env_1_t), twc, 0, NULL, NULL);
-#endif
+                mir_task_create((mir_tfunc_t) _smp__ol_sparselu_par_call_1, (void*) &imm_args_1, sizeof(_nx_data_env_1_t), 0, NULL, NULL);
             }
 
         // Task wait 
-#ifdef IMPLICIT_TASKWAIT
-        mir_twc_wait_pw();
-#else
-        mir_twc_wait(twc);
-#endif
+        mir_task_wait();
 
         for ((_args->ii_0) = (_args->kk_0) + 1; (_args->ii_0) < (*NB_0); (_args->ii_0)++)
             if ((_args->bench_0)[(_args->ii_0) * (*NB_0) + (_args->kk_0)] != ((void *) 0))
@@ -333,29 +314,16 @@ typedef struct _nx_data_env_3_t_tag
                         imm_args_2.kk_0 = (_args->kk_0);
 
 
-#ifdef IMPLICIT_TASKWAIT
-                        struct mir_task_t* task_2 = mir_task_create_pw((mir_tfunc_t) _smp__ol_sparselu_par_call_2, (void*) &imm_args_2, sizeof(_nx_data_env_2_t), /*twc, */0, NULL, NULL);
-#else
-                        struct mir_task_t* task_2 = mir_task_create((mir_tfunc_t) _smp__ol_sparselu_par_call_2, (void*) &imm_args_2, sizeof(_nx_data_env_2_t), twc, 0, NULL, NULL);
-#endif
+                        mir_task_create((mir_tfunc_t) _smp__ol_sparselu_par_call_2, (void*) &imm_args_2, sizeof(_nx_data_env_2_t), 0, NULL, NULL);
                     }
 
         // Task wait
-#ifdef IMPLICIT_TASKWAIT
-        mir_twc_wait_pw();
-#else
-        mir_twc_wait(twc);
-#endif
+        mir_task_wait();
     }
 }/*}}}*/
 
 void sparselu_par_call(float **bench)
 {/*{{{*/
-#ifndef IMPLICIT_TASKWAIT 
-    // Task wait counter
-    struct mir_twc_t* twc = mir_twc_create();
-#endif
-
     int ii = 0, jj = 0, kk = 0;
 
     // Create task
@@ -366,18 +334,10 @@ void sparselu_par_call(float **bench)
     imm_args_3.jj_0 = jj;
     imm_args_3.kk_0 = kk;
 
-#ifdef IMPLICIT_TASKWAIT
-    struct mir_task_t* task_3 = mir_task_create_pw((mir_tfunc_t) _smp__ol_sparselu_par_call_3, (void*) &imm_args_3, sizeof(_nx_data_env_3_t), /*twc, */0, NULL, NULL);
-#else
-    struct mir_task_t* task_3 = mir_task_create((mir_tfunc_t) _smp__ol_sparselu_par_call_3, (void*) &imm_args_3, sizeof(_nx_data_env_3_t), twc, 0, NULL, NULL);
-#endif
+    mir_task_create((mir_tfunc_t) _smp__ol_sparselu_par_call_3, (void*) &imm_args_3, sizeof(_nx_data_env_3_t), 0, NULL, NULL);
 
     // Task wait
-#ifdef IMPLICIT_TASKWAIT
-    mir_twc_wait_pw();
-#else
-    mir_twc_wait(twc);
-#endif
+    mir_task_wait();
 }/*}}}*/
 
 void sparselu_seq_call(float **bench)

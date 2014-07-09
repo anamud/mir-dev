@@ -1,5 +1,5 @@
 # Message
-print("THIS FEATURE IS NOT AVAILABLE AS OF NOW!")
+print("THIS FEATURE IS NOT AVAILABLE CURRENTLY!")
 
 # Quit
 quit("no", 0)

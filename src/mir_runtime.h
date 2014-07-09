@@ -7,24 +7,24 @@
 #include <stdbool.h>
 
 #include "mir_worker.h"
-#include "mir_arch.h"
+#include "arch/mir_arch.h"
 #include "mir_defines.h"
 #include "mir_types.h"
-#include "mir_sched_pol.h"
+#include "scheduling/mir_sched_pol.h"
 #include "mir_task.h"
 #include "mir_types.h"
 
 BEGIN_C_DECLS 
 
 struct mir_runtime_t
-{
+{/*{{{*/
     // Data
     uint16_t num_workers;
     uint16_t* worker_core_map;
     pthread_key_t worker_index;
     uint64_t init_time;
     struct mir_worker_t workers[MIR_WORKER_MAX_COUNT];
-    struct mir_sched_pol_t *sched_pol;
+    struct mir_sched_pol_t* sched_pol;
     struct mir_arch_t* arch;
     uint32_t task_inlining_limit;
     int shmid;
@@ -36,19 +36,12 @@ struct mir_runtime_t
     bool enable_stats;
     bool enable_task_graph_gen;
     bool enable_recorder;
-    bool enable_dependence_resolver;
     bool enable_shmem_handshake;
-};
+};/*}}}*/
 
-void mir_create();
+/*LIBINT*/ void mir_create();
 
-void mir_destroy();
-
-void mir_config();
-
-void mir_preconfig_init();
-
-void mir_postconfig_init();
+/*LIBINT*/ void mir_destroy();
 
 END_C_DECLS 
 #endif //MIR_RUNTIME_H

@@ -164,9 +164,6 @@ void nqueens(int n, int j, char *a, int *solutions, int depth)
     csols = alloca(n*sizeof(int));
     memset(csols,0,n*sizeof(int));
 
-    // The task wait counter
-    struct mir_twc_t* twc = mir_twc_create();
-
     /* try each possible position for queen <j> */
     for (i = 0; i < n; i++) 
     {
@@ -181,7 +178,7 @@ void nqueens(int n, int j, char *a, int *solutions, int depth)
                 imm_args.csols = csols;
                 imm_args.i = i;
 
-                struct mir_task_t* task_0 = mir_task_create((mir_tfunc_t) smp_ol_nqueens_0, (void*) &imm_args, sizeof(struct nanos_args_0_t), twc, 0, NULL, NULL);
+                mir_task_create((mir_tfunc_t) smp_ol_nqueens_0, (void*) &imm_args, sizeof(struct nanos_args_0_t), 0, NULL, NULL);
         } 
         else 
         {
@@ -192,7 +189,7 @@ void nqueens(int n, int j, char *a, int *solutions, int depth)
     }
 
     // Wait for tasks to finish
-    mir_twc_wait(twc);
+    mir_task_wait();
 
     for ( i = 0; i < n; i++) 
         *solutions += csols[i];

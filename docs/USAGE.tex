@@ -1,0 +1,384 @@
+\documentclass[11pt,a4paper,notitlepage]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{graphicx}
+\usepackage{enumerate}
+\usepackage{xcolor}
+\definecolor{bg}{rgb}{0.95,0.95,0.95}
+\usepackage{ulem}
+\usepackage{listings}
+%\usepackage{vhistory}
+\usepackage[parfill]{parskip}
+
+\lstdefinestyle{BashInputStyle}{
+  language=bash,
+  basicstyle=\small\sffamily,
+  commentstyle=\color{black},    
+  numberstyle=\tiny\color{black}, 
+  keywordstyle=\color{black},       
+  extendedchars=true,              
+  numbers=none,
+  numbersep=3pt,
+  frame=tb,
+  columns=fullflexible,
+  backgroundcolor=\color{yellow!20},
+  linewidth=\linewidth,
+  breaklines=true,
+  breakatwhitespace=false,           
+  showspaces=false,
+  keepspaces=true,                 
+  captionpos=b,                    
+  showspaces=false,                
+  showstringspaces=false,          
+  showtabs=false,                  
+  tabsize=2,                       
+  aboveskip=\bigskipamount, 
+  belowskip=\bigskipamount,
+}
+
+\title{MIR: Installation and Usage}
+\author{Ananya Muddukrishna}
+\date{ananya@kth.se}
+
+\begin{document}
+\maketitle
+
+%% Start of the revision history table
+%\begin{versionhistory}
+%\vhEntry{1.0}{2014-06-19}{ananya} {Created}
+%\vhEntry{1.1}{2014-07-01}{ananya} {Improved OpenMP programming documentation}
+%\vhEntry{1.1}{2014-07-02}{ananya} {Simplified OpenMP programming documentation}
+%\end{versionhistory}
+
+\section{Introduction}
+MIR is a task-based runtime system library.
+MIR is written using C99 and scales well for medium-grained task-based programs. 
+MIR provides a direct interface for writing task-based programs.
+A subset of OpenMP 3.0 tasks is also supported.
+MIR is flexible - the user can experiment with different scheduling policies.
+Locality-aware scheduling and data distribution support for NUMA systems is also present.
+MIR supports extensive performance analysis and profiling features.
+Users can quickly solve performance problems using detailed thread-based and task-based performance information provided by MIR.
+
+\section{Requirements}
+Building MIR as a basic task-based runtime system requires:
+\begin{itemize}
+\item Machine with x86 architecture
+\item Linux kernel later than January 2012
+\item GCC and Binutils
+\item Scons - a build system
+\end{itemize}
+
+\subsection{Optional requirements}
+Extended features of MIR such as profiling and locality-aware scheduling require these additional software:
+\begin{itemize}
+\item libnuma - for data-distribution and locality-aware scheduling on NUMA systems
+\item PAPI - for reading hardware performance counters during thread-based profiling
+\item Paraver - for visualizing thread execution traces
+\item Python 2.X and 3.X - for executing profiling scripts
+\item Intel Pin sources - for profiling instructions executed by tasks during task-based profiling
+\item R - for executing profiling scripts
+\item These R packages: 
+\begin{itemize}
+\item igraph - for task graph processing
+\item RColorBrewer - for colors
+\item gdata, plyr - for data structure transformations
+\end{itemize}
+\item Graphviz - for task graph plotting
+\end{itemize}
+
+\section{Directory Structure}
+The MIR source repository is structured as shown below. Directories are shown using /. Nesting is shown using indentation and +.
+\begin{enumerate}[/]
+\item src - Core source files
+    \begin{enumerate}[+/]
+        \item arch - Architecture-based source files
+        \item scheduling - Scheduling policy source files
+    \end{enumerate}
+\item scripts - Various profiling and testing scripts
+    \begin{enumerate}[+/]
+        \item task-graph - Scripts for task-based profiling
+    \end{enumerate}
+\item test - programs for testing 
+    \begin{enumerate}[+/]
+        \item omp - OpenMP programs
+        \item bots - BOTS programs written using MIR programming interface
+        \item with-data-footprint - Programs where tasks have explicit data footprint 
+    \end{enumerate}
+\end{enumerate}
+
+\section{Building}
+Building the basic MIR library is simple. Follow below steps:
+\begin{enumerate}
+\item Set MIR\_ROOT environment variable to the MIR source repository path
+\begin{lstlisting}[style=BashInputStyle]
+$ export MIR_ROOT=<<MIR source repository path>>
+\end{lstlisting}
+\item Ensure MIR\_ROOT/src/SConstruct matches your build intention
+\item Build
+\begin{lstlisting}[style=BashInputStyle]
+$ cd $MIR_ROOT/src
+$ scons 
+\end{lstlisting}
+\end{enumerate}
+
+\subsection{Data-distribution and locality-aware scheduling on NUMA systems}
+Follow below steps to enable support for NUMA systems.
+\begin{enumerate}
+\item Install libnuma and numactl
+\item Create an empty file called HAVE\_LIBNUMA
+\begin{lstlisting}[style=BashInputStyle]
+$ touch $MIR_ROOT/src/HAVE_LIBNUMA
+\end{lstlisting}
+\item Clean and rebuild MIR
+\begin{lstlisting}[style=BashInputStyle]
+$ cd $MIR_ROOT/src
+$ scons -c
+$ scons 
+\end{lstlisting}
+\end{enumerate}
+
+\section{Task-based Programming Interface}
+MIR provides a direct task-based programming interface and supports a subset of OpenMP 3.0 tasks.
+
+\subsection{Direct task-based programming interface}
+MIR provides a basic interface for task-based programming. Look at mir\_public\_int.h in MIR\_ROOT/src for interface details and programs in MIR\_ROOT/test for interface usage details. A simple example program is shown below. 
+
+\begin{lstlisting}[style=BashInputStyle]
+#include "mir_public_int.h"
+
+void foo(int id)
+{
+    printf(stderr, "Hello from task %d\n", id);
+}
+
+struct foo_wrapper_arg_t 
+{
+    int id;
+};
+
+void foo_wrapper(void* arg)
+{
+    struct foo_wrapper_arg_t* farg = (struct foo_wrapper_arg_t*)(arg);
+    foo(farg->id);
+}
+
+int main(int argc, char *argv[])
+{
+    // Initialize the runtime system
+    mir_create();
+
+    // Create as many tasks as there are threads
+    int num_workers = mir_get_num_threads();
+    for(int i=0; i<num_workers; i++)
+    {
+            struct foo_wrapper_arg_t arg;
+            arg.id = i;
+            mir_task_create((mir_tfunc_t) foo_wrapper, &arg, sizeof(struct foo_wrapper_arg_t), 0, NULL, NULL);
+    }
+        
+    // Wait for tasks to finish
+    mir_task_wait();
+
+    // Release runtime system resources
+    mir_destroy();
+
+    return 0;
+}
+\end{lstlisting}
+
+\subsection{OpenMP 3.0 task-based programming subset}
+MIR also supports a subset of OpenMP 3.0 tasks. 
+Only the \texttt{task} and \texttt{taskwait} constructs are supported.
+These constructs are sufficient for writing most task based programs.
+Note that the constructs are supported by intercepting GCC translated calls to GNU libgomp interfaces.
+Therefore OpenMP 3.0 task support is restricted to programs compiled using GCC.
+
+The parallel construct is deprecated.
+MIR creates a team of threads during initialization - when mir\_create is called.
+Threads are released when mir\_destroy is called.
+
+Tips to write OpenMP 3.0 task programs supported by MIR:
+\begin{itemize}
+\item Initialize and release the runtime system explicitly by calling mir\_create and mir\_destroy.
+\item Do not think in terms of threads. Think in terms of tasks.
+\item Do not use the parallel construct to share work. 
+\item Do not use barriers to synchronize threads.
+\item Use the task construct to parallelize work. Use clauses shared, firstprivate and private to indicate the data environment.
+\item Use taskwait to synchronize tasks.
+\item Use mir\_lock instead of the \texttt{critical} construct or use native locks such as pthread\_lock.
+\item Use gcc atomic builtins for flushing and atomic operations.
+\item Look at examples in MIR\_ROOT/test/omp.
+\end{itemize}
+
+A simple set of steps we use often when producing MIR supported OpenMP programs is as follows:
+\begin{enumerate}
+\item When parallel execution is required, create a \texttt{parallel} block  with default(none) followed immediately by a \texttt{single} block. 
+\item Use the \texttt{task} construct within the \texttt{single} block to parallelize work. 
+\item Synchronize tasks using the \texttt{taskwait} construct explicitly. Do not rely on implicit barriers and taskwaits.
+\item Parallelizing work inside a master task context is helpful while interpreting profiling results.
+\item Compile and link with the native OpenMP implementation (libgomp) and check if the program runs correctly. 
+\item Comment out the parallel and single blocks, initialize the MIR runtime system right in the beginning of the program and release it at the end of the program, include mir\_public\_int.h, compile and link with the appropriate MIR library (opt/debug/prof) to produce the executable.
+\end{enumerate}
+
+The directly-programmed example shown previously written using the OpenMP 3.0 task subset supported by MIR is shown below.
+
+\begin{lstlisting}[style=BashInputStyle]
+int main(int argc, char *argv[])
+{
+    // Initialize the runtime system
+    mir_create();
+
+//#pragma omp parallel default(none)
+//{
+//#pragma omp single
+//{
+// Master task context: helpful for interpreting profiling results.
+#pragma omp task
+{
+    // Now parallelize the work involved
+    // Work in this case: create as many tasks as there are threads
+    int num_workers = mir_get_num_threads();
+    for(int i=0; i<num_workers; i++)
+    {
+        #pragma omp task firstprivate(i)
+            foo(i);
+    }
+        
+    // Wait for tasks to finish
+    #pragma omp taskwait
+}
+// Wait for master task to finish
+#pragma omp taskwait
+//}
+//}
+    // Release runtime system resources
+    mir_destroy();
+
+    return 0;
+}
+\end{lstlisting}
+
+Look at test programs in MIR\_ROOT/test for advanced usage examples.
+
+\section{Testing}
+MIR does not have a dedicated test case (unit testing) suite yet. The fib test program (Fibonacci number calculation) is recommended for testing.
+
+\begin{lstlisting}[style=BashInputStyle]
+$ cd $MIR_ROOT/test/fib
+$ scons -c
+$ scons
+$ echo "Executing verbose build"
+$ ./fib-verbose
+$ echo "Executing debug build"
+$ ./fib-debug
+$ echo "Executing optimized (production) build"
+$ ./fib-opt
+\end{lstlisting}
+
+Other test programs in MIR\_ROOT/test can also be used for testing.
+
+\subsection{Compiling and linking}
+Look at SConstruct - the scons build file - of each test program to understand how to compile and link with the MIR library. Observing scons build messages is also recommended.
+
+\subsection{Configuration}
+MIR has several configurable options which can be set using the environment variable MIR\_CONF. Set the -h flag to see available configuration options.
+
+\begin{lstlisting}[style=BashInputStyle]
+$ cd $MIR_ROOT/test/fib
+$ scons 
+$ MIR_CONF="-h" ./fib-opt 3
+\end{lstlisting}
+
+\section{Profiling}
+MIR supports detailed thread-based and task-based profiling.
+
+\subsection{Thread-based profiling}
+Thread states and events are main performance indicators in thread-based profiling. 
+
+Enable the -r flag to get detailed per-thread state and event information in files with .rec extension.
+Each rec file represents a worker thread.
+The name of each rec file begins with the Unix time when the runtime system was initialized.
+The rec files can be inspected individually or combined and visualized using Paraver.
+
+\begin{lstlisting}[style=BashInputStyle]
+$ rm *.rec *.prv *.pcf
+$ MIR_CONF="-r" ./fib-opt
+$ $MIR_ROOT/scripts/mirtoparaver.py *-config.rec 
+$ wxparaver *-paraver.prv
+\end{lstlisting}
+
+A set of files matching the pattern <<Unix time>>-state-time*.rec are also created when -r is enabled. 
+These files contain thread state duration information which can be aggregated for analysis without Paraver.
+
+\begin{lstlisting}[style=BashInputStyle]
+$ $MIR_ROOT/scripts/get-state-stats.sh <<Unix time>>
+$ cat state-file-acc.info
+\end{lstlisting}
+
+Hardware performance counters can be read during thread events. This process is not fully automated and needs work from the user.
+
+First install PAPI. 
+Then set the PAPI\_ROOT environment variable and create a file called HAVE\_PAPI in MIR\_ROOT/src.
+Next enable the preprocessor definition MIR\_RECORDER\_USE\_HW\_PERF\_COUNTERS in MIR\_ROOT/src/mir\_defines.h.
+Next enable hardware performance counters of interest in MIR\_ROOT/src/mir\_recorder.{c|h}.
+Rebuild MIR.
+
+\begin{lstlisting}[style=BashInputStyle]
+$ export PAPI_ROOT=<<PAPI install path, typically /usr>>
+$ touch $MIR_ROOT/src/HAVE_PAPI
+$ cat mir_defines.h mir_recorder.{c|h}
+$ scons
+\end{lstlisting}
+
+Performance counter readings will be now be added to .rec files produced by enabling thread-based profiling (-r flag). 
+The readings can either be viewed on Paraver or aggregated for analysis outside Paraver. 
+
+\begin{lstlisting}[style=BashInputStyle]
+$ $MIR_ROOT/scripts/get-event-counts.sh <<.prv file>>
+$ cat event-counts-*.txt
+\end{lstlisting}
+
+\subsection{Task-based profiling}
+Task are first-class citizens in task-based profiling.
+
+Enable the -i flag in MIR\_CONF to get basic task-based information in a file called mir-stats.
+
+\begin{lstlisting}[style=BashInputStyle]
+$ MIR_CONF="-i" ./fib-opt
+$ cat mir-stats
+\end{lstlisting}
+
+Enable the -g flag to generate and plot the fork-join task graph that unfolded during execution.
+
+\begin{lstlisting}[style=BashInputStyle]
+$ MIR_CONF="-g" ./fib-opt
+$ Rscript ${MIR_ROOT}/scripts/task-graph/mir-fork-join-graph-plot.R mir-task-graph color
+\end{lstlisting}
+
+MIR can also generate an instruction-level profile of tasks.
+Instruction-level task profiling support is restricted to programs compiled using GCC.
+To enable instruction-level profiling support, first get PIN sources and set the below environment variables.
+
+\begin{lstlisting}[style=BashInputStyle]
+$ export PIN_ROOT=<<Pin source path>>
+$ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:<<Pin install path>>
+\end{lstlisting}
+
+Next, edit PIN\_ROOT/source/tools/Config/makefile.unix.config and add -fopenmp (note the -) to variables 
+\begin{tiny}{TOOL\_LDFLAGS\_NOOPT, TOOL\_CXXFLAGS\_NOOPT}.\end{tiny}
+
+Next build mir\_outline\_function\_profiler.so - the Pin tool which profiles tasks.
+\begin{lstlisting}[style=BashInputStyle]
+$ cd $MIR_ROOT/scripts/task-graph
+$ make PIN_ROOT=$PIN_ROOT
+\end{lstlisting}
+
+View profiling options options using -h.
+\begin{lstlisting}[style=BashInputStyle]
+$ $PIN_ROOT/intel64/bin/pinbin -t $MIR_ROOT/scripts/task-graph/obj-intel64/mir_outline_function_profiler.so -h -- echo
+\end{lstlisting}
+
+Look at MIR\_ROOT/docs/ATG.pdf for more information on instruction-level profiling.
+Also, the file MIR\_ROOT/test/fib/profile-test.sh shows how to automate instruction-level profiling.
+\end{document}

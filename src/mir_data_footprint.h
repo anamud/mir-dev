@@ -3,11 +3,16 @@
 
 #include <stdint.h>
 #include <stdlib.h>
-#include "mir_mem_pol.h"
+#include "mir_defines.h"
 #include "mir_types.h"
+
+#ifdef MIR_MEM_POL_ENABLE
+#include "mir_mem_pol.h"
+#endif
 
 BEGIN_C_DECLS 
 
+/*LIBINT_DECL_BEGIN*/
 enum mir_data_access_t 
 {
     MIR_DATA_ACCESS_READ = 0,
@@ -26,11 +31,14 @@ struct mir_data_footprint_t
     mir_data_access_t data_access;
     void* part_of;
 };
+/*LIBINT_DECL_END*/
 
 void mir_data_footprint_copy(struct mir_data_footprint_t* dest, struct mir_data_footprint_t* src);
 
+#ifdef MIR_MEM_POL_ENABLE
 // Note: This adds to dist
 void mir_data_footprint_get_dist(struct mir_mem_node_dist_t* dist, struct mir_data_footprint_t* footprint);
+#endif
 
 END_C_DECLS 
 

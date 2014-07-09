@@ -1,10 +1,10 @@
 #include "mir_worker.h"
 #include "mir_task.h"
 #include "mir_recorder.h"
-#include "mir_sched_pol.h"
+#include "scheduling/mir_sched_pol.h"
 #include "mir_runtime.h"
 #include "mir_memory.h"
-#include "mir_debug.h"
+#include "mir_utils.h"
 #include "mir_lock.h"
 #include "mir_defines.h"
 
@@ -20,7 +20,7 @@ uint32_t g_num_tasks_waiting = 0;
 extern uint32_t g_sig_worker_alive;
 extern struct mir_runtime_t* runtime;
 
-void* mir_worker_loop(void* arg)
+static void* mir_worker_loop(void* arg)
 {/*{{{*/
     struct mir_worker_t* worker = (struct mir_worker_t*) arg;
 
@@ -153,6 +153,9 @@ void mir_worker_local_init(struct mir_worker_t* worker)
 
     // For task graph generation
     worker->task_graph_node = NULL;
+
+    // Create private task queue
+    worker->private_queue = mir_queue_create(runtime->sched_pol->queue_capacity);
 }/*}}}*/
 
 static inline void mir_worker_backoff_reset(struct mir_worker_t* worker)
@@ -167,11 +170,44 @@ static inline void mir_worker_backoff(struct mir_worker_t* worker)
         worker->backoff_us *= MIR_WORKER_EXP_BOFF_SCALE;
 }/*}}}*/
 
+void mir_worker_push(struct mir_worker_t* worker, struct mir_task_t* task)
+{/*{{{*/
+    if( false == mir_queue_push(worker->private_queue, (void*) task) )
+        MIR_ABORT(MIR_ERROR_STR "Cannot enque task into private queue. Increase queue capacity using MIR_CONF.\n");
+
+    __sync_fetch_and_add(&g_num_tasks_waiting, 1);
+    // Update stats
+    if(runtime->enable_stats)
+        worker->status->num_tasks_created++;
+}/*}}}*/
+
+static inline bool mir_worker_pop(struct mir_worker_t* worker, struct mir_task_t** task)
+{/*{{{*/
+    bool found = 0;
+    struct mir_queue_t* queue = worker->private_queue;
+    if(mir_queue_size(queue) > 0)
+    {
+        mir_queue_pop(queue, (void**)&(*task));
+        if(*task)
+        {
+            __sync_fetch_and_sub(&g_num_tasks_waiting, 1);
+            T_DBG("Dq", *task);
+
+            found = 1;
+
+        }
+    }
+
+    return found;
+}/*}}}*/
+
 void mir_worker_do_work(struct mir_worker_t* worker, bool backoff)
 {/*{{{*/
     // Try to find tasks to execute
     struct mir_task_t* task = NULL;
-    bool work_available = runtime->sched_pol->pop(&task);
+    bool work_available = 0;
+
+    work_available = mir_worker_pop(worker, &task);
     if(work_available == 1) 
     {
         // Update busy counter
@@ -183,28 +219,38 @@ void mir_worker_do_work(struct mir_worker_t* worker, bool backoff)
         // Update busy counter
         __sync_fetch_and_sub(&g_worker_status_board, 1);
 
-        /*if(backoff)*/
-        /*{*/
-            // Update backoff
-            mir_worker_backoff_reset(worker);
-        /*}*/
+        // Update backoff
+        mir_worker_backoff_reset(worker);
+
+        return;
     }
-    else 
-    { 
-        // Do other useful things such as ...
-        // Release independant tasks
-        // For now we backoff
-        if(backoff)
-        {
-            mir_worker_backoff(worker);
-        }
+    
+    work_available = runtime->sched_pol->pop(&task);
+    if(work_available == 1) 
+    {
+        // Update busy counter
+        __sync_fetch_and_add(&g_worker_status_board, 1);
+
+        // Execute task
+        mir_task_execute(task);
+
+        // Update busy counter
+        __sync_fetch_and_sub(&g_worker_status_board, 1);
+
+        // Update backoff
+        mir_worker_backoff_reset(worker);
+
+        return;
+    }
+    
+    // Do other useful things such as ...
+    // Release independant tasks
+    // For now we backoff
+    if(backoff)
+    {
+        mir_worker_backoff(worker);
     }
 }/*}}}*/
-
-//uint16_t mir_worker_get_id(struct mir_worker_t* worker)
-/*{[>{{{<]*/
-    /*return worker->id;*/
-/*}[>}}}<]*/
 
 void mir_worker_check_done()
 {/*{{{*/
@@ -239,6 +285,7 @@ void mir_worker_status_init(struct mir_worker_status_t* status)
         status->total_comm_cost = 0;
         status->lowest_comm_cost = -1; 
         status->highest_comm_cost = 0;
+#ifdef MIR_MEM_POL_ENABLE
         if(0 == strcmp(runtime->sched_pol->name, "numa") && runtime->arch->diameter > 0)
         {
             status->num_comm_tasks_stolen_by_diameter = mir_malloc_int(sizeof(uint32_t) * runtime->arch->diameter);
@@ -249,6 +296,9 @@ void mir_worker_status_init(struct mir_worker_status_t* status)
         {
             status->num_comm_tasks_stolen_by_diameter = NULL;
         }
+#else
+        status->num_comm_tasks_stolen_by_diameter = NULL;
+#endif
     }
 }/*}}}*/
 
@@ -337,7 +387,7 @@ void mir_worker_update_task_graph(struct mir_worker_t* worker, struct mir_task_t
 
 void mir_task_graph_write_header_to_file(FILE* file)
 {/*{{{*/
-    fprintf(file, "task,parent,join_node,join_node_parent,join_node_pass_count,execution_start_time\n");
+    fprintf(file, "task,parent,joins_at,core_id,child_number,num_children,exec_cycles\n");
 }/*}}}*/
 
 void mir_task_graph_write_to_file(struct mir_task_graph_node_t* node, FILE* file)
@@ -345,22 +395,19 @@ void mir_task_graph_write_to_file(struct mir_task_graph_node_t* node, FILE* file
     struct mir_task_graph_node_t* temp = node;
     while(temp != NULL)
     {
-        mir_id_t task_parent, twc_parent;
+        mir_id_t task_parent;
         task_parent.uid = 0;
-        twc_parent.uid = 0;
         if(temp->task->parent)
             task_parent.uid = temp->task->parent->id.uid;
-        if(temp->task->twc)
-            if(temp->task->twc->parent)
-                twc_parent.uid = temp->task->twc->parent->id.uid;
 
-        fprintf(file, "%" MIR_FORMSPEC_UL ",%" MIR_FORMSPEC_UL ",%" MIR_FORMSPEC_UL ",%" MIR_FORMSPEC_UL ",%lu" ",%" MIR_FORMSPEC_UL "\n", 
+        fprintf(file, "%" MIR_FORMSPEC_UL ",%" MIR_FORMSPEC_UL ",%lu,%u,%u,%u,%" MIR_FORMSPEC_UL "\n", 
                 temp->task->id.uid, 
                 task_parent.uid,
-                (temp->task->twc == NULL)? 0 : temp->task->twc->id.uid,
-                twc_parent.uid,
                 temp->pass_count,
-                temp->task->execution_start_time);
+                temp->task->core_id,
+                temp->task->child_number,
+                temp->task->num_children,
+                temp->task->exec_cycles);
 
         temp = temp->next;
     }

@@ -4,11 +4,11 @@
 #include "mir_worker.h"
 #include "mir_recorder.h"
 #include "mir_runtime.h"
-#include "mir_sched_pol.h"
-#include "mir_debug.h"
+#include "scheduling/mir_sched_pol.h"
+#include "mir_utils.h"
 #include "mir_memory.h"
 #include "mir_data_footprint.h"
-#include "mir_perf.h"
+#include "mir_queue.h"
 
 #include <stdint.h>
 #include <stdlib.h>
@@ -20,7 +20,6 @@ extern struct mir_runtime_t* runtime;
 extern uint32_t g_num_tasks_waiting;
 
 static uint64_t g_tasks_uidc = MIR_TASK_ID_START + 1;
-static uint64_t g_taskwaits_uidc = MIR_TASKWAIT_ID_START + 1;
 
 static inline unsigned int mir_twc_reduce(struct mir_twc_t* twc)
 {/*{{{*/
@@ -54,130 +53,8 @@ static inline bool inline_task()
     return false;
 }/*}}}*/
 
-struct mir_task_t* mir_task_create(mir_tfunc_t tfunc, void* data, size_t data_size, struct mir_twc_t* twc, unsigned int num_data_footprints, struct mir_data_footprint_t* data_footprints, const char* name)
+static inline struct mir_task_t* mir_task_create_common(mir_tfunc_t tfunc, void* data, size_t data_size, unsigned int num_data_footprints, struct mir_data_footprint_t* data_footprints, const char* name)
 {/*{{{*/
-    // To inline or not to line, that is the grand question!
-    if(inline_task())
-    {
-        tfunc(data);
-        // Update stats
-        struct mir_worker_t* worker = mir_worker_get_context(); 
-        if(runtime->enable_stats)
-            worker->status->num_tasks_inlined++;
-        return NULL;
-    }
-
-    // Go on and create the task
-    MIR_RECORDER_STATE_BEGIN(MIR_STATE_TCREATE);
-
-    struct mir_task_t* task = NULL;
-#ifdef MIR_TASK_ALLOCATE_ON_STACK
-    task = (struct mir_task_t*) alloca (sizeof(struct mir_task_t));
-#else
-    task = (struct mir_task_t*) mir_malloc_int (sizeof(struct mir_task_t));
-#endif
-    if(task == NULL)
-        MIR_ABORT(MIR_ERROR_STR "Could not allocate memory!\n");
-
-    // Task function and argument data
-    task->func = tfunc;
-#ifdef MIR_TASK_VARIABLE_DATA_SIZE
-    task->data = mir_malloc_int(sizeof(char) * data_size);
-#else
-    MIR_ASSERT(data_size <= MIR_TASK_DATA_MAX_SIZE);
-#endif
-    task->data_size = data_size;
-    memcpy((void*)&task->data[0], data, data_size);
-
-    // Task unique id
-    // A running number
-    task->id.uid = __sync_fetch_and_add(&(g_tasks_uidc), 1);
-
-    // Creation time
-    task->creation_time = mir_get_cycles();
-
-    // Task name
-    strcpy(task->name, MIR_TASK_DEFAULT_NAME);
-    if(name)
-    {/*{{{*/
-        if(strlen(name) > MIR_SHORT_NAME_LEN)
-            MIR_ABORT(MIR_ERROR_STR "Task name longer than %d characters!\n", MIR_SHORT_NAME_LEN);
-        else
-            strcpy(task->name, name);
-    }/*}}}*/
-
-    // Task wait counter
-    task->ctwc = mir_twc_create();
-    task->twc = NULL;
-    if(twc) 
-    {
-        task->twc = twc;
-        __sync_fetch_and_add(&(task->twc->count), 1);
-    }
-
-    // Communication cost
-    // Initially communication cost is unknown
-    // Is determined when task is scheduled
-    task->comm_cost = -1;
-
-    // Data footprint
-    for(int i=0; i<MIR_DATA_ACCESS_NUM_TYPES; i++)
-        task->dist_by_access_type[i] = NULL;
-    task->num_data_footprints = 0;
-    task->data_footprints = NULL;
-    if (num_data_footprints > 0)
-    {/*{{{*/
-        // FIXME: Dynamic allocation increases task creation time
-#ifdef MIR_TASK_ALLOCATE_ON_STACK
-        task->data_footprints = ( struct mir_data_footprint_t* ) alloca ( num_data_footprints * sizeof( struct mir_data_footprint_t ) );
-#else
-        task->data_footprints = ( struct mir_data_footprint_t* ) mir_malloc_int ( num_data_footprints * sizeof( struct mir_data_footprint_t ) );
-#endif
-        if(task->data_footprints == NULL)
-            MIR_ABORT(MIR_ERROR_STR "Could not allocate memory!\n");
-
-        for (int i=0; i<num_data_footprints; i++)
-        {
-            mir_data_footprint_copy(&task->data_footprints[i], &data_footprints[i]);
-        }
-
-        task->num_data_footprints = num_data_footprints;
-    }/*}}}*/
-
-    // Task parent
-    struct mir_worker_t* worker = mir_worker_get_context(); 
-    task->parent = worker->current_task;
-
-    // Flags
-    task->done = 0;
-
-    // Task is now created
-    T_DBG("Cr", task);
-
-    // Schedule task
-    mir_task_schedule(task);
-
-    MIR_RECORDER_STATE_END(NULL, 0);
-
-    return task;
-}/*}}}*/
-
-struct mir_task_t* mir_task_create_pw(mir_tfunc_t tfunc, void* data, size_t data_size, unsigned int num_data_footprints, struct mir_data_footprint_t* data_footprints, const char* name)
-{/*{{{*/
-    // To inline or not to line, that is the grand question!
-    if(inline_task())
-    {
-        tfunc(data);
-        // Update stats
-        struct mir_worker_t* worker = mir_worker_get_context(); 
-        if(runtime->enable_stats)
-            worker->status->num_tasks_inlined++;
-        return NULL;
-    }
-
-    // Go on and create the task
-    MIR_RECORDER_STATE_BEGIN(MIR_STATE_TCREATE);
-
     struct mir_task_t* task = NULL;
 #ifdef MIR_TASK_ALLOCATE_ON_STACK
     task = (struct mir_task_t*) alloca (sizeof(struct mir_task_t));
@@ -200,9 +77,6 @@ struct mir_task_t* mir_task_create_pw(mir_tfunc_t tfunc, void* data, size_t data
     // Task unique id
     // A running number
     task->id.uid = __sync_fetch_and_add(&(g_tasks_uidc), 1);
-
-    // Creation time
-    task->creation_time = mir_get_cycles();
 
     // Task name
     strcpy(task->name, MIR_TASK_DEFAULT_NAME);
@@ -254,6 +128,15 @@ struct mir_task_t* mir_task_create_pw(mir_tfunc_t tfunc, void* data, size_t data
     else
         task->twc = runtime->ctwc;
     __sync_fetch_and_add(&(task->twc->count), 1);
+    
+    // Task child matters
+    task->num_children = 0;
+    task->child_number = 0;
+    if(task->parent)
+    {
+        __sync_fetch_and_add(&(task->parent->num_children), 1);
+        task->child_number = task->parent->num_children;
+    }
 
     // Flags
     task->done = 0;
@@ -262,41 +145,83 @@ struct mir_task_t* mir_task_create_pw(mir_tfunc_t tfunc, void* data, size_t data
     // Task is now created
     T_DBG("Cr", task);
 
-    // Schedule task
-    mir_task_schedule(task);
-
-    MIR_RECORDER_STATE_END(NULL, 0);
-
     return task;
 }/*}}}*/
 
-void mir_task_destroy(struct mir_task_t* task)
+static inline void mir_task_schedule(struct mir_task_t* task)
 {/*{{{*/
-    // FIXME: Free the task!
-}/*}}}*/
-
-void mir_task_schedule(struct mir_task_t* task)
-{/*{{{*/
-    // Check if task can be scheduled
-    // Analyze dependences
-    if(runtime->enable_dependence_resolver == 1 && task->num_data_footprints> 0) 
-    {
-        MIR_ABORT(MIR_ERROR_STR "Dependence reolver not supported yet!\n");
-    } 
-    else 
-        mir_task_schedule_int(task);
-}/*}}}*/
-
-void mir_task_schedule_int(struct mir_task_t* task)
-{/*{{{*/
-    // Get this worker
-    struct mir_worker_t* worker = mir_worker_get_context();
-
     // Push task to the scheduling policy
     runtime->sched_pol->push(task);
 
     //__sync_synchronize();
     T_DBG("Sb", task);
+}/*}}}*/
+
+static inline void mir_task_schedule_on(struct mir_task_t* task, unsigned int target)
+{/*{{{*/
+    // Push task to target
+    // Target = specific worker 
+    struct mir_worker_t* worker = &runtime->workers[target];
+
+    mir_worker_push(worker, task);
+
+    //__sync_synchronize();
+    T_DBG("Sb", task);
+}/*}}}*/
+
+void mir_task_create(mir_tfunc_t tfunc, void* data, size_t data_size, unsigned int num_data_footprints, struct mir_data_footprint_t* data_footprints, const char* name)
+{/*{{{*/
+    // To inline or not to line, that is the grand question!
+    if(inline_task())
+    {
+        tfunc(data);
+        // Update stats
+        struct mir_worker_t* worker = mir_worker_get_context(); 
+        if(runtime->enable_stats)
+            worker->status->num_tasks_inlined++;
+        return;
+    }
+
+    // Go on and create the task
+    MIR_RECORDER_STATE_BEGIN(MIR_STATE_TCREATE);
+
+    // Create task
+    struct mir_task_t* task = mir_task_create_common(tfunc, data, data_size, num_data_footprints, data_footprints, name);
+
+    // Schedule task
+    mir_task_schedule(task);
+
+    MIR_RECORDER_STATE_END(NULL, 0);
+}/*}}}*/
+
+void mir_task_create_on(mir_tfunc_t tfunc, void* data, size_t data_size, unsigned int num_data_footprints, struct mir_data_footprint_t* data_footprints, const char* name, unsigned int target)
+{/*{{{*/
+    // To inline or not to line, that is the grand question!
+    if(inline_task())
+    {
+        tfunc(data);
+        // Update stats
+        struct mir_worker_t* worker = mir_worker_get_context(); 
+        if(runtime->enable_stats)
+            worker->status->num_tasks_inlined++;
+        return;
+    }
+
+    // Go on and create the task
+    MIR_RECORDER_STATE_BEGIN(MIR_STATE_TCREATE);
+
+    // Create task
+    struct mir_task_t* task = mir_task_create_common(tfunc, data, data_size, num_data_footprints, data_footprints, name);
+
+    // Schedule task
+    mir_task_schedule_on(task, target);
+
+    MIR_RECORDER_STATE_END(NULL, 0);
+}/*}}}*/
+
+static void mir_task_destroy(struct mir_task_t* task)
+{/*{{{*/
+    // FIXME: Free the task!
 }/*}}}*/
 
 void mir_task_execute(struct mir_task_t* task)
@@ -306,7 +231,6 @@ void mir_task_execute(struct mir_task_t* task)
 
     // Compose event metadata
     char event_meta_data[MIR_RECORDER_EVENT_META_DATA_MAX_SIZE-1] = {0};
-    //char* event_meta_data = alloca(sizeof(char) * MIR_SHORT_NAME_LEN);
     sprintf(event_meta_data, "%" MIR_FORMSPEC_UL ",%s", task->id.uid, task->name);
 
     //MIR_DEBUG("%" MIR_FORMSPEC_UL ",%s\n", task->id.uid, task->name);
@@ -315,17 +239,21 @@ void mir_task_execute(struct mir_task_t* task)
     MIR_RECORDER_EVENT(&event_meta_data[0], MIR_RECORDER_EVENT_META_DATA_MAX_SIZE-1);
     MIR_RECORDER_STATE_BEGIN( MIR_STATE_TEXEC);
 
+    // Current task timing
+    if(worker->current_task)
+        worker->current_task->exec_cycles += (mir_get_cycles() - worker->current_task->exec_resume_instant);
+
     // Save task context of worker
     struct mir_task_t* temp = worker->current_task;
 
     // Update task context of worker
     worker->current_task = task;
 
-    // Execution start time
-    task->execution_start_time = mir_get_cycles();
+    // Current task timing
+    worker->current_task->exec_cycles = 0;
+    worker->current_task->exec_resume_instant = mir_get_cycles();
 
     // Write task id to shared memory.
-    // And wait for it to be read
     if(runtime->enable_shmem_handshake == 1)
     {
         char buf[MIR_SHM_SIZE] = {0};
@@ -337,15 +265,21 @@ void mir_task_execute(struct mir_task_t* task)
     // Execute task function
     task->func(task->data);
 
-    // Make sure Pin has read the data
-    //if(runtime->enable_shmem_handshake == 1)
-        //while(*(runtime->shm) != MIR_SHM_SIGREAD) {}
+    // Record where executed
+    task->core_id = worker->core_id;
+
+    // Current task timing
+    worker->current_task->exec_cycles += (mir_get_cycles() - worker->current_task->exec_resume_instant);
 
     // Add to task graph
     mir_worker_update_task_graph(worker, task);
 
     // Restore task context of worker
     worker->current_task = temp;
+
+    // Current task timing
+    if(worker->current_task)
+        worker->current_task->exec_resume_instant = mir_get_cycles();
 
     //MIR_INFORM(MIR_INFORM_STR "Task %" MIR_FORMSPEC_UL " executed on worker %d\n", task->id.uid, worker->id);
 
@@ -365,8 +299,10 @@ void mir_task_execute(struct mir_task_t* task)
     __sync_synchronize();
 
     // FIXME Destroy task !
+    // NOTE: Destroying task upsets task graph structure
 }/*}}}*/
 
+#ifdef MIR_MEM_POL_ENABLE
 struct mir_mem_node_dist_t* mir_task_get_footprint_dist(struct mir_task_t* task, mir_data_access_t access)
 {/*{{{*/
     if(task->num_data_footprints == 0)
@@ -392,33 +328,7 @@ struct mir_mem_node_dist_t* mir_task_get_footprint_dist(struct mir_task_t* task,
 
     return task->dist_by_access_type[access];
 }/*}}}*/
-
-void mir_task_wait(struct mir_task_t* task)
-{/*{{{*/
-    if(!task)
-        return;
-
-    MIR_RECORDER_STATE_BEGIN(MIR_STATE_TSYNC);
-
-    struct mir_worker_t* worker = mir_worker_get_context();
-
-    // Wait and do useful work
-    while(task->done != 1)
-    {
-        __sync_synchronize();
-        T_DBG("Wa", task);
-#ifdef MIR_WORKER_BACKOFF_DURING_SYNC
-    // Sync with backoff=true
-    mir_worker_do_work(worker, true);
-#else
-    // Sync with backoff=false
-    mir_worker_do_work(worker, false);
 #endif
-    }
-
-    MIR_RECORDER_STATE_END(NULL, 0);
-    return;
-}/*}}}*/
 
 struct mir_twc_t* mir_twc_create() 
 {/*{{{*/
@@ -431,10 +341,6 @@ struct mir_twc_t* mir_twc_create()
 
    twc->count = 0;
 
-    // Task wait unique id
-    // A running number
-    twc->id.uid = __sync_fetch_and_add(&(g_taskwaits_uidc), 1);
-
     // Reset num times passed
    twc->num_passes = 0;
 
@@ -443,33 +349,7 @@ struct mir_twc_t* mir_twc_create()
    return twc;
 }/*}}}*/
 
-void mir_twc_wait(struct mir_twc_t* twc)
-{/*{{{*/
-    MIR_RECORDER_STATE_BEGIN(MIR_STATE_TSYNC);
-
-    struct mir_worker_t* worker = (struct mir_worker_t*) pthread_getspecific (runtime->worker_index);
-
-    // Wait and do useful work
-    while(mir_twc_reduce(twc) != 1)
-    {
-        // __sync_synchronize();
-#ifdef MIR_WORKER_BACKOFF_DURING_SYNC
-        // Sync with backoff=true
-        mir_worker_do_work(worker, true);
-#else
-        // Sync with backoff=false
-        mir_worker_do_work(worker, false);
-#endif
-    }
-
-    // Update num times passed
-    twc->num_passes++;
-
-    MIR_RECORDER_STATE_END(NULL, 0);
-    return;
-}/*}}}*/
-
-void mir_twc_wait_pw()
+void mir_task_wait()
 {/*{{{*/
     MIR_RECORDER_STATE_BEGIN(MIR_STATE_TSYNC);
 

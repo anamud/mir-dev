@@ -57,6 +57,8 @@ struct mir_worker_t
     struct mir_task_t* current_task;
     struct mir_worker_status_t* status;
     struct mir_recorder_t* recorder;
+    //For dedicated tasks
+    struct mir_queue_t* private_queue;
     // For task graph generation
     struct mir_task_graph_node_t* task_graph_node;
 };
@@ -66,8 +68,6 @@ void mir_worker_update_bias(struct mir_worker_t* worker);
 void mir_worker_master_init(struct mir_worker_t* worker);
 
 void mir_worker_local_init(struct mir_worker_t* worker);
-
-void* mir_worker_loop(void* arg);
 
 void mir_worker_do_work(struct mir_worker_t* worker, bool backoff);
 
@@ -92,6 +92,8 @@ void mir_task_graph_write_header_to_file(FILE* file);
 void mir_task_graph_write_to_file(struct mir_task_graph_node_t* node, FILE* file);
 
 void mir_task_graph_destroy(struct mir_task_graph_node_t* node);
+
+void mir_worker_push(struct mir_worker_t* worker, struct mir_task_t* task);
 
 END_C_DECLS
 #endif 
