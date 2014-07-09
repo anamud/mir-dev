@@ -6,3 +6,5 @@ The MIR task-based runtime system is an academic software developed by Ananya Mu
 This software includes code derived from benchmarks of the Barcelona OpenMP Task Suite (BOTS) and intermediate files produced by the Mercurium compiler, both developed by Barcelona Supercomputing Center.
 
 This software includes code derived from the Glasgow Haskell Compiler.
+
+This software includes code derived from GNU libgomp.
