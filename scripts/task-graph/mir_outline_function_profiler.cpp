@@ -89,6 +89,8 @@ typedef struct _MIR_FUNCTION_STAT_
     //std::vector<VOID*> mrefs_write;
     UINT64 mem_fp_sz;
     std::vector<UINT64> mem_share;
+    std::vector<UINT64> task_create_instant;
+    std::vector<UINT64> task_wait_instant;
     struct _MIR_FUNCTION_STAT_ * next;
 } MIR_FUNCTION_STAT;/*}}}*/
 
@@ -96,7 +98,7 @@ MIR_FUNCTION_STAT* g_stat_list = NULL;
 MIR_FUNCTION_STAT* g_current_stat = NULL;
 std::stack<MIR_FUNCTION_STAT*> g_stat_stack;
 
-VOID MIRFunctionUpdateMemRefRead(VOID* memp)
+VOID MIROutlineFunctionUpdateMemRefRead(VOID* memp)
 {/*{{{*/
     if(g_current_stat)
     {
@@ -106,7 +108,7 @@ VOID MIRFunctionUpdateMemRefRead(VOID* memp)
     }
 }/*}}}*/
 
-VOID MIRFunctionUpdateMemRefWrite(VOID* memp)
+VOID MIROutlineFunctionUpdateMemRefWrite(VOID* memp)
 {/*{{{*/
     if(g_current_stat)
     {
@@ -117,32 +119,32 @@ VOID MIRFunctionUpdateMemRefWrite(VOID* memp)
 }/*}}}*/
 
 #ifdef GET_INS_MIX
-VOID MIRFunctionUpdateInsMix(INT32 index)
+VOID MIROutlineFunctionUpdateInsMix(INT32 index)
 {/*{{{*/
     if(g_current_stat)
         g_current_stat->ins_mix[index]++;
 }/*}}}*/
 #endif
 
-VOID MIRFunctionUpdateInsCount()
+VOID MIROutlineFunctionUpdateInsCount()
 {/*{{{*/
     if(g_current_stat)
         g_current_stat->ins_count++;
 }/*}}}*/
 
-VOID MIRFunctionUpdateStackRead()
+VOID MIROutlineFunctionUpdateStackRead()
 {/*{{{*/
     if(g_current_stat)
         g_current_stat->stack_read++;
 }/*}}}*/
 
-VOID MIRFunctionUpdateStackWrite()
+VOID MIROutlineFunctionUpdateStackWrite()
 {/*{{{*/
     if(g_current_stat)
         g_current_stat->stack_write++;
 }/*}}}*/
 
-VOID MIRFunctionEntry(VOID* name)
+VOID MIROutlineFunctionEntry(VOID* name)
 {/*{{{*/
     // Attach to MIR shared memory
     if(g_shmat_done == false)
@@ -193,7 +195,7 @@ VOID MIRFunctionEntry(VOID* name)
     //std::cout << "Function entered!\n";
 }/*}}}*/
 
-VOID MIRFunctionExit()
+VOID MIROutlineFunctionExit()
 {/*{{{*/
     // Memory optimziation: Free the mem_fp set
     // We are only intersted in mem_fp size for now
@@ -207,9 +209,25 @@ VOID MIRFunctionExit()
     g_stat_stack.pop();
     if(!g_stat_stack.empty())
         g_current_stat = g_stat_stack.top();
+    else
+        g_current_stat = NULL;
 
     // Debug
     //std::cout << "Function exited!\n";
+}/*}}}*/
+
+VOID MIRTaskCreateBefore()
+{/*{{{*/
+    //std::cout << "Entering task create!" << std::endl;
+    if(g_current_stat)
+        g_current_stat->task_create_instant.push_back(g_current_stat->ins_count);
+}/*}}}*/
+
+VOID MIRTaskWaitAfter()
+{/*{{{*/
+    //std::cout << "Exited task wait!" << std::endl;
+    if(g_current_stat)
+        g_current_stat->task_wait_instant.push_back(g_current_stat->ins_count);
 }/*}}}*/
 
 VOID Image(IMG img, VOID *v)
@@ -231,23 +249,23 @@ VOID Image(IMG img, VOID *v)
             RTN_Open(mirRtn);
 
             // Create new stats counter for each entry and exit of mir_execute_task
-            RTN_InsertCall(mirRtn, IPOINT_BEFORE, (AFUNPTR)MIRFunctionEntry, IARG_PTR, RTN_Name(mirRtn).c_str(), IARG_END);
-            RTN_InsertCall(mirRtn, IPOINT_AFTER, (AFUNPTR)MIRFunctionExit, IARG_END);
+            RTN_InsertCall(mirRtn, IPOINT_BEFORE, (AFUNPTR)MIROutlineFunctionEntry, IARG_PTR, RTN_Name(mirRtn).c_str(), IARG_END);
+            RTN_InsertCall(mirRtn, IPOINT_AFTER, (AFUNPTR)MIROutlineFunctionExit, IARG_END);
 
             // For each instruction with function, update entries in the stats counter
             for (INS ins = RTN_InsHead(mirRtn); INS_Valid(ins); ins = INS_Next(ins))
             {
-                INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)MIRFunctionUpdateInsCount, IARG_END);
+                INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)MIROutlineFunctionUpdateInsCount, IARG_END);
 #ifdef GET_INS_MIX
-                INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)MIRFunctionUpdateInsMix, IARG_UINT32, INS_Category(ins), IARG_END);
+                INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)MIROutlineFunctionUpdateInsMix, IARG_UINT32, INS_Category(ins), IARG_END);
 #endif
 
                 // Instrument stack accesses
                 // If instruction operates using the SP or FP, its a stack operation
                 if(INS_IsStackRead(ins))
-                    INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)MIRFunctionUpdateStackRead, IARG_END);
+                    INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)MIROutlineFunctionUpdateStackRead, IARG_END);
                 if(INS_IsStackWrite(ins))
-                    INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)MIRFunctionUpdateStackWrite, IARG_END);
+                    INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)MIROutlineFunctionUpdateStackWrite, IARG_END);
 
 #ifdef EXCLUDE_STACK_INS_FROM_MEM_FP 
                 if(!INS_IsStackRead(ins) && !INS_IsStackWrite(ins))
@@ -261,7 +279,7 @@ VOID Image(IMG img, VOID *v)
                         if (INS_MemoryOperandIsRead(ins, memOp))
                         {
                             INS_InsertPredicatedCall(
-                                ins, IPOINT_BEFORE, (AFUNPTR)MIRFunctionUpdateMemRefRead,
+                                ins, IPOINT_BEFORE, (AFUNPTR)MIROutlineFunctionUpdateMemRefRead,
                                 //IARG_INST_PTR,
                                 IARG_MEMORYOP_EA, memOp,
                                 //IARG_REG_VALUE, REG_STACK_PTR,
@@ -273,7 +291,7 @@ VOID Image(IMG img, VOID *v)
                         if (INS_MemoryOperandIsWritten(ins, memOp))
                         {
                             INS_InsertPredicatedCall(
-                                ins, IPOINT_BEFORE, (AFUNPTR)MIRFunctionUpdateMemRefWrite,
+                                ins, IPOINT_BEFORE, (AFUNPTR)MIROutlineFunctionUpdateMemRefWrite,
                                 //IARG_INST_PTR,
                                 IARG_MEMORYOP_EA, memOp,
                                 //IARG_REG_VALUE, REG_STACK_PTR,
@@ -305,17 +323,17 @@ VOID Image(IMG img, VOID *v)
             // For each instruction of the function, update entries in the stats counter
             for (INS ins = RTN_InsHead(mirRtn); INS_Valid(ins); ins = INS_Next(ins))
             {
-                INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)MIRFunctionUpdateInsCount, IARG_END);
+                INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)MIROutlineFunctionUpdateInsCount, IARG_END);
 #ifdef GET_INS_MIX
-                INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)MIRFunctionUpdateInsMix, IARG_UINT32, INS_Category(ins), IARG_END);
+                INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)MIROutlineFunctionUpdateInsMix, IARG_UINT32, INS_Category(ins), IARG_END);
 #endif
 
                 // Instrument stack accesses
                 // If instruction operates using the SP or FP, its a stack operation
                 if(INS_IsStackRead(ins))
-                    INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)MIRFunctionUpdateStackRead, IARG_END);
+                    INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)MIROutlineFunctionUpdateStackRead, IARG_END);
                 if(INS_IsStackWrite(ins))
-                    INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)MIRFunctionUpdateStackWrite, IARG_END);
+                    INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)MIROutlineFunctionUpdateStackWrite, IARG_END);
 
 #ifdef EXCLUDE_STACK_INS_FROM_MEM_FP 
                 if(!INS_IsStackRead(ins) && !INS_IsStackWrite(ins))
@@ -329,7 +347,7 @@ VOID Image(IMG img, VOID *v)
                         if (INS_MemoryOperandIsRead(ins, memOp))
                         {
                             INS_InsertPredicatedCall(
-                                ins, IPOINT_BEFORE, (AFUNPTR)MIRFunctionUpdateMemRefRead,
+                                ins, IPOINT_BEFORE, (AFUNPTR)MIROutlineFunctionUpdateMemRefRead,
                                 //IARG_INST_PTR,
                                 IARG_MEMORYOP_EA, memOp,
                                 //IARG_REG_VALUE, REG_STACK_PTR,
@@ -341,7 +359,7 @@ VOID Image(IMG img, VOID *v)
                         if (INS_MemoryOperandIsWritten(ins, memOp))
                         {
                             INS_InsertPredicatedCall(
-                                ins, IPOINT_BEFORE, (AFUNPTR)MIRFunctionUpdateMemRefWrite,
+                                ins, IPOINT_BEFORE, (AFUNPTR)MIROutlineFunctionUpdateMemRefWrite,
                                 //IARG_INST_PTR,
                                 IARG_MEMORYOP_EA, memOp,
                                 //IARG_REG_VALUE, REG_STACK_PTR,
@@ -356,9 +374,27 @@ VOID Image(IMG img, VOID *v)
             RTN_Close(mirRtn);
         }/*}}}*/
     }
+
+    // Task create 
+    RTN mirTaskCreateRtn = RTN_FindByName(img, "mir_task_create");
+    if (RTN_Valid(mirTaskCreateRtn))
+    {
+        RTN_Open(mirTaskCreateRtn);
+        RTN_InsertCall(mirTaskCreateRtn, IPOINT_BEFORE, (AFUNPTR)MIRTaskCreateBefore, IARG_END);
+        RTN_Close(mirTaskCreateRtn);
+    }
+    
+    // Task wait
+    RTN mirTaskWaitRtn = RTN_FindByName(img, "mir_task_wait");
+    if (RTN_Valid(mirTaskWaitRtn))
+    {
+        RTN_Open(mirTaskWaitRtn);
+        RTN_InsertCall(mirTaskWaitRtn, IPOINT_AFTER, (AFUNPTR)MIRTaskWaitAfter, IARG_END);
+        RTN_Close(mirTaskWaitRtn);
+    }
 }/*}}}*/
 
-VOID MIRFunctionUpdateMemFp(MIR_FUNCTION_STAT * stat)
+VOID MIROutlineFunctionUpdateMemFp(MIR_FUNCTION_STAT * stat)
 {/*{{{*/
     // Mem footprint count
     // Uniquify read and write refs to get sets R and W
@@ -383,7 +419,7 @@ VOID MIRFunctionUpdateMemFp(MIR_FUNCTION_STAT * stat)
     // std::cout << communication << ", " << load << ", " << stat->ins_count << std::endl;
 }/*}}}*/
 
-VOID MIRFunctionUpdateMemShare(MIR_FUNCTION_STAT * this_stat, size_t cutoff)
+VOID MIROutlineFunctionUpdateMemShare(MIR_FUNCTION_STAT * this_stat, size_t cutoff)
 {/*{{{*/
     // Mem footprint share
     // Intersection of this instance's memory footprint with all other instances within cutoff
@@ -435,7 +471,7 @@ VOID Fini(INT32 code, VOID *v)
 //#pragma omp task
         {
             // Update memory footprint
-            MIRFunctionUpdateMemFp(stat);
+            MIROutlineFunctionUpdateMemFp(stat);
         }
     }
 //#pragma omp taskwait
@@ -449,7 +485,7 @@ VOID Fini(INT32 code, VOID *v)
 #pragma omp task
             {
                 // Update memory sharing
-                MIRFunctionUpdateMemShare(stat, cutoff);
+                MIROutlineFunctionUpdateMemShare(stat, cutoff);
             }
         }
 #pragma omp taskwait
@@ -497,6 +533,8 @@ VOID Fini(INT32 code, VOID *v)
 #endif
         out << std::endl;
     }
+    // Close file
+    out.close();
 
     if(KnobCalcMemShare)
     {
@@ -531,6 +569,33 @@ VOID Fini(INT32 code, VOID *v)
         out.close();
     }
 
+    // Write task create and task wait instants
+    filename.clear();
+    filename = KnobOutputFileSuffix.Value(); // + "." + KnobFunctionName.Value();
+    if( KnobPid )
+        filename += "." + decstr( getpid_portable() );
+    filename += "-create_wait_instants";
+    std::cout << "Writing task create and wait invocation information to file: " << filename << " ..." << std::endl;
+    out.open(filename.c_str());
+    out << "task,ins_count,[create],[wait]" << std::endl;
+    for (MIR_FUNCTION_STAT* stat = g_stat_list; stat; stat = stat->next)
+    {
+        out << stat->id << "," << stat->ins_count << ",[";
+        std::vector<UINT64>::iterator it;
+        for(it = stat->task_create_instant.begin(); it != stat->task_create_instant.end(); it++)
+        {
+            out << *it << ",";
+        }
+        out << "],[";
+        for(it = stat->task_wait_instant.begin(); it != stat->task_wait_instant.end(); it++)
+        {
+            out << *it << ",";
+        }
+        out << "]";
+        out << std::endl;
+    }
+    // Close file
+    out.close();
 }/*}}}*/
 
 INT32 Usage()

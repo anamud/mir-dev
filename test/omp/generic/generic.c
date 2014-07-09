@@ -16,6 +16,9 @@ void process(int i, int n);
 void test(int n);
 int main(int argc, char **argv);
 
+// Defines
+#define REUSE_COUNT 2
+
 long get_usecs(void)
 {/*{{{*/
     struct timeval t;
@@ -30,28 +33,32 @@ void preprocess(int p)
 
 void process(int i, int n)
 {/*{{{*/
-    if(i%2 == 0)
-    {
-#pragma omp task
-        preprocess(0);
-    }
-#pragma omp task
-        preprocess(1);
-#pragma omp task
-        preprocess(2);
-#pragma omp taskwait
+    /*if(i%2 == 0)*/
+    /*{*/
+/*#pragma omp task*/
+        /*preprocess(0);*/
+    /*}*/
+/*#pragma omp task*/
+        /*preprocess(1);*/
+/*#pragma omp task*/
+        /*preprocess(2);*/
+/*#pragma omp taskwait*/
 
     printf("Processing %d-%d!\n", i, n);    
 }/*}}}*/
 
 void test(int n)
 {/*{{{*/
-    for(int i=0; i<n; i++)
+    for(int r=0; r<REUSE_COUNT; r++)
     {
+        for(int i=0; i<n; i++)
+        {
+            preprocess(r); 
 #pragma omp task firstprivate(i) shared(n)
-        process(i,n);
-    }
+            process(i,n);
+        }
 #pragma omp taskwait
+    }
 }/*}}}*/
 
 int main(int argc, char **argv)
@@ -69,7 +76,10 @@ int main(int argc, char **argv)
 
     long par_time_start = get_usecs();
 #pragma omp task
+{
     test(num);
+    test(num-1);
+}
 #pragma omp taskwait
     long par_time_end = get_usecs();
     double par_time = (double)( par_time_end - par_time_start) / 1000000;

@@ -15,8 +15,8 @@
 #define OPR_SCALE (42)
 #define SLEEP_MS 0
 #define LOOP_CNT 10
-#define REUSE_CNT 1
-#define SHOW_NUMA_STATS 1
+#define REUSE_CNT 2
+//#define SHOW_NUMA_STATS 1
 //#define ENABLE_FAULT_IN 
 //#define ENABLE_PREFETCH 1
 
@@ -140,7 +140,6 @@ void for_task_wrapper(void* arg)
 void map_par()
 {/*{{{*/
     PMSG("Parallel exec ... \n");
-
     for(int r=0; r<REUSE_CNT; r++)
     {
         // Split the task creation load among workers
