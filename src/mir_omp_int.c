@@ -3,6 +3,7 @@
 #include "mir_utils.h"
 #include "mir_runtime.h"
 #include "mir_worker.h"
+#include "mir_memory.h"
 
 extern struct mir_runtime_t* runtime;
 
@@ -277,8 +278,17 @@ bool GOMP_cancellation_point (int a0)
 /* task.c */
 
 void GOMP_task(void (*fn)(void *), void *data, void (*copyfn)(void *, void *), long arg_size, long arg_align, bool if_clause, unsigned flags, void** deps)
-{
-    mir_task_create((mir_tfunc_t) fn, (void*) data, (size_t)(arg_size), 0, NULL, NULL);
+{  
+    if(copyfn)
+    {
+        char* buf = mir_malloc_int(sizeof(char) * arg_size);
+        if(buf == NULL)
+            MIR_ABORT(MIR_ERROR_STR "Could not allocate memory!\n");
+        copyfn(buf, data); 
+        mir_task_create((mir_tfunc_t) fn, (void*) buf, (size_t)(arg_size), 0, NULL, NULL);
+    }
+    else
+        mir_task_create((mir_tfunc_t) fn, (void*) data, (size_t)(arg_size), 0, NULL, NULL);
 }
 void GOMP_taskwait (void)
 {

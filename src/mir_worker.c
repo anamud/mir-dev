@@ -49,7 +49,8 @@ static void* mir_worker_loop(void* arg)
 
             // Wait
             mir_lock_set(&worker->sig_die);
-            //MIR_DEBUG(MIR_DEBUG_STR "Worker %d is dead!\n", worker->id);
+            __sync_fetch_and_add(&g_sig_worker_alive, -1);
+            MIR_DEBUG(MIR_DEBUG_STR "Worker %d is dead!\n", worker->id);
             break;
         }
     }
