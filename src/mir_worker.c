@@ -124,7 +124,7 @@ void mir_worker_local_init(struct mir_worker_t* worker)
     worker->backoff_us = MIR_WORKER_EXP_BOFF_RESET;
 
     // Bind the worker
-    MIR_DEBUG(MIR_DEBUG_STR "Binding worker to core %d\n", worker->core_id);
+    MIR_DEBUG(MIR_DEBUG_STR "Binding worker %d to core %d\n", worker->id, worker->core_id);
 #ifdef __tile__
     if (tmc_cpus_set_my_cpu(worker->core_id) != 0)
         MIR_ABORT(MIR_ERROR_STR "Unable to bind worker to core %d\n", worker->core_id);

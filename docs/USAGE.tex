@@ -141,7 +141,7 @@ $ scons
 \section{Task-based Programming Interface}
 MIR provides a direct task-based programming interface and supports a subset of OpenMP 3.0 tasks.
 
-\subsection{Direct task-based programming interface}
+\subsection{Direct task-based programming}
 MIR provides a basic interface for task-based programming. Look at mir\_public\_int.h in MIR\_ROOT/src for interface details and programs in MIR\_ROOT/test for interface usage details. A simple example program is shown below. 
 
 \begin{lstlisting}[style=BashInputStyle]
@@ -190,7 +190,7 @@ int main(int argc, char *argv[])
 \subsection{OpenMP 3.0 task-based programming subset}
 MIR also supports a subset of OpenMP 3.0 tasks. 
 Only the \texttt{task} and \texttt{taskwait} constructs are supported.
-These constructs are sufficient for writing most task based programs.
+These two constructs are sufficient for writing most task based programs.
 Note that the constructs are supported by intercepting GCC translated calls to GNU libgomp interfaces.
 Therefore OpenMP 3.0 task support is restricted to programs compiled using GCC.
 
@@ -262,7 +262,7 @@ int main(int argc, char *argv[])
 Look at test programs in MIR\_ROOT/test for advanced usage examples.
 
 \section{Testing}
-MIR does not have a dedicated test case (unit testing) suite yet. The fib test program (Fibonacci number calculation) is recommended for testing.
+MIR does not have a dedicated test case (unit testing) suite yet. The fib program (Fibonacci number calculation) is recommended for testing.
 
 \begin{lstlisting}[style=BashInputStyle]
 $ cd $MIR_ROOT/test/fib
@@ -288,6 +288,33 @@ MIR has several configurable options which can be set using the environment vari
 $ cd $MIR_ROOT/test/fib
 $ scons 
 $ MIR_CONF="-h" ./fib-opt 3
+\end{lstlisting}
+
+\subsection{Core binding}
+MIR creates and binds one worker thread per core (including hardware threads) by default. Binding is id-based - worker thread 0 is bound to core 0, worker 1 to core 1 and so on. The binding scheme can be changed to a specific mapping using the environment variable MIR\_WORKER\_CORE\_MAP. Ensure MIR\_WORKER\_EXPLICIT\_BIND is defined in mir\_defines.h to enable explicit binding support. An example is shown below.
+
+\begin{lstlisting}[style=BashInputStyle]
+$ cd $MIR_ROOT/src
+$ grep "EXPLICIT_BIND" mir_defines.h
+#define MIR_WORKER_EXPLICIT_BIND
+$ cd $MIR_ROOT/test/fib
+$ cat /proc/cpuinfo | grep -c Core
+4
+$ export MIR_WORKER_CORE_MAP="0,2,3,1"
+$ scons 
+$ ./fib-debug 10 3
+MIR_DBG: Starting initialization ...
+MIR_DBG: Architecture set to firenze
+MIR_DBG: Memory allocation policy set to system
+MIR_DBG: Task scheduling policy set to central-stack
+MIR_DBG: Reading worker to core map ...
+MIR_DBG: Binding worker 0 to core 3
+MIR_DBG: Binding worker 3 to core 0
+MIR_DBG: Binding worker 2 to core 2
+MIR_DBG: Worker 2 is initialized!
+MIR_DBG: Worker 3 is initialized!
+MIR_DBG: Binding worker 1 to core 1
+...
 \end{lstlisting}
 
 \section{Profiling}
@@ -362,7 +389,7 @@ To enable instruction-level profiling support, first get PIN sources and set the
 
 \begin{lstlisting}[style=BashInputStyle]
 $ export PIN_ROOT=<<Pin source path>>
-$ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:<<Pin install path>>
+$ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$PIN_ROOT
 \end{lstlisting}
 
 Next, edit PIN\_ROOT/source/tools/Config/makefile.unix.config and add -fopenmp (note the -) to variables 
