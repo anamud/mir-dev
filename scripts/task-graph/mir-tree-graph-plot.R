@@ -6,8 +6,7 @@ require(RColorBrewer, quietly=TRUE)
 require(gdata, quietly=TRUE, warn.conflicts=FALSE)
 
 # Sizes
-join_size <- 10
-fork_size <- join_size
+fork_size <- 10
 start_size <- 15
 end_size <- start_size
 task_size <- 30
@@ -44,24 +43,18 @@ toc("Read data")
 tic(type="elapsed")
 # Set colors
 if(tg.color == "color") {
-    join_color <- "#FF7F50"  # coral
     fork_color <- "#2E8B57"  # seagreen
-    start_color <- "#DEB887" # burlywood
+    other_color <- "#DEB887" # burlywood
     create_edge_color <- fork_color
-    sync_edge_color <- join_color
 } else if(tg.color == "gray") {
-    join_color <- "#D3D3D3"  # light gray
     fork_color <- "#D3D3D3"  # light gray
-    start_color <- "#D3D3D3" # light gray
+    other_color <- "#D3D3D3" # light gray
     create_edge_color <- "black"
-    sync_edge_color <- "black"
 } else {
     print("Unsupported color format. Supported formats: color, gray. Defaulting to color.")
-    join_color <- "#FF7F50"  # coral
     fork_color <- "#2E8B57"  # seagreen
-    start_color <- "#DEB887" # burlywood
+    other_color <- "#DEB887" # burlywood
     create_edge_color <- fork_color
-    sync_edge_color <- join_color
 }
 
 scope_edge_color <-"black" 
@@ -70,14 +63,6 @@ cont_edge_color <- "black"
 toc("Setting colors")
 
 tic(type="elapsed")
-# Increment join node pass counts 
-# The pass count starts at 0
-tg.data$joins_at_plus_one <- tg.data$joins_at + 1
-
-# Create join node list
-join_nodes <- mapply(function(x, y, z) {paste('j', x, y, sep='.')}, x=tg.data$parent, y=tg.data$joins_at_plus_one)
-join_nodes_unique <- unique(unlist(join_nodes, use.names=FALSE))
-
 # Create parent nodes list
 parent_nodes_unique <- unique(tg.data$parent)
 
@@ -89,8 +74,7 @@ toc("Node list creation")
 # Create graph
 tic(type="elapsed")
 tg <- graph.empty(directed=TRUE) + vertices('E', 
-                                            unique(c(join_nodes_unique, 
-                                                     fork_nodes_unique, 
+                                            unique(c(fork_nodes_unique, 
                                                      parent_nodes_unique, 
                                                      tg.data$task)))
 toc("Graph creation")
@@ -102,12 +86,6 @@ tg[from=fork_nodes, to=tg.data$task, attr='color'] <- create_edge_color
 toc("Connect parent fork to task node")
 
 tic(type="elapsed")
-# Connect parent fork to parent join node
-tg[from=fork_nodes, to=join_nodes, attr='kind'] <- 'continue'
-tg[from=fork_nodes, to=join_nodes, attr='color'] <- cont_edge_color
-toc("Connect parent fork to parent join node")
-
-tic(type="elapsed")
 first_forks_index <- which(grepl("f.[0-9]+.0$", fork_nodes_unique))
 parent_first_forks <- as.vector(sapply(fork_nodes_unique[first_forks_index], function(x) {gsub('f.(.*)\\.+.*','\\1', x)}))
 first_forks <- fork_nodes_unique[first_forks_index]
@@ -116,8 +94,8 @@ tg[to=first_forks, from=parent_first_forks, attr='color'] <- scope_edge_color
 toc("Connect parent to first fork")
 
 tic(type="elapsed")
-# Connect join to next fork
-#Rprof("profile-jointonext.out")
+# Connect fork to next fork
+#Rprof("profile-forktonext.out")
 find_next_fork <- function(node)
 {
   #print(paste('Processing node',node, sep=" "))
@@ -128,7 +106,7 @@ find_next_fork <- function(node)
   join_count <- as.numeric(node_split[3])
   
   # Find next work
-  next_fork <- paste('f', as.character(parent), as.character(join_count), sep=".")
+  next_fork <- paste('f', as.character(parent), as.character(join_count+1), sep=".")
   if(is.na(match(next_fork, fork_nodes_unique)) == F)
   {
     # Connect to next fork
@@ -141,13 +119,13 @@ find_next_fork <- function(node)
   }
   next_fork
 }
-next_forks <- as.vector(sapply(join_nodes_unique, find_next_fork))
-tg[from=join_nodes_unique, to=next_forks, attr='kind'] <- 'continue'
-tg[from=join_nodes_unique, to=next_forks, attr='color'] <- cont_edge_color
+next_forks <- as.vector(sapply(fork_nodes_unique, find_next_fork))
+tg[from=fork_nodes_unique, to=next_forks, attr='kind'] <- 'continue'
+tg[from=fork_nodes_unique, to=next_forks, attr='color'] <- cont_edge_color
 #Rprof(NULL)
-toc("Connect join to next fork")
+toc("Connect fork to next fork")
 
-# Connext E to last join of task 0
+# Connext E to last fork of task 0
 tic(type="elapsed")
 get_join_count <- function(node)
 {
@@ -157,11 +135,11 @@ get_join_count <- function(node)
   join_count <- as.numeric(node_split[3])
   join_count
 }
-join_nodes_of_zero <- join_nodes_unique[which(grepl("j.0.[0-9]+$", join_nodes_unique))]
-largest_join_count_of_zero <- max(as.vector(sapply(join_nodes_of_zero, get_join_count)))
-tg[from=paste("j.0.",largest_join_count_of_zero,sep=""), to='E', attr='kind'] <- 'continue'
-tg[from=paste("j.0.",largest_join_count_of_zero,sep=""), to='E', attr='color'] <- cont_edge_color
-toc("Connect last join to node E")
+fork_nodes_of_zero <- fork_nodes_unique[which(grepl("f.0.[0-9]+$", fork_nodes_unique))]
+largest_join_count_of_zero <- max(as.vector(sapply(fork_nodes_of_zero, get_join_count)))
+tg[from=paste("f.0.",largest_join_count_of_zero,sep=""), to='E', attr='kind'] <- 'continue'
+tg[from=paste("f.0.",largest_join_count_of_zero,sep=""), to='E', attr='color'] <- cont_edge_color
+toc("Connect last fork of 0 to node E")
 
 tic(type="elapsed")
 tg <- simplify(tg, remove.multiple=T, remove.loops=T)
@@ -195,22 +173,18 @@ sink()
 
 # Set label and color of 'task 0'
 start_index <- V(tg)$name == '0'
-tg <- set.vertex.attribute(tg, name='color', index=start_index, value=start_color)
+tg <- set.vertex.attribute(tg, name='color', index=start_index, value=other_color)
 tg <- set.vertex.attribute(tg, name='label', index=start_index, value='S')
 tg <- set.vertex.attribute(tg, name='size', index=start_index, value=start_size)
 
 # Set label and color of 'task E'
 end_index <- V(tg)$name == "E"
-tg <- set.vertex.attribute(tg, name='color', index=end_index, value=start_color)
+tg <- set.vertex.attribute(tg, name='color', index=end_index, value=other_color)
 tg <- set.vertex.attribute(tg, name='label', index=end_index, value='E')
 tg <- set.vertex.attribute(tg, name='size', index=end_index, value=end_size)
 
-# Make join and fork nodes small
-join_nodes_index <- startsWith(V(tg)$name, 'j')
+# Make fork nodes small
 fork_nodes_index <- startsWith(V(tg)$name, 'f')
-tg <- set.vertex.attribute(tg, name='size', index=join_nodes_index, value=join_size)
-tg <- set.vertex.attribute(tg, name='color', index=join_nodes_index, value=join_color)
-tg <- set.vertex.attribute(tg, name='label', index=join_nodes_index, value='*')
 tg <- set.vertex.attribute(tg, name='size', index=fork_nodes_index, value=fork_size)
 tg <- set.vertex.attribute(tg, name='color', index=fork_nodes_index, value=fork_color)
 tg <- set.vertex.attribute(tg, name='label', index=fork_nodes_index, value='^')

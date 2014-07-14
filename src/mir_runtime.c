@@ -366,8 +366,8 @@ void mir_destroy()
     MIR_DEBUG(MIR_DEBUG_STR "Shutting down ...\n");
 
     // FIXME: ws-de causes never-ending shutdown
-    if(0 == strcmp(runtime->sched_pol->name, "ws-de"))
-        goto shutdown;
+    /*if(0 == strcmp(runtime->sched_pol->name, "ws-de"))*/
+        /*goto shutdown;*/
 
     // Check if workers are free
     MIR_DEBUG(MIR_DEBUG_STR "Checking if workers are done ...\n");
