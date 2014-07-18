@@ -68,6 +68,8 @@ static inline struct mir_task_t* mir_task_create_common(mir_tfunc_t tfunc, void*
     task->func = tfunc;
 #ifdef MIR_TASK_VARIABLE_DATA_SIZE
     task->data = mir_malloc_int (sizeof(char) * data_size);
+    if(task->data == NULL)
+        MIR_ABORT(MIR_ERROR_STR "Could not allocate memory!\n");
 #else
     MIR_ASSERT(data_size <= MIR_TASK_DATA_MAX_SIZE);
 #endif
