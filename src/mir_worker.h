@@ -54,6 +54,7 @@ struct mir_worker_t
     uint16_t bias;
     uint32_t backoff_us;
     struct mir_lock_t sig_die;
+    bool sig_dying;
     struct mir_task_t* current_task;
     struct mir_worker_status_t* status;
     struct mir_recorder_t* recorder;

@@ -373,8 +373,12 @@ void mir_destroy()
     MIR_DEBUG(MIR_DEBUG_STR "Checking if workers are done ...\n");
     mir_worker_check_done();
 
-    // Freeze workers
+    // Announce destruction
     runtime->sig_dying = 1;
+
+    // Freeze workers
+    for (int i=0; i<runtime->num_workers; i++)
+        runtime->workers[i].sig_dying = 1;
     __sync_synchronize();
     MIR_DEBUG(MIR_DEBUG_STR "Workers are done. Sent die signal.\n");
 
