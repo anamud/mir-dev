@@ -232,13 +232,16 @@ void mir_task_execute(struct mir_task_t* task)
     struct mir_worker_t* worker = mir_worker_get_context();
 
     // Compose event metadata
-    char event_meta_data[MIR_RECORDER_EVENT_META_DATA_MAX_SIZE-1] = {0};
-    sprintf(event_meta_data, "%" MIR_FORMSPEC_UL ",%s", task->id.uid, task->name);
+    char event_meta_data_pre[MIR_RECORDER_EVENT_META_DATA_MAX_SIZE-1] = {0};
+    if(worker->current_task)
+        sprintf(event_meta_data_pre, "%" MIR_FORMSPEC_UL ",%s", worker->current_task->id.uid, worker->current_task->name);
+    else
+        sprintf(event_meta_data_pre, "0, NULL");
 
     //MIR_DEBUG("%" MIR_FORMSPEC_UL ",%s\n", task->id.uid, task->name);
 
     // Record event and state
-    MIR_RECORDER_EVENT(&event_meta_data[0], MIR_RECORDER_EVENT_META_DATA_MAX_SIZE-1);
+    MIR_RECORDER_EVENT(&event_meta_data_pre[0], MIR_RECORDER_EVENT_META_DATA_MAX_SIZE-1);
     MIR_RECORDER_STATE_BEGIN( MIR_STATE_TEXEC);
 
     // Current task timing
@@ -286,8 +289,11 @@ void mir_task_execute(struct mir_task_t* task)
     //MIR_INFORM(MIR_INFORM_STR "Task %" MIR_FORMSPEC_UL " executed on worker %d\n", task->id.uid, worker->id);
 
     // Record event and state
-    MIR_RECORDER_STATE_END(&event_meta_data[0], MIR_RECORDER_EVENT_META_DATA_MAX_SIZE-1);
-    MIR_RECORDER_EVENT(&event_meta_data[0], MIR_RECORDER_EVENT_META_DATA_MAX_SIZE-1);
+    char event_meta_data_post[MIR_RECORDER_EVENT_META_DATA_MAX_SIZE-1] = {0};
+    sprintf(event_meta_data_post, "%" MIR_FORMSPEC_UL ",%s", task->id.uid, task->name);
+    //MIR_DEBUG("%" MIR_FORMSPEC_UL ",%s\n", task->id.uid, task->name);
+    MIR_RECORDER_STATE_END(&event_meta_data_post[0], MIR_RECORDER_EVENT_META_DATA_MAX_SIZE-1);
+    MIR_RECORDER_EVENT(&event_meta_data_post[0], MIR_RECORDER_EVENT_META_DATA_MAX_SIZE-1);
 
     // Mark task as done
     task->done = 1;

@@ -34,7 +34,11 @@ toc <- function(message)
 tic(type="elapsed")
 ### Read data
 args <- commandArgs(TRUE)
-if(length(args) != 2) quit("no", 1)
+if(length(args) != 2) 
+{
+    print("Arguments missing! Please provide task graph(arg1) and color(arg2, one of {color,gray})")
+    quit("no", 1)
+}
 tg.file <- args[1]
 tg.data <- read.csv(tg.file, header=TRUE)
 tg.color <- args[2]
@@ -152,7 +156,8 @@ V(tg)$label <- V(tg)$name
 # Set task vertex attributes
 task_index <- match(as.character(tg.data$task), V(tg)$name)
 # Set annotations
-for (annot in c('exec_cycles','child_number','num_children','core_id'))
+#for (annot in c('exec_cycles','child_number','num_children','core_id'))
+for (annot in colnames(tg.data))
 {
     values <- tg.data[which(tg.data$task %in% V(tg)[task_index]$name),annot]
     tg <- set.vertex.attribute(tg, name=annot, index=task_index, value=values)
