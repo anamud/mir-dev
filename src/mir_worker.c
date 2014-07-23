@@ -14,6 +14,8 @@
 #include <string.h>
 #include <stdbool.h>
 
+// FIXME: Make these two per-worker
+// PJ says kill the thread upon exit
 uint32_t g_worker_status_board = 0;
 uint32_t g_num_tasks_waiting = 0;
 
@@ -41,7 +43,7 @@ static void* mir_worker_loop(void* arg)
 
         // Check for runtime shutdown
         // __sync_synchronize();
-        if(runtime->sig_dying == 1)
+        if(worker->sig_dying == 1)
         {
             // Dump MIR_STATE_TIDLE state
             MIR_RECORDER_STATE_END(NULL, 0);
@@ -65,6 +67,7 @@ void mir_worker_master_init(struct mir_worker_t* worker)
     // When this is unset, the worker dies
     mir_lock_create(&worker->sig_die);
     mir_lock_set(&worker->sig_die);
+    worker->sig_dying = 0;
 
     // Worker thread attributes
     pthread_attr_t attr;
@@ -262,7 +265,9 @@ void mir_worker_check_done()
         // Check if worker is free and no tasks are queued up
         //MIR_DEBUG(MIR_DEBUG_STR "Tasks waiting = %u Worker status %u \n", g_num_tasks_waiting, g_worker_status_board);
         if( g_num_tasks_waiting == 0 && g_worker_status_board == 0 )
-            break;
+            if( g_num_tasks_waiting == 0 && g_worker_status_board == 0 )
+                    // Rechecking to ensure. Hope compiler does not optimize this away!
+                    break;
     }
 }/*}}}*/
 
