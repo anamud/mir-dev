@@ -31,7 +31,7 @@
 // Types
 #define MIR_SHORT_NAME_LEN 32
 #define MIR_LONG_NAME_LEN 256
-#define MIR_SBUF_SIZE 32
+#define MIR_SBUF_SIZE 64
 
 // Utils
 #define MIR_ERROR_STR "MIR_FATAL: "

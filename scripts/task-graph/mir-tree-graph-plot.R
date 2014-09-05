@@ -4,6 +4,8 @@ rm(list=ls())
 require(igraph, quietly=TRUE)
 require(RColorBrewer, quietly=TRUE)
 require(gdata, quietly=TRUE, warn.conflicts=FALSE)
+options("scipen"=999) # big number of digits
+#getOption("scipen")
 
 # Sizes
 fork_size <- 10
@@ -49,20 +51,18 @@ tic(type="elapsed")
 if(tg.color == "color") {
     fork_color <- "#2E8B57"  # seagreen
     other_color <- "#DEB887" # burlywood
-    create_edge_color <- fork_color
 } else if(tg.color == "gray") {
     fork_color <- "#D3D3D3"  # light gray
     other_color <- "#D3D3D3" # light gray
-    create_edge_color <- "black"
 } else {
     print("Unsupported color format. Supported formats: color, gray. Defaulting to color.")
     fork_color <- "#2E8B57"  # seagreen
     other_color <- "#DEB887" # burlywood
-    create_edge_color <- fork_color
 }
 
-scope_edge_color <-"black" 
-cont_edge_color <- "black"
+create_edge_color <- "#D3D3D3"  # light gray
+scope_edge_color <- "#D3D3D3"  # light gray
+cont_edge_color <- "#D3D3D3"  # light gray
 
 toc("Setting colors")
 
