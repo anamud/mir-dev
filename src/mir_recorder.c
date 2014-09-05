@@ -55,10 +55,10 @@ char* mir_event_name_string[MIR_RECORDER_EVENT_MAX_COUNT]  =
 // FIXME: WARNING AND NOTE! Update also in recorder_create
 char* mir_event_name_string[MIR_RECORDER_EVENT_MAX_COUNT] = 
 { /*{{{*/
-    "PAPI_TOT_INS",
-    "PAPI_TOT_CYC",
-    /*"PAPI_L2_DCM",*/
-    /*"PAPI_RES_STL",*/
+    /*"PAPI_TOT_INS",*/
+    /*"PAPI_TOT_CYC",*/
+    "PAPI_L2_DCM",
+    "PAPI_RES_STL",
     /*"PAPI_L1_DCA",*/
     /*"PAPI_L1_DCH",*/
 };/*}}}*/

@@ -40,17 +40,17 @@ void cores_of_this(struct mir_sbuf_t* coreids, uint16_t nodeid)
         return;
     else
     {{
-        unsigned int num_cores = {};
+        unsigned int num_cores = {0};
         coreids->size = num_cores;
-        for(int i=0, basecore=0; i<num_cores; i++)
-            coreids->buf[i] = basecore+i;
+        for(int i=0; i<num_cores; i++)
+            coreids->buf[i] = i;
     }}
 }}
 struct mir_arch_t arch_this = 
 {{
     .name = "this",
     .num_nodes = 1,
-    .num_cores = {},
+    .num_cores = {1},
     .diameter = 0,
     .llc_size_KB = 1,
     .config = config_this,
@@ -65,13 +65,13 @@ struct mir_arch_t arch_this =
 
 def main():
     if(len(sys.argv) > 2):
-        print 'Usage: {} path'.format(sys.argv[0])
+        print 'Usage: {0} path'.format(sys.argv[0])
         exit(2)
-    fil = open('{}/mir_arch_this.c'.format(sys.argv[1]), 'w')
+    fil = open('{0}/mir_arch_this.c'.format(sys.argv[1]), 'w')
     write_pretext(fil)
     write_posttext(fil)
     fil.close()
-    print 'Wrote {}/mir_arch_this.c'.format(sys.argv[1])
+    print 'Wrote {0}/mir_arch_this.c'.format(sys.argv[1])
 
 if __name__ == '__main__':
     main()

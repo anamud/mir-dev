@@ -42,8 +42,8 @@ void cores_of_this(struct mir_sbuf_t* coreids, uint16_t nodeid)
     {{
         unsigned int num_cores = {};
         coreids->size = num_cores;
-        for(int i=0, basecore=0; i<num_cores; i++)
-            coreids->buf[i] = basecore+i;
+        for(int i=0; i<num_cores; i++)
+            coreids->buf[i] = i;
     }}
 }}
 struct mir_arch_t arch_this = 

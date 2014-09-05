@@ -28,7 +28,7 @@ echo Wrote accumulated events to file $OUTF
 
 # Get event information and summary
 if (( $# == 3)); then
-    Rscript get-events-per-task.R $OUTF $2 $3
+    Rscript $MIR_ROOT/scripts/get-events-per-task.R $OUTF $2 $3
 else
-    Rscript get-events-per-task.R $OUTF
+    Rscript $MIR_ROOT/scripts/get-events-per-task.R $OUTF
 fi
