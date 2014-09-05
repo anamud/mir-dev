@@ -382,7 +382,7 @@ void mir_task_wait()
     }
 
     // Update num times passed
-    twc->num_passes++;
+    __sync_fetch_and_add(&(twc->num_passes), 1);
 
     MIR_RECORDER_STATE_END(NULL, 0);
     return;
