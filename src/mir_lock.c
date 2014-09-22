@@ -1,8 +1,5 @@
 #include "mir_lock.h"
 
-// Uncomment this to use sync mutex on the tilepro64
-//#define TILEPRO_USE_SYNCMUTEX
-
 #ifdef __tile__
 #ifdef TILEPRO_USE_SYNCMUTEX
 #include <tmc/sync.h>
