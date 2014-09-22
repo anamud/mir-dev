@@ -68,18 +68,6 @@ void mir_free_int(void *p, size_t bytes)
 #endif
 }/*}}}*/
 
-void mir_page_attr_set(tmc_alloc_t* alloc)
-{/*{{{*/
-#if defined (MIR_PAGE_NO_LOCAL_CACHING)
-    tmc_alloc_set_caching(alloc, MAP_CACHE_NO_LOCAL);
-#elif defined (MIR_PAGE_NO_L1_CACHING)
-    tmc_alloc_set_caching(alloc, MAP_CACHE_NO_L1);
-#elif defined (MIR_PAGE_NO_L2_CACHING)
-    tmc_alloc_set_caching(alloc, MAP_CACHE_NO_L2);
-#endif
-return;
-}/*}}}*/
-
 #else
 
 void* mir_malloc_int(size_t bytes)

@@ -34,7 +34,7 @@ struct mir_data_footprint_t
 };
 /*LIBINT_DECL_END*/
 
-static inline void mir_data_footprint_copy(struct mir_data_footprint_t* dest, const struct mir_data_footprint_t* src)
+static inline void data_footprint_copy(struct mir_data_footprint_t* dest, const struct mir_data_footprint_t* src)
 {/*{{{*/
     // Check
     MIR_ASSERT(src != NULL);

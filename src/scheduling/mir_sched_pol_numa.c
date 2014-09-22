@@ -113,9 +113,7 @@ static inline bool is_data_dist_significant(struct mir_mem_node_dist_t* dist)
 
     // Get dist stats
     struct mir_mem_node_dist_stat_t stat;
-    mir_mem_node_dist_stat(dist, &stat);
-
-    //Print info
+    mir_mem_node_dist_get_stat(&stat, dist);
     MIR_DEBUG("Dist stats: %lu %lu %lu %.3f %.3f [%lu, 0.0]\n", stat.sum, stat.min, stat.max, stat.mean, stat.sd, low_limit);
 
     // Check if data from all node is large enough

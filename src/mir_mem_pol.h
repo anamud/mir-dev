@@ -47,7 +47,7 @@ void  mir_mem_node_dist_destroy(struct mir_mem_node_dist_t* dist);
 
 void mir_mem_get_dist(struct mir_mem_node_dist_t* dist, void* addr, size_t sz, void* part_of);
 
-void mir_mem_node_dist_stat(struct mir_mem_node_dist_t* dist, struct mir_mem_node_dist_stat_t* stat);
+void mir_mem_node_dist_get_stat(struct mir_mem_node_dist_stat_t* stat, const struct mir_mem_node_dist_t* dist);
 
 #endif
 END_C_DECLS

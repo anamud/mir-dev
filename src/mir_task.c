@@ -113,7 +113,7 @@ static inline struct mir_task_t* mir_task_create_common(mir_tfunc_t tfunc, void*
 
         for (int i=0; i<num_data_footprints; i++)
         {
-            mir_data_footprint_copy(&task->data_footprints[i], &data_footprints[i]);
+            data_footprint_copy(&task->data_footprints[i], &data_footprints[i]);
         }
 
         task->num_data_footprints = num_data_footprints;

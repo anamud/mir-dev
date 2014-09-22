@@ -8,14 +8,14 @@
 
 struct mir_queue_t* mir_queue_create(uint32_t capacity)
 {/*{{{*/
+    MIR_ASSERT(capacity > 0);
+
     struct mir_queue_t* queue = (struct mir_queue_t*)mir_cmalloc_int(sizeof(struct mir_queue_t));
-    if(!queue)
-        MIR_ABORT(MIR_ERROR_STR "No memory to create queue!\n");
+    MIR_ASSERT(queue != NULL);
 
     queue->buffer = NULL;
     queue->buffer = mir_cmalloc_int(capacity * sizeof(void*));
-    if(!queue->buffer)
-        MIR_ABORT(MIR_ERROR_STR "No memory to create queue buffer!\n");
+    MIR_ASSERT(queue->buffer != NULL);
 
     queue->capacity = capacity;
     queue->size = 0;
@@ -30,17 +30,21 @@ struct mir_queue_t* mir_queue_create(uint32_t capacity)
 
 void mir_queue_destroy(struct mir_queue_t* queue)
 {/*{{{*/
-    if( queue == NULL )
-        return;
+    MIR_ASSERT(queue != NULL);
 
     mir_lock_destroy(&(queue->enq_lock));
     mir_lock_destroy(&(queue->deq_lock));
     mir_free_int(queue->buffer, queue->capacity * sizeof(void*));
+    queue->buffer = NULL;
     mir_free_int(queue, sizeof(struct mir_queue_t));
+    queue = NULL;
 }/*}}}*/
 
 bool mir_queue_push(struct mir_queue_t* queue, void* data)
 {/*{{{*/
+    MIR_ASSERT(queue != NULL);
+    MIR_ASSERT(data != NULL);
+
     mir_lock_set(&(queue->enq_lock));
 
     if(QUEUE_FULL(queue)) 
@@ -65,6 +69,9 @@ bool mir_queue_push(struct mir_queue_t* queue, void* data)
 
 void mir_queue_pop(struct mir_queue_t* queue, void** data)
 {/*{{{*/
+    MIR_ASSERT(queue != NULL);
+    MIR_ASSERT(data != NULL);
+
     mir_lock_set(&(queue->deq_lock));
     if (QUEUE_EMPTY(queue)) 
     {
@@ -74,6 +81,7 @@ void mir_queue_pop(struct mir_queue_t* queue, void** data)
     }
 
     *data = queue->buffer[queue->out];
+    MIR_ASSERT(*data != NULL);
     __sync_fetch_and_sub(&(queue->size), 1);
 
     queue->out++;
@@ -85,8 +93,10 @@ void mir_queue_pop(struct mir_queue_t* queue, void** data)
     return;
 }/*}}}*/
 
-uint32_t mir_queue_size(struct mir_queue_t *queue)
+uint32_t mir_queue_size(const struct mir_queue_t *queue)
 {/*{{{*/
+    MIR_ASSERT(queue != NULL);
+    
     //__sync_synchronize();
     //mir_lock_set(&(queue->lock));
     uint32_t size = queue->size ;
