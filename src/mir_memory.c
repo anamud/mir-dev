@@ -1,5 +1,6 @@
 #include "mir_memory.h"
 #include "mir_defines.h"
+#include "mir_utils.h"
 
 #include <stdlib.h>
 #include <stdint.h>
@@ -47,53 +48,39 @@ void* mir_malloc_int(size_t bytes)
     mir_page_attr_set(&alloc);
     memptr = tmc_alloc_map(&alloc, bytes_p2);
 
-    if (memptr != NULL)
-    {
 #ifdef MIR_MEMORY_ALLOCATOR_DEBUG
-        __sync_fetch_and_add(&g_total_allocated_memory, bytes);
+    MIR_ASSERT(memptr != NULL);
+    __sync_fetch_and_add(&g_total_allocated_memory, bytes);
 #endif
-    }
+
     return memptr;
 }/*}}}*/
 
 void mir_free_int(void *p, size_t bytes)
 {/*{{{*/
-    if(p != NULL && bytes > 0)
-    {
-        unsigned long bytes_p2 = upper_power_of_two((unsigned long) bytes);
+    MIR_ASSERT(p != NULL);
+    MIR_ASSERT(bytes > 0);
+    unsigned long bytes_p2 = upper_power_of_two((unsigned long) bytes);
+    tmc_alloc_unmap(p, bytes_p2);
+    p = NULL;
 #ifdef MIR_MEMORY_ALLOCATOR_DEBUG
-        __sync_fetch_and_sub(&g_total_allocated_memory, bytes);
+    __sync_fetch_and_sub(&g_total_allocated_memory, bytes);
 #endif
-
-        tmc_alloc_unmap(p, bytes_p2);
-    }
 }/*}}}*/
 
 void mir_page_attr_set(tmc_alloc_t* alloc)
 {/*{{{*/
 #if defined (MIR_PAGE_NO_LOCAL_CACHING)
-tmc_alloc_set_caching(alloc, MAP_CACHE_NO_LOCAL);
+    tmc_alloc_set_caching(alloc, MAP_CACHE_NO_LOCAL);
 #elif defined (MIR_PAGE_NO_L1_CACHING)
-tmc_alloc_set_caching(alloc, MAP_CACHE_NO_L1);
+    tmc_alloc_set_caching(alloc, MAP_CACHE_NO_L1);
 #elif defined (MIR_PAGE_NO_L2_CACHING)
-tmc_alloc_set_caching(alloc, MAP_CACHE_NO_L2);
+    tmc_alloc_set_caching(alloc, MAP_CACHE_NO_L2);
 #endif
 return;
 }/*}}}*/
 
 #else
-
-/*void* mir_malloc_int(size_t bytes)*/
-/*{[>{{{<]*/
-    /*void* memptr = malloc(bytes);*/
-    /*if (memptr)*/
-    /*{*/
-/*#ifdef MIR_MEMORY_ALLOCATOR_DEBUG*/
-        /*__sync_fetch_and_add(&g_total_allocated_memory, bytes);*/
-/*#endif*/
-    /*}*/
-    /*return memptr;*/
-/*}[>}}}<]*/
 
 void* mir_malloc_int(size_t bytes)
 {/*{{{*/
@@ -101,28 +88,23 @@ void* mir_malloc_int(size_t bytes)
     void* memptr = NULL;
     int rval = posix_memalign(&memptr, MIR_PAGE_ALIGNMENT, bytes_p2);
 
-    if (rval == 0)
-    {
 #ifdef MIR_MEMORY_ALLOCATOR_DEBUG
-        __sync_fetch_and_add(&g_total_allocated_memory, bytes);
+    MIR_ASSERT(rval == 0);
+    __sync_fetch_and_add(&g_total_allocated_memory, bytes);
 #endif
-    }
+
     return memptr;
 }/*}}}*/
 
 void mir_free_int(void *p, size_t bytes)
 {/*{{{*/
-    if(p != NULL )
-    {
-        if(bytes > 0)
-        {
+    MIR_ASSERT(p != NULL);
+    MIR_ASSERT(bytes > 0);
+    free(p);
+    p = NULL;
 #ifdef MIR_MEMORY_ALLOCATOR_DEBUG
-            __sync_fetch_and_sub(&g_total_allocated_memory, bytes);
+    __sync_fetch_and_sub(&g_total_allocated_memory, bytes);
 #endif
-        }
-
-        free(p);
-    }
 }/*}}}*/
 
 #endif
