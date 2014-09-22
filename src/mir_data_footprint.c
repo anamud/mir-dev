@@ -1,24 +1,14 @@
 #include "mir_data_footprint.h"
 #include "mir_utils.h"
 
-void mir_data_footprint_copy(struct mir_data_footprint_t* dest, struct mir_data_footprint_t* src)
-{/*{{{*/
-    if(!dest || !src)
-        return;
-
-    // Copy elements
-    dest->base = src->base;
-    dest->type = src->type;
-    dest->start = src->start;
-    dest->end = src->end;
-    dest->row_sz = src->row_sz;
-    dest->data_access = src->data_access;
-    dest->part_of = src->part_of;
-}/*}}}*/
-
 #ifdef MIR_MEM_POL_ENABLE
-void mir_data_footprint_get_dist(struct mir_mem_node_dist_t* dist, struct mir_data_footprint_t* footprint)
+// FIXME: Multi-tasking function
+void mir_data_footprint_get_dist(struct mir_mem_node_dist_t* dist, const struct mir_data_footprint_t* footprint)
 {/*{{{*/
+    // Check
+    MIR_ASSERT(dist != NULL);
+    MIR_ASSERT(footprint != NULL);
+
     uint64_t row_sz = footprint->row_sz;
     if(row_sz > 1)
     {
@@ -28,7 +18,6 @@ void mir_data_footprint_get_dist(struct mir_mem_node_dist_t* dist, struct mir_da
             mir_mem_get_dist( dist, base, 
                     (footprint->end - footprint->start + 1) * footprint->type, 
                     footprint->part_of );
-
             /*MIR_INFORM("Footprint composed of these addresses:\n");*/
             /*MIR_INFORM("%p[%lu-%lu]\n", base, footprint->start, footprint->end);*/
         }

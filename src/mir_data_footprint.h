@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include "mir_defines.h"
 #include "mir_types.h"
+#include "mir_utils.h"
 
 #ifdef MIR_MEM_POL_ENABLE
 #include "mir_mem_pol.h"
@@ -33,11 +34,26 @@ struct mir_data_footprint_t
 };
 /*LIBINT_DECL_END*/
 
-void mir_data_footprint_copy(struct mir_data_footprint_t* dest, struct mir_data_footprint_t* src);
+static inline void mir_data_footprint_copy(struct mir_data_footprint_t* dest, const struct mir_data_footprint_t* src)
+{/*{{{*/
+    // Check
+    MIR_ASSERT(src != NULL);
+    MIR_ASSERT(dest != NULL);
+
+    // Copy elements
+    dest->base = src->base;
+    dest->type = src->type;
+    dest->start = src->start;
+    dest->end = src->end;
+    dest->row_sz = src->row_sz;
+    dest->data_access = src->data_access;
+    dest->part_of = src->part_of;
+}/*}}}*/
+
 
 #ifdef MIR_MEM_POL_ENABLE
 // Note: This adds to dist
-void mir_data_footprint_get_dist(struct mir_mem_node_dist_t* dist, struct mir_data_footprint_t* footprint);
+void mir_data_footprint_get_dist(struct mir_mem_node_dist_t* dist, const struct mir_data_footprint_t* footprint);
 #endif
 
 END_C_DECLS 
