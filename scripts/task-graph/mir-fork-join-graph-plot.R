@@ -32,17 +32,21 @@ toc <- function(message)
   invisible(toc)
 }
 
-tic(type="elapsed")
 ### Read data
+tic(type="elapsed")
 args <- commandArgs(TRUE)
-if(length(args) != 2) quit("no", 1)
+if(length(args) != 2) 
+{
+   print("Arguments missing! Please provide task graph(arg1) and color(arg2, one of {color,gray})")
+   quit("no", 1)
+}
 tg.file <- args[1]
 tg.data <- read.csv(tg.file, header=TRUE)
 tg.color <- args[2]
 toc("Read data")
 
-tic(type="elapsed")
 # Set colors
+tic(type="elapsed")
 if(tg.color == "color") {
     join_color <- "#FF7F50"  # coral
     fork_color <- "#2E8B57"  # seagreen
@@ -69,13 +73,10 @@ cont_edge_color <- "black"
 
 toc("Setting colors")
 
+# Create node lists
 tic(type="elapsed")
-# Increment join node pass counts 
-# The pass count starts at 0
-tg.data$joins_at_plus_one <- tg.data$joins_at + 1
-
-# Create join node list
-join_nodes <- mapply(function(x, y, z) {paste('j', x, y, sep='.')}, x=tg.data$parent, y=tg.data$joins_at_plus_one)
+# Create join nodes list
+join_nodes <- mapply(function(x, y, z) {paste('j', x, y, sep='.')}, x=tg.data$parent, y=tg.data$joins_at)
 join_nodes_unique <- unique(unlist(join_nodes, use.names=FALSE))
 
 # Create parent nodes list
@@ -95,12 +96,13 @@ tg <- graph.empty(directed=TRUE) + vertices('E',
                                                      tg.data$task)))
 toc("Graph creation")
 
+# Connect parent fork to task 
 tic(type="elapsed")
-# Connect parent to task node
 tg[from=fork_nodes, to=tg.data$task, attr='kind'] <- 'create'
 tg[from=fork_nodes, to=tg.data$task, attr='color'] <- create_edge_color
-toc("Connect parent to task node")
+toc("Connect parent fork to task")
 
+# Connect parent task to first fork 
 tic(type="elapsed")
 first_forks_index <- which(grepl("f.[0-9]+.0$", fork_nodes_unique))
 parent_first_forks <- as.vector(sapply(fork_nodes_unique[first_forks_index], function(x) {gsub('f.(.*)\\.+.*','\\1', x)}))
@@ -109,18 +111,17 @@ tg[to=first_forks, from=parent_first_forks, attr='kind'] <- 'scope'
 tg[to=first_forks, from=parent_first_forks, attr='color'] <- scope_edge_color   
 toc("Connect parent to first fork")
 
+# Connect leaf task to join 
 tic(type="elapsed")
-# Connect leaf task to join node
 leaf_tasks <- setdiff(tg.data$task, parent_nodes_unique)
 leaf_join_nodes <- join_nodes[match(leaf_tasks, tg.data$task)]
 tg[from=leaf_tasks, to=leaf_join_nodes, attr='kind'] <- 'sync'
 tg[from=leaf_tasks, to=leaf_join_nodes, attr='color'] <- sync_edge_color
-toc("Connect leaf task to join node")
+toc("Connect leaf task to join")
 
+# Connect join to next fork
 tic(type="elapsed")
-# Connect join to another fork
 #Rprof("profile-jointonext.out")
-#for(node in join_nodes_unique)
 find_next_fork <- function(node)
 {
   #print(paste('Processing node',node, sep=" "))
@@ -130,8 +131,8 @@ find_next_fork <- function(node)
   parent <- as.numeric(node_split[2])
   join_count <- as.numeric(node_split[3])
   
-  # Find next work
-  next_fork <- paste('f', as.character(parent), as.character(join_count), sep=".")
+  # Find next fork
+  next_fork <- paste('f', as.character(parent), as.character(join_count+1), sep=".")
   if(is.na(match(next_fork, fork_nodes_unique)) == F)
   {
     # Connect to next fork
@@ -142,7 +143,7 @@ find_next_fork <- function(node)
     # Next fork is part of grandfather
     parent_index <- match(parent, tg.data$task)
     gfather <- tg.data[parent_index,]$parent
-    gfather_join <- paste('j', as.character(gfather), as.character(tg.data[parent_index,]$joins_at_plus_one), sep=".")
+    gfather_join <- paste('j', as.character(gfather), as.character(tg.data[parent_index,]$joins_at), sep=".")
 
     if(is.na(match(gfather_join, join_nodes_unique)) == F)
     {
@@ -163,6 +164,7 @@ tg[from=join_nodes_unique, to=next_forks, attr='color'] <- cont_edge_color
 #Rprof(NULL)
 toc("Connect join to next fork")
 
+# Set attributes
 tic(type="elapsed")
 # Common vertex attributes
 V(tg)$label <- V(tg)$name
@@ -170,15 +172,15 @@ V(tg)$label <- V(tg)$name
 # Set task vertex attributes
 task_index <- match(as.character(tg.data$task), V(tg)$name)
 # Set annotations
-for (annot in c('exec_cycles','child_number','num_children','core_id'))
+for (annot in colnames(tg.data))
 {
-    values <- tg.data[which(tg.data$task %in% V(tg)[task_index]$name),annot]
+    values <- as.character(tg.data[,annot])
     tg <- set.vertex.attribute(tg, name=annot, index=task_index, value=values)
 }
 # Set width to constant
 tg <- set.vertex.attribute(tg, name='size', index=task_index, value=task_size)
 # Set color to indicate core_id
-core_ids <- tg.data[which(tg.data$task %in% V(tg)[task_index]$name),'core_id']
+core_ids <- tg.data$core_id
 core_colors <- rainbow(max(core_ids)+1)
 tg <- set.vertex.attribute(tg, name='color', index=task_index, value=core_colors[core_ids+1])
 # Write core_id colors for reference
@@ -210,25 +212,52 @@ tg <- set.vertex.attribute(tg, name='label', index=join_nodes_index, value='*')
 tg <- set.vertex.attribute(tg, name='size', index=fork_nodes_index, value=fork_size)
 tg <- set.vertex.attribute(tg, name='color', index=fork_nodes_index, value=fork_color)
 tg <- set.vertex.attribute(tg, name='label', index=fork_nodes_index, value='^')
-
 toc("Attribute setting")
 
+# Check if any fork or join vertices have bad degrees
 tic(type="elapsed")
+if(is.element(0, degree(tg, fork_nodes_index, mode = c("in"))))
+{
+  print("Warning! One or more fork nodes have zero degree since one or more tasks in the program performed empty synchronization.")
+  print("Aborting on error!")
+  quit("no", 1)
+}
+if(is.element(0, degree(tg, fork_nodes_index, mode = c("out"))))
+{
+  print("Warning! One or more fork nodes have zero degree since one or more tasks in the program performed empty synchronization.")
+  print("Aborting on error!")
+  quit("no", 1)
+}
+if(is.element(0, degree(tg, join_nodes_index, mode = c("in"))))
+{
+  print("Warning! One or more join nodes have zero degree since one or more tasks in the program performed empty synchronization.")
+  print("Aborting on error!")
+  quit("no", 1)
+}
+if(is.element(0, degree(tg, join_nodes_index, mode = c("out"))))
+{
+  print("Warning! One or more join nodes have zero degree since one or more tasks in the program performed empty synchronization.")
+  print("Aborting on error!")
+  quit("no", 1)
+}
+toc("Checking for bad structure")
+
 # Write dot file
+tic(type="elapsed")
 tg.file.out <- paste(gsub(". $", "", tg.file), ".dot", sep="")
 print(paste("Writing file", tg.file.out))
 res <- write.graph(tg, file=tg.file.out, format="dot")
 toc("Write dot")
 
-tic(type="elapsed")
 # Write gml file
+tic(type="elapsed")
 tg.file.out <- paste(gsub(". $", "", tg.file), ".graphml", sep="")
 print(paste("Writing file", tg.file.out))
 res <- write.graph(tg, file=tg.file.out, format="graphml")
 toc("Write graphml")
 
-# tic(type="elapsed")
 # # Write pdf file
+# tic(type="elapsed")
 # lyt <- layout.fruchterman.reingold(tg,niter=500,area=vcount(tg)^2,coolexp=3,repulserad=vcount(tg)^3,maxdelta=vcount(tg))
 # tg.file.out <- paste(gsub(". $", "", tg.file), ".pdf", sep="")
 # print(paste("Writing file", tg.file.out))
@@ -237,8 +266,8 @@ toc("Write graphml")
 # dev.off()
 # toc("Write pdf")
 
-tic(type="elapsed")
 # Write adjacency matrix file
+tic(type="elapsed")
 tg.file.out <- paste(gsub(". $", "", tg.file), ".adjm", sep="")
 print(paste("Writing file", tg.file.out))
 sink(tg.file.out)
@@ -246,8 +275,8 @@ print(get.adjacency(tg,names=T))
 sink()
 toc("Write adjacency matrix")
 
-tic(type="elapsed")
 # Write edgelist file
+tic(type="elapsed")
 tg.file.out <- paste(gsub(". $", "", tg.file), ".edgelist", sep="")
 print(paste("Writing file", tg.file.out))
 sink(tg.file.out)
@@ -256,4 +285,6 @@ sink()
 toc("Write edgelist")
 
 # Warn
-warnings()
+wa <- warnings()
+if(class(wa) != "NULL")
+    print(wa)

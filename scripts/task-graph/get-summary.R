@@ -19,4 +19,6 @@ print("Median Absolute Deviation")
 apply(dat, 2, mad)
 
 # Warn
-warnings()
+wa <- warnings()
+if(class(wa) != "NULL")
+    print(wa)

@@ -14,7 +14,7 @@
 #include <string.h>
 #include <stdbool.h>
 
-// FIXME: Make these two per-worker
+// FIXME: Make these per-worker
 // PJ says kill the thread upon exit
 uint32_t g_worker_status_board = 0;
 uint32_t g_num_tasks_waiting = 0;

@@ -45,14 +45,14 @@ row.has.na <- apply(annot.tg, 1, function(x){any(is.na(x))})
 sum.row.has.na <- sum(row.has.na)
 if(sum.row.has.na > 0)
 {
+  print(sprintf("Note: %d rows contained NAs in the annotated graph.", sum.row.has.na ))
   if(abort_on_error == T)
   {
-      print("Aborting on error!")
-      quit("no", 1)
+    print("Aborting on error!")
+    quit("no", 1)
   }
   else
   {
-      print(sprintf("Note: %d rows contained NAs in the annotated graph.", sum.row.has.na ))
       print("Warning! Converting NAs in the annotated task graph to zero. This will probably skew the plot. For example, vertex size based on mean values.")
       annot.tg[is.na(annot.tg)] <- 0
   }
@@ -67,7 +67,7 @@ write.csv(annot.tg, annot.tg.file, row.names=FALSE)
 toc("Write file time")
 
 # Warn
-warnings()
+wa <- warnings()
+if(class(wa) != "NULL")
+    print(wa)
 
-# Quit
-quit("no", 0)
