@@ -7,11 +7,16 @@
 #include "mir_omp_int.h"
 
 /*LIBINT_INC_BEGIN*/
+// Uncomment this to use sync mutex on the tilepro64
+//#define TILEPRO_USE_SYNCMUTEX
 #ifdef __tile__
-//#include <tmc/sync.h>
-//#define MIR_LOCK_INITIALIZER TMC_SYNC_MUTEX_INIT
+#ifdef TILEPRO_USE_SYNCMUTEX
+#include <tmc/sync.h>
+#define MIR_LOCK_INITIALIZER TMC_SYNC_MUTEX_INIT
+#else
 #include <tmc/spin.h>
 #define MIR_LOCK_INITIALIZER TMC_SPIN_MUTEX_INIT
+#endif
 #else
 #include <pthread.h>
 #define MIR_LOCK_INITIALIZER PTHREAD_MUTEX_INITIALIZER

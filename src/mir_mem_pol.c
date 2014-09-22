@@ -480,12 +480,15 @@ static void release_coarse(void* addr, size_t sz)
     size_t new_sz = sz + sizeof(struct mem_header_t);
     void* new_addr = (void*)((char*)addr - sizeof(struct mem_header_t));
 #ifdef MIR_MEM_POL_CACHE_NODES
+    // FIXME: This check kicks in when the fine policy is used. Fugly code!
     // Release node cache
     struct mem_header_t* header = (struct mem_header_t*)(new_addr);
-    MIR_ASSERT(header->node_cache != NULL);
-    uint16_t pagesz = sysconf(_SC_PAGESIZE);
-    size_t num_pages = (new_sz +  pagesz - 1)/pagesz;
-    mir_free_int(header->node_cache, sizeof(uint16_t) * num_pages);
+    if(header->node_cache != NULL)
+    {
+        uint16_t pagesz = sysconf(_SC_PAGESIZE);
+        size_t num_pages = (new_sz +  pagesz - 1)/pagesz;
+        mir_free_int(header->node_cache, sizeof(uint16_t) * num_pages);
+    }
 #endif
 #ifndef __tile__
 #ifdef MIR_MEM_POL_LOCK_PAGES 
