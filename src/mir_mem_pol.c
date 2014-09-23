@@ -5,6 +5,7 @@
 #include "mir_utils.h"
 #include "mir_runtime.h"
 #include "mir_worker.h"
+#include "arch/mir_arch.h"
 
 #ifdef MIR_MEM_POL_ENABLE
 #ifndef __tile__
@@ -99,7 +100,52 @@ void  mir_mem_node_dist_destroy(struct mir_mem_node_dist_t* dist)
     mir_free_int(dist, sizeof(struct mir_mem_node_dist_t));
 }/*}}}*/
 
-static void print_dist(struct mir_mem_node_dist_t* dist)
+unsigned long mir_mem_node_dist_get_comm_cost(const struct mir_mem_node_dist_t* dist, uint16_t from_node)
+{/*{{{*/
+    MIR_ASSERT(dist != NULL);
+    MIR_ASSERT(dist->buf !=NULL);
+    MIR_ASSERT(runtime->arch->num_nodes > from_node);
+
+    unsigned long comm_cost = 0;
+
+    for(int i=0; i<runtime->arch->num_nodes; i++)
+    {
+        //MIR_DEBUG(MIR_DEBUG_STR "Comm cost node %d to %d: %d\n", from_node, i, runtime->arch->comm_cost_of(from_node, i));
+        comm_cost += (dist->buf[i] * runtime->arch->comm_cost_of(from_node, i));
+    }
+
+    return comm_cost;
+}/*}}}*/
+
+void mir_mem_node_dist_get_stat(struct mir_mem_node_dist_stat_t* stat, const struct mir_mem_node_dist_t* dist)
+{/*{{{*/
+    MIR_ASSERT(dist != NULL);
+    MIR_ASSERT(dist->buf != NULL);
+    MIR_ASSERT(stat != NULL);
+
+    stat->sum = 0;
+    stat->min = -1;
+    stat->max = 0;
+    for(int i=0; i<runtime->arch->num_nodes; i++)
+    {
+        size_t val = dist->buf[i];
+        stat->sum += val;
+        if(stat->min > val)
+            stat->min = val;
+        if(stat->max < val)
+            stat->max = val;
+    }
+    stat->mean = stat->sum / (runtime->arch->num_nodes);
+    double sum_dsq = 0;
+    for(int i=0; i<runtime->arch->num_nodes; i++)
+    {
+        double diff = ((double)(dist->buf[i]) - stat->mean);
+        sum_dsq = (diff * diff);
+    }
+    stat->sd = sqrt(sum_dsq / (runtime->arch->num_nodes));
+}/*}}}*/
+
+static void mem_node_dist_print(struct mir_mem_node_dist_t* dist)
 {/*{{{*/
     MIR_ASSERT(dist != NULL);
     MIR_ASSERT(dist->buf != NULL);
@@ -109,9 +155,9 @@ static void print_dist(struct mir_mem_node_dist_t* dist)
     MIR_INFORM("\n");
 }/*}}}*/
 
-void mir_mem_get_dist(struct mir_mem_node_dist_t* dist, void* addr, size_t sz, void* part_of)
+void mir_mem_get_mem_node_dist(struct mir_mem_node_dist_t* dist, void* addr, size_t sz, void* part_of)
 {/*{{{*/
-    MIR_ASSERT(addr != NULL || sz != 0 || dist != NULL);
+    MIR_ASSERT(addr != NULL && sz != 0 && dist != NULL);
 
     // Check if the part_of address contains a header
     // If yes, then the ... 
@@ -174,34 +220,6 @@ void mir_mem_get_dist(struct mir_mem_node_dist_t* dist, void* addr, size_t sz, v
     // FIXME: What happens on TILEPRO64? 
     MIR_ASSERT(1 == 1);
 #endif
-}/*}}}*/
-
-void mir_mem_node_dist_get_stat(struct mir_mem_node_dist_stat_t* stat, const struct mir_mem_node_dist_t* dist)
-{/*{{{*/
-    MIR_ASSERT(dist != NULL);
-    MIR_ASSERT(dist->buf != NULL);
-    MIR_ASSERT(stat != NULL);
-
-    stat->sum = 0;
-    stat->min = -1;
-    stat->max = 0;
-    for(int i=0; i<runtime->arch->num_nodes; i++)
-    {
-        size_t val = dist->buf[i];
-        stat->sum += val;
-        if(stat->min > val)
-            stat->min = val;
-        if(stat->max < val)
-            stat->max = val;
-    }
-    stat->mean = stat->sum / (runtime->arch->num_nodes);
-    double sum_dsq = 0;
-    for(int i=0; i<runtime->arch->num_nodes; i++)
-    {
-        double diff = ((double)(dist->buf[i]) - stat->mean);
-        sum_dsq = (diff * diff);
-    }
-    stat->sd = sqrt(sum_dsq / (runtime->arch->num_nodes));
 }/*}}}*/
 
 struct mir_mem_pol_t

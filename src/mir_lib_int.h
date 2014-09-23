@@ -26,6 +26,17 @@
 BEGIN_C_DECLS 
 
 /*LIBINT_DECL_BEGIN*/
+struct mir_lock_t
+{/*{{{*/
+#ifdef __tile__
+    //tmc_sync_mutex_t m;
+    tmc_spin_mutex_t m;
+#else
+    pthread_mutex_t m;
+#endif
+};/*}}}*/
+/*LIBINT_DECL_END*/
+/*LIBINT_DECL_BEGIN*/
 enum mir_data_access_t 
 {
     MIR_DATA_ACCESS_READ = 0,
@@ -44,17 +55,6 @@ struct mir_data_footprint_t
     mir_data_access_t data_access;
     void* part_of;
 };
-/*LIBINT_DECL_END*/
-/*LIBINT_DECL_BEGIN*/
-struct mir_lock_t
-{/*{{{*/
-#ifdef __tile__
-    //tmc_sync_mutex_t m;
-    tmc_spin_mutex_t m;
-#else
-    pthread_mutex_t m;
-#endif
-};/*}}}*/
 /*LIBINT_DECL_END*/
 /*LIBINT_BEGIN*/
 void mir_lock_create(struct mir_lock_t* lock);

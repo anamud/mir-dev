@@ -1,8 +1,3 @@
-/*
- *  Description: This is the MIR runtime system. The name MIR is inspired by MIR publishers, whose books I enjoyed during my childhood. I learned later on in life that MIR in Russian means peace. 
- *  Author:  Ananya Muddukrishna
- */
-
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -34,6 +29,7 @@
 // The global runtime object
 struct mir_runtime_t* runtime = NULL;
 
+// FIXME: Make this per-worker
 uint32_t g_sig_worker_alive = 0;
 
 static void mir_preconfig_init()
@@ -41,15 +37,12 @@ static void mir_preconfig_init()
     MIR_DEBUG(MIR_DEBUG_STR "Starting initialization ...\n");
     // Arch
     runtime->arch = mir_arch_create_by_query();
-    if(runtime->arch == NULL)
-        MIR_ABORT(MIR_ERROR_STR "Cannot create architecture!\n");
-    else 
-        MIR_DEBUG(MIR_DEBUG_STR "Architecture set to %s\n", runtime->arch->name);
+    MIR_ASSERT(runtime->arch != NULL);
+    MIR_DEBUG(MIR_DEBUG_STR "Architecture set to %s\n", runtime->arch->name);
 
     // Scheduling policy
     runtime->sched_pol = mir_sched_pol_get_by_name(MIR_SCHED_POL_DEFAULT);
-    if(runtime->sched_pol == NULL)
-        MIR_ABORT(MIR_ERROR_STR "Cannot select %s scheduling policy!\n", MIR_SCHED_POL_DEFAULT);
+    MIR_ASSERT(runtime->sched_pol != NULL);
 
 #ifdef MIR_MEM_POL_ENABLE
     // Memory allocation policy
@@ -59,11 +52,11 @@ static void mir_preconfig_init()
     // Workers
     runtime->num_workers = runtime->arch->num_cores;
     runtime->worker_core_map = mir_malloc_int(sizeof(uint16_t) * runtime->arch->num_cores);
+    MIR_ASSERT(runtime->worker_core_map != NULL);
     for(int i=0; i<runtime->num_workers; i++)
         runtime->worker_core_map[i] = (uint16_t) i;
     int rval = pthread_key_create(&runtime->worker_index, NULL); 
-    if (rval != 0)
-        MIR_ABORT(MIR_ERROR_STR "Unable to create worker TLS key!\n");
+    MIR_ASSERT(rval == 0);
 
     // Flags
     runtime->sig_dying = 0;
@@ -89,13 +82,11 @@ static void mir_postconfig_init()
     {/*{{{*/
         // Create shared memory
         runtime->shmid = shmget((int)(MIR_SHM_KEY), MIR_SHM_SIZE, IPC_CREAT | 0666);
-        if(runtime->shmid < 0)
-            MIR_ABORT(MIR_ERROR_STR "shmget failed [%d]!\n", runtime->shmid);
+        if(runtime->shmid < 0) MIR_ABORT(MIR_ERROR_STR "shmget failed [%d]!\n", runtime->shmid);
 
         // Attach
         runtime->shm = shmat(runtime->shmid, NULL, 0); 
-        if (runtime->shm == NULL)
-            MIR_ABORT(MIR_ERROR_STR "shmat returned NULL!\n");
+        MIR_ASSERT(runtime->shm != NULL);
 
         /*// Test. Write something.*/
         /*char testchar = 'A';*/
@@ -158,8 +149,7 @@ static void mir_postconfig_init()
                 tok_cnt++;
                 tok = strtok (NULL, ",");
             }
-            if(tok_cnt != runtime->num_workers)
-                MIR_ABORT(MIR_ERROR_STR "MIR_WORKER_CORE_MAP incompletely specified!\n");
+            MIR_ASSERT(tok_cnt == runtime->num_workers);
         }
 #endif
     for (uint32_t i=0; i<runtime->num_workers; i++) 
@@ -203,14 +193,14 @@ static inline void print_help()
     MIR_INFORM(MIR_INFORM_STR "Valid options in MIR_CONF environment variable ...\n"
     "-h print this help message\n"
     "-w=<int> number of workers\n"
-    "-s=<str> task scheduling policy\n"
+    "-s=<str> task scheduling policy. Choose among central, central-stack, ws, ws-de and numa.\n"
     "-r enable recorder\n"
-    "-x=<int> task inlining limit based on num tasks per worker\n"
+    "-x=<int> task inlining limit based on num tasks per worker.\n"
     "-i write statistics to file\n"
     "-l=<int> stack size in MB\n"
     "-q=<int> queue capacity\n"
-    "-m=<str> memory allocation policy\n"
-    "-y=<csv> schedule policy specific parameters\n"
+    "-m=<str> memory allocation policy. Choose among coarse, fine and system.\n"
+    "-y=<csv> schedule policy specific parameters. Policy numa: data size in bytes below which task is dealt to worker's private queue.\n"
     "-g enable fork-join graph generation \n"
     "-p enable handshake with Pin profiler [Note: Supported only for a single worker!]\n"
     );
@@ -269,15 +259,8 @@ static void mir_config()
                     }
                     break;
                 case 'g':
-                    /*if(runtime->num_workers == 1)*/
-                    /*{*/
-                        runtime->enable_task_graph_gen = 1;
-                        MIR_DEBUG(MIR_DEBUG_STR "Fork-join graph generation is enabled!\n");
-                    /*}*/
-                    /*else*/
-                    /*{*/
-                        /*MIR_ABORT(MIR_ERROR_STR "Number of workers = %d != 1. Cannot enable task graph generation!\n", runtime->num_workers);*/
-                    /*}*/
+                    runtime->enable_task_graph_gen = 1;
+                    MIR_DEBUG(MIR_DEBUG_STR "Fork-join graph generation is enabled!\n");
                     break;
                 case 'r':
                     runtime->enable_recorder = 1;
@@ -285,12 +268,14 @@ static void mir_config()
                     break;
                 case 'i':
                     runtime->enable_stats = 1;
+                    MIR_DEBUG(MIR_DEBUG_STR "Statistics collection is enabled!\n");
                     break;
                 case 'x':
                     if(tok[2] == '=')
                     {
                         char* s = tok+3;
                         runtime->task_inlining_limit = atoi(s);
+                        MIR_DEBUG(MIR_DEBUG_STR "Task inlining limit set to %u\n", runtime->task_inlining_limit);
                     }
                     else
                     {
@@ -364,10 +349,6 @@ void mir_destroy()
     MIR_RECORDER_EVENT(NULL,0);
 
     MIR_DEBUG(MIR_DEBUG_STR "Shutting down ...\n");
-
-    // FIXME: ws-de causes never-ending shutdown
-    /*if(0 == strcmp(runtime->sched_pol->name, "ws-de"))*/
-        /*goto shutdown;*/
 
     // Check if workers are free
     MIR_DEBUG(MIR_DEBUG_STR "Checking if workers are done ...\n");

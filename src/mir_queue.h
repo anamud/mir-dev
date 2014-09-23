@@ -10,7 +10,7 @@
 BEGIN_C_DECLS 
 
 #ifdef MIR_QUEUE_DEBUG
-static void Q_DBG(char*msg, const struct mir_queue_t *q) 
+static void Q_DBG(const char*msg, const struct mir_queue_t *q) 
 {/*{{{*/
     fprintf(stderr, "%ld\t#%d in %d out %d\t%s\n", 
                     pthread_self(),

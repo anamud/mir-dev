@@ -7,6 +7,9 @@
 #include "mir_memory.h"
 #include "mir_utils.h"
 #include "mir_defines.h"
+#ifdef MIR_MEM_POL_ENABLE
+#include "mir_mem_pol.h"
+#endif 
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -137,8 +140,8 @@ void push_numa (struct mir_task_t* task)
 
     // Push task onto node with the least access cost to read data footprint
     // If no data footprint, push task onto this worker's node
-    struct mir_mem_node_dist_t* dist = mir_task_get_footprint_dist(task, MIR_DATA_ACCESS_READ);
-    //struct mir_mem_node_dist_t* dist = mir_task_get_footprint_dist(task, MIR_DATA_ACCESS_WRITE);
+    struct mir_mem_node_dist_t* dist = mir_task_get_mem_node_dist(task, MIR_DATA_ACCESS_READ);
+    //struct mir_mem_node_dist_t* dist = mir_task_get_mem_node_dist(task, MIR_DATA_ACCESS_WRITE);
     if(dist)
     {
         if(is_data_dist_significant(dist) == false)
@@ -147,7 +150,7 @@ void push_numa (struct mir_task_t* task)
             least_cost_worker = this_worker;
             push_to_alt_queue = true;
             if(runtime->enable_stats)
-                task->comm_cost = mir_sched_pol_get_comm_cost(runtime->arch->node_of(least_cost_worker->core_id), dist);
+                task->comm_cost = mir_mem_node_dist_get_comm_cost(dist, runtime->arch->node_of(least_cost_worker->core_id));
         }
         else
         {
@@ -167,7 +170,7 @@ void push_numa (struct mir_task_t* task)
                 if(node != prev_node)
                 {
                     prev_node = node;
-                    unsigned long comm_cost = mir_sched_pol_get_comm_cost(node, dist);
+                    unsigned long comm_cost = mir_mem_node_dist_get_comm_cost(dist, node);
                     if(comm_cost < least_comm_cost)
                     {
                         least_comm_cost = comm_cost;
@@ -313,10 +316,10 @@ bool pop_numa (struct mir_task_t** task)
                 // Update stats
                 if(runtime->enable_stats)
                 {
-                    struct mir_mem_node_dist_t* dist = mir_task_get_footprint_dist(*task, MIR_DATA_ACCESS_READ);
+                    struct mir_mem_node_dist_t* dist = mir_task_get_mem_node_dist(*task, MIR_DATA_ACCESS_READ);
                     if(dist)
                     {
-                        (*task)->comm_cost = mir_sched_pol_get_comm_cost(node, dist);
+                        (*task)->comm_cost = mir_mem_node_dist_get_comm_cost(dist, node);
                         mir_worker_status_update_comm_cost(worker->status, (*task)->comm_cost);
                     }
 
@@ -370,11 +373,11 @@ bool pop_numa (struct mir_task_t** task)
                     // Update stats
                     if(runtime->enable_stats)
                     {
-                        struct mir_mem_node_dist_t* dist = mir_task_get_footprint_dist(*task, MIR_DATA_ACCESS_READ);
-                        //struct mir_mem_node_dist_t* dist = mir_task_get_footprint_dist(*task, MIR_DATA_ACCESS_WRITE);
+                        struct mir_mem_node_dist_t* dist = mir_task_get_mem_node_dist(*task, MIR_DATA_ACCESS_READ);
+                        //struct mir_mem_node_dist_t* dist = mir_task_get_mem_node_dist(*task, MIR_DATA_ACCESS_WRITE);
                         if(dist)
                         {
-                            (*task)->comm_cost = mir_sched_pol_get_comm_cost(node, dist);
+                            (*task)->comm_cost = mir_mem_node_dist_get_comm_cost(dist, node);
                             mir_worker_status_update_comm_cost(worker->status, (*task)->comm_cost);
                             worker->status->num_comm_tasks_stolen_by_diameter[d-1]++;
                         }

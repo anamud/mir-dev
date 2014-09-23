@@ -7,6 +7,9 @@
 #include "mir_memory.h"
 #include "mir_utils.h"
 #include "mir_defines.h"
+#ifdef MIR_MEM_POL_ENABLE
+#include "mir_mem_pol.h"
+#endif 
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -130,10 +133,10 @@ bool pop_central_stack (struct mir_task_t** task)
             if(runtime->enable_stats)
             {
 #ifdef MIR_MEM_POL_ENABLE
-                struct mir_mem_node_dist_t* dist = mir_task_get_footprint_dist(*task, MIR_DATA_ACCESS_READ);
+                struct mir_mem_node_dist_t* dist = mir_task_get_mem_node_dist(*task, MIR_DATA_ACCESS_READ);
                 if(dist)
                 {
-                    (*task)->comm_cost = mir_sched_pol_get_comm_cost(node, dist);
+                    (*task)->comm_cost = mir_mem_node_dist_get_comm_cost(dist, node);
                     mir_worker_status_update_comm_cost(worker->status, (*task)->comm_cost);
                 }
 #endif

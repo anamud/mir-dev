@@ -7,8 +7,11 @@
 #include "scheduling/mir_sched_pol.h"
 #include "mir_utils.h"
 #include "mir_memory.h"
-#include "mir_data_footprint.h"
 #include "mir_queue.h"
+
+#ifdef MIR_MEM_POL_ENABLE
+#include "mir_mem_pol.h"
+#endif 
 
 #include <stdint.h>
 #include <stdlib.h>
@@ -311,7 +314,37 @@ void mir_task_execute(struct mir_task_t* task)
 }/*}}}*/
 
 #ifdef MIR_MEM_POL_ENABLE
-struct mir_mem_node_dist_t* mir_task_get_footprint_dist(struct mir_task_t* task, mir_data_access_t access)
+static inline void mir_data_footprint_get_mem_node_dist(struct mir_mem_node_dist_t* dist, const struct mir_data_footprint_t* footprint)
+{/*{{{*/
+    // Check
+    MIR_ASSERT(dist != NULL);
+    MIR_ASSERT(footprint != NULL);
+
+    uint64_t row_sz = footprint->row_sz;
+    if(row_sz > 1)
+    {
+        for(uint64_t brow=0; brow<=footprint->end; brow++)
+        {
+            void* base = footprint->base + brow*row_sz*footprint->type;
+            mir_mem_get_mem_node_dist( dist, base, 
+                    (footprint->end - footprint->start + 1) * footprint->type, 
+                    footprint->part_of );
+            /*MIR_INFORM("Footprint composed of these addresses:\n");*/
+            /*MIR_INFORM("%p[%lu-%lu]\n", base, footprint->start, footprint->end);*/
+        }
+    }
+    else
+    {
+        mir_mem_get_mem_node_dist( dist, footprint->base, 
+                (footprint->end - footprint->start + 1) * footprint->type, 
+                footprint->part_of );
+        /*MIR_INFORM("Footprint composed of these addresses:\n");*/
+        /*MIR_INFORM("%p[%lu-%lu]\n", footprint->base, footprint->start, footprint->end);*/
+    }
+}/*}}}*/
+
+// FIXME: Multi-tasking fucntion. Seperate!
+struct mir_mem_node_dist_t* mir_task_get_mem_node_dist(struct mir_task_t* task, mir_data_access_t access)
 {/*{{{*/
     if(task->num_data_footprints == 0)
         return NULL;
@@ -325,7 +358,7 @@ struct mir_mem_node_dist_t* mir_task_get_footprint_dist(struct mir_task_t* task,
         // Calculate dist
         for(int i=0; i<task->num_data_footprints; i++)
             if(task->data_footprints[i].data_access == access)
-                mir_data_footprint_get_dist(dist, &task->data_footprints[i]);
+                mir_data_footprint_get_mem_node_dist(dist, &task->data_footprints[i]);
 
         // Print dist
         /*MIR_INFORM("Dist for task %" MIR_FORMSPEC_UL ": ", task->id.uid);*/

@@ -45,9 +45,11 @@ struct mir_mem_node_dist_t* mir_mem_node_dist_create();
 
 void  mir_mem_node_dist_destroy(struct mir_mem_node_dist_t* dist);
 
-void mir_mem_get_dist(struct mir_mem_node_dist_t* dist, void* addr, size_t sz, void* part_of);
+void mir_mem_get_mem_node_dist(struct mir_mem_node_dist_t* dist, void* addr, size_t sz, void* part_of);
 
 void mir_mem_node_dist_get_stat(struct mir_mem_node_dist_stat_t* stat, const struct mir_mem_node_dist_t* dist);
+
+unsigned long mir_mem_node_dist_get_comm_cost(const struct mir_mem_node_dist_t* dist, uint16_t from_node);
 
 #endif
 END_C_DECLS

@@ -10,7 +10,7 @@
 BEGIN_C_DECLS 
 
 #ifdef MIR_STACK_DEBUG
-static void S_DBG(char*msg, struct mir_stack_t *q) 
+static void S_DBG(const char*msg, const struct mir_stack_t *q) 
 {/*{{{*/
     fprintf(stderr, "%ld\t#%d size %d head \t%s\n", 
                     pthread_self(),
@@ -49,7 +49,7 @@ bool mir_stack_push(struct mir_stack_t* stack, void* data);
 void mir_stack_pop(struct mir_stack_t* stack, void** data);
 
 // Get the cuurent stack size
-uint32_t mir_stack_size(struct mir_stack_t* stack);
+uint32_t mir_stack_size(const struct mir_stack_t* stack);
 
 END_C_DECLS
 
