@@ -49,16 +49,32 @@ void process(int i, int n)
 
 void test(int n)
 {/*{{{*/
-    for(int r=0; r<REUSE_COUNT; r++)
-    {
-        for(int i=0; i<n; i++)
-        {
-            preprocess(r); 
-#pragma omp task firstprivate(i) shared(n)
-            process(i,n);
-        }
-#pragma omp taskwait
-    }
+    /*for(int r=0; r<REUSE_COUNT; r++)*/
+    /*{*/
+        /*for(int i=0; i<n; i++)*/
+        /*{*/
+            /*preprocess(r); */
+/*#pragma omp task firstprivate(i) shared(n)*/
+            /*process(i,n);*/
+        /*}*/
+/*#pragma omp taskwait*/
+    /*}*/
+    preprocess(0);
+#pragma omp task
+    process(0,0);
+#pragma omp task
+    process(0,1);
+#pragma omp taskwait 
+
+#pragma omp task
+    process(0,2);
+#pragma omp taskwait 
+
+#pragma omp task
+    process(0,3);
+#pragma omp task
+    process(0,4);
+#pragma omp taskwait 
 }/*}}}*/
 
 int main(int argc, char **argv)
@@ -78,7 +94,7 @@ int main(int argc, char **argv)
 #pragma omp task
 {
     test(num);
-    test(num-1);
+    //test(num-1);
 }
 #pragma omp taskwait
     long par_time_end = get_usecs();

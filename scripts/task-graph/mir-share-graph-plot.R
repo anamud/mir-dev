@@ -68,8 +68,7 @@ sg_file_out <- paste(gsub(". $", "", sg_file), ".dot", sep="")
 print(paste("Writing file", sg_file_out))
 res <- write.graph(sg, file=sg_file_out, format="dot")
 
-# Warnings
-warnings()
-            
-# Quit
-quit("no", 0)
+# Warn
+wa <- warnings()
+if(class(wa) != "NULL")
+    print(wa)

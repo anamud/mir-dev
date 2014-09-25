@@ -97,7 +97,7 @@ debug.Program(app_name +'-debug', source = debug_src)
 #-O3
 opt = env.Clone();
 opt['CCFLAGS'] += Split("""
--O3
+-O2
 """)
 opt['LIBS'] += ['mir-opt']
 opt.VariantDir('opt-build', '.', duplicate=0)

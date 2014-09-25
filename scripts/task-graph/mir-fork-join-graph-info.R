@@ -18,3 +18,9 @@ cat("joins_at_summary: ")
 cat(summary(count(tg.data, c('parent','joins_at'))$freq))
 cat("\n")
 sink()
+
+# Warn
+wa <- warnings()
+if(class(wa) != "NULL")
+    print(wa)
+

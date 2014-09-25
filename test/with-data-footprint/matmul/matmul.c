@@ -216,7 +216,6 @@ void compute(struct timeval *start, struct timeval *stop, unsigned long NB, unsi
 {/*{{{*/
     gettimeofday(start,NULL);
 
-    struct mir_twc_t* twc = mir_twc_create();
     for (unsigned long i = 0; i < DIM; i++)
         for (unsigned long j = 0; j < DIM; j++)
         {
@@ -273,11 +272,11 @@ void compute(struct timeval *start, struct timeval *stop, unsigned long NB, unsi
             footprints[f].data_access = MIR_DATA_ACCESS_WRITE;
             footprints[f].part_of = C[i][j];
 
-            struct mir_task_t* task = mir_task_create((mir_tfunc_t) compute_task_wrapper, &arg, sizeof(struct compute_task_wrapper_arg_t), twc, DIM+DIM+2, footprints, NULL);
+            mir_task_create((mir_tfunc_t) compute_task_wrapper, &arg, sizeof(struct compute_task_wrapper_arg_t), DIM+DIM+2, footprints, NULL);
         }
 
 //#pragma omp taskwait
-    mir_twc_wait(twc);
+    mir_task_wait();
     gettimeofday(stop,NULL);
 }/*}}}*/
 
@@ -326,7 +325,7 @@ void deinit_seq(unsigned long DIM)
     free(C_seq);
 }/*}}}*/
 
-void malloc_task(uint64_t start, uint64_t end, struct mir_twc_t* twc)
+void malloc_task(uint64_t start, uint64_t end)
 {/*{{{*/
     for(uint64_t j=start; j<=end; j++)
     {/*{{{*/
@@ -340,13 +339,12 @@ struct malloc_task_wrapper_arg_t
 {/*{{{*/
     uint64_t start;
     uint64_t end;
-    struct mir_twc_t* twc;
 };/*}}}*/
 
 void malloc_task_wrapper(void* arg)
 {/*{{{*/
     struct malloc_task_wrapper_arg_t* warg = (struct malloc_task_wrapper_arg_t*) arg;
-    malloc_task(warg->start, warg->end, warg->twc);
+    malloc_task(warg->start, warg->end);
 }/*}}}*/
 
 void init (unsigned long argc, char **argv, unsigned long * N_p, unsigned long * DIM_p)
@@ -391,7 +389,6 @@ void init (unsigned long argc, char **argv, unsigned long * N_p, unsigned long *
 #ifdef BMALLOC_IN_PARALLEL
     {/*{{{*/
         PMSG("Allocating blocks in parallel ...\n");
-        struct mir_twc_t* twc = mir_twc_create();
 
         // Split the task creation load among workers
         // Same action as worksharing omp for
@@ -411,7 +408,7 @@ void init (unsigned long argc, char **argv, unsigned long * N_p, unsigned long *
                     arg.end = end;
                     arg.twc = twc;
 
-                    struct mir_task_t* task = mir_task_create((mir_tfunc_t) malloc_task_wrapper, &arg, sizeof(struct malloc_task_wrapper_arg_t), twc, 0, NULL, NULL);
+                    struct mir_task_t* task = mir_task_create((mir_tfunc_t) malloc_task_wrapper, &arg, sizeof(struct malloc_task_wrapper_arg_t), 0, NULL, NULL);
                 }
             }
         }
@@ -426,11 +423,11 @@ void init (unsigned long argc, char **argv, unsigned long * N_p, unsigned long *
                 arg.end = end;
                 arg.twc = twc;
 
-                struct mir_task_t* task = mir_task_create((mir_tfunc_t) malloc_task_wrapper, &arg, sizeof(struct malloc_task_wrapper_arg_t), twc, 0, NULL, NULL);
+                mir_task_create((mir_tfunc_t) malloc_task_wrapper, &arg, sizeof(struct malloc_task_wrapper_arg_t), 0, NULL, NULL);
             }
         }
 
-        mir_twc_wait(twc);
+        mir_task_wait();
     }/*}}}*/
 #else
     for (unsigned long i = 0; i < DIM*DIM; i++)
