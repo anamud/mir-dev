@@ -27,10 +27,13 @@ static inline unsigned int mir_twc_reduce(struct mir_twc_t* twc)
     for(int i=0; i<runtime->num_workers; i++)
         sum += twc->count_per_worker[i];
 
+    // This catches the nasty case of not sychronizing with all tasks previously
+    MIR_ASSERT(sum <= twc->count);
+
     if(sum < twc->count)
         return 0;
     else
-        return 1;
+        return 1; // sum == twc->count
 }/*}}}*/
 
 static inline bool inline_task()
@@ -368,6 +371,9 @@ void mir_task_wait()
     else
         twc = runtime->ctwc;
 
+    // Prevent empty synchronizations
+    MIR_ASSERT(twc->count > 0);
+
     // Wait and do useful work
     while(mir_twc_reduce(twc) != 1)
     {
@@ -383,6 +389,11 @@ void mir_task_wait()
 
     // Update num times passed
     __sync_fetch_and_add(&(twc->num_passes), 1);
+
+    // Reset counts 
+    twc->count = 0;
+    for(int i=0; i<runtime->num_workers; i++)
+       twc->count_per_worker[i] = 0;
 
     MIR_RECORDER_STATE_END(NULL, 0);
     return;
