@@ -43,6 +43,7 @@ struct _perf_ctr_map
 #define SPR_PERF_COUNT_1 0x4206
 #define SPR_AUX_PERF_COUNT_0 0x6005
 #define SPR_AUX_PERF_COUNT_1 0x6006
+// Count=4 is hard-coded. Do not change count.
 struct _perf_ctr_map perf_ctr_map[4] = {
     {"LOCAL_DRD_CNT", 0x28}
     {"REMOTE_DRD_CNT", 0x2b},
@@ -59,6 +60,8 @@ struct _perf_ctr_map perf_ctr_map[4] = {
 #else
 
 #include "papi.h"
+// Ignore the codes 0x0
+// Add as many perf counters as MIR_RECORDER_NUM_PAPI_HWPC 
 struct _perf_ctr_map perf_ctr_map[MIR_RECORDER_NUM_PAPI_HWPC] = {
     {"PAPI_TOT_INS", 0x0},
     {"PAPI_TOT_CYC", 0x0},
@@ -79,7 +82,7 @@ struct mir_recorder_t* mir_recorder_create(uint16_t id)
 
     // Open buffer file
     char buffer_file_name[MIR_LONG_NAME_LEN];
-    sprintf(buffer_file_name, "%" MIR_FORMSPEC_UL "-recorder-%d.rec", runtime->init_time, id);
+    sprintf(buffer_file_name, "%s-prv-%d.rec", MIR_RECORDER_FILE_NAME_SUFFIX, id);
     recorder->buffer_file = fopen(buffer_file_name, "w");
     MIR_ASSERT(recorder->buffer_file != NULL);
 
@@ -175,7 +178,7 @@ void mir_recorder_destroy(struct mir_recorder_t* recorder)
 
     // Write state time to file
     char state_time_filename[MIR_LONG_NAME_LEN];
-    sprintf(state_time_filename, "%" MIR_FORMSPEC_UL "-state-time-%d.rec", runtime->init_time, recorder->id);
+    sprintf(state_time_filename, "%s-state-time-%d.rec", MIR_RECORDER_FILE_NAME_SUFFIX, recorder->id);
 
     // Open state_time_file
     FILE* state_time_file = fopen(state_time_filename, "w");
@@ -206,7 +209,7 @@ void mir_recorder_destroy(struct mir_recorder_t* recorder)
     {
         // Make config file name
         char config_filename[MIR_LONG_NAME_LEN];
-        sprintf(config_filename, "%" MIR_FORMSPEC_UL "-config.rec", runtime->init_time);
+        sprintf(config_filename, "%s-prv-config.rec", MIR_RECORDER_FILE_NAME_SUFFIX);
 
         // Open config file
         FILE* config_file = fopen(config_filename, "w");

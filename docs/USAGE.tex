@@ -323,9 +323,8 @@ MIR supports detailed thread-based and task-based profiling.
 \subsection{Thread-based profiling}
 Thread states and events are main performance indicators in thread-based profiling. 
 
-Enable the -r flag to get detailed per-thread state and event information in files with .rec extension.
+Enable the -r flag to get detailed per-thread state and event information in files with *-prv-*.rec extension.
 Each rec file represents a worker thread.
-The name of each rec file begins with the Unix time when the runtime system was initialized.
 The rec files can be inspected individually or combined and visualized using Paraver.
 
 \begin{lstlisting}[style=BashInputStyle]
@@ -335,7 +334,7 @@ $ $MIR_ROOT/scripts/mirtoparaver.py *-config.rec
 $ wxparaver *-paraver.prv
 \end{lstlisting}
 
-A set of files matching the pattern <<Unix time>>-state-time*.rec are also created when -r is enabled. 
+A set of files matching the pattern *-state-time*.rec are also created when -r is enabled. 
 These files contain thread state duration information which can be aggregated for analysis without Paraver.
 
 \begin{lstlisting}[style=BashInputStyle]
@@ -348,13 +347,21 @@ Hardware performance counters can be read during thread events. This process is 
 First install PAPI. 
 Then set the PAPI\_ROOT environment variable and create a file called HAVE\_PAPI in MIR\_ROOT/src.
 Next enable the preprocessor definition MIR\_RECORDER\_USE\_HW\_PERF\_COUNTERS in MIR\_ROOT/src/mir\_defines.h.
-Next enable hardware performance counters of interest in MIR\_ROOT/src/mir\_recorder.{c|h}.
+Next enable PAPI hardware performance counters of interest in MIR\_ROOT/src/mir\_recorder.c.
 Rebuild MIR.
 
 \begin{lstlisting}[style=BashInputStyle]
 $ export PAPI_ROOT=<<PAPI install path, typically /usr>>
 $ touch $MIR_ROOT/src/HAVE_PAPI
-$ cat mir_defines.h mir_recorder.{c|h}
+$ grep -i "HW_PERF" $MIR_ROOT/src/mir_defines.h 
+#define MIR_RECORDER_USE_HW_PERF_COUNTERS 
+$ grep -i "{\"PAPI_" $MIR_ROOT/src/mir_recorder.c
+    {"PAPI_TOT_INS", 0x0},
+    {"PAPI_TOT_CYC", 0x0},
+    /*{"PAPI_L2_DCM", 0x0},*/
+    /*{"PAPI_RES_STL", 0x0},*/
+    /*{"PAPI_L1_DCA", 0x0},*/
+    /*{"PAPI_L1_DCH", 0x0},*/
 $ scons
 \end{lstlisting}
 

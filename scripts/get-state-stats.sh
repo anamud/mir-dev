@@ -2,7 +2,7 @@
 
 # Arguments check
 if (( $# != 1 )); then
-    echo "Usage: $0 timestamp"
+    echo "Usage: $0 suffix"
     exit 1
 fi
 

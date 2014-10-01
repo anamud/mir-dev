@@ -54,12 +54,6 @@ void config_central_stack (const char* conf_str)
         }
         tok = strtok(NULL, " ");
     }
-
-    // Set process stack size
-    int ps_sz = MIR_SCHED_POL_CENTRAL_STACK_PROCESS_STACK_SIZE * 1024 *1024;
-    MIR_ASSERT(ps_sz > 0);
-    MIR_ASSERT(0 == mir_pstack_set_size(ps_sz));
-    MIR_DEBUG(MIR_DEBUG_STR "Process stack size set to %d bytes\n", ps_sz);
 }/*}}}*/
 
 void create_central_stack ()

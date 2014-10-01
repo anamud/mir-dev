@@ -101,8 +101,8 @@ void push_ws (struct mir_task_t* task)
     struct mir_worker_t* worker = mir_worker_get_context(); 
     MIR_ASSERT(NULL != worker);
 
-    // Push task to central queue
-    struct mir_queue_t* queue = runtime->sched_pol->queues[0];
+    // Push task to this workers queue 
+    struct mir_queue_t* queue = runtime->sched_pol->queues[worker->id];
     MIR_ASSERT(NULL != queue);
     if( false == mir_queue_push(queue, (void*) task) )
     {

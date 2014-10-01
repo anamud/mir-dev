@@ -2,17 +2,17 @@
 
 # Arguments check
 if (( $# == 0)); then
-    echo "Usage: $0 timestamp [task graph] [task graph field]"
+    echo "Usage: $0 suffix [task graph] [task graph field]"
     exit 1
 fi
 
 if (( $# > 3)); then
-    echo "Usage: $0 timestamp [task graph] [task graph field]"
+    echo "Usage: $0 suffix [task graph] [task graph field]"
     exit 1
 fi
 
 if (( $# == 2)); then
-    echo "Usage: $0 timestamp [task graph] [task graph field]"
+    echo "Usage: $0 suffix [task graph] [task graph field]"
     exit 1
 fi
 
