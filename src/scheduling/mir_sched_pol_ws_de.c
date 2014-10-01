@@ -26,6 +26,7 @@ void config_ws_de (const char* conf_str)
     strcpy(str, conf_str);
 
     struct mir_sched_pol_t* sp = runtime->sched_pol;
+    MIR_ASSERT(NULL != sp);
 
     char* tok = strtok(str, " ");
     while(tok)
@@ -40,6 +41,7 @@ void config_ws_de (const char* conf_str)
                     {
                         char* s = tok+3;
                         sp->queue_capacity = atoi(s);
+                        MIR_ASSERT(sp->queue_capacity > 0);
                         //MIR_INFORM(MIR_INFORM_STR "Setting queue capacity to %d\n", sp->queue_capacity);
                     }
                     else
@@ -58,39 +60,52 @@ void config_ws_de (const char* conf_str)
 void create_ws_de ()
 {/*{{{*/
     struct mir_sched_pol_t* sp = runtime->sched_pol;
+    MIR_ASSERT(NULL != sp);
 
     // Create worker private task queues
     sp->num_queues = runtime->num_workers;
     sp->queues = (struct mir_queue_t**) mir_malloc_int (sp->num_queues * sizeof(mir_dequeue_t*));
-    if(NULL == sp->queues)
-        MIR_ABORT(MIR_ERROR_STR "Unable to create task dequeues!\n");
+    MIR_ASSERT(NULL != sp->queues);
 
     for(int i=0; i< sp->num_queues; i++)
+    {
         sp->queues[i] = (struct mir_queue_t*) newWSDeque(sp->queue_capacity);
+        MIR_ASSERT(NULL != sp->queues[i]);
+    }
 }/*}}}*/
 
 void destroy_ws_de ()
 {/*{{{*/
     return; // FIXME: Bad exit. Workers bang on queues which are freed.
     struct mir_sched_pol_t* sp = runtime->sched_pol;
-    
+    MIR_ASSERT(NULL != sp);
+
     // Free queues
     for(int i=0; i<sp->num_queues ; i++)
+    {
+        MIR_ASSERT(NULL != sp->queues[i]);
         freeWSDeque((mir_dequeue_t*)sp->queues[i]);
+        sp->queues[i] = NULL;
+    }
 
+    MIR_ASSERT(NULL != sp->queues);
     mir_free_int(sp->queues, sizeof(mir_dequeue_t*) * sp->num_queues);
+    sp->queues = NULL;
 }/*}}}*/
 
 void push_ws_de (struct mir_task_t* task)
 {/*{{{*/
+    MIR_ASSERT(NULL != task);
     //if(runtime->enable_recorder == 1)
     //MIR_RECORDER_STATE_BEGIN(MIR_STATE_TSCHED);
 
     // Get this worker!
     struct mir_worker_t* worker = mir_worker_get_context(); 
+    MIR_ASSERT(NULL != worker);
 
     // ws has per-worker queues
     mir_dequeue_t* queue = (mir_dequeue_t*) runtime->sched_pol->queues[worker->id];
+    MIR_ASSERT(NULL != queue);
     if( rtsFalse == pushWSDeque(queue, (void*) task) )
     {
 #ifdef MIR_INLINE_TASK_IF_QUEUE_FULL 
@@ -99,7 +114,7 @@ void push_ws_de (struct mir_task_t* task)
         if(runtime->enable_stats)
             worker->status->num_tasks_inlined++;
 #else
-        MIR_ABORT(MIR_ERROR_STR "Cannot enque task. Increase queue capacity using MIR_CONF.\n");
+        MIR_ABORT(MIR_ERROR_STR "Cannot enqueue task. Increase queue capacity using MIR_CONF.\n");
 #endif
     }
     else
@@ -118,8 +133,10 @@ bool pop_ws_de (struct mir_task_t** task)
 {/*{{{*/
     bool found = 0;
     struct mir_sched_pol_t* sp = runtime->sched_pol;
+    MIR_ASSERT(NULL != sp);
     uint32_t num_queues = sp->num_queues;
     struct mir_worker_t* worker = mir_worker_get_context(); 
+    MIR_ASSERT(NULL != worker);
     uint16_t node = runtime->arch->node_of(worker->core_id);
 
     // First try to pop from own queue
@@ -129,6 +146,7 @@ bool pop_ws_de (struct mir_task_t** task)
     mir_dequeue_t* queue = (mir_dequeue_t*) sp->queues[worker->id];
     if(looksEmptyWSDeque(queue) == rtsFalse)
     {
+        *task = NULL;
         *task = (struct mir_task_t*) popWSDeque(queue);
         if(*task)
         {
@@ -182,6 +200,7 @@ bool pop_ws_de (struct mir_task_t** task)
         mir_dequeue_t* queue = (mir_dequeue_t*) sp->queues[ctr];
         if(looksEmptyWSDeque(queue) == rtsFalse)
         {
+            *task = NULL;
             *task = (struct mir_task_t*) stealWSDeque(queue);
             if(*task) 
             {
