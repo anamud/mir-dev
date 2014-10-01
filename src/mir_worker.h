@@ -84,7 +84,7 @@ void mir_worker_status_update_comm_cost(struct mir_worker_status_t* status, unsi
 
 void mir_worker_status_write_header_to_file(FILE* file);
 
-void mir_worker_status_write_to_file(struct mir_worker_status_t* status, FILE* file);
+void mir_worker_status_write_to_file(const struct mir_worker_status_t* status, FILE* file);
 
 void mir_worker_update_task_graph(struct mir_worker_t* worker, struct mir_task_t* task);
 

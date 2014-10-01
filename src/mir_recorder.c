@@ -14,68 +14,7 @@
 
 extern struct mir_runtime_t* runtime;
 
-#ifdef MIR_RECORDER_USE_HW_PERF_COUNTERS
-
-#ifdef __tile__
-
-#include <arch/cycle.h>
-
-#define SPR_PERF_COUNT_CTL  0x4207
-#define SPR_AUX_PERF_COUNT_CTL  0x6007
-#define SPR_PERF_COUNT_0 0x4205
-#define SPR_PERF_COUNT_1 0x4206
-#define SPR_AUX_PERF_COUNT_0 0x6005
-#define SPR_AUX_PERF_COUNT_1 0x6006
-#define LOCAL_DRD_CNT 0x28
-#define REMOTE_DRD_CNT 0x2b 
-#define LOCAL_DRD_MISS 0x34
-#define REMOTE_DRD_MISS 0x37
-#define DATA_CACHE_STALL 0x10
-#define INSTRUCTION_CACHE_STALL 0x11
-#define LOAD_MISS_REPLAY_TRAP 0x1c
-#define BUNDLES_RETIRED 0x6
-#define VIC_WB_CNT 0x3b
-#define COUNTER_ONE 0x1
-#define LR_COUNTERS 1
-#define COUNTER_CONF LR_COUNTERS
-
-// FIXME: WARNING AND NOTE! Update also in recorder_create
-char* mir_event_name_string[MIR_RECORDER_EVENT_MAX_COUNT]  = 
-{ /*{{{*/
-     "LOCAL_DRD_MISS", 
-     "REMOTE_DRD_MISS", 
-     "DATA_CACHE_STALL", //"LOAD_MISS_REPLAY_TRAP",
-     "LOAD_MISS_REPLAY_TRAP" //"BUNDLES_RETIRED" 
- };/*}}}*/
-
-#else
-
-#include "papi.h"
-
-// FIXME: WARNING AND NOTE! Update also in recorder_create
-char* mir_event_name_string[MIR_RECORDER_EVENT_MAX_COUNT] = 
-{ /*{{{*/
-    "PAPI_TOT_INS",
-    "PAPI_TOT_CYC",
-    /*"PAPI_L2_DCM",*/
-    /*"PAPI_RES_STL",*/
-    /*"PAPI_L1_DCA",*/
-    /*"PAPI_L1_DCH",*/
-};/*}}}*/
-
-#endif
-
-#else
-
-// FIXME: WARNING AND NOTE! Update also in recorder_create
-char* mir_event_name_string[MIR_RECORDER_EVENT_MAX_COUNT] = 
-{ /*{{{*/
-    "NO_EVENT", 
-};/*}}}*/
-
-#endif
-
-const char* mir_state_name_string[MIR_RECORDER_STATE_MAX_COUNT] = 
+const char* mir_state_name_string[MIR_RECORDER_NUM_STATES] = 
 {/*{{{*/
     "TIDLE",
     "TCREATE",
@@ -87,36 +26,84 @@ const char* mir_state_name_string[MIR_RECORDER_STATE_MAX_COUNT] =
     "TMALLOC"
 };/*}}}*/
 
+#ifdef MIR_RECORDER_USE_HW_PERF_COUNTERS
+
+struct _perf_ctr_map 
+{ 
+    char* name; 
+    int code; 
+};
+
+#ifdef __tile__
+
+#include <arch/cycle.h>
+#define SPR_PERF_COUNT_CTL  0x4207
+#define SPR_AUX_PERF_COUNT_CTL  0x6007
+#define SPR_PERF_COUNT_0 0x4205
+#define SPR_PERF_COUNT_1 0x4206
+#define SPR_AUX_PERF_COUNT_0 0x6005
+#define SPR_AUX_PERF_COUNT_1 0x6006
+struct _perf_ctr_map perf_ctr_map[4] = {
+    {"LOCAL_DRD_CNT", 0x28}
+    {"REMOTE_DRD_CNT", 0x2b},
+    {"LOCAL_DRD_MISS", 0x34},
+    {"REMOTE_DRD_MISS", 0x37},
+    /*{"DATA_CACHE_STALL", 0x10},*/
+    /*{"INSTRUCTION_CACHE_STALL", 0x11},*/
+    /*{"LOAD_MISS_REPLAY_TRAP", 0x1c},*/
+    /*{"BUNDLES_RETIRED", 0x6},*/
+    /*{"VIC_WB_CNT", 0x3b},*/
+    /*{"COUNTER_ONE", 0x1},*/
+};
+
+#else
+
+#include "papi.h"
+struct _perf_ctr_map perf_ctr_map[MIR_RECORDER_NUM_PAPI_HWPC] = {
+    {"PAPI_TOT_INS", 0x0},
+    {"PAPI_TOT_CYC", 0x0},
+};
+
+#endif
+
+#endif
+
 struct mir_recorder_t* mir_recorder_create(uint16_t id)
 {/*{{{*/
     struct mir_recorder_t* recorder = (struct mir_recorder_t*) mir_malloc_int (sizeof(struct mir_recorder_t));
-    if(recorder == NULL)
-        MIR_ABORT(MIR_ERROR_STR "Could not create recorder!\n");
+    MIR_ASSERT(recorder != NULL);
 
     // Open buffer file
     char buffer_file_name[MIR_LONG_NAME_LEN];
     sprintf(buffer_file_name, "%" MIR_FORMSPEC_UL "-recorder-%d.rec", runtime->init_time, id);
     recorder->buffer_file = fopen(buffer_file_name, "w");
-    if(!recorder->buffer_file)
-        MIR_ABORT(MIR_ERROR_STR "Could not create recorder buffer file!\n");
+    MIR_ASSERT(recorder->buffer_file != NULL);
 
     // Record id
     recorder->id = id;
     fprintf(recorder->buffer_file, "%%recorder_id=%d%%\n", id);
 
     // Reset state time related
-    for(int i=0; i<MIR_RECORDER_STATE_MAX_COUNT; i++)
+    for(int i=0; i<MIR_RECORDER_NUM_STATES; i++)
         recorder->state_time[i] = 0;
     recorder->prev_state = 0;
     recorder->this_state = 0;
     recorder->this_state_trans_time = mir_get_cycles();
 
     // Record states and events
-    for(int i=0; i<MIR_RECORDER_STATE_MAX_COUNT; i++)
+    for(int i=0; i<MIR_RECORDER_NUM_STATES; i++)
         fprintf(recorder->buffer_file, "%s:", mir_state_name_string[i]);
     fprintf(recorder->buffer_file, "\n");
-    for(int i=0; i<MIR_RECORDER_EVENT_MAX_COUNT; i++)
-        fprintf(recorder->buffer_file, "%s:", mir_event_name_string[i]);
+#ifdef MIR_RECORDER_USE_HW_PERF_COUNTERS
+#ifdef __tile__
+    for(int i=0; i<4; i++)
+#else
+    for(int i=0; i<MIR_RECORDER_NUM_PAPI_HWPC; i++)
+#endif
+        fprintf(recorder->buffer_file, "%s:", perf_ctr_map[i].name);
+#else
+    fprintf(recorder->buffer_file, "NA:");
+#endif
     fprintf(recorder->buffer_file, "\n");
 
     // Reset buffer heads
@@ -131,48 +118,44 @@ struct mir_recorder_t* mir_recorder_create(uint16_t id)
     recorder->num_events = 0;
 
 #ifdef MIR_RECORDER_USE_HW_PERF_COUNTERS
-
 #ifdef __tile__
-
-    // Settilera counters
-    recorder->tilecounter[0] = LOCAL_DRD_MISS;
-    recorder->tilecounter[1] = REMOTE_DRD_MISS;
-    recorder->tilecounter[2] = DATA_CACHE_STALL; // LOAD_MISS_REPLAY_TRAP;
-    recorder->tilecounter[3] = LOAD_MISS_REPLAY_TRAP; // BUNDLES_RETIRED;
+    // Set tilera counters
+    for(int i=0; i<4; i++)
+        recorder->tilecounter[i] = perf_ctr_map_tilepro64[i].code;
 
     // Enable tilera counters
     __insn_mtspr(SPR_PERF_COUNT_CTL, recorder->tilecounter[0] | (recorder->tilecounter[1] << 16));
     __insn_mtspr(SPR_AUX_PERF_COUNT_CTL, recorder->tilecounter[2] | (recorder->tilecounter[3] << 16));
-
 #else
-
     // Register thread with PAPI
     //MIR_INFORM(MIR_INFORM_STR "Registering thread %d with PAPI ... \n", id);
     int retval = PAPI_register_thread();
-    if ( retval != PAPI_OK )
-        MIR_ABORT(MIR_ERROR_STR "PAPI_register_thread %d failed [%d]!\n", id, retval);
+    MIR_ASSERT(retval == PAPI_OK);
 
     // Create the eventset
     recorder->EventSet = PAPI_NULL;
-    if ( (retval = PAPI_create_eventset(&recorder->EventSet)) != PAPI_OK)
-        MIR_ABORT(MIR_ERROR_STR "PAPI_create_eventset failed!\n");
+    retval = PAPI_create_eventset(&recorder->EventSet);
+    MIR_ASSERT(retval == PAPI_OK);
 
     // Add events to the eventset
-    for(int i = 0; i < MIR_RECORDER_EVENT_MAX_COUNT; i++)
+    for(int i = 0; i < MIR_RECORDER_NUM_PAPI_HWPC; i++)
     {
-        int event_code;
-        //MIR_INFORM(MIR_INFORM_STR "Recorder %d getting event code for event %s ... \n", id, mir_event_name_string[i]);
-        if ( (retval = PAPI_event_name_to_code(mir_event_name_string[i], &event_code)) != PAPI_OK)
-            MIR_ABORT(MIR_ERROR_STR "Recorder %d PAPI_event name_to_code %s failed [%d]!\n", id, mir_event_name_string[i], retval);
-        //MIR_INFORM(MIR_INFORM_STR "Recorder %d adding event with code event %x ... \n", id, event_code);
-        if ( (retval = PAPI_add_event(recorder->EventSet, event_code)) != PAPI_OK)
-            MIR_ABORT(MIR_ERROR_STR "Recorder %d PAPI_add_event %x failed [%d]!\n", id, event_code, retval);
+        int code;
+        if((retval = PAPI_event_name_to_code(perf_ctr_map[i].name, &code)) != PAPI_OK)
+        {
+            PAPI_perror("PAPI_event_name_to_code: ");
+            MIR_ABORT(MIR_ERROR_STR "Recorder %d PAPI_event_name_to_code %s failed [%d]!\n", id, perf_ctr_map[i].name, retval);
+        }
+        if((retval = PAPI_add_event(recorder->EventSet, code)) != PAPI_OK)
+        {
+            PAPI_perror("PAPI_add_event: ");
+            MIR_ABORT(MIR_ERROR_STR "Recorder %d PAPI_add_event %x failed [%d]!\n", id, code, retval);
+        }
     }
 
     // Start counting 
     PAPI_start(recorder->EventSet);
 #endif
-
 #endif
 
     // Pass it on!
@@ -181,8 +164,10 @@ struct mir_recorder_t* mir_recorder_create(uint16_t id)
 
 void mir_recorder_destroy(struct mir_recorder_t* recorder)
 {/*{{{*/
+    MIR_ASSERT(recorder != NULL);
+
     // Update state time
-    mir_recorder_state_transition(recorder, 0);
+    mir_recorder_record_state_transition(recorder, 0);
 
     // Write state time to file
     char state_time_filename[MIR_LONG_NAME_LEN];
@@ -190,18 +175,17 @@ void mir_recorder_destroy(struct mir_recorder_t* recorder)
 
     // Open state_time_file
     FILE* state_time_file = fopen(state_time_filename, "w");
-    if(!state_time_file)
-        MIR_ABORT(MIR_ERROR_STR "Cannot open recorder state time file for writing!\n");
+    MIR_ASSERT(state_time_file != NULL);
 
     // Write state time
     fprintf(state_time_file, "%d", recorder->id);
-    for(int i=0; i<MIR_RECORDER_STATE_MAX_COUNT; i++)
+    for(int i=0; i<MIR_RECORDER_NUM_STATES; i++)
         fprintf(state_time_file, ",%" MIR_FORMSPEC_UL "", recorder->state_time[i]);
     fprintf(state_time_file, "\n");
     if(recorder->id == 0)
     {
         fprintf(state_time_file, "THREAD");
-        for(int i=0; i<MIR_RECORDER_STATE_MAX_COUNT; i++)
+        for(int i=0; i<MIR_RECORDER_NUM_STATES; i++)
             fprintf(state_time_file, ",%s", mir_state_name_string[i]);
         fprintf(state_time_file, "\n");
     }
@@ -222,11 +206,13 @@ void mir_recorder_destroy(struct mir_recorder_t* recorder)
 
         // Open config file
         FILE* config_file = fopen(config_filename, "w");
-        if(!config_file)
-            MIR_ABORT(MIR_ERROR_STR "Cannot open recorder config file for writing!\n");
+        MIR_ASSERT(config_file != NULL);
 
         // Write to config file
         fprintf(config_file, "creation_cycle=%" MIR_FORMSPEC_UL "\ndestruction_cycle=%" MIR_FORMSPEC_UL "\nnum_workers=%d\n", runtime->init_time, mir_get_cycles(), runtime->num_workers);
+        
+        // Close config file
+        fclose(config_file);
 
         // Close PAPI
 #if defined(MIR_RECORDER_USE_HW_PERF_COUNTERS)
@@ -242,6 +228,8 @@ void mir_recorder_destroy(struct mir_recorder_t* recorder)
 
 void mir_recorder_write_to_file(struct mir_recorder_t* recorder)
 {/*{{{*/
+    MIR_ASSERT(recorder != NULL);
+
     // Dump states
     for(uint64_t i=0; i<recorder->state_buffer_head; i++)
     {
@@ -262,10 +250,27 @@ void mir_recorder_write_to_file(struct mir_recorder_t* recorder)
         fprintf(recorder->buffer_file, "e:%d:%" MIR_FORMSPEC_UL ":%d:", 
                 event->id, 
                 event->event_time,
-                MIR_RECORDER_EVENT_MAX_COUNT);
+#ifdef MIR_RECORDER_USE_HW_PERF_COUNTERS 
+#ifdef __tile__ 
+                4
+#else
+                MIR_RECORDER_NUM_PAPI_HWPC
+#endif
+#else
+                1
+#endif
+                );
         
-        for(int j=0; j<MIR_RECORDER_EVENT_MAX_COUNT; j++)
-            fprintf(recorder->buffer_file, "%s=%lld,", mir_event_name_string[j], event->values[j]);
+#ifdef MIR_RECORDER_USE_HW_PERF_COUNTERS 
+#ifdef __tile__ 
+        for(int j=0; j<4; j++)
+#else
+        for(int j=0; j<MIR_RECORDER_NUM_PAPI_HWPC; j++)
+#endif
+            fprintf(recorder->buffer_file, "%s=%lld,", perf_ctr_map[j].name, event->values[j]);
+#else
+        fprintf(recorder->buffer_file, "%s=%lld,", "NA", event->values[0]);
+#endif
 
         fprintf(recorder->buffer_file, ":%s\n", 
                 event->meta_data); 
@@ -277,9 +282,9 @@ void mir_recorder_write_to_file(struct mir_recorder_t* recorder)
 
 }/*}}}*/
 
-void mir_recorder_state_transition(struct mir_recorder_t* recorder, mir_state_name_t next_state)
+void mir_recorder_record_state_transition(struct mir_recorder_t* recorder, mir_state_name_t next_state)
 {/*{{{*/
-    //printf("%s->%s\n", mir_state_name_string[recorder->this_state], mir_state_name_string[next_state]);
+    MIR_ASSERT(recorder != NULL);
     uint64_t this_instant = mir_get_cycles();
     recorder->state_time[recorder->this_state] += (this_instant - recorder->this_state_trans_time);
     recorder->prev_state = recorder->this_state;
@@ -291,14 +296,14 @@ void MIR_RECORDER_STATE_BEGIN(mir_state_name_t name)
 {/*{{{*/
     // Get this worker
     struct mir_worker_t* worker = mir_worker_get_context();
+    MIR_ASSERT(worker != NULL);
 
     // Get this worker's reocrder
     struct mir_recorder_t* r = worker->recorder;
-    if(!r)
-        return;
+    MIR_ASSERT(r != NULL);
 
     // Update state time
-    mir_recorder_state_transition(r, name);
+    mir_recorder_record_state_transition(r, name);
 
     // Increase state count
     r->num_states++;
@@ -322,11 +327,11 @@ void MIR_RECORDER_STATE_END(const char* meta_data, uint32_t meta_data_length)
 {/*{{{*/
     // Get this worker
     struct mir_worker_t* worker = mir_worker_get_context();
+    MIR_ASSERT(worker != NULL);
 
     // Get this worker's reocrder
     struct mir_recorder_t* r = worker->recorder;
-    if(!r)
-        return;
+    MIR_ASSERT(r != NULL);
 
     // Pop from state state_stack
     r->state_stack_head--;
@@ -336,7 +341,7 @@ void MIR_RECORDER_STATE_END(const char* meta_data, uint32_t meta_data_length)
 
     // Update state time
     struct mir_state_t* next_state = &r->state_stack[(r->state_stack_head)-1];
-    mir_recorder_state_transition(r, next_state->name);
+    mir_recorder_record_state_transition(r, next_state->name);
 
     // Copy from state state_stack to state_buffer
     state->end_time = mir_get_cycles();
@@ -361,20 +366,22 @@ void MIR_RECORDER_STATE_END(const char* meta_data, uint32_t meta_data_length)
     (r->state_buffer_head)++;
     
     // If buffer is near full, dump!
-    //MIR_ASSERT(r->state_buffer_head < MIR_RECORDER_BUFFER_MAX_SIZE);
     if (r->state_buffer_head == (MIR_RECORDER_BUFFER_MAX_SIZE-1))
+    {
         mir_recorder_write_to_file(r);
+        MIR_ASSERT(r->state_buffer_head == 0);
+    }
 }/*}}}*/
 
 void MIR_RECORDER_EVENT(const char* meta_data, uint32_t meta_data_length)
 {/*{{{*/
     // Get this worker
     struct mir_worker_t* worker = mir_worker_get_context();
+    MIR_ASSERT(worker != NULL);
 
     // Get this worker's reocrder
     struct mir_recorder_t* r = worker->recorder;
-    if(!r)
-        return;
+    MIR_ASSERT(r != NULL);
 
     // Increase event count
     r->num_events++;
@@ -408,7 +415,6 @@ void MIR_RECORDER_EVENT(const char* meta_data, uint32_t meta_data_length)
     __insn_mtspr(SPR_AUX_PERF_COUNT_CTL, r->tilecounter[2] | (r->tilecounter[3] << 16));
 #endif
 #else
-    // FIXME: WARNING AND NOTE! 0 == MIR_RECORDER_EVENT_MAX_COUNT
     event->values[0] = 0;
 #endif
 
@@ -431,5 +437,8 @@ void MIR_RECORDER_EVENT(const char* meta_data, uint32_t meta_data_length)
     // If buffer is near full, dump!
     //MIR_ASSERT(r->event_buffer_head < MIR_RECORDER_BUFFER_MAX_SIZE);
     if (r->event_buffer_head == (MIR_RECORDER_BUFFER_MAX_SIZE-1))
+    {
         mir_recorder_write_to_file(r);
+        MIR_ASSERT(r->state_buffer_head == 0);
+    }
 }/*}}}*/

@@ -165,6 +165,7 @@ static void mir_postconfig_init()
     }
 
     // Wait for workers to signal alive
+    MIR_ASSERT(g_sig_worker_alive < runtime->num_workers);
 wait_alive:
     if (g_sig_worker_alive == 0) goto alive;
     __sync_synchronize();
@@ -340,13 +341,15 @@ void mir_create()
     mir_postconfig_init();
 
     // Set a marking event
-    MIR_RECORDER_EVENT(NULL,0);
+    if(runtime->enable_recorder == 1)
+        MIR_RECORDER_EVENT(NULL,0);
 }/*}}}*/
 
 void mir_destroy()
 {/*{{{*/
     // Set a marking event
-    MIR_RECORDER_EVENT(NULL,0);
+    if(runtime->enable_recorder == 1)
+        MIR_RECORDER_EVENT(NULL,0);
 
     MIR_DEBUG(MIR_DEBUG_STR "Shutting down ...\n");
 
@@ -434,6 +437,7 @@ void mir_destroy()
     }
     // Wait for workers to signal dead
 wait_dead:
+    MIR_ASSERT(g_sig_worker_alive < runtime->num_workers);
     if (g_sig_worker_alive == 0) goto dead;
     __sync_synchronize();
     goto wait_dead;

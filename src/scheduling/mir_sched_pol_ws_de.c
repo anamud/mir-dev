@@ -83,6 +83,7 @@ void destroy_ws_de ()
 
 void push_ws_de (struct mir_task_t* task)
 {/*{{{*/
+    //if(runtime->enable_recorder == 1)
     //MIR_RECORDER_STATE_BEGIN(MIR_STATE_TSCHED);
 
     // Get this worker!
@@ -109,6 +110,7 @@ void push_ws_de (struct mir_task_t* task)
             worker->status->num_tasks_created++;
     }
 
+    //if(runtime->enable_recorder == 1)
     //MIR_RECORDER_STATE_END(NULL, 0);
 }/*}}}*/
 
@@ -121,6 +123,7 @@ bool pop_ws_de (struct mir_task_t** task)
     uint16_t node = runtime->arch->node_of(worker->core_id);
 
     // First try to pop from own queue
+    //if(runtime->enable_recorder == 1)
     //MIR_RECORDER_STATE_BEGIN(MIR_STATE_TPOP);
 
     mir_dequeue_t* queue = (mir_dequeue_t*) sp->queues[worker->id];
@@ -161,12 +164,14 @@ bool pop_ws_de (struct mir_task_t** task)
         }
     }
 
+    //if(runtime->enable_recorder == 1)
     //MIR_RECORDER_STATE_END(NULL, 0);
 
     if (found)
         return found;
 
     // Next try to pop from other queues
+    //if(runtime->enable_recorder == 1)
     //MIR_RECORDER_STATE_BEGIN(MIR_STATE_TSTEAL);
 
     uint16_t ctr = worker->id + 1;
@@ -218,6 +223,7 @@ bool pop_ws_de (struct mir_task_t** task)
         if(ctr == num_queues) ctr = 0;
     }
 
+    //if(runtime->enable_recorder == 1)
     //MIR_RECORDER_STATE_END(NULL, 0);
 
     return found;
