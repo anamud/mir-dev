@@ -209,9 +209,7 @@ $ ./fib-opt
    Native Interface
   </h2>
   <p>
-   The native interface for task-based programming is friendly, even to non-experts. Look at mir_public_int.h in MIR_ROOT/src for interface details
-   <br/>
-   and programs in MIR_ROOT/programs for interface usage examples. A simple program using the native interface is shown
+   The native interface for task-based programming is friendly, even to non-experts. Look at mir_public_int.h in MIR_ROOT/src for interface details and programs in MIR_ROOT/programs for interface usage examples. A simple program using the native interface is shown
    <br/>
    below.
   </p>
@@ -291,7 +289,9 @@ int main(int argc, char *argv[])
   </p>
   <blockquote>
    <p>
-    Note: OpenMP tasks are supported by intercepting GCC translated calls to GNU libgomp. OpenMP 3.0 task interface support is therefore restricted to programs compiled using GCC.
+    Note:
+    <br/>
+    OpenMP tasks are supported by intercepting GCC translated calls to GNU libgomp. OpenMP 3.0 task interface support is therefore restricted to programs compiled using GCC.
    </p>
   </blockquote>
   <h3>
@@ -801,7 +801,7 @@ $ make PIN_ROOT=$PIN_ROOT
 ...
 -c  [default ]
 specify functions called (csv) from outline functions
--o  [default mir_ofp]
+-o  [default mir-ofp]
 specify output file suffix
 -s  [default ]
 specify outline functions (csv)
@@ -847,7 +847,8 @@ specify outline functions (csv)
     </p>
    </li>
   </ul>
-  <pre><code>$ alias mir-inst-prof="MIR_CONF\=\"-w\=1 -p\" \$ PIN_ROOT/intel64/bin/pinbin -t ${MIR_ROOT}/scripts/profiling/task/obj-intel64/mir_of_profiler.so" 
+  <pre><code>$ alias mir-inst-prof="MIR_CONF='-w=1 -p' ${PIN_ROOT}/intel64/bin/pinbin -t ${MIR_ROOT}/scripts/profiling/task/obj-intel64/mir_of_profiler.so"
+
 </code></pre>
   <ul>
    <li>
@@ -859,7 +860,7 @@ specify outline functions (csv)
       <p>
        Per-task instructions in a CSV file called
        <code>
-        mir_ofp-instructions
+        mir-ofp-instructions
        </code>
        . Example contents of the file are shown below.
       </p>
@@ -968,7 +969,7 @@ specify outline functions (csv)
       <p>
        Per-task events in a file called
        <code>
-        mir_ofp-events
+        mir-ofp-events
        </code>
        . Example contents of the file are shown below.
       </p>
@@ -999,7 +1000,7 @@ specify outline functions (csv)
       <p>
        Program memory map in a file called
        <code>
-        mir_ofp-mem_map
+        mir-ofp-mem-map
        </code>
        . This is a copy of the memory map file of the program from the /proc filesystem.
       </p>
@@ -1190,13 +1191,13 @@ CALLED_FUNCTIONS=fib_seq,fib,get_usecs,main
     Inspect instruction profiler output.
    </li>
   </ul>
-  <pre><code>$ head mir_ofp-instructions
+  <pre><code>$ head mir-ofp-instructions
 "task","parent","joins_at","child_number","num_children","core_id","exec_cycles","ins_count","stack_read","stack_write","mem_fp","ccr","clr","mem_read","mem_write","name"
 1,0,0,0,2,0,21887625,58,10,15,5,12,15,4,1,"ol_fib_2"
 2,1,0,1,2,0,610035,60,10,15,5,12,15,4,1,"ol_fib_0"
 3,1,0,2,2,0,3183115,60,10,15,5,12,15,4,1,"ol_fib_1"
 ...
-$ head mir_ofp-events
+$ head mir-ofp-events
 task,ins_count,[create],[wait]
 14,446,[],[]
 15,278,[],[]
@@ -1232,15 +1233,15 @@ joins_at_summary: 1 2 2 1.875 2 2
     Combine the instruction-level information produced by the instruction profiler with the fork-join information produced by the runtime system into a  single CSV file.
    </li>
   </ul>
-  <pre><code>$ Rscript ${MIR_ROOT}/scripts/task-graph/gather-task-performance.R mir-forks-joins mir_ofp-instructions "mir-per_task_perf"
+  <pre><code>$ Rscript ${MIR_ROOT}/scripts/task-graph/gather-task-performance.R mir-forks-joins mir-ofp-instructions "mir-task-perf"
 </code></pre>
   <ul>
    <li>
     Plot task graph using combined performance information and view on YEd.
    </li>
   </ul>
-  <pre><code>$ Rscript ${MIR_ROOT}/scripts/profiling/task/annotated-graph-plot.R mir-per_task_perf color
-$ yed mir-per_task_perf.graphml
+  <pre><code>$ Rscript ${MIR_ROOT}/scripts/profiling/task/annotated-graph-plot.R mir-task-perf color
+$ yed mir-task-perf.graphml
 </code></pre>
  </body>
 </html>

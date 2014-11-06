@@ -11,7 +11,7 @@ echo "Profiling tasks of application ${APP} using input ${INPUT} ..."
 LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$PIN_ROOT/intel64/runtime \
 MIR_CONF=${MIR_CONF} \
 $PIN_ROOT/intel64/bin/pinbin \
--t ${MIR_ROOT}/scripts/profiling/task/obj-intel64/mir-of-profiler.so \
+-t ${MIR_ROOT}/scripts/profiling/task/obj-intel64/mir_of_profiler.so \
 -o ${OFILE_PREFIX} \
 -s ${OUTLINE_FUNCTIONS} \
 -c ${CALLED_FUNCTIONS} \
@@ -55,6 +55,13 @@ then
 else
     echo "Not processing profile data!"
 fi
+
+# Settings 
+echo APP=$APP > ${OFILE_PREFIX}-settings
+echo OUTLINE_FUNCTIONS=$OUTLINE_FUNCTIONS >> ${OFILE_PREFIX}-settings
+echo CALLED_FUNCTIONS=$CALLED_FUNCTIONS >> ${OFILE_PREFIX}-settings
+echo INPUT=$INPUT >> ${OFILE_PREFIX}-settings
+echo MIR_CONF=$MIR_CONF >> ${OFILE_PREFIX}-settings
 
 # Copy files
 max=`ls -1d prof_results_${OFILE_PREFIX}_* | sed -e "s/prof_results_${OFILE_PREFIX}_//g" | tr -dc '[0-9\n]' | sort -k 1,1n | tail -1`

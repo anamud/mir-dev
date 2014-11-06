@@ -404,7 +404,8 @@ The profiler requires outline function names under the argument `-s`.  The argum
 
 * Create a handy alias for invoking the profiler.
 ```
-$ alias mir-inst-prof="MIR_CONF\=\"-w\=1 -p\" \$ PIN_ROOT/intel64/bin/pinbin -t ${MIR_ROOT}/scripts/profiling/task/obj-intel64/mir_of_profiler.so" 
+$ alias mir-inst-prof="MIR_CONF='-w=1 -p' ${PIN_ROOT}/intel64/bin/pinbin -t ${MIR_ROOT}/scripts/profiling/task/obj-intel64/mir_of_profiler.so"
+
 ```
 * The profiler produces following outputs: 
 	1. Per-task instructions in a CSV file called `mir-ofp-instructions`. Example contents of the file are shown below. 
