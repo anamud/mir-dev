@@ -39,11 +39,10 @@
 #define MIR_INFORM_STR "MIR_INFO: "
 
 // Statistics
-#define MIR_STATS_FILE_NAME "mir-stats"
+#define MIR_STATS_FILE_NAME "mir-execution-stats"
 
 // Task graph
-#define MIR_TASK_GRAPH_FILE_NAME "mir-task-graph"
-#define MIR_TGPID_SIZE 512
+#define MIR_TASK_GRAPH_FILE_NAME "mir-forks-joins"
 
 // Memory allocator
 #define MIR_MEMORY_ALLOCATOR_DEBUG 
