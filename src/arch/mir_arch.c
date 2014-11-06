@@ -12,7 +12,7 @@ extern struct mir_arch_t arch_adk; // 2
 extern struct mir_arch_t arch_gatti; // 3
 extern struct mir_arch_t arch_firenze; // 4
 extern struct mir_arch_t arch_gothmog; // 5
-extern struct mir_arch_t arch_tilepro64; // 6
+extern struct mir_arch_t arch_tilepro64; // 6 = MIR_ARCH_NUM_PREDEF
 
 // WARNING and NOTE: Make sure predef architecture count == num entries in predef architecture struct
 #define MIR_ARCH_NUM_PREDEF 6
@@ -36,8 +36,7 @@ struct mir_arch_t* mir_arch_create_by_query()
     // Run uname -n to get node name
     FILE* fpipe;
     fpipe = popen("uname -n", "r");
-    if(!fpipe)
-        MIR_ABORT(MIR_ERROR_STR "Cannot open pipe!\n");
+    MIR_ASSERT(fpipe != NULL);
 
     // Get node name into buffer and strip it of the newline at end
     char arch_name[MIR_SHORT_NAME_LEN];

@@ -39,11 +39,10 @@
 #define MIR_INFORM_STR "MIR_INFO: "
 
 // Statistics
-#define MIR_STATS_FILE_NAME "mir-stats"
+#define MIR_STATS_FILE_NAME "mir-execution-stats"
 
 // Task graph
-#define MIR_TASK_GRAPH_FILE_NAME "mir-task-graph"
-#define MIR_TGPID_SIZE 512
+#define MIR_TASK_GRAPH_FILE_NAME "mir-forks-joins"
 
 // Memory allocator
 #define MIR_MEMORY_ALLOCATOR_DEBUG 
@@ -55,10 +54,10 @@
 #define MIR_RECORDER_STACK_MAX_SIZE MIR_RECORDER_BUFFER_MAX_SIZE
 #define MIR_RECORDER_STATE_META_DATA_MAX_SIZE 32
 #define MIR_RECORDER_EVENT_META_DATA_MAX_SIZE 32
+#define MIR_RECORDER_FILE_NAME_SUFFIX "mir-recorder"
 
 // Scheduling policy
 #define MIR_SCHED_POL_DEFAULT "central-stack"
-#define MIR_SCHED_POL_CENTRAL_STACK_PROCESS_STACK_SIZE 128
 
 // Dynamic inlining
 #define MIR_INLINE_TASK_IF_QUEUE_FULL 

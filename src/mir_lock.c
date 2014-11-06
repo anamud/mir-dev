@@ -1,8 +1,11 @@
 #include "mir_lock.h"
 
 #ifdef __tile__
-//#include <tmc/sync.h>
+#ifdef TILEPRO_USE_SYNCMUTEX
+#include <tmc/sync.h>
+#else
 #include <tmc/spin.h>
+#endif
 #else
 #include <pthread.h>
 #endif
@@ -10,8 +13,11 @@
 void mir_lock_create(struct mir_lock_t* lock)
 {/*{{{*/
 #ifdef __tile__
-    // tmc_sync_mutex_init(&lock->m);
+#ifdef TILEPRO_USE_SYNCMUTEX
+    tmc_sync_mutex_init(&lock->m);
+#else
     tmc_spin_mutex_init(&lock->m);
+#endif
 #else
     pthread_mutex_init(&lock->m, NULL);
 #endif
@@ -27,8 +33,11 @@ void mir_lock_destroy(struct mir_lock_t* lock)
 void mir_lock_set(struct mir_lock_t* lock)
 {/*{{{*/
 #ifdef __tile__
-    // tmc_sync_mutex_lock(&lock->m);
+#ifdef TILEPRO_USE_SYNCMUTEX
+    tmc_sync_mutex_lock(&lock->m);
+#else
     tmc_spin_mutex_lock(&lock->m);
+#endif
 #else
     pthread_mutex_lock(&lock->m);
 #endif
@@ -37,8 +46,11 @@ void mir_lock_set(struct mir_lock_t* lock)
 void mir_lock_unset(struct mir_lock_t* lock)
 {/*{{{*/
 #ifdef __tile__
-    //tmc_sync_mutex_unlock(&lock->m);
+#ifdef TILEPRO_USE_SYNCMUTEX
+    tmc_sync_mutex_unlock(&lock->m);
+#else
     tmc_spin_mutex_unlock(&lock->m);
+#endif
 #else
     pthread_mutex_unlock(&lock->m);
 #endif
@@ -47,8 +59,11 @@ void mir_lock_unset(struct mir_lock_t* lock)
 int mir_lock_tryset(struct mir_lock_t* lock)
 {/*{{{*/
 #ifdef __tile__
-    //return tmc_sync_mutex_trylock(&lock->m);
+#ifdef TILEPRO_USE_SYNCMUTEX
+    return tmc_sync_mutex_trylock(&lock->m);
+#else
     return tmc_spin_mutex_trylock(&lock->m);
+#endif
 #else
     return pthread_mutex_trylock(&lock->m);
 #endif

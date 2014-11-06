@@ -30,10 +30,6 @@ struct mir_sched_pol_t
 
 struct mir_sched_pol_t* mir_sched_pol_get_by_name(const char* name);
 
-#ifdef MIR_MEM_POL_ENABLE
-unsigned long mir_sched_pol_get_comm_cost(uint16_t node, struct mir_mem_node_dist_t* dist);
-#endif
-
 END_C_DECLS 
 
 #endif 

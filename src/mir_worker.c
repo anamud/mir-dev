@@ -25,6 +25,7 @@ extern struct mir_runtime_t* runtime;
 static void* mir_worker_loop(void* arg)
 {/*{{{*/
     struct mir_worker_t* worker = (struct mir_worker_t*) arg;
+    MIR_ASSERT(worker != NULL);
 
     // Initialize worker data
     mir_worker_local_init(worker);
@@ -32,10 +33,16 @@ static void* mir_worker_loop(void* arg)
 
     // Signal runtime
     __sync_fetch_and_add(&g_sig_worker_alive, -1);
+    MIR_ASSERT(g_sig_worker_alive < runtime->num_workers);
+
+    // Record state and event
+    if(runtime->enable_recorder == 1)
+    {
+        MIR_RECORDER_EVENT(NULL,0);
+        MIR_RECORDER_STATE_BEGIN(MIR_STATE_TIDLE);
+    }
 
     // Now do useful work
-    MIR_RECORDER_EVENT(NULL,0);
-    MIR_RECORDER_STATE_BEGIN(MIR_STATE_TIDLE);
     while(1)
     {
         // Do work with backoff=true
@@ -45,12 +52,16 @@ static void* mir_worker_loop(void* arg)
         // __sync_synchronize();
         if(worker->sig_dying == 1)
         {
-            // Dump MIR_STATE_TIDLE state
-            MIR_RECORDER_STATE_END(NULL, 0);
-            MIR_RECORDER_EVENT(NULL,0);
+            if(runtime->enable_recorder == 1)
+            {
+                // Dump MIR_STATE_TIDLE state
+                MIR_RECORDER_STATE_END(NULL, 0);
+                MIR_RECORDER_EVENT(NULL,0);
+            }
 
             // Wait
             mir_lock_set(&worker->sig_die);
+            MIR_ASSERT(g_sig_worker_alive < runtime->num_workers);
             __sync_fetch_and_add(&g_sig_worker_alive, -1);
             MIR_DEBUG(MIR_DEBUG_STR "Worker %d is dead!\n", worker->id);
             break;
@@ -62,6 +73,7 @@ static void* mir_worker_loop(void* arg)
 
 void mir_worker_master_init(struct mir_worker_t* worker)
 {/*{{{*/
+    MIR_ASSERT(worker != NULL);
     // Kill signal
     // Used during runtime system shutdown
     // When this is unset, the worker dies
@@ -82,13 +94,14 @@ void mir_worker_master_init(struct mir_worker_t* worker)
 
     // Create worker thread
     int rval = pthread_create(&(worker->pthread), &attr, mir_worker_loop, (void*)worker);
-    if (rval != 0)
-        MIR_ABORT(MIR_ERROR_STR "Unable to create worker thread!\n");
+    MIR_ASSERT(rval == 0);
 }/*}}}*/
 
 struct mir_worker_t* mir_worker_get_context()
 {/*{{{*/
-    return pthread_getspecific(runtime->worker_index);
+    struct mir_worker_t* worker = pthread_getspecific(runtime->worker_index);
+    MIR_ASSERT(worker != NULL);
+    return worker;
 }/*}}}*/
 
 static int worker_get_cpu()
@@ -97,10 +110,9 @@ static int worker_get_cpu()
     CPU_ZERO(&set);
 
     int ret = sched_getaffinity(0, sizeof(cpu_set_t), &set);
-    if(ret == -1)
-        MIR_ABORT(MIR_ERROR_STR "Could not get cpu affinity of worker!\n");
+    MIR_ASSERT(ret != -1);
 
-    int cpu = 0;
+    int cpu = -1;
     for(int i=0; i<CPU_SETSIZE; i++)
     {
         if(CPU_ISSET(i, &set))
@@ -109,16 +121,18 @@ static int worker_get_cpu()
             break;
         }
     }
+    MIR_ASSERT(cpu != -1);
 
     return cpu;
 }/*}}}*/
 
 void mir_worker_local_init(struct mir_worker_t* worker)
 {/*{{{*/
+    MIR_ASSERT(worker != NULL);
+
     // Set TLS
     int rval = pthread_setspecific(runtime->worker_index, (void*) worker);
-    if (rval != 0)
-        MIR_ABORT(MIR_ERROR_STR "Could not set TLS for worker %d!\n", worker->id);
+    MIR_ASSERT(rval == 0);
 
     // Set the bias
     worker->bias = worker->id;
@@ -129,8 +143,8 @@ void mir_worker_local_init(struct mir_worker_t* worker)
     // Bind the worker
     MIR_DEBUG(MIR_DEBUG_STR "Binding worker %d to core %d\n", worker->id, worker->core_id);
 #ifdef __tile__
-    if (tmc_cpus_set_my_cpu(worker->core_id) != 0)
-        MIR_ABORT(MIR_ERROR_STR "Unable to bind worker to core %d\n", worker->core_id);
+    int ret = tmc_cpus_set_my_cpu(worker->core_id);
+    MIR_ASSERT(ret == 0);
 #else
     cpu_set_t cpu_set;
     CPU_ZERO(&cpu_set);
@@ -139,10 +153,13 @@ void mir_worker_local_init(struct mir_worker_t* worker)
 #endif
 
     // Create and reset worker status counters
-    worker->status = (struct mir_worker_status_t*) mir_malloc_int (sizeof(struct mir_worker_status_t));
-    if(worker->status == NULL)
-        MIR_ABORT(MIR_ERROR_STR "Unable to create worker status!\n");
-    mir_worker_status_init(worker->status);
+    worker->status = NULL;
+    if(runtime->enable_stats)
+    {
+        worker->status = (struct mir_worker_status_t*) mir_malloc_int (sizeof(struct mir_worker_status_t));
+        MIR_ASSERT(worker->status != NULL);
+        mir_worker_status_init(worker->status);
+    }
 
     // Wait till bound
     while(worker->core_id != worker_get_cpu());
@@ -160,6 +177,7 @@ void mir_worker_local_init(struct mir_worker_t* worker)
 
     // Create private task queue
     worker->private_queue = mir_queue_create(runtime->sched_pol->queue_capacity);
+    MIR_ASSERT(worker->private_queue != NULL);
 }/*}}}*/
 
 static inline void mir_worker_backoff_reset(struct mir_worker_t* worker)
@@ -176,6 +194,9 @@ static inline void mir_worker_backoff(struct mir_worker_t* worker)
 
 void mir_worker_push(struct mir_worker_t* worker, struct mir_task_t* task)
 {/*{{{*/
+    MIR_ASSERT(worker != NULL);
+    MIR_ASSERT(task != NULL);
+
     if( false == mir_queue_push(worker->private_queue, (void*) task) )
         MIR_ABORT(MIR_ERROR_STR "Cannot enque task into private queue. Increase queue capacity using MIR_CONF.\n");
 
@@ -187,19 +208,21 @@ void mir_worker_push(struct mir_worker_t* worker, struct mir_task_t* task)
 
 static inline bool mir_worker_pop(struct mir_worker_t* worker, struct mir_task_t** task)
 {/*{{{*/
+    MIR_ASSERT(worker != NULL);
+    MIR_ASSERT(task != NULL);
+
     bool found = 0;
     struct mir_queue_t* queue = worker->private_queue;
+    MIR_ASSERT(worker->private_queue != NULL);
     if(mir_queue_size(queue) > 0)
     {
         mir_queue_pop(queue, (void**)&(*task));
-        if(*task)
-        {
-            __sync_fetch_and_sub(&g_num_tasks_waiting, 1);
-            T_DBG("Dq", *task);
+        // There is no other popper. This must succeed.
+        MIR_ASSERT(*task != NULL);
+        __sync_fetch_and_sub(&g_num_tasks_waiting, 1);
+        T_DBG("Dq", *task);
 
-            found = 1;
-
-        }
+        found = 1;
     }
 
     return found;
@@ -207,6 +230,8 @@ static inline bool mir_worker_pop(struct mir_worker_t* worker, struct mir_task_t
 
 void mir_worker_do_work(struct mir_worker_t* worker, bool backoff)
 {/*{{{*/
+    MIR_ASSERT(worker != NULL);
+
     // Try to find tasks to execute
     struct mir_task_t* task = NULL;
     bool work_available = 0;
@@ -269,32 +294,39 @@ void mir_worker_check_done()
                     // Rechecking to ensure. Hope compiler does not optimize this away!
                     break;
     }
+    MIR_ASSERT(g_num_tasks_waiting == 0);
+    MIR_ASSERT(g_worker_status_board == 0);
 }/*}}}*/
 
 void mir_worker_update_bias(struct mir_worker_t* worker)
 {/*{{{*/
+    MIR_ASSERT(worker != NULL);
     worker->bias = (worker->bias + 1)%(runtime->num_workers);
 }/*}}}*/
 
 void mir_worker_status_init(struct mir_worker_status_t* status)
 {/*{{{*/
-    if(status)
-    {
-        // Get this worker
-        struct mir_worker_t* worker = mir_worker_get_context();
-        status->id = worker->id;
-        status->num_tasks_created = 0;
-        status->num_tasks_owned = 0;
-        status->num_tasks_stolen = 0;
-        status->num_tasks_inlined = 0;
-        status->num_comm_tasks = 0;
-        status->total_comm_cost = 0;
-        status->lowest_comm_cost = -1; 
-        status->highest_comm_cost = 0;
+    MIR_ASSERT(status != NULL);
+
+    // Get this worker
+    struct mir_worker_t* worker = mir_worker_get_context();
+    MIR_ASSERT(worker != NULL);
+
+    // Set status
+    status->id = worker->id;
+    status->num_tasks_created = 0;
+    status->num_tasks_owned = 0;
+    status->num_tasks_stolen = 0;
+    status->num_tasks_inlined = 0;
+    status->num_comm_tasks = 0;
+    status->total_comm_cost = 0;
+    status->lowest_comm_cost = -1; 
+    status->highest_comm_cost = 0;
 #ifdef MIR_MEM_POL_ENABLE
         if(0 == strcmp(runtime->sched_pol->name, "numa") && runtime->arch->diameter > 0)
         {
             status->num_comm_tasks_stolen_by_diameter = mir_malloc_int(sizeof(uint32_t) * runtime->arch->diameter);
+            MIR_ASSERT(status->num_comm_tasks_stolen_by_diameter != NULL);
             for(uint16_t i=0; i<runtime->arch->diameter; i++)
                 status->num_comm_tasks_stolen_by_diameter[i] = 0;
         }
@@ -305,17 +337,18 @@ void mir_worker_status_init(struct mir_worker_status_t* status)
 #else
         status->num_comm_tasks_stolen_by_diameter = NULL;
 #endif
-    }
 }/*}}}*/
 
 void mir_worker_status_destroy(struct mir_worker_status_t* status)
 {/*{{{*/
-    if(status && status->num_comm_tasks_stolen_by_diameter)
+    MIR_ASSERT(status != NULL);
+    if(status->num_comm_tasks_stolen_by_diameter)
         mir_free_int(status->num_comm_tasks_stolen_by_diameter, sizeof(uint32_t) * runtime->arch->diameter);
 }/*}}}*/
 
 void mir_worker_status_update_comm_cost(struct mir_worker_status_t* status, unsigned long comm_cost)
 {/*{{{*/
+    MIR_ASSERT(status != NULL);
     status->num_comm_tasks++;
     status->total_comm_cost += comm_cost;
     if(status->lowest_comm_cost > comm_cost)
@@ -329,66 +362,66 @@ void mir_worker_status_write_header_to_file(FILE* file)
     fprintf(file, "worker,created,owned,stolen,inlined,comm_tasks,total_comm_cost,avg_comm_cost,lowest_comm_cost,highest_comm_cost,comm_tasks_stolen_by_diameter\n");
 }/*}}}*/
 
-void mir_worker_status_write_to_file(struct mir_worker_status_t* status, FILE* file)
+void mir_worker_status_write_to_file(const struct mir_worker_status_t* status, FILE* file)
 {/*{{{*/
-    if(status)
+    MIR_ASSERT(file != NULL);
+    MIR_ASSERT(status != NULL);
+
+    // Pre-process
+    unsigned long avg_comm_cost = status->total_comm_cost;
+    if(status->num_comm_tasks > 1)
+        // NOTE: We exclude inlined tasks
+        avg_comm_cost /= status->num_comm_tasks;
+
+    // Dump to file
+    if(status->num_comm_tasks_stolen_by_diameter)
     {
-        // Process
-        // NOTE: This excludes inlined tasks
-        unsigned long avg_comm_cost = status->total_comm_cost;
-        if(status->num_comm_tasks > 1)
-            avg_comm_cost /= status->num_comm_tasks;
-
-        // Dump to file
-        if(status->num_comm_tasks_stolen_by_diameter)
-        {
-            fprintf(file, "%d,%d,%d,%d,%d,%d,%lu,%lu,%lu,%lu",
-                    status->id, 
-                    status->num_tasks_created,
-                    status->num_tasks_owned,
-                    status->num_tasks_stolen,
-                    status->num_tasks_inlined, 
-                    status->num_comm_tasks,
-                    status->total_comm_cost, 
-                    avg_comm_cost,
-                    status->lowest_comm_cost,
-                    status->highest_comm_cost);
-            fprintf(file, ",[");
-            for(uint16_t i=0; i<runtime->arch->diameter; i++)
-                fprintf(file, "%d-", status->num_comm_tasks_stolen_by_diameter[i]);
-            fprintf(file, "]\n");
-
-        }
-        else
-        {
-            fprintf(file, "%d,%d,%d,%d,%d,%d,%lu,%lu,%lu,%lu,NA\n",
-                    status->id, 
-                    status->num_tasks_created,
-                    status->num_tasks_owned,
-                    status->num_tasks_stolen,
-                    status->num_tasks_inlined, 
-                    status->num_comm_tasks,
-                    status->total_comm_cost, 
-                    avg_comm_cost,
-                    status->lowest_comm_cost,
-                    status->highest_comm_cost);
-        }
+        fprintf(file, "%d,%d,%d,%d,%d,%d,%lu,%lu,%lu,%lu",
+                status->id, 
+                status->num_tasks_created,
+                status->num_tasks_owned,
+                status->num_tasks_stolen,
+                status->num_tasks_inlined, 
+                status->num_comm_tasks,
+                status->total_comm_cost, 
+                avg_comm_cost,
+                status->lowest_comm_cost,
+                status->highest_comm_cost);
+        fprintf(file, ",[");
+        for(uint16_t i=0; i<runtime->arch->diameter; i++)
+            fprintf(file, "%d-", status->num_comm_tasks_stolen_by_diameter[i]);
+        fprintf(file, "]\n");
+    }
+    else
+    {
+        fprintf(file, "%d,%d,%d,%d,%d,%d,%lu,%lu,%lu,%lu,NA\n",
+                status->id, 
+                status->num_tasks_created,
+                status->num_tasks_owned,
+                status->num_tasks_stolen,
+                status->num_tasks_inlined, 
+                status->num_comm_tasks,
+                status->total_comm_cost, 
+                avg_comm_cost,
+                status->lowest_comm_cost,
+                status->highest_comm_cost);
     }
 }/*}}}*/
 
 void mir_worker_update_task_graph(struct mir_worker_t* worker, struct mir_task_t* task)
 {/*{{{*/
-    if(runtime->enable_task_graph_gen == 1)
-    {
-        struct mir_task_graph_node_t* node = mir_malloc_int(sizeof(struct mir_task_graph_node_t));
-        node->task = task;
-        if(task->twc)
-            node->pass_count = task->twc->num_passes;
-        else
-            node->pass_count = 0;
-        node->next = worker->task_graph_node;
-        worker->task_graph_node = node;
-    }
+    MIR_ASSERT(worker != NULL);
+    MIR_ASSERT(task != NULL);
+
+    struct mir_task_graph_node_t* node = mir_malloc_int(sizeof(struct mir_task_graph_node_t));
+    MIR_ASSERT(node != NULL);
+    node->task = task;
+    if(task->twc)
+        node->pass_count = task->twc->num_passes;
+    else
+        node->pass_count = 0;
+    node->next = worker->task_graph_node;
+    worker->task_graph_node = node;
 }/*}}}*/
 
 void mir_task_graph_write_header_to_file(FILE* file)

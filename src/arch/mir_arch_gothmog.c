@@ -93,6 +93,7 @@ uint16_t node_of_gothmog(uint16_t coreid)
 
 void cores_of_gothmog(struct mir_sbuf_t* coreids, uint16_t nodeid)
 {/*{{{*/
+    MIR_ASSERT(coreids != NULL);
     coreids->size = 0;
     switch(nodeid)
     {

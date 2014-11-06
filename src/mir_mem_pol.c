@@ -5,6 +5,7 @@
 #include "mir_utils.h"
 #include "mir_runtime.h"
 #include "mir_worker.h"
+#include "arch/mir_arch.h"
 
 #ifdef MIR_MEM_POL_ENABLE
 #ifndef __tile__
@@ -23,6 +24,7 @@
 
 extern struct mir_runtime_t* runtime;
 
+// FIXME: nodes are inconsistently u16
 struct mem_header_t
 {/*{{{*/
     uint64_t magic;
@@ -33,22 +35,24 @@ struct mem_header_t
 
 static struct mem_header_t* get_mem_header(void* addr)
 {/*{{{*/
-    if(!addr)
-        return NULL;
-
+    MIR_ASSERT(addr != NULL);
     struct mem_header_t* header = addr - sizeof(struct mem_header_t);
-    if(header->magic == runtime->init_time)
-    {
-        return header;
-    }
-    else
-    {
-        return NULL;
-    }
+    if(header->magic == runtime->init_time) return header;
+    else return NULL;
+}/*}}}*/
+
+static inline uint16_t get_node_from_system(void* addr)
+{/*{{{*/
+    MIR_ASSERT(addr != NULL);
+    int nodeid = runtime->arch->num_nodes+1;
+    get_mempolicy(&nodeid, NULL, 0, (void*)addr, MPOL_F_NODE|MPOL_F_ADDR);
+    MIR_ASSERT(nodeid < runtime->arch->num_nodes);
+    return (uint16_t) nodeid;
 }/*}}}*/
 
 static inline uint16_t get_node_of(void* addr, void* base_addr)
 {/*{{{*/
+    MIR_ASSERT(addr != NULL);
 #ifdef MIR_MEM_POL_CACHE_NODES 
     if(base_addr)
     {
@@ -58,40 +62,30 @@ static inline uint16_t get_node_of(void* addr, void* base_addr)
         {
             int page_num = (addr - base_addr) / sysconf(_SC_PAGESIZE);
             int cached_nodeid = header->node_cache[page_num];
-            /*int nodeid = runtime->arch->num_nodes+1;*/
-            /*get_mempolicy(&nodeid, NULL, 0, (void*)addr, MPOL_F_NODE|MPOL_F_ADDR);*/
-            /*MIR_ASSERT(cached_nodeid == nodeid);*/
+            /*MIR_ASSERT(cached_nodeid == get_node_from_system(addr));*/
             return cached_nodeid;
         }
         else
         {
-            int nodeid = runtime->arch->num_nodes+1;
-            get_mempolicy(&nodeid, NULL, 0, (void*)addr, MPOL_F_NODE|MPOL_F_ADDR);
-            return (uint16_t) nodeid;
+            return get_node_from_system(addr);
         }
     }
     else
     {
-        int nodeid = runtime->arch->num_nodes+1;
-        get_mempolicy(&nodeid, NULL, 0, (void*)addr, MPOL_F_NODE|MPOL_F_ADDR);
-        return (uint16_t) nodeid;
+        return get_node_from_system(addr);
     }
 #else
-    int nodeid = runtime->arch->num_nodes+1;
-    get_mempolicy(&nodeid, NULL, 0, (void*)addr, MPOL_F_NODE|MPOL_F_ADDR);
-    return (uint16_t) nodeid;
+    return get_node_from_system(addr);
 #endif
 }/*}}}*/
 
 struct mir_mem_node_dist_t* mir_mem_node_dist_create()
 {/*{{{*/
     struct mir_mem_node_dist_t* dist = mir_malloc_int(sizeof(struct mir_mem_node_dist_t));
-    if(dist == NULL) 
-        MIR_ABORT(MIR_ERROR_STR "Cannot allocate memory!\n");
+    MIR_ASSERT(dist != NULL);
 
     dist->buf = mir_malloc_int(sizeof(size_t) * runtime->arch->num_nodes);
-    if(dist->buf == NULL) 
-        MIR_ABORT(MIR_ERROR_STR "Cannot allocate memory!\n");
+    MIR_ASSERT(dist->buf != NULL);
     for(uint16_t i=0; i<runtime->arch->num_nodes; i++)
         dist->buf[i] = 0;
 
@@ -100,22 +94,70 @@ struct mir_mem_node_dist_t* mir_mem_node_dist_create()
 
 void  mir_mem_node_dist_destroy(struct mir_mem_node_dist_t* dist)
 {/*{{{*/
+    MIR_ASSERT(dist->buf != NULL);
     mir_free_int(dist->buf, sizeof(size_t) * runtime->arch->num_nodes);
+    MIR_ASSERT(dist != NULL);
     mir_free_int(dist, sizeof(struct mir_mem_node_dist_t));
 }/*}}}*/
 
-static void print_dist(struct mir_mem_node_dist_t* dist)
+unsigned long mir_mem_node_dist_get_comm_cost(const struct mir_mem_node_dist_t* dist, uint16_t from_node)
 {/*{{{*/
+    MIR_ASSERT(dist != NULL);
+    MIR_ASSERT(dist->buf !=NULL);
+    MIR_ASSERT(runtime->arch->num_nodes > from_node);
+
+    unsigned long comm_cost = 0;
+
+    for(int i=0; i<runtime->arch->num_nodes; i++)
+    {
+        //MIR_DEBUG(MIR_DEBUG_STR "Comm cost node %d to %d: %d\n", from_node, i, runtime->arch->comm_cost_of(from_node, i));
+        comm_cost += (dist->buf[i] * runtime->arch->comm_cost_of(from_node, i));
+    }
+
+    return comm_cost;
+}/*}}}*/
+
+void mir_mem_node_dist_get_stat(struct mir_mem_node_dist_stat_t* stat, const struct mir_mem_node_dist_t* dist)
+{/*{{{*/
+    MIR_ASSERT(dist != NULL);
+    MIR_ASSERT(dist->buf != NULL);
+    MIR_ASSERT(stat != NULL);
+
+    stat->sum = 0;
+    stat->min = -1;
+    stat->max = 0;
+    for(int i=0; i<runtime->arch->num_nodes; i++)
+    {
+        size_t val = dist->buf[i];
+        stat->sum += val;
+        if(stat->min > val)
+            stat->min = val;
+        if(stat->max < val)
+            stat->max = val;
+    }
+    stat->mean = stat->sum / (runtime->arch->num_nodes);
+    double sum_dsq = 0;
+    for(int i=0; i<runtime->arch->num_nodes; i++)
+    {
+        double diff = ((double)(dist->buf[i]) - stat->mean);
+        sum_dsq = (diff * diff);
+    }
+    stat->sd = sqrt(sum_dsq / (runtime->arch->num_nodes));
+}/*}}}*/
+
+static void mem_node_dist_print(struct mir_mem_node_dist_t* dist)
+{/*{{{*/
+    MIR_ASSERT(dist != NULL);
+    MIR_ASSERT(dist->buf != NULL);
     MIR_INFORM("Dist: ");
     for(int i=0; i<runtime->arch->num_nodes; i++)
         MIR_INFORM("%lu ", dist->buf[i]);
     MIR_INFORM("\n");
 }/*}}}*/
 
-void mir_mem_get_dist(struct mir_mem_node_dist_t* dist, void* addr, size_t sz, void* part_of)
+void mir_mem_get_mem_node_dist(struct mir_mem_node_dist_t* dist, void* addr, size_t sz, void* part_of)
 {/*{{{*/
-    if(addr == NULL || sz == 0 || dist == NULL)
-        return;
+    MIR_ASSERT(addr != NULL && sz != 0 && dist != NULL);
 
     // Check if the part_of address contains a header
     // If yes, then the ... 
@@ -154,7 +196,7 @@ void mir_mem_get_dist(struct mir_mem_node_dist_t* dist, void* addr, size_t sz, v
     uint16_t page_size = sysconf(_SC_PAGESIZE);
 
     if(sz <= page_size)
-    dist->buf[node] += sz;
+        dist->buf[node] += sz;
 
     uint16_t new_node = runtime->arch->num_nodes + 1;
     size_t ifrom = 0;
@@ -174,39 +216,10 @@ void mir_mem_get_dist(struct mir_mem_node_dist_t* dist, void* addr, size_t sz, v
         dist->buf[node] += (sz-ifrom);
 
     //print_dist(dist);
+#else
+    // FIXME: What happens on TILEPRO64? 
+    MIR_ASSERT(1 == 1);
 #endif
-}/*}}}*/
-
-/*size_t mir_mem_node_dist_sum(struct mir_mem_node_dist_t* dist)*/
-/*{[>{{{<]*/
-    /*size_t sz = 0;*/
-    /*for(int i=0; i<runtime->arch->num_nodes; i++)*/
-        /*sz+= dist->buf[i];*/
-    /*return sz;*/
-/*}[>}}}<]*/
-
-void mir_mem_node_dist_stat(struct mir_mem_node_dist_t* dist, struct mir_mem_node_dist_stat_t* stat)
-{/*{{{*/
-    stat->sum = 0;
-    stat->min = -1;
-    stat->max = 0;
-    for(int i=0; i<runtime->arch->num_nodes; i++)
-    {
-        size_t val = dist->buf[i];
-        stat->sum += val;
-        if(stat->min > val)
-            stat->min = val;
-        if(stat->max < val)
-            stat->max = val;
-    }
-    stat->mean = stat->sum / (runtime->arch->num_nodes);
-    double sum_dsq = 0;
-    for(int i=0; i<runtime->arch->num_nodes; i++)
-    {
-        double diff = ((double)(dist->buf[i]) - stat->mean);
-        sum_dsq = (diff * diff);
-    }
-    stat->sd = sqrt(sum_dsq / (runtime->arch->num_nodes));
 }/*}}}*/
 
 struct mir_mem_pol_t
@@ -255,17 +268,20 @@ advance:
 
 static inline void fault_all_pages(void* addr, size_t sz)
 {/*{{{*/
+    MIR_ASSERT(addr != NULL);
     uint16_t pagesz = sysconf(_SC_PAGESIZE);
+    MIR_ASSERT(pagesz != 0);
     size_t num_pages = (sz +  pagesz - 1)/pagesz;
     for(size_t i=0; i<num_pages; i++)
-    {
         *((char*)(addr) + (i*pagesz)) = 0;
-    }
 }/*}}}*/
 
 static void* allocate_coarse(size_t sz)
 {/*{{{*/
-    MIR_RECORDER_STATE_BEGIN(MIR_STATE_TMALLOC);
+    MIR_ASSERT(sz > 0);
+
+    if(runtime->enable_recorder == 1)
+        MIR_RECORDER_STATE_BEGIN(MIR_STATE_TMALLOC);
 
     void* addr = NULL;
     size_t new_sz = sz + sizeof(struct mem_header_t);
@@ -273,10 +289,12 @@ static void* allocate_coarse(size_t sz)
 #ifndef __tile__
     numa_set_bind_policy(1);
     struct bitmask* mask = numa_bitmask_alloc(runtime->arch->num_nodes);
+    MIR_ASSERT(mask != NULL);
     numa_bitmask_clearall(mask);
     numa_bitmask_setbit(mask, mem_pol->node);
     numa_set_membind(mask);
     addr = numa_alloc_onnode(new_sz, mem_pol->node);
+    MIR_ASSERT(addr != NULL);
     numa_bitmask_free(mask);
     numa_set_bind_policy(0);
 #ifdef MIR_MEM_POL_LOCK_PAGES
@@ -290,32 +308,34 @@ static void* allocate_coarse(size_t sz)
 #else
     tmc_alloc_t home = TMC_ALLOC_INIT;
     tmc_alloc_set_home(&home, mem_pol->node);
-    mir_page_attr_set(&home);
+    page_attr_set(&home);
     addr = tmc_alloc_map(&home, new_sz);
+    MIR_ASSERT(addr != NULL);
 #endif
 
-    if(addr)
-    {
-        // Write header
-        struct mem_header_t* header = (struct mem_header_t*) addr;
-        header->magic = runtime->init_time;
-        header->sz = sz;
-        header->nodeid = mem_pol->node;
-        header->node_cache = NULL;
+    // Write header
+    struct mem_header_t* header = (struct mem_header_t*) addr;
+    header->magic = runtime->init_time;
+    header->sz = sz;
+    header->nodeid = mem_pol->node;
+    header->node_cache = NULL;
 
-        __sync_fetch_and_add(&mem_pol->total_allocated, new_sz);
-    }
-
+    // Book-keeping
     advance_node();
+    __sync_fetch_and_add(&mem_pol->total_allocated, new_sz);
 
-    MIR_RECORDER_STATE_END(NULL, 0);
+    if(runtime->enable_recorder == 1)
+        MIR_RECORDER_STATE_END(NULL, 0);
 
     return (void*) ((unsigned char*)addr + sizeof(struct mem_header_t));
 }/*}}}*/
 
 static void* allocate_fine(size_t sz)
 {/*{{{*/
-    MIR_RECORDER_STATE_BEGIN(MIR_STATE_TMALLOC);
+    MIR_ASSERT(sz > 0);
+
+    if(runtime->enable_recorder == 1)
+        MIR_RECORDER_STATE_BEGIN(MIR_STATE_TMALLOC);
 
     void* addr = NULL;
     size_t new_sz = sz + sizeof(struct mem_header_t);
@@ -325,6 +345,7 @@ static void* allocate_fine(size_t sz)
     int cur_pol;
     get_mempolicy(&cur_pol, NULL, 0, 0, 0);
     struct bitmask* mask = numa_bitmask_alloc(runtime->arch->num_nodes);
+    MIR_ASSERT(mask != NULL);
 #ifdef MIR_MEM_POL_RESTRICT
     numa_bitmask_clearall(mask);
     for(int i=0; i<runtime->num_workers; i++)
@@ -337,6 +358,7 @@ static void* allocate_fine(size_t sz)
 #endif
     numa_set_interleave_mask(mask);
     addr = numa_alloc_interleaved_subset(new_sz, mask);
+    MIR_ASSERT(addr != NULL);
     set_mempolicy(cur_pol, mask->maskp, mask->size + 1);
     numa_bitmask_free(mask);
 #ifdef MIR_MEM_POL_LOCK_PAGES
@@ -351,76 +373,81 @@ static void* allocate_fine(size_t sz)
 #else
     tmc_alloc_t home = TMC_ALLOC_INIT;
     tmc_alloc_set_home(&home, TMC_ALLOC_HOME_HASH);
-    mir_page_attr_set(&home);
+    page_attr_set(&home);
     addr = tmc_alloc_map(&home, new_sz);
+    MIR_ASSERT(addr != NULL);
 #endif
 
-    if(addr)
-    {
-        // Write header
-        struct mem_header_t* header = (struct mem_header_t*) addr;
-        header->magic = 0;
-        header->sz = sz;
-        header->nodeid = runtime->arch->num_nodes + 1;
+    // Write header
+    struct mem_header_t* header = (struct mem_header_t*) addr;
+    header->magic = 0;
+    header->sz = sz;
+    header->nodeid = runtime->arch->num_nodes + 1;
 #ifdef MIR_MEM_POL_CACHE_NODES 
-        // Have to fault in the pages!
-        // Or else the query will not work
-        if(faulted_in == false)
-        {
-            //memset(addr, 0, new_sz);
-            fault_all_pages(addr, new_sz);
-            faulted_in = true;
-        }
-
-        // Create node cache
-        uint16_t pagesz = sysconf(_SC_PAGESIZE);
-        size_t num_pages = (new_sz +  pagesz - 1)/pagesz;
-        header->node_cache = mir_malloc_int(sizeof(uint16_t) * num_pages);
-        for(size_t i=0; i<num_pages; i++)
-        {
-            uint16_t node = get_node_of(addr + (i*pagesz), NULL);
-            header->node_cache[i] = node;
-        }
-        /*MIR_INFORM("Node cache: ");*/
-        /*for(size_t i=0; i<num_pages; i++)*/
-            /*MIR_INFORM("%lu->%d ", i, header->node_cache[i]);*/
-        /*MIR_INFORM("\n");*/
-#else
-        header->node_cache = NULL;
-#endif
-
-        __sync_fetch_and_add(&mem_pol->total_allocated, new_sz);
+    // Have to fault in the pages!
+    // Or else the query will not work
+    if(faulted_in == false)
+    {
+        //memset(addr, 0, new_sz);
+        fault_all_pages(addr, new_sz);
+        faulted_in = true;
     }
 
-    MIR_RECORDER_STATE_END(NULL, 0);
+    // Create node cache
+    uint16_t pagesz = sysconf(_SC_PAGESIZE);
+    size_t num_pages = (new_sz +  pagesz - 1)/pagesz;
+    header->node_cache = mir_malloc_int(sizeof(uint16_t) * num_pages);
+    MIR_ASSERT(header->node_cache != NULL);
+    for(size_t i=0; i<num_pages; i++)
+    {
+        uint16_t node = get_node_of(addr + (i*pagesz), NULL);
+        header->node_cache[i] = node;
+    }
+    /*MIR_INFORM("Node cache: ");*/
+    /*for(size_t i=0; i<num_pages; i++)*/
+        /*MIR_INFORM("%lu->%d ", i, header->node_cache[i]);*/
+    /*MIR_INFORM("\n");*/
+#else
+    header->node_cache = NULL;
+#endif
+
+    __sync_fetch_and_add(&mem_pol->total_allocated, new_sz);
+
+    if(runtime->enable_recorder == 1)
+        MIR_RECORDER_STATE_END(NULL, 0);
 
     return (void*) ((unsigned char*)addr + sizeof(struct mem_header_t));
 }/*}}}*/
 
 static void* allocate_system(size_t sz)
 {/*{{{*/
-    MIR_RECORDER_STATE_BEGIN(MIR_STATE_TMALLOC);
+    MIR_ASSERT(sz > 0);
+
+    if(runtime->enable_recorder == 1)
+        MIR_RECORDER_STATE_BEGIN(MIR_STATE_TMALLOC);
 
     size_t new_sz = sz + sizeof(struct mem_header_t);
     void* addr = malloc(new_sz);
-    if(addr)
-    {
-        // Write header
-        struct mem_header_t* header = (struct mem_header_t*) addr;
-        header->magic = 0;
-        header->sz = sz;
-        header->nodeid = runtime->arch->num_nodes + 1;
-        header->node_cache = NULL;
-    }
+    MIR_ASSERT(addr != NULL);
+    // Write header
+    struct mem_header_t* header = (struct mem_header_t*) addr;
+    header->magic = 0;
+    header->sz = sz;
+    header->nodeid = runtime->arch->num_nodes + 1;
+    header->node_cache = NULL;
 
-    MIR_RECORDER_STATE_END(NULL, 0);
+    if(runtime->enable_recorder == 1)
+        MIR_RECORDER_STATE_END(NULL, 0);
 
     return (void*) ((unsigned char*)addr + sizeof(struct mem_header_t));
 }/*}}}*/
 
 static void* allocate_local(size_t sz)
 {/*{{{*/
-    MIR_RECORDER_STATE_BEGIN(MIR_STATE_TMALLOC);
+    MIR_ASSERT(sz > 0);
+
+    if(runtime->enable_recorder == 1)
+        MIR_RECORDER_STATE_BEGIN(MIR_STATE_TMALLOC);
 
     void* addr = NULL;
     size_t new_sz = sz + sizeof(struct mem_header_t);
@@ -432,10 +459,12 @@ static void* allocate_local(size_t sz)
 #ifndef __tile__
     numa_set_bind_policy(1);
     struct bitmask* mask = numa_bitmask_alloc(runtime->arch->num_nodes);
+    MIR_ASSERT(mask != NULL);
     numa_bitmask_clearall(mask);
     numa_bitmask_setbit(mask, node);
     numa_set_membind(mask);
     addr = numa_alloc_onnode(new_sz, node);
+    MIR_ASSERT(addr != NULL);
     numa_bitmask_free(mask);
     numa_set_bind_policy(0);
 #ifdef MIR_MEM_POL_LOCK_PAGES
@@ -449,35 +478,38 @@ static void* allocate_local(size_t sz)
 #else
     tmc_alloc_t home = TMC_ALLOC_INIT;
     tmc_alloc_set_home(&home, node);
-    mir_page_attr_set(&home);
+    page_attr_set(&home);
     addr = tmc_alloc_map(&home, new_sz);
+    MIR_ASSERT(addr != NULL);
 #endif
 
-    if(addr)
-    {
-        // Write header
-        struct mem_header_t* header = (struct mem_header_t*) addr;
-        header->magic = runtime->init_time;
-        header->sz = sz;
-        header->nodeid = node;
-        header->node_cache = NULL;
+    // Write header
+    struct mem_header_t* header = (struct mem_header_t*) addr;
+    header->magic = runtime->init_time;
+    header->sz = sz;
+    header->nodeid = node;
+    header->node_cache = NULL;
 
-        __sync_fetch_and_add(&mem_pol->total_allocated, new_sz);
-    }
+    __sync_fetch_and_add(&mem_pol->total_allocated, new_sz);
 
-    MIR_RECORDER_STATE_END(NULL, 0);
+    if(runtime->enable_recorder == 1)
+        MIR_RECORDER_STATE_END(NULL, 0);
 
     return (void*) ((unsigned char*)addr + sizeof(struct mem_header_t));
 }/*}}}*/
 
 static void release_coarse(void* addr, size_t sz)
 {/*{{{*/
+    MIR_ASSERT(addr != NULL);
+    MIR_ASSERT(sz > 0);
+
     size_t new_sz = sz + sizeof(struct mem_header_t);
     void* new_addr = (void*)((char*)addr - sizeof(struct mem_header_t));
 #ifdef MIR_MEM_POL_CACHE_NODES
+    // FIXME: This check kicks in when the fine policy is used. Fugly code!
     // Release node cache
     struct mem_header_t* header = (struct mem_header_t*)(new_addr);
-    if(header->node_cache)
+    if(header->node_cache != NULL)
     {
         uint16_t pagesz = sysconf(_SC_PAGESIZE);
         size_t num_pages = (new_sz +  pagesz - 1)/pagesz;
@@ -493,25 +525,28 @@ static void release_coarse(void* addr, size_t sz)
     tmc_alloc_unmap(new_addr, new_sz);
 #endif
 
-    if(addr)
-    {
-        __sync_fetch_and_sub(&mem_pol->total_allocated, new_sz);
-    }
+    __sync_fetch_and_sub(&mem_pol->total_allocated, new_sz);
 }/*}}}*/
 
 static void release_fine(void* addr, size_t sz)
 {/*{{{*/
+    MIR_ASSERT(addr != NULL);
+    MIR_ASSERT(sz > 0);
     release_coarse(addr, sz);
 }/*}}}*/
 
 static void release_system(void* addr, size_t sz)
 {/*{{{*/
+    MIR_ASSERT(addr != NULL);
+    MIR_ASSERT(sz > 0);
     void* new_addr = (void*)((char*)addr - sizeof(struct mem_header_t));
     free(new_addr);
 }/*}}}*/
 
 static void release_local(void* addr, size_t sz)
 {/*{{{*/
+    MIR_ASSERT(addr != NULL);
+    MIR_ASSERT(sz > 0);
     release_coarse(addr, sz);
 }/*}}}*/
 
@@ -526,6 +561,7 @@ static void reset_coarse()
 
 void mir_mem_pol_config (const char* conf_str)
 {/*{{{*/
+    MIR_ASSERT(conf_str != NULL);
     char str[MIR_LONG_NAME_LEN];
     strcpy(str, conf_str);
 
@@ -582,8 +618,7 @@ void mir_mem_pol_create ()
 {/*{{{*/
     // Allocate mem_pol structure
     mem_pol = mir_malloc_int(sizeof(struct mir_mem_pol_t));
-    if(!mem_pol)
-        MIR_ABORT(MIR_ERROR_STR "Cannot create memory allocation policy!\n");
+    MIR_ASSERT(mem_pol != NULL);
     // Statistics
     mem_pol->total_allocated = 0;
     // Node for coarse allocation

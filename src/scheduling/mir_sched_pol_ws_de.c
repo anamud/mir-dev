@@ -8,6 +8,9 @@
 #include "mir_memory.h"
 #include "mir_utils.h"
 #include "mir_defines.h"
+#ifdef MIR_MEM_POL_ENABLE
+#include "mir_mem_pol.h"
+#endif 
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -23,6 +26,7 @@ void config_ws_de (const char* conf_str)
     strcpy(str, conf_str);
 
     struct mir_sched_pol_t* sp = runtime->sched_pol;
+    MIR_ASSERT(NULL != sp);
 
     char* tok = strtok(str, " ");
     while(tok)
@@ -37,6 +41,7 @@ void config_ws_de (const char* conf_str)
                     {
                         char* s = tok+3;
                         sp->queue_capacity = atoi(s);
+                        MIR_ASSERT(sp->queue_capacity > 0);
                         //MIR_INFORM(MIR_INFORM_STR "Setting queue capacity to %d\n", sp->queue_capacity);
                     }
                     else
@@ -55,38 +60,52 @@ void config_ws_de (const char* conf_str)
 void create_ws_de ()
 {/*{{{*/
     struct mir_sched_pol_t* sp = runtime->sched_pol;
+    MIR_ASSERT(NULL != sp);
 
     // Create worker private task queues
     sp->num_queues = runtime->num_workers;
     sp->queues = (struct mir_queue_t**) mir_malloc_int (sp->num_queues * sizeof(mir_dequeue_t*));
-    if(NULL == sp->queues)
-        MIR_ABORT(MIR_ERROR_STR "Unable to create task dequeues!\n");
+    MIR_ASSERT(NULL != sp->queues);
 
     for(int i=0; i< sp->num_queues; i++)
+    {
         sp->queues[i] = (struct mir_queue_t*) newWSDeque(sp->queue_capacity);
+        MIR_ASSERT(NULL != sp->queues[i]);
+    }
 }/*}}}*/
 
 void destroy_ws_de ()
 {/*{{{*/
     return; // FIXME: Bad exit. Workers bang on queues which are freed.
     struct mir_sched_pol_t* sp = runtime->sched_pol;
-    
+    MIR_ASSERT(NULL != sp);
+
     // Free queues
     for(int i=0; i<sp->num_queues ; i++)
+    {
+        MIR_ASSERT(NULL != sp->queues[i]);
         freeWSDeque((mir_dequeue_t*)sp->queues[i]);
+        sp->queues[i] = NULL;
+    }
 
+    MIR_ASSERT(NULL != sp->queues);
     mir_free_int(sp->queues, sizeof(mir_dequeue_t*) * sp->num_queues);
+    sp->queues = NULL;
 }/*}}}*/
 
 void push_ws_de (struct mir_task_t* task)
 {/*{{{*/
+    MIR_ASSERT(NULL != task);
+    //if(runtime->enable_recorder == 1)
     //MIR_RECORDER_STATE_BEGIN(MIR_STATE_TSCHED);
 
     // Get this worker!
     struct mir_worker_t* worker = mir_worker_get_context(); 
+    MIR_ASSERT(NULL != worker);
 
     // ws has per-worker queues
     mir_dequeue_t* queue = (mir_dequeue_t*) runtime->sched_pol->queues[worker->id];
+    MIR_ASSERT(NULL != queue);
     if( rtsFalse == pushWSDeque(queue, (void*) task) )
     {
 #ifdef MIR_INLINE_TASK_IF_QUEUE_FULL 
@@ -95,7 +114,7 @@ void push_ws_de (struct mir_task_t* task)
         if(runtime->enable_stats)
             worker->status->num_tasks_inlined++;
 #else
-        MIR_ABORT(MIR_ERROR_STR "Cannot enque task. Increase queue capacity using MIR_CONF.\n");
+        MIR_ABORT(MIR_ERROR_STR "Cannot enqueue task. Increase queue capacity using MIR_CONF.\n");
 #endif
     }
     else
@@ -106,6 +125,7 @@ void push_ws_de (struct mir_task_t* task)
             worker->status->num_tasks_created++;
     }
 
+    //if(runtime->enable_recorder == 1)
     //MIR_RECORDER_STATE_END(NULL, 0);
 }/*}}}*/
 
@@ -113,16 +133,20 @@ bool pop_ws_de (struct mir_task_t** task)
 {/*{{{*/
     bool found = 0;
     struct mir_sched_pol_t* sp = runtime->sched_pol;
+    MIR_ASSERT(NULL != sp);
     uint32_t num_queues = sp->num_queues;
     struct mir_worker_t* worker = mir_worker_get_context(); 
+    MIR_ASSERT(NULL != worker);
     uint16_t node = runtime->arch->node_of(worker->core_id);
 
     // First try to pop from own queue
+    //if(runtime->enable_recorder == 1)
     //MIR_RECORDER_STATE_BEGIN(MIR_STATE_TPOP);
 
     mir_dequeue_t* queue = (mir_dequeue_t*) sp->queues[worker->id];
     if(looksEmptyWSDeque(queue) == rtsFalse)
     {
+        *task = NULL;
         *task = (struct mir_task_t*) popWSDeque(queue);
         if(*task)
         {
@@ -133,7 +157,7 @@ bool pop_ws_de (struct mir_task_t** task)
                 if(runtime->enable_stats)
                 {
 #ifdef MIR_MEM_POL_ENABLE
-                    struct mir_mem_node_dist_t* dist = mir_task_get_footprint_dist(*task, MIR_DATA_ACCESS_READ);
+                    struct mir_mem_node_dist_t* dist = mir_task_get_mem_node_dist(*task, MIR_DATA_ACCESS_READ);
                     if(dist)
                     {
                         /*MIR_INFORM("Dist for task %" MIR_FORMSPEC_UL ": ", (*task)->id.uid);*/
@@ -141,7 +165,7 @@ bool pop_ws_de (struct mir_task_t** task)
                             /*MIR_INFORM("%lu ", dist->buf[i]);*/
                         /*MIR_INFORM("\n");*/
 
-                        (*task)->comm_cost = mir_sched_pol_get_comm_cost(node, dist);
+                        (*task)->comm_cost = mir_mem_node_dist_get_comm_cost(dist, node);
                         mir_worker_status_update_comm_cost(worker->status, (*task)->comm_cost);
                     }
 #endif
@@ -158,12 +182,14 @@ bool pop_ws_de (struct mir_task_t** task)
         }
     }
 
+    //if(runtime->enable_recorder == 1)
     //MIR_RECORDER_STATE_END(NULL, 0);
 
     if (found)
         return found;
 
     // Next try to pop from other queues
+    //if(runtime->enable_recorder == 1)
     //MIR_RECORDER_STATE_BEGIN(MIR_STATE_TSTEAL);
 
     uint16_t ctr = worker->id + 1;
@@ -174,6 +200,7 @@ bool pop_ws_de (struct mir_task_t** task)
         mir_dequeue_t* queue = (mir_dequeue_t*) sp->queues[ctr];
         if(looksEmptyWSDeque(queue) == rtsFalse)
         {
+            *task = NULL;
             *task = (struct mir_task_t*) stealWSDeque(queue);
             if(*task) 
             {
@@ -184,7 +211,7 @@ bool pop_ws_de (struct mir_task_t** task)
                     if(runtime->enable_stats)
                     {
 #ifdef MIR_MEM_POL_ENABLE
-                        struct mir_mem_node_dist_t* dist = mir_task_get_footprint_dist(*task, MIR_DATA_ACCESS_READ);
+                        struct mir_mem_node_dist_t* dist = mir_task_get_mem_node_dist(*task, MIR_DATA_ACCESS_READ);
                         if(dist)
                         {
                             /*MIR_INFORM("Dist for task %" MIR_FORMSPEC_UL ": ", (*task)->id.uid);*/
@@ -192,7 +219,7 @@ bool pop_ws_de (struct mir_task_t** task)
                                 /*MIR_INFORM("%lu ", dist->buf[i]);*/
                             /*MIR_INFORM("\n");*/
 
-                            (*task)->comm_cost = mir_sched_pol_get_comm_cost(node, dist);
+                            (*task)->comm_cost = mir_mem_node_dist_get_comm_cost(dist, node);
                             mir_worker_status_update_comm_cost(worker->status, (*task)->comm_cost);
                         }
 #endif
@@ -215,6 +242,7 @@ bool pop_ws_de (struct mir_task_t** task)
         if(ctr == num_queues) ctr = 0;
     }
 
+    //if(runtime->enable_recorder == 1)
     //MIR_RECORDER_STATE_END(NULL, 0);
 
     return found;

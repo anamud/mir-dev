@@ -1,2 +1,26 @@
-Documents coming soon!
-Contact ananya@kth.se for details.
+=== RUNTIME SYSTEM ===
+Add TILEPro64 support.
+Add clang support.
+Improve OpenMP 3.0 support.
+Add support for implicit data dependence resolution.
+Improve documents structure.
+Provide more documentation.
+Improve libgomp OpenMP wrapper.
+Inline functions for speed.
+Add better help system.
+Add better parsing for MIR_CONF.
+
+=== PROFILING ===
+Support Cilk-like task graph generation.
+Add dependence graph generation support.
+Profile omp for loops.
+
+=== PROGRAMS ===
+Work on UTS scaling.
+Add benchmarks with data dependences.
+
+=== TESTING ===
+Add a simple testing suite.
+
+=== MISC === 
+Set up github repository.

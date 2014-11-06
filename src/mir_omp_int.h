@@ -7,6 +7,7 @@
 BEGIN_C_DECLS 
 
 /* Taken from https://gcc.gnu.org/git/?p=gcc.git;a=tree;f=libgomp;hb=HEAD on 21 May 2014*/
+// FIXME: Warning!! Fragile!! This can cause a header version mismatch when linked with libgomp. Add a check! 
 
 /* barrier.c */
 

@@ -9,13 +9,11 @@
 struct mir_stack_t* mir_stack_create(uint32_t capacity)
 {/*{{{*/
     struct mir_stack_t* stack = (struct mir_stack_t*)mir_cmalloc_int(sizeof(struct mir_stack_t));
-    if(!stack)
-        MIR_ABORT(MIR_ERROR_STR "No memory to create stack!\n");
+    MIR_ASSERT(stack != NULL);
 
     stack->buffer = NULL;
     stack->buffer = mir_cmalloc_int(capacity * sizeof(void*));
-    if(!stack->buffer)
-        MIR_ABORT(MIR_ERROR_STR "No memory to create stack buffer!\n");
+    MIR_ASSERT(stack->buffer != NULL);
 
     stack->capacity = capacity;
     stack->head = 0;
@@ -26,16 +24,21 @@ struct mir_stack_t* mir_stack_create(uint32_t capacity)
 
 void mir_stack_destroy(struct mir_stack_t* stack)
 {/*{{{*/
-    if(stack == NULL)
-        return;
+    MIR_ASSERT(stack != NULL);
+    MIR_ASSERT(stack->buffer != NULL);
 
     mir_lock_destroy(&(stack->lock));
     mir_free_int(stack->buffer, stack->capacity * sizeof(void*));
+    stack->buffer = NULL;
     mir_free_int(stack, sizeof(struct mir_stack_t));
+    stack = NULL;
 }/*}}}*/
 
 bool mir_stack_push(struct mir_stack_t* stack, void* data)
 {/*{{{*/
+    MIR_ASSERT(stack != NULL);
+    MIR_ASSERT(data != NULL);
+
     mir_lock_set(&(stack->lock));
 
     if (STACK_FULL(stack))
@@ -56,6 +59,9 @@ bool mir_stack_push(struct mir_stack_t* stack, void* data)
 
 void mir_stack_pop(struct mir_stack_t* stack, void** data)
 {/*{{{*/
+    MIR_ASSERT(stack != NULL);
+    MIR_ASSERT(data != NULL);
+
     mir_lock_set(&(stack->lock));
     if (STACK_EMPTY(stack))
     {
@@ -64,14 +70,17 @@ void mir_stack_pop(struct mir_stack_t* stack, void** data)
         return;
     }
     *data = stack->buffer[stack->head - 1];
+    MIR_ASSERT(*data != NULL);
     stack->head--;
     //__sync_synchronize();
     mir_lock_unset(&(stack->lock));
     return;
 }/*}}}*/
 
-uint32_t mir_stack_size(struct mir_stack_t *stack)
+uint32_t mir_stack_size(const struct mir_stack_t *stack)
 {/*{{{*/
+    MIR_ASSERT(stack != NULL);
+
     //__sync_synchronize();
     //mir_lock_set(&(stack->lock));
     uint32_t size = stack->head ;

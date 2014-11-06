@@ -18,7 +18,17 @@ uint64_t mir_get_allocated_memory();
 #ifdef __tile__
 #include <tmc/alloc.h>
 #include <tmc/mem.h>
-void mir_page_attr_set(tmc_alloc_t* alloc);
+static inline void page_attr_set(tmc_alloc_t* alloc)
+{/*{{{*/
+#if defined (MIR_PAGE_NO_LOCAL_CACHING)
+    tmc_alloc_set_caching(alloc, MAP_CACHE_NO_LOCAL);
+#elif defined (MIR_PAGE_NO_L1_CACHING)
+    tmc_alloc_set_caching(alloc, MAP_CACHE_NO_L1);
+#elif defined (MIR_PAGE_NO_L2_CACHING)
+    tmc_alloc_set_caching(alloc, MAP_CACHE_NO_L2);
+#endif
+return;
+}/*}}}*/
 #endif
 
 END_C_DECLS 
