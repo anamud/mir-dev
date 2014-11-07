@@ -27,22 +27,22 @@ abort_on_error <- T
 # Read args
 args <- commandArgs(TRUE)
 if(length(args) != 3) quit("no", 1)
-# fj = fork-join task graph produced by runtime system (MIR_CONF: -g)
-# cg = call graph produced by the outline function profiler
-fj.file <- args[1]
-cg.file <- args[2]
+# ts = task stats produced by runtime system (MIR_CONF: -g)
+# ip = instruction profile produced by the outline function profiler
+ts.file <- args[1]
+ip.file <- args[2]
 comb.tp.file.prefix <- args[3]
 
 tic(type="elapsed")
 # Read data
-fj.data <- read.csv(fj.file, header=TRUE)
-cg.data <- read.csv(cg.file, header=TRUE)
+ts.data <- read.csv(ts.file, header=TRUE)
+ip.data <- read.csv(ip.file, header=TRUE)
 toc("Read data time")
 
 tic(type="elapsed")
 # Create combined task performance table
-comb.tp <- subset(fj.data, select=c(task, parent, joins_at, child_number, num_children, core_id, exec_cycles))
-comb.tp <- merge(comb.tp, cg.data, by.x="task", by.y="task", all=T)
+comb.tp <- subset(ts.data, select=c(task, parent, joins_at, child_number, num_children, core_id, exec_cycles))
+comb.tp <- merge(comb.tp, ip.data, by.x="task", by.y="task", all=T)
 row.has.na <- apply(comb.tp, 1, function(x){any(is.na(x))})
 sum.row.has.na <- sum(row.has.na)
 if(sum.row.has.na > 0)

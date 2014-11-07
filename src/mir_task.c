@@ -22,7 +22,7 @@
 extern struct mir_runtime_t* runtime;
 extern uint32_t g_num_tasks_waiting;
 
-// FIXME: Make this per-worker
+// FIXME: Make these per-worker
 static uint64_t g_tasks_uidc = MIR_TASK_ID_START + 1;
 
 static inline unsigned int mir_twc_reduce(struct mir_twc_t* twc)
@@ -145,6 +145,9 @@ static inline struct mir_task_t* mir_task_create_common(mir_tfunc_t tfunc, void*
         task->child_number = task->parent->num_children;
     }
 
+    // Other book-keeping
+    task->queue_size_at_pop = 0;
+
     // Flags
     task->done = 0;
     task->taken = 0;
@@ -188,11 +191,11 @@ void mir_task_create(mir_tfunc_t tfunc, void* data, size_t data_size, unsigned i
     if(inline_necessary())
     {
         tfunc(data);
-        // Update stats
+        // Update worker stats
         struct mir_worker_t* worker = mir_worker_get_context(); 
         MIR_ASSERT(worker != NULL);
-        if(runtime->enable_stats)
-            worker->status->num_tasks_inlined++;
+        if(runtime->enable_worker_stats)
+            worker->statistics->num_tasks_inlined++;
         return;
         // FIXME: What about reporting inlining to the Pin profiler!?
     }
@@ -218,10 +221,10 @@ void mir_task_create_on_worker(mir_tfunc_t tfunc, void* data, size_t data_size, 
     if(inline_necessary())
     {
         tfunc(data);
-        // Update stats
+        // Update worker stats
         struct mir_worker_t* worker = mir_worker_get_context(); 
-        if(runtime->enable_stats)
-            worker->status->num_tasks_inlined++;
+        if(runtime->enable_worker_stats)
+            worker->statistics->num_tasks_inlined++;
         return;
         // FIXME: What about reporting inlining to the Pin profiler!?
     }
@@ -285,12 +288,12 @@ void mir_task_execute(struct mir_task_t* task)
     worker->current_task->exec_resume_instant = mir_get_cycles();
 
     // Write task id to shared memory.
-    if(runtime->enable_shmem_handshake == 1)
+    if(runtime->enable_ofp_handshake == 1)
     {
-        char buf[MIR_SHM_SIZE] = {0};
+        char buf[MIR_OFP_SHM_SIZE] = {0};
         sprintf(buf, "%" MIR_FORMSPEC_UL, task->id.uid);
-        for(int i=0; i<MIR_SHM_SIZE; i++)
-            runtime->shm[i] = buf[i];
+        for(int i=0; i<MIR_OFP_SHM_SIZE; i++)
+            runtime->ofp_shm[i] = buf[i];
     }
 
     // Execute task function
@@ -305,9 +308,9 @@ void mir_task_execute(struct mir_task_t* task)
     // Current task timing
     worker->current_task->exec_cycles += (mir_get_cycles() - worker->current_task->exec_resume_instant);
 
-    // Add to task graph
-    if(runtime->enable_task_graph_gen == 1)
-        mir_worker_update_task_graph(worker, task);
+    // Collect task statistics
+    if(runtime->enable_task_stats == 1)
+        mir_worker_update_task_statistics(worker, task);
 
     // Restore task context of worker
     worker->current_task = temp;
@@ -337,7 +340,7 @@ void mir_task_execute(struct mir_task_t* task)
     __sync_synchronize();
 
     // FIXME Destroy task !
-    // NOTE: Destroying task upsets task graph structure
+    // NOTE: Destroying task upsets task statistics structure
 }/*}}}*/
 
 #ifdef MIR_MEM_POL_ENABLE
@@ -457,4 +460,45 @@ void mir_task_wait()
         MIR_RECORDER_STATE_END(NULL, 0);
 
     return;
+}/*}}}*/
+
+void mir_task_statistics_write_header_to_file(FILE* file)
+{/*{{{*/
+    fprintf(file, "task,parent,joins_at,core_id,child_number,num_children,exec_cycles,inst_parallelism\n");
+}/*}}}*/
+
+void mir_task_statistics_write_to_file(struct mir_task_statistics_t* statistics, FILE* file)
+{/*{{{*/
+    struct mir_task_statistics_t* temp = statistics;
+    while(temp != NULL)
+    {
+        mir_id_t task_parent;
+        task_parent.uid = 0;
+        if(temp->task->parent)
+            task_parent.uid = temp->task->parent->id.uid;
+
+        fprintf(file, "%" MIR_FORMSPEC_UL ",%" MIR_FORMSPEC_UL ",%lu,%u,%u,%u,%" MIR_FORMSPEC_UL ",%u\n", 
+                temp->task->id.uid, 
+                task_parent.uid,
+                temp->pass_count,
+                temp->task->core_id,
+                temp->task->child_number,
+                temp->task->num_children,
+                temp->task->exec_cycles,
+                temp->task->queue_size_at_pop);
+
+        temp = temp->next;
+    }
+}/*}}}*/
+
+void mir_task_statistics_destroy(struct mir_task_statistics_t* statistics)
+{/*{{{*/
+    struct mir_task_statistics_t* temp = statistics;
+    while(temp != NULL)
+    {
+        struct mir_task_statistics_t* next = temp->next;
+        mir_free_int(temp, sizeof(struct mir_task_statistics_t));
+        temp = next;
+        // FIXME: Can also free the task and wait counter here!
+    }
 }/*}}}*/

@@ -14,6 +14,15 @@
 
 BEGIN_C_DECLS 
 
+// For task statistics collection
+struct mir_task_statistics_t;
+struct mir_task_statistics_t
+{
+    struct mir_task_t* task;
+    unsigned long pass_count;
+    struct mir_task_statistics_t* next;
+};
+
 /*LIBINT_DECL_BEGIN*/
 enum mir_data_access_t 
 {
@@ -91,6 +100,7 @@ struct mir_task_t
     uint16_t core_id; 
     uint64_t exec_resume_instant;
     uint64_t exec_cycles;
+    uint32_t queue_size_at_pop;
 
     // Flags
     uint32_t done;
@@ -127,6 +137,12 @@ struct mir_mem_node_dist_t* mir_task_get_mem_node_dist(struct mir_task_t* task, 
 struct mir_twc_t* mir_twc_create();
 
 /*LIBINT*/ void mir_task_wait();
+
+void mir_task_statistics_write_header_to_file(FILE* file);
+
+void mir_task_statistics_write_to_file(struct mir_task_statistics_t* statistics, FILE* file);
+
+void mir_task_statistics_destroy(struct mir_task_statistics_t* statistics);
 
 END_C_DECLS
 #endif

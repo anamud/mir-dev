@@ -8,7 +8,7 @@ command2="./fib-prof 48 $c"
 sched=ws
 
 # Prepare
-rm -f *.rec* mir-execution-stats speedup.txt *.prv* *.pcf event-*
+rm -f *.rec* mir-worker-stats speedup.txt *.prv* *.pcf event-*
 scons
 
 # Collect detailed perf
@@ -40,7 +40,7 @@ max=`ls -1d perf_report_* | sed -e "s/perf_report_//g" | tr -dc '[0-9\n]' | sort
 outdir=perf_report_$((max + 1))
 echo "Copying perf information to $outdir"
 mkdir $outdir
-mv *.rec* mir-execution-stats *.prv *.pcf ./$outdir 
+mv *.rec* mir-worker-stats *.prv *.pcf ./$outdir 
 mv event-* ./$outdir
 mv speedup.txt ./$outdir
 cp get_perf.sh ./$outdir

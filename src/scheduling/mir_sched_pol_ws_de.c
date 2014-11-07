@@ -111,8 +111,8 @@ void push_ws_de (struct mir_task_t* task)
 #ifdef MIR_INLINE_TASK_IF_QUEUE_FULL 
         mir_task_execute(task);
         // Update stats
-        if(runtime->enable_stats)
-            worker->status->num_tasks_inlined++;
+        if(runtime->enable_worker_stats)
+            worker->statistics->num_tasks_inlined++;
 #else
         MIR_ABORT(MIR_ERROR_STR "Cannot enqueue task. Increase queue capacity using MIR_CONF.\n");
 #endif
@@ -121,8 +121,8 @@ void push_ws_de (struct mir_task_t* task)
     {
         __sync_fetch_and_add(&g_num_tasks_waiting, 1);
         // Update stats
-        if(runtime->enable_stats)
-            worker->status->num_tasks_created++;
+        if(runtime->enable_worker_stats)
+            worker->statistics->num_tasks_created++;
     }
 
     //if(runtime->enable_recorder == 1)
@@ -154,7 +154,7 @@ bool pop_ws_de (struct mir_task_t** task)
             if(grab)
             {
                 // Update stats
-                if(runtime->enable_stats)
+                if(runtime->enable_worker_stats)
                 {
 #ifdef MIR_MEM_POL_ENABLE
                     struct mir_mem_node_dist_t* dist = mir_task_get_mem_node_dist(*task, MIR_DATA_ACCESS_READ);
@@ -166,11 +166,11 @@ bool pop_ws_de (struct mir_task_t** task)
                         /*MIR_INFORM("\n");*/
 
                         (*task)->comm_cost = mir_mem_node_dist_get_comm_cost(dist, node);
-                        mir_worker_status_update_comm_cost(worker->status, (*task)->comm_cost);
+                        mir_worker_statistics_update_comm_cost(worker->statistics, (*task)->comm_cost);
                     }
 #endif
 
-                    worker->status->num_tasks_owned++;
+                    worker->statistics->num_tasks_owned++;
                 }
 
                 if(g_num_tasks_waiting > 0)
@@ -208,7 +208,7 @@ bool pop_ws_de (struct mir_task_t** task)
                 if(grab)
                 {
                     // Update stats
-                    if(runtime->enable_stats)
+                    if(runtime->enable_worker_stats)
                     {
 #ifdef MIR_MEM_POL_ENABLE
                         struct mir_mem_node_dist_t* dist = mir_task_get_mem_node_dist(*task, MIR_DATA_ACCESS_READ);
@@ -220,11 +220,11 @@ bool pop_ws_de (struct mir_task_t** task)
                             /*MIR_INFORM("\n");*/
 
                             (*task)->comm_cost = mir_mem_node_dist_get_comm_cost(dist, node);
-                            mir_worker_status_update_comm_cost(worker->status, (*task)->comm_cost);
+                            mir_worker_statistics_update_comm_cost(worker->statistics, (*task)->comm_cost);
                         }
 #endif
 
-                        worker->status->num_tasks_stolen++;
+                        worker->statistics->num_tasks_stolen++;
                     }
 
                     if(g_num_tasks_waiting > 0)

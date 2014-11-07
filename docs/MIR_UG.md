@@ -1,7 +1,5 @@
-***
-***
-# MIR User Guide
-***
+
+#==MIR User Guide==
 
 # Introduction
 
@@ -290,6 +288,11 @@ MIR supports extensive thread-based and task-based profiling.
 
 Thread states and events are the main performance indicators in thread-based profiling.
 
+Enable the `-i` flag to get basic load-balance information in a CSV file called `mir-worker-stats`.
+```
+$ MIR_CONF="-i" ./fib-opt
+$ cat mir-worker-stats
+
 Enable the `-r` flag to get detailed per-thread state and event information in a set of `mir-recorder-prv-*.rec` files. Each file represents a worker thread. The files can be inspected individually or combined and visualized using Paraver.
 ```
 $ MIR_CONF="-r" ./fib-opt
@@ -353,16 +356,10 @@ $ cat event-counts-*.txt
 
 Task are first-class citizens in task-based profiling.
 
-Enable the `-i` flag to get basic task-based information in a CSV file called `mir-execution-stats`.
-```
-$ MIR_CONF="-i" ./fib-opt
-$ cat mir-execution-stats
-```
-
-Enable the `-g` flag to generate task fork and join information in a CSV file called `mir-forks-joins`. Inspect the file manually or plot and visualize the fork-join task graph.
+Enable the `-g` flag to collect task statistics in a CSV file called `mir-task-stats`. Inspect the file manually or plot and visualize the fork-join task graph.
 ```
 $ MIR_CONF="-g" ./fib-opt
-$ Rscript ${MIR_ROOT}/scripts/profiling/task/fork-join-graph-plot.R mir-forks-joins color
+$ Rscript ${MIR_ROOT}/scripts/profiling/task/fork-join-graph-plot.R mir-task-stats color
 ```
 
 ### Instruction-level task profiling
@@ -451,9 +448,9 @@ $ alias mir-inst-prof="MIR_CONF='-w=1 -p' ${PIN_ROOT}/intel64/bin/pinbin -t ${MI
 
 MIR contains several graph plotters which can transform task-based profiling data into task graphs. The graphs can be visualized on tools such as Graphviz, yEd and Cytoscape. 
 
-* Plot the fork-join task graph using fork-join information from the runtime system.
+* Plot the fork-join task graph using task statistics from the runtime system.
 ```
-$ Rscript ${MIR_ROOT}/scripts/profiling/task/fork-join-graph-plot.R mir-forks-joins color
+$ Rscript ${MIR_ROOT}/scripts/profiling/task/fork-join-graph-plot.R mir-task-stats color
 ```
 
 > Tip: 
@@ -461,7 +458,7 @@ $ Rscript ${MIR_ROOT}/scripts/profiling/task/fork-join-graph-plot.R mir-forks-jo
 
 * Huge graphs with 50000+ tasks take a long time to plot. Plot the fork-join task graph as a tree to save time.
 ```
-$ Rscript ${MIR_ROOT}/scripts/profiling/task/tree-graph-plot.R mir-forks-joins color
+$ Rscript ${MIR_ROOT}/scripts/profiling/task/tree-graph-plot.R mir-task-stats color
 ```
 
 * Use `${MIR_ROOT}/scripts/profiling/task/annotated-graph-plot.R` to plot task graphs with additional information embedded into graphical elements.
@@ -535,24 +532,24 @@ task,ins_count,[create],[wait]
 ...
 ```
 
-* Generate fork-join information. 
+* Collect task statistics.
 ```
 MIR_CONF="-g" ./fib-prof 10 4
 ```
 > Tip: 
-> Fork-join information is constant for a given input for Fibonacci.
+> Generate task statistics information simultaneously with other statistics to maintain consistency.
 
-* Process and inspect fork-join information for basis statistics.
+* Summarize task statistics.
 ``` 
-$ Rscript ${MIR_ROOT}/scripts/task-graph/mir-fork-join-graph-info.R mir-forks-joins
-$ cat mir-forks-joins.info
+$ Rscript ${MIR_ROOT}/scripts/profiling/task/task-stats-summary.R mir-task-stats
+$ cat mir-task-stats.info
 num_tasks: 15
 joins_at_summary: 1 2 2 1.875 2 2
 ```
 
-* Combine the instruction-level information produced by the instruction profiler with the fork-join information produced by the runtime system into a  single CSV file.
+* Combine the instruction-level information produced by the instruction profiler with the task statistics produced by the runtime system into a single CSV file.
 ``` 
-$ Rscript ${MIR_ROOT}/scripts/task-graph/gather-task-performance.R mir-forks-joins mir-ofp-instructions "mir-task-perf"
+$ Rscript ${MIR_ROOT}/scripts/profiling/task/gather-task-performance.R mir-task-stats mir-ofp-instructions "mir-task-perf"
 ```
 * Plot task graph using combined performance information and view on YEd.
 ``` 

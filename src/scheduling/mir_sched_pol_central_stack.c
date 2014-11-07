@@ -106,8 +106,8 @@ void push_central_stack (struct mir_task_t* task)
 #ifdef MIR_INLINE_TASK_IF_QUEUE_FULL 
         mir_task_execute(task);
         // Update stats
-        if(runtime->enable_stats)
-            worker->status->num_tasks_inlined++;
+        if(runtime->enable_worker_stats)
+            worker->statistics->num_tasks_inlined++;
 #else
         MIR_ABORT(MIR_ERROR_STR "Cannot enque task. Increase queue capacity using MIR_CONF.\n");
 #endif
@@ -116,8 +116,8 @@ void push_central_stack (struct mir_task_t* task)
     {
         __sync_fetch_and_add(&g_num_tasks_waiting, 1);
         // Update stats
-        if(runtime->enable_stats)
-            worker->status->num_tasks_created++;
+        if(runtime->enable_worker_stats)
+            worker->statistics->num_tasks_created++;
     }
 
     //if(runtime->enable_recorder == 1)
@@ -144,15 +144,18 @@ bool pop_central_stack (struct mir_task_t** task)
         mir_stack_pop(queue, (void**)&(*task));
         if(*task)
         {
+            if(runtime->enable_task_stats == 1)
+                (*task)->queue_size_at_pop = mir_stack_size(queue);
+
             // Update stats
-            if(runtime->enable_stats)
+            if(runtime->enable_worker_stats)
             {
 #ifdef MIR_MEM_POL_ENABLE
                 struct mir_mem_node_dist_t* dist = mir_task_get_mem_node_dist(*task, MIR_DATA_ACCESS_READ);
                 if(dist)
                 {
                     (*task)->comm_cost = mir_mem_node_dist_get_comm_cost(dist, node);
-                    mir_worker_status_update_comm_cost(worker->status, (*task)->comm_cost);
+                    mir_worker_statistics_update_comm_cost(worker->statistics, (*task)->comm_cost);
                 }
 #endif
             }
@@ -163,8 +166,8 @@ bool pop_central_stack (struct mir_task_t** task)
             found = 1;
 
             // Update stats
-            if(runtime->enable_stats)
-                worker->status->num_tasks_owned++;
+            if(runtime->enable_worker_stats)
+                worker->statistics->num_tasks_owned++;
         }
     }
 

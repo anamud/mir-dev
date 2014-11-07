@@ -17,35 +17,35 @@ $PIN_ROOT/intel64/bin/pinbin \
 -c ${CALLED_FUNCTIONS} \
 -- ./${APP}-prof ${INPUT}
 
-# Rename forks-joins file
+# Rename task stats file
 if [[ "${MIR_CONF}" == *-g* ]]
 then
-if [ -f mir-forks-joins ];
+if [ -f mir-task-stats ];
 then
-    mv mir-forks-joins ${OFILE_PREFIX}-forks-joins
+    mv mir-task-stats ${OFILE_PREFIX}-task-stats
 fi
 fi
 
-# Rename execution stats file
+# Rename worker stats file
 if [[ "${MIR_CONF}" == *-i* ]]
 then
-if [ -f mir-execution-stats ];
+if [ -f mir-worker-stats ];
 then
-    mv mir-execution-stats ${OFILE_PREFIX}-execution-stats
+    mv mir-worker-stats ${OFILE_PREFIX}-worker-stats
 fi
 fi
 
 if [ ${PROCESS_PROFILE_DATA} -eq 1 ]
 then
-    # Summarize fork join info 
-    echo "Summarizing fork join info ..."
-    Rscript ${MIR_ROOT}/scripts/profiling/task/fork-join-summary.R ${OFILE_PREFIX}-forks-joins
+    # Summarize task stats 
+    echo "Summarizing task stats ..."
+    Rscript ${MIR_ROOT}/scripts/profiling/task/task-stats-summary.R ${OFILE_PREFIX}-task-stats
     # Plot fork join task graph 
     echo "Plotting fork join task graph ..."
-    Rscript ${MIR_ROOT}/scripts/profiling/task/fork-join-graph-plot.R ${OFILE_PREFIX}-forks-joins color
+    Rscript ${MIR_ROOT}/scripts/profiling/task/fork-join-graph-plot.R ${OFILE_PREFIX}-task-stats color
     # Gather task performance data
     echo "Gathering task performance ..."
-    Rscript ${MIR_ROOT}/scripts/profiling/task/gather-task-performance.R ${OFILE_PREFIX}-forks-joins ${OFILE_PREFIX}-instructions ${OFILE_PREFIX}-task-perf
+    Rscript ${MIR_ROOT}/scripts/profiling/task/gather-task-performance.R ${OFILE_PREFIX}-task-stats ${OFILE_PREFIX}-instructions ${OFILE_PREFIX}-task-perf
     # Plot annotated task graph 
     echo "Plotting annotated task graph ..."
     Rscript ${MIR_ROOT}/scripts/profiling/task/annotated-graph-plot.R ${OFILE_PREFIX}-task-perf color

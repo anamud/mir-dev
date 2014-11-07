@@ -39,10 +39,8 @@
 #define MIR_INFORM_STR "MIR_INFO: "
 
 // Statistics
-#define MIR_STATS_FILE_NAME "mir-execution-stats"
-
-// Task graph
-#define MIR_TASK_GRAPH_FILE_NAME "mir-forks-joins"
+#define MIR_WORKER_STATS_FILE_NAME "mir-worker-stats"
+#define MIR_TASK_STATS_FILE_NAME "mir-task-stats"
 
 // Memory allocator
 #define MIR_MEMORY_ALLOCATOR_DEBUG 
@@ -75,8 +73,8 @@
 //#define MIR_PAGE_NO_L2_CACHING 
 
 // Shared memory
-#define MIR_SHM_SIZE 16
-#define MIR_SHM_KEY 31415926
-#define MIR_SHM_SIGREAD '*'
+#define MIR_OFP_SHM_SIZE 16
+#define MIR_OFP_SHM_KEY 31415926
+#define MIR_OFP_SHM_SIGREAD '*'
 
 #endif

@@ -152,13 +152,13 @@ void mir_worker_local_init(struct mir_worker_t* worker)
     sched_setaffinity((pid_t)0, sizeof(cpu_set), &cpu_set);
 #endif
 
-    // Create and reset worker status counters
-    worker->status = NULL;
-    if(runtime->enable_stats)
+    // Create and reset worker statistics counters
+    worker->statistics = NULL;
+    if(runtime->enable_worker_stats)
     {
-        worker->status = (struct mir_worker_status_t*) mir_malloc_int (sizeof(struct mir_worker_status_t));
-        MIR_ASSERT(worker->status != NULL);
-        mir_worker_status_init(worker->status);
+        worker->statistics = (struct mir_worker_statistics_t*) mir_malloc_int (sizeof(struct mir_worker_statistics_t));
+        MIR_ASSERT(worker->statistics != NULL);
+        mir_worker_statistics_init(worker->statistics);
     }
 
     // Wait till bound
@@ -172,8 +172,8 @@ void mir_worker_local_init(struct mir_worker_t* worker)
     // Set current task
     worker->current_task = NULL;
 
-    // For task graph generation
-    worker->task_graph_node = NULL;
+    // For task statistics collection 
+    worker->task_statistics = NULL;
 
     // Create private task queue
     worker->private_queue = mir_queue_create(runtime->sched_pol->queue_capacity);
@@ -202,8 +202,8 @@ void mir_worker_push(struct mir_worker_t* worker, struct mir_task_t* task)
 
     __sync_fetch_and_add(&g_num_tasks_waiting, 1);
     // Update stats
-    if(runtime->enable_stats)
-        worker->status->num_tasks_created++;
+    if(runtime->enable_worker_stats)
+        worker->statistics->num_tasks_created++;
 }/*}}}*/
 
 static inline bool mir_worker_pop(struct mir_worker_t* worker, struct mir_task_t** task)
@@ -304,162 +304,123 @@ void mir_worker_update_bias(struct mir_worker_t* worker)
     worker->bias = (worker->bias + 1)%(runtime->num_workers);
 }/*}}}*/
 
-void mir_worker_status_init(struct mir_worker_status_t* status)
+void mir_worker_statistics_init(struct mir_worker_statistics_t* statistics)
 {/*{{{*/
-    MIR_ASSERT(status != NULL);
+    MIR_ASSERT(statistics != NULL);
 
     // Get this worker
     struct mir_worker_t* worker = mir_worker_get_context();
     MIR_ASSERT(worker != NULL);
 
-    // Set status
-    status->id = worker->id;
-    status->num_tasks_created = 0;
-    status->num_tasks_owned = 0;
-    status->num_tasks_stolen = 0;
-    status->num_tasks_inlined = 0;
-    status->num_comm_tasks = 0;
-    status->total_comm_cost = 0;
-    status->lowest_comm_cost = -1; 
-    status->highest_comm_cost = 0;
+    // Set statistics
+    statistics->id = worker->id;
+    statistics->num_tasks_created = 0;
+    statistics->num_tasks_owned = 0;
+    statistics->num_tasks_stolen = 0;
+    statistics->num_tasks_inlined = 0;
+    statistics->num_comm_tasks = 0;
+    statistics->total_comm_cost = 0;
+    statistics->lowest_comm_cost = -1; 
+    statistics->highest_comm_cost = 0;
 #ifdef MIR_MEM_POL_ENABLE
         if(0 == strcmp(runtime->sched_pol->name, "numa") && runtime->arch->diameter > 0)
         {
-            status->num_comm_tasks_stolen_by_diameter = mir_malloc_int(sizeof(uint32_t) * runtime->arch->diameter);
-            MIR_ASSERT(status->num_comm_tasks_stolen_by_diameter != NULL);
+            statistics->num_comm_tasks_stolen_by_diameter = mir_malloc_int(sizeof(uint32_t) * runtime->arch->diameter);
+            MIR_ASSERT(statistics->num_comm_tasks_stolen_by_diameter != NULL);
             for(uint16_t i=0; i<runtime->arch->diameter; i++)
-                status->num_comm_tasks_stolen_by_diameter[i] = 0;
+                statistics->num_comm_tasks_stolen_by_diameter[i] = 0;
         }
         else
         {
-            status->num_comm_tasks_stolen_by_diameter = NULL;
+            statistics->num_comm_tasks_stolen_by_diameter = NULL;
         }
 #else
-        status->num_comm_tasks_stolen_by_diameter = NULL;
+        statistics->num_comm_tasks_stolen_by_diameter = NULL;
 #endif
 }/*}}}*/
 
-void mir_worker_status_destroy(struct mir_worker_status_t* status)
+void mir_worker_statistics_destroy(struct mir_worker_statistics_t* statistics)
 {/*{{{*/
-    MIR_ASSERT(status != NULL);
-    if(status->num_comm_tasks_stolen_by_diameter)
-        mir_free_int(status->num_comm_tasks_stolen_by_diameter, sizeof(uint32_t) * runtime->arch->diameter);
+    MIR_ASSERT(statistics != NULL);
+    if(statistics->num_comm_tasks_stolen_by_diameter)
+        mir_free_int(statistics->num_comm_tasks_stolen_by_diameter, sizeof(uint32_t) * runtime->arch->diameter);
 }/*}}}*/
 
-void mir_worker_status_update_comm_cost(struct mir_worker_status_t* status, unsigned long comm_cost)
+void mir_worker_statistics_update_comm_cost(struct mir_worker_statistics_t* statistics, unsigned long comm_cost)
 {/*{{{*/
-    MIR_ASSERT(status != NULL);
-    status->num_comm_tasks++;
-    status->total_comm_cost += comm_cost;
-    if(status->lowest_comm_cost > comm_cost)
-        status->lowest_comm_cost = comm_cost;
-    if(status->highest_comm_cost < comm_cost)
-        status->highest_comm_cost = comm_cost;
+    MIR_ASSERT(statistics != NULL);
+    statistics->num_comm_tasks++;
+    statistics->total_comm_cost += comm_cost;
+    if(statistics->lowest_comm_cost > comm_cost)
+        statistics->lowest_comm_cost = comm_cost;
+    if(statistics->highest_comm_cost < comm_cost)
+        statistics->highest_comm_cost = comm_cost;
 }/*}}}*/
 
-void mir_worker_status_write_header_to_file(FILE* file)
+void mir_worker_statistics_write_header_to_file(FILE* file)
 {/*{{{*/
     fprintf(file, "worker,created,owned,stolen,inlined,comm_tasks,total_comm_cost,avg_comm_cost,lowest_comm_cost,highest_comm_cost,comm_tasks_stolen_by_diameter\n");
 }/*}}}*/
 
-void mir_worker_status_write_to_file(const struct mir_worker_status_t* status, FILE* file)
+void mir_worker_statistics_write_to_file(const struct mir_worker_statistics_t* statistics, FILE* file)
 {/*{{{*/
     MIR_ASSERT(file != NULL);
-    MIR_ASSERT(status != NULL);
+    MIR_ASSERT(statistics != NULL);
 
     // Pre-process
-    unsigned long avg_comm_cost = status->total_comm_cost;
-    if(status->num_comm_tasks > 1)
+    unsigned long avg_comm_cost = statistics->total_comm_cost;
+    if(statistics->num_comm_tasks > 1)
         // NOTE: We exclude inlined tasks
-        avg_comm_cost /= status->num_comm_tasks;
+        avg_comm_cost /= statistics->num_comm_tasks;
 
     // Dump to file
-    if(status->num_comm_tasks_stolen_by_diameter)
+    if(statistics->num_comm_tasks_stolen_by_diameter)
     {
         fprintf(file, "%d,%d,%d,%d,%d,%d,%lu,%lu,%lu,%lu",
-                status->id, 
-                status->num_tasks_created,
-                status->num_tasks_owned,
-                status->num_tasks_stolen,
-                status->num_tasks_inlined, 
-                status->num_comm_tasks,
-                status->total_comm_cost, 
+                statistics->id, 
+                statistics->num_tasks_created,
+                statistics->num_tasks_owned,
+                statistics->num_tasks_stolen,
+                statistics->num_tasks_inlined, 
+                statistics->num_comm_tasks,
+                statistics->total_comm_cost, 
                 avg_comm_cost,
-                status->lowest_comm_cost,
-                status->highest_comm_cost);
+                statistics->lowest_comm_cost,
+                statistics->highest_comm_cost);
         fprintf(file, ",[");
         for(uint16_t i=0; i<runtime->arch->diameter; i++)
-            fprintf(file, "%d-", status->num_comm_tasks_stolen_by_diameter[i]);
+            fprintf(file, "%d-", statistics->num_comm_tasks_stolen_by_diameter[i]);
         fprintf(file, "]\n");
     }
     else
     {
         fprintf(file, "%d,%d,%d,%d,%d,%d,%lu,%lu,%lu,%lu,NA\n",
-                status->id, 
-                status->num_tasks_created,
-                status->num_tasks_owned,
-                status->num_tasks_stolen,
-                status->num_tasks_inlined, 
-                status->num_comm_tasks,
-                status->total_comm_cost, 
+                statistics->id, 
+                statistics->num_tasks_created,
+                statistics->num_tasks_owned,
+                statistics->num_tasks_stolen,
+                statistics->num_tasks_inlined, 
+                statistics->num_comm_tasks,
+                statistics->total_comm_cost, 
                 avg_comm_cost,
-                status->lowest_comm_cost,
-                status->highest_comm_cost);
+                statistics->lowest_comm_cost,
+                statistics->highest_comm_cost);
     }
 }/*}}}*/
 
-void mir_worker_update_task_graph(struct mir_worker_t* worker, struct mir_task_t* task)
+void mir_worker_update_task_statistics(struct mir_worker_t* worker, struct mir_task_t* task)
 {/*{{{*/
     MIR_ASSERT(worker != NULL);
     MIR_ASSERT(task != NULL);
 
-    struct mir_task_graph_node_t* node = mir_malloc_int(sizeof(struct mir_task_graph_node_t));
-    MIR_ASSERT(node != NULL);
-    node->task = task;
+    struct mir_task_statistics_t* statistics = mir_malloc_int(sizeof(struct mir_task_statistics_t));
+    MIR_ASSERT(statistics != NULL);
+    statistics->task = task;
     if(task->twc)
-        node->pass_count = task->twc->num_passes;
+        statistics->pass_count = task->twc->num_passes;
     else
-        node->pass_count = 0;
-    node->next = worker->task_graph_node;
-    worker->task_graph_node = node;
+        statistics->pass_count = 0;
+    statistics->next = worker->task_statistics;
+    worker->task_statistics = statistics;
 }/*}}}*/
 
-void mir_task_graph_write_header_to_file(FILE* file)
-{/*{{{*/
-    fprintf(file, "task,parent,joins_at,core_id,child_number,num_children,exec_cycles\n");
-}/*}}}*/
-
-void mir_task_graph_write_to_file(struct mir_task_graph_node_t* node, FILE* file)
-{/*{{{*/
-    struct mir_task_graph_node_t* temp = node;
-    while(temp != NULL)
-    {
-        mir_id_t task_parent;
-        task_parent.uid = 0;
-        if(temp->task->parent)
-            task_parent.uid = temp->task->parent->id.uid;
-
-        fprintf(file, "%" MIR_FORMSPEC_UL ",%" MIR_FORMSPEC_UL ",%lu,%u,%u,%u,%" MIR_FORMSPEC_UL "\n", 
-                temp->task->id.uid, 
-                task_parent.uid,
-                temp->pass_count,
-                temp->task->core_id,
-                temp->task->child_number,
-                temp->task->num_children,
-                temp->task->exec_cycles);
-
-        temp = temp->next;
-    }
-}/*}}}*/
-
-void mir_task_graph_destroy(struct mir_task_graph_node_t* node)
-{/*{{{*/
-    struct mir_task_graph_node_t* this = node;
-    while(this != NULL)
-    {
-        struct mir_task_graph_node_t* next = this->next;
-        mir_free_int(this, sizeof(struct mir_task_graph_node_t));
-        this = next;
-        // FIXME: Can also free the task and wait counter here!
-    }
-}/*}}}*/

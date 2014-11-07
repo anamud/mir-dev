@@ -45,9 +45,6 @@ tg.file <- args[1]
 tg.data <- read.csv(tg.file, header=TRUE)
 tg.color <- args[2]
 
-# tg.file <- '/home/ananya/mir-dev/test/omp/generic/prof_results_test_16/generic_test-annotated_task_graph'
-# tg.data <- read.csv(tg.file, header=TRUE)
-# tg.color <- "color"
 toc("Read data")
 
 # Set colors

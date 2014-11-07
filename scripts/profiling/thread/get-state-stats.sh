@@ -2,7 +2,7 @@
 
 # Arguments check
 if (( $# != 2 )); then
-    echo "Usage: $0 rec-file-common-suffix mir-execution-stats"
+    echo "Usage: $0 rec-file-common-suffix mir-worker-stats"
     exit 1
 fi
 
