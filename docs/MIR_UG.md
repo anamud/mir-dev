@@ -5,6 +5,9 @@
 
 MIR is a task-based runtime system library written using C99. MIR scales well for medium-grained task-based programs. MIR provides a simple native interface for writing task-based programs. In addition, a subset of the OpenMP 3.0 tasks interface is supported. MIR is flexible --- the user can experiment with different scheduling policies. Example: Locality-aware scheduling and data distribution on NUMA systems. MIR supports extensive performance analysis and profiling features. Users can quickly solve performance problems using detailed thread-based and task-based performance information profiled by MIR.
 
+# Intended Audience
+MIR is intended to be used by advanced task-based programmers. Knowledge of compilation and runtime system role in task-based programming is required to use and appreciate MIR. 
+
 # Installation
 
 ## Mandatory Requirements
@@ -449,7 +452,7 @@ $ alias mir-inst-prof="MIR_CONF='-w=1 -p' ${PIN_ROOT}/intel64/bin/pinbin -t ${MI
 
 ## Visualization
 
-MIR contains several graph plotters which can transform task-based profiling data into task graphs. The graphs can be visualized on tools such as Graphviz, yEd and Cytoscape. 
+MIR has a nice graph plotter which can transform task-based profiling data into task graphs. The generated graph can be visualized on tools such as Graphviz, yEd and Cytoscape. 
 
 * Plot the fork-join task graph using task statistics from the runtime system.
 ```
@@ -463,6 +466,13 @@ $ Rscript ${MIR_ROOT}/scripts/profiling/task/task-graph-plot.R -d mir-task-stats
 ```
 $ Rscript ${MIR_ROOT}/scripts/profiling/task/task-graph-plot.R -t -d mir-task-stats -p color
 ```
+
+* The graph plotter can annotate task graph elements with performance information. Combine the instruction-level information produced by the instruction profiler with the task statistics produced by the runtime system into a single CSV file. Plot task graph using combined performance information.
+``` 
+$ Rscript ${MIR_ROOT}/scripts/profiling/task/gather-task-performance.R mir-task-stats mir-ofp-instructions "mir-task-perf"
+$ Rscript ${MIR_ROOT}/scripts/profiling/task/task-graph-plot.R -d mir-task-perf -p color
+``` 
+
 ## Case Study: Fibonacci 
 
 The Fibonacci program is found in MIR_ROOT/programs/native/fib. The program takes two arguments --- the number n and the depth cutoff for recursive task creation. Let us see how to profile the program for task-based performance information.
@@ -553,7 +563,7 @@ $ Rscript ${MIR_ROOT}/scripts/profiling/task/gather-task-performance.R mir-task-
 ```
 * Plot task graph using combined performance information and view on YEd.
 ``` 
-$ Rscript ${MIR_ROOT}/scripts/profiling/task/task-graph-plot.R mir-task-perf color
+$ Rscript ${MIR_ROOT}/scripts/profiling/task/task-graph-plot.R -d mir-task-perf -p color
 $ yed mir-task-perf.graphml
 ```
 
