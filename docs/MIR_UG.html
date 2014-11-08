@@ -878,7 +878,7 @@ specify outline functions (csv)
        </code>
        . Example contents of the file are shown below.
       </p>
-      <pre><code>"task","parent","joins_at","child_number","num_children","core_id","exec_cycles","ins_count","stack_read","stack_write","mem_fp","ccr","clr","mem_read","mem_write","ofl_name"
+      <pre><code>"task","parent","joins_at","child_number","num_children","core_id","exec_cycles","ins_count","stack_read","stack_write","mem_fp","ccr","clr","mem_read","mem_write","outl_func"
 1,0,0,0,2,0,21887625,58,10,15,5,12,15,4,1,"ol_fib_2"
 2,1,0,1,2,0,610035,60,10,15,5,12,15,4,1,"ol_fib_0"
 3,1,0,2,2,0,3183115,60,10,15,5,12,15,4,1,"ol_fib_1"
@@ -973,7 +973,7 @@ specify outline functions (csv)
        </li>
        <li>
         <code>
-         name
+         outl_func
         </code>
         : Name of the outline function of the task.
        </li>
@@ -1033,7 +1033,7 @@ specify outline functions (csv)
     Plot the fork-join task graph using task statistics from the runtime system.
    </li>
   </ul>
-  <pre><code>$ Rscript ${MIR_ROOT}/scripts/profiling/task/fork-join-graph-plot.R mir-task-stats color
+  <pre><code>$ Rscript ${MIR_ROOT}/scripts/profiling/task/task-graph-plot.R -d mir-task-stats -p color
 </code></pre>
   <blockquote>
    <p>
@@ -1047,25 +1047,16 @@ specify outline functions (csv)
     <code>
      color
     </code>
-    as argument.
+    as the palette argument.
    </p>
   </blockquote>
   <ul>
    <li>
-    Huge graphs with 50000+ tasks take a long time to plot. Plot the fork-join task graph as a tree to save time.
+    Huge graphs with 50000+ tasks take a long time to plot. Plot the task graph as a tree to save time.
    </li>
   </ul>
-  <pre><code>$ Rscript ${MIR_ROOT}/scripts/profiling/task/tree-graph-plot.R mir-task-stats color
+  <pre><code>$ Rscript ${MIR_ROOT}/scripts/profiling/task/task-graph-plot.R -t -d mir-task-stats -p color
 </code></pre>
-  <ul>
-   <li>
-    Use
-    <code>
-     ${MIR_ROOT}/scripts/profiling/task/annotated-graph-plot.R
-    </code>
-    to plot task graphs with additional information embedded into graphical elements.
-   </li>
-  </ul>
   <h2>
    Case Study: Fibonacci
   </h2>
@@ -1206,7 +1197,7 @@ CALLED_FUNCTIONS=fib_seq,fib,get_usecs,main
    </li>
   </ul>
   <pre><code>$ head mir-ofp-instructions
-"task","parent","joins_at","child_number","num_children","core_id","exec_cycles","ins_count","stack_read","stack_write","mem_fp","ccr","clr","mem_read","mem_write","name"
+"task","parent","joins_at","child_number","num_children","core_id","exec_cycles","ins_count","stack_read","stack_write","mem_fp","ccr","clr","mem_read","mem_write","outl_funcf"
 1,0,0,0,2,0,21887625,58,10,15,5,12,15,4,1,"ol_fib_2"
 2,1,0,1,2,0,610035,60,10,15,5,12,15,4,1,"ol_fib_0"
 3,1,0,2,2,0,3183115,60,10,15,5,12,15,4,1,"ol_fib_1"
@@ -1254,7 +1245,7 @@ joins_at_summary: 1 2 2 1.875 2 2
     Plot task graph using combined performance information and view on YEd.
    </li>
   </ul>
-  <pre><code>$ Rscript ${MIR_ROOT}/scripts/profiling/task/annotated-graph-plot.R mir-task-perf color
+  <pre><code>$ Rscript ${MIR_ROOT}/scripts/profiling/task/task-graph-plot.R mir-task-perf color
 $ yed mir-task-perf.graphml
 </code></pre>
  </body>

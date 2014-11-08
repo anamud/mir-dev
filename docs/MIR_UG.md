@@ -453,19 +453,16 @@ MIR contains several graph plotters which can transform task-based profiling dat
 
 * Plot the fork-join task graph using task statistics from the runtime system.
 ```
-$ Rscript ${MIR_ROOT}/scripts/profiling/task/fork-join-graph-plot.R mir-task-stats color
+$ Rscript ${MIR_ROOT}/scripts/profiling/task/task-graph-plot.R -d mir-task-stats -p color
 ```
 
 > Tip: 
-> The graph plotter will plot in gray scale if `gray` is supplied instead of `color` as argument. 
+> The graph plotter will plot in gray scale if `gray` is supplied instead of `color` as the palette argument. 
 
-* Huge graphs with 50000+ tasks take a long time to plot. Plot the fork-join task graph as a tree to save time.
+* Huge graphs with 50000+ tasks take a long time to plot. Plot the task graph as a tree to save time.
 ```
-$ Rscript ${MIR_ROOT}/scripts/profiling/task/tree-graph-plot.R mir-task-stats color
+$ Rscript ${MIR_ROOT}/scripts/profiling/task/task-graph-plot.R -t -d mir-task-stats -p color
 ```
-
-* Use `${MIR_ROOT}/scripts/profiling/task/annotated-graph-plot.R` to plot task graphs with additional information embedded into graphical elements.
-
 ## Case Study: Fibonacci 
 
 The Fibonacci program is found in MIR_ROOT/programs/native/fib. The program takes two arguments --- the number n and the depth cutoff for recursive task creation. Let us see how to profile the program for task-based performance information.
@@ -556,7 +553,7 @@ $ Rscript ${MIR_ROOT}/scripts/profiling/task/gather-task-performance.R mir-task-
 ```
 * Plot task graph using combined performance information and view on YEd.
 ``` 
-$ Rscript ${MIR_ROOT}/scripts/profiling/task/annotated-graph-plot.R mir-task-perf color
+$ Rscript ${MIR_ROOT}/scripts/profiling/task/task-graph-plot.R mir-task-perf color
 $ yed mir-task-perf.graphml
 ```
 

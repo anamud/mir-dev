@@ -40,18 +40,15 @@ then
     # Summarize task stats 
     echo "Summarizing task stats ..."
     Rscript ${MIR_ROOT}/scripts/profiling/task/task-stats-summary.R ${OFILE_PREFIX}-task-stats
-    # Plot fork join task graph 
-    echo "Plotting fork join task graph ..."
-    Rscript ${MIR_ROOT}/scripts/profiling/task/fork-join-graph-plot.R ${OFILE_PREFIX}-task-stats color
     # Gather task performance data
     echo "Gathering task performance ..."
     Rscript ${MIR_ROOT}/scripts/profiling/task/gather-task-performance.R ${OFILE_PREFIX}-task-stats ${OFILE_PREFIX}-instructions ${OFILE_PREFIX}-task-perf
-    # Plot annotated task graph 
-    echo "Plotting annotated task graph ..."
-    Rscript ${MIR_ROOT}/scripts/profiling/task/annotated-graph-plot.R ${OFILE_PREFIX}-task-perf color
+    # Plot task graph 
+    echo "Plotting series-parallel task graph ..."
+    Rscript ${MIR_ROOT}/scripts/profiling/task/task-graph-plot.R -d ${OFILE_PREFIX}-task-perf -p color -o ${OFILE_PREFIX}-task-graph-ser-par
     # Plot tree task graph 
     echo "Plotting tree task graph ..."
-    Rscript ${MIR_ROOT}/scripts/profiling/task/tree-graph-plot.R ${OFILE_PREFIX}-task-perf color
+    Rscript ${MIR_ROOT}/scripts/profiling/task/task-graph-plot.R -d ${OFILE_PREFIX}-task-perf -t -p color -o ${OFILE_PREFIX}-task-graph-tree
 else
     echo "Not processing profile data!"
 fi
