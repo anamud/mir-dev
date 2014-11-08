@@ -14,7 +14,6 @@ Add better parsing for MIR_CONF.
 Support Cilk-like task graph generation.
 Add dependence graph generation support.
 Profile omp for loops.
-Unify graph plotters.
 
 === PROGRAMS ===
 Work on UTS scaling.
