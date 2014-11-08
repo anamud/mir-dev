@@ -27,6 +27,7 @@ Enabling extended features such as profiling, locality-aware scheduling and data
 * Intel Pin sources (for profiling instructions executed by tasks)
 * R  (for executing profiling scripts)
 * R packages:
+    * optparse (for parsing data)
     * igraph (for task graph processing)
     * RColorBrewer (for colors)
     * gdata, plyr (for data structure transformations)
@@ -292,6 +293,8 @@ Enable the `-i` flag to get basic load-balance information in a CSV file called 
 ```
 $ MIR_CONF="-i" ./fib-opt
 $ cat mir-worker-stats
+```
+==TODO:== Explain file contents
 
 Enable the `-r` flag to get detailed per-thread state and event information in a set of `mir-recorder-prv-*.rec` files. Each file represents a worker thread. The files can be inspected individually or combined and visualized using Paraver.
 ```
@@ -361,6 +364,7 @@ Enable the `-g` flag to collect task statistics in a CSV file called `mir-task-s
 $ MIR_CONF="-g" ./fib-opt
 $ Rscript ${MIR_ROOT}/scripts/profiling/task/fork-join-graph-plot.R mir-task-stats color
 ```
+==TODO:== Explain file contents.
 
 ### Instruction-level task profiling
 
@@ -392,7 +396,6 @@ specify output file suffix
 specify outline functions (csv)
 ...
 ```
-
 The profiler requires outline function names under the argument `-s`.  The argument `-c` accepts names of functions which are called within tasks.  The argument `--` separates profiled program invocation from profiler arguments. 
 
 * The profiler requires handshaking with the runtime system. To enable handshaking, enable the `-p` flag in MIR_CONF.
@@ -407,7 +410,7 @@ $ alias mir-inst-prof="MIR_CONF='-w=1 -p' ${PIN_ROOT}/intel64/bin/pinbin -t ${MI
 * The profiler produces following outputs: 
 	1. Per-task instructions in a CSV file called `mir-ofp-instructions`. Example contents of the file are shown below. 
 		
-			"task","parent","joins_at","child_number","num_children","core_id","exec_cycles","ins_count","stack_read","stack_write","mem_fp","ccr","clr","mem_read","mem_write","name"
+			"task","parent","joins_at","child_number","num_children","core_id","exec_cycles","ins_count","stack_read","stack_write","mem_fp","ccr","clr","mem_read","mem_write","outl_func"
 			1,0,0,0,2,0,21887625,58,10,15,5,12,15,4,1,"ol_fib_2"
 			2,1,0,1,2,0,610035,60,10,15,5,12,15,4,1,"ol_fib_0"
 			3,1,0,2,2,0,3183115,60,10,15,5,12,15,4,1,"ol_fib_1"
@@ -428,7 +431,7 @@ $ alias mir-inst-prof="MIR_CONF='-w=1 -p' ${PIN_ROOT}/intel64/bin/pinbin -t ${MI
 	  	* `clr`: Computation to Load Ratio. Indicates number of instructions executed per read access to memory.
 	  	* `mem_read`: Number of read accesses to memory (excluding stack) while executing instructions.
 	  	* `mem_write`: Number of write accesses to memory (excluding stack) while executing instructions.
-	  	* `name`: Name of the outline function of the task.
+	  	* `outl_func`: Name of the outline function of the task.
 
 	2. Per-task events in a file called `mir-ofp-events`. Example contents of the file are shown below. 
 		
@@ -519,7 +522,7 @@ $ mir-inst-prof \
 
 ``` 
 $ head mir-ofp-instructions
-"task","parent","joins_at","child_number","num_children","core_id","exec_cycles","ins_count","stack_read","stack_write","mem_fp","ccr","clr","mem_read","mem_write","name"
+"task","parent","joins_at","child_number","num_children","core_id","exec_cycles","ins_count","stack_read","stack_write","mem_fp","ccr","clr","mem_read","mem_write","outl_funcf"
 1,0,0,0,2,0,21887625,58,10,15,5,12,15,4,1,"ol_fib_2"
 2,1,0,1,2,0,610035,60,10,15,5,12,15,4,1,"ol_fib_0"
 3,1,0,2,2,0,3183115,60,10,15,5,12,15,4,1,"ol_fib_1"

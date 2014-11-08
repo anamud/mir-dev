@@ -84,6 +84,9 @@
     R packages:
     <ul>
      <li>
+      optparse (for parsing data)
+     </li>
+     <li>
       igraph (for task graph processing)
      </li>
      <li>
@@ -606,374 +609,653 @@ MIR_DBG: Binding worker 1 to core 1
   </p>
   <pre><code>$ MIR_CONF="-i" ./fib-opt
 $ cat mir-worker-stats
+</code></pre>
+  <p>
+   <mark>
+    TODO:
+   </mark>
+   Explain file contents
+  </p>
+  <p>
+   Enable the
+   <code>
+    -r
+   </code>
+   flag to get detailed per-thread state and event information in a set of
+   <code>
+    mir-recorder-prv-*.rec
+   </code>
+   files. Each file represents a worker thread. The files can be inspected individually or combined and visualized using Paraver.
+  </p>
+  <pre><code>$ MIR_CONF="-r" ./fib-opt
+$ $MIR_ROOT/scripts/profiling/thread/mirtoparaver.py \
+mir-recorder-prv-config.rec 
+$ wxparaver mir-recorder.prv
+</code></pre>
+  <p>
+   A set of
+   <code>
+    mir-recorder-state-time-*.rec
+   </code>
+   files are also created when
+   <code>
+    -r
+   </code>
+   is enabled. The files contain thread state duration information which can be accumulated for analysis without Paraver.
+  </p>
+  <pre><code>$ $MIR_ROOT/scripts/profiling/thread/get-state-stats.sh \
+mir-recorder-state-time
+$ cat state-file-acc.info
+</code></pre>
+  <h3>
+   Enabling hardware performance counters
+  </h3>
+  <p>
+   MIR can read hardware performance counters during thread events. This process is not fully automated and needs a little bit of hands-on work from the user.
+  </p>
+  <ul>
+   <li>
+    <p>
+     Install PAPI.
+    </p>
+   </li>
+   <li>
+    <p>
+     Set the
+     <code>
+      PAPI_ROOT
+     </code>
+     environment variable
+    </p>
+   </li>
+  </ul>
+  <pre><code>$ export PAPI_ROOT=&lt;PAPI install path&gt;
+</code></pre>
+  <ul>
+   <li>
+    Create a file called
+    <code>
+     HAVE_PAPI
+    </code>
+    in MIR_ROOT/src.
+   </li>
+  </ul>
+  <pre><code>$ touch $MIR_ROOT/src/HAVE_PAPI
+</code></pre>
+  <ul>
+   <li>
+    Enable the preprocessor definition
+    <code>
+     MIR_RECORDER_USE_HW_PERF_COUNTERS
+    </code>
+    in
+    <code>
+     MIR_ROOT/src/mir_defines.h
+    </code>
+    .
+   </li>
+  </ul>
+  <pre><code>$grep -i HW_PERF $MIR_ROOT/src/mir_defines.h
+#define MIR_RECORDER_USE_HW_PERF_COUNTERS 
+</code></pre>
+  <ul>
+   <li>
+    Enable PAPI hardware performance counters of interest in
+    <code>
+     MIR_ROOT/src/mir_recorder.c
+    </code>
+    .
+   </li>
+  </ul>
+  <pre><code>$ grep -i "{\"PAPI_" $MIR_ROOT/src/mir_recorder.c
+{"PAPI_TOT_INS", 0x0},
+{"PAPI_TOT_CYC", 0x0},
+/*{"PAPI_L2_DCM", 0x0},*/
+/*{"PAPI_RES_STL", 0x0},*/
+/*{"PAPI_L1_DCA", 0x0},*/
+/*{"PAPI_L1_DCH", 0x0},*/
+</code></pre>
+  <ul>
+   <li>
+    Rebuild MIR.
+   </li>
+  </ul>
+  <pre><code>$ scons -c &amp;&amp; scons
+</code></pre>
+  <p>
+   Performance counter readings will be now be added to
+   <code>
+    mir-recorder-prv-*.rec
+   </code>
+   files produced during thread-based profiling. The counter readings can either be viewed on Paraver or accumulated for analysis outside Paraver.
+  </p>
+  <pre><code>$ $MIR_ROOT/scripts/profiling/thread/get-event-counts.sh mir-recorder-prv
+$ cat event-counts-*.txt
+</code></pre>
+  <h2>
+   Task-based Profiling
+  </h2>
+  <p>
+   Task are first-class citizens in task-based profiling.
+  </p>
+  <p>
+   Enable the
+   <code>
+    -g
+   </code>
+   flag to collect task statistics in a CSV file called
+   <code>
+    mir-task-stats
+   </code>
+   . Inspect the file manually or plot and visualize the fork-join task graph.
+  </p>
+  <pre><code>$ MIR_CONF="-g" ./fib-opt
+$ Rscript ${MIR_ROOT}/scripts/profiling/task/fork-join-graph-plot.R mir-task-stats color
+</code></pre>
+  <p>
+   <mark>
+    TODO:
+   </mark>
+   Explain file contents.
+  </p>
+  <h3>
+   Instruction-level task profiling
+  </h3>
+  <p>
+   MIR provides a Pin-based instruction profiler that traces instructions executed by tasks.  Technically, the profiler traces instructions executed within outline functions of tasks in programs compiled using GCC. Follow below steps to build and use the profiler.
+  </p>
+  <ul>
+   <li>
+    Get Intel Pin sources and set environment variables.
+   </li>
+  </ul>
+  <pre><code>$ export PIN_ROOT=&lt;Pin source path&gt;
+$ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$PIN_ROOT
+</code></pre>
+  <ul>
+   <li>
+    <p>
+     Edit
+     <code>
+      PIN_ROOT/source/tools/Config/makefile.unix.config
+     </code>
+     and add
+     <code>
+      -fopenmp
+     </code>
+     to variables
+     <code>
+      TOOL_LDFLAGS_NOOPT
+     </code>
+     and
+     <code>
+      TOOL_CXXFLAGS_NOOPT
+     </code>
+    </p>
+   </li>
+   <li>
+    <p>
+     Build the profiler.
+    </p>
+   </li>
+  </ul>
+  <pre><code>$ cd $MIR_ROOT/scripts/profiling/task
+$ make PIN_ROOT=$PIN_ROOT
+</code></pre>
+  <ul>
+   <li>
+    View profiler options using
+    <code>
+     -h
+    </code>
+    .
+   </li>
+  </ul>
+  <pre><code>$ $PIN_ROOT/intel64/bin/pinbin -t $MIR_ROOT/scripts/profiling/task/obj-intel64/mir_of_profiler.so -h -- /usr/bin/echo
+...
+-c  [default ]
+specify functions called (csv) from outline functions
+-o  [default mir-ofp]
+specify output file suffix
+-s  [default ]
+specify outline functions (csv)
+...
+</code></pre>
+  <p>
+   The profiler requires outline function names under the argument
+   <code>
+    -s
+   </code>
+   .  The argument
+   <code>
+    -c
+   </code>
+   accepts names of functions which are called within tasks.  The argument
+   <code>
+    --
+   </code>
+   separates profiled program invocation from profiler arguments.
+  </p>
+  <ul>
+   <li>
+    <p>
+     The profiler requires handshaking with the runtime system. To enable handshaking, enable the
+     <code>
+      -p
+     </code>
+     flag in MIR_CONF.
+    </p>
+   </li>
+   <li>
+    <p>
+     The profiler requires single-threaded execution of the profiled program.  Provide
+     <code>
+      -w=1
+     </code>
+     in MIR_CONF while profiling.
+    </p>
+   </li>
+   <li>
+    <p>
+     Create a handy alias for invoking the profiler.
+    </p>
+   </li>
+  </ul>
+  <pre><code>$ alias mir-inst-prof="MIR_CONF='-w=1 -p' ${PIN_ROOT}/intel64/bin/pinbin -t ${MIR_ROOT}/scripts/profiling/task/obj-intel64/mir_of_profiler.so"
 
-Enable the `-r` flag to get detailed per-thread state and event information in a set of `mir-recorder-prv-*.rec` files. Each file represents a worker thread. The files can be inspected individually or combined and visualized using Paraver.
 </code></pre>
+  <ul>
+   <li>
+    <p>
+     The profiler produces following outputs:
+    </p>
+    <ol>
+     <li>
+      <p>
+       Per-task instructions in a CSV file called
+       <code>
+        mir-ofp-instructions
+       </code>
+       . Example contents of the file are shown below.
+      </p>
+      <pre><code>"task","parent","joins_at","child_number","num_children","core_id","exec_cycles","ins_count","stack_read","stack_write","mem_fp","ccr","clr","mem_read","mem_write","ofl_name"
+1,0,0,0,2,0,21887625,58,10,15,5,12,15,4,1,"ol_fib_2"
+2,1,0,1,2,0,610035,60,10,15,5,12,15,4,1,"ol_fib_0"
+3,1,0,2,2,0,3183115,60,10,15,5,12,15,4,1,"ol_fib_1"
+</code></pre>
+      <p>
+       Each line shows instruction and code properties of a distinct task executed by the program. Properties are described below.
+      </p>
+      <ul>
+       <li>
+        <code>
+         task
+        </code>
+        : Identifier of the task.
+       </li>
+       <li>
+        <code>
+         parent
+        </code>
+        : Identifier of the parent task.
+       </li>
+       <li>
+        <code>
+         joins_at
+        </code>
+        : The order of synchronizing with the parent task context.
+       </li>
+       <li>
+        <code>
+         child_number
+        </code>
+        : Order of task creation by parent.
+       </li>
+       <li>
+        <code>
+         num_children
+        </code>
+        : Indicates the number of child tasks created by the task.
+       </li>
+       <li>
+        <code>
+         exec_cycles
+        </code>
+        : Number of cycles spent executing the task including child task creation and synchronization.
+       </li>
+       <li>
+        <code>
+         core_id
+        </code>
+        : Identifier of the core that executed the task.
+       </li>
+       <li>
+        <code>
+         ins_count
+        </code>
+        : Total number of instructions executed by the task.
+       </li>
+       <li>
+        <code>
+         stack_read
+        </code>
+        : Number of read accesses to the stack while executing instructions.
+       </li>
+       <li>
+        <code>
+         stack_write
+        </code>
+        : Number of write accesses to the stack while executing instructions.
+       </li>
+       <li>
+        <code>
+         ccr
+        </code>
+        : Computation to Communication Ratio. Indicates number of instructions executed per read or write access to memory.
+       </li>
+       <li>
+        <code>
+         clr
+        </code>
+        : Computation to Load Ratio. Indicates number of instructions executed per read access to memory.
+       </li>
+       <li>
+        <code>
+         mem_read
+        </code>
+        : Number of read accesses to memory (excluding stack) while executing instructions.
+       </li>
+       <li>
+        <code>
+         mem_write
+        </code>
+        : Number of write accesses to memory (excluding stack) while executing instructions.
+       </li>
+       <li>
+        <code>
+         name
+        </code>
+        : Name of the outline function of the task.
+       </li>
+      </ul>
+     </li>
+     <li>
+      <p>
+       Per-task events in a file called
+       <code>
+        mir-ofp-events
+       </code>
+       . Example contents of the file are shown below.
+      </p>
+      <pre><code>task,ins_count,[create],[wait]
+14,446,[],[]
+15,278,[],[]
+10,60,[32,43,],[47,]
+</code></pre>
+      <p>
+       Each line in the file shows events for a distinct task executed by the program. Event occurance is indicated in terms of instruction count. Events currently supported are:
+      </p>
+      <ul>
+       <li>
+        <code>
+         create
+        </code>
+        : Indicates when child tasks were created. Example: [32,43] indicates the task 10 created its first child at instruction 32 and second child at 43. Tasks 14 and 15 did not create children tasks.
+       </li>
+       <li>
+        <code>
+         wait
+        </code>
+        : Indicates when child tasks were synchronized. Example: [47,] indicates the task 10 synchronized with all children created prior at instruction 47.
+       </li>
+      </ul>
+     </li>
+     <li>
+      <p>
+       Program memory map in a file called
+       <code>
+        mir-ofp-mem-map
+       </code>
+       . This is a copy of the memory map file of the program from the /proc filesystem.
+      </p>
+     </li>
+    </ol>
+   </li>
+  </ul>
+  <h2>
+   Visualization
+  </h2>
   <p>
-   $ MIR_CONF="-r" ./fib-opt
-   <br/>
-   $ $MIR_ROOT/scripts/profiling/thread/mirtoparaver.py \
-   <br/>
-   mir-recorder-prv-config.rec
-   <br/>
-   $ wxparaver mir-recorder.prv
+   MIR contains several graph plotters which can transform task-based profiling data into task graphs. The graphs can be visualized on tools such as Graphviz, yEd and Cytoscape.
   </p>
-  <pre><code>
-A set of `mir-recorder-state-time-*.rec` files are also created when `-r` is enabled. The files contain thread state duration information which can be accumulated for analysis without Paraver.
+  <ul>
+   <li>
+    Plot the fork-join task graph using task statistics from the runtime system.
+   </li>
+  </ul>
+  <pre><code>$ Rscript ${MIR_ROOT}/scripts/profiling/task/fork-join-graph-plot.R mir-task-stats color
 </code></pre>
-  <p>
-   $ $MIR_ROOT/scripts/profiling/thread/get-state-stats.sh \
-   <br/>
-   mir-recorder-state-time
-   <br/>
-   $ cat state-file-acc.info
-  </p>
-  <pre><code>
-### Enabling hardware performance counters
-
-MIR can read hardware performance counters during thread events. This process is not fully automated and needs a little bit of hands-on work from the user.  
-
-* Install PAPI.  
-
-* Set the `PAPI_ROOT` environment variable 
-</code></pre>
-  <p>
-   $ export PAPI_ROOT=
-   <papi install="" path="">
-   </papi>
-  </p>
-  <pre><code>
-* Create a file called `HAVE_PAPI` in MIR_ROOT/src.  
-</code></pre>
-  <p>
-   $ touch $MIR_ROOT/src/HAVE_PAPI
-  </p>
-  <pre><code>
-* Enable the preprocessor definition `MIR_RECORDER_USE_HW_PERF_COUNTERS` in `MIR_ROOT/src/mir_defines.h`.  
-</code></pre>
-  <p>
-   $grep -i HW_PERF $MIR_ROOT/src/mir_defines.h
-  </p>
-  <h1>
-   define MIR_RECORDER_USE_HW_PERF_COUNTERS
-  </h1>
-  <pre><code>
-* Enable PAPI hardware performance counters of interest in `MIR_ROOT/src/mir_recorder.c`.  
-</code></pre>
-  <p>
-   $ grep -i "{\"PAPI_" $MIR_ROOT/src/mir_recorder.c
-   <br/>
-   {"PAPI_TOT_INS", 0x0},
-   <br/>
-   {"PAPI_TOT_CYC", 0x0},
-   <br/>
-   /
-   <em>
-    {"PAPI_L2_DCM", 0x0},
-   </em>
-   /
-   <br/>
-   /
-   <em>
-    {"PAPI_RES_STL", 0x0},
-   </em>
-   /
-   <br/>
-   /
-   <em>
-    {"PAPI_L1_DCA", 0x0},
-   </em>
-   /
-   <br/>
-   /
-   <em>
-    {"PAPI_L1_DCH", 0x0},
-   </em>
-   /
-  </p>
-  <pre><code>
- * Rebuild MIR.
-</code></pre>
-  <p>
-   $ scons -c &amp;&amp; scons
-  </p>
-  <pre><code>
-Performance counter readings will be now be added to `mir-recorder-prv-*.rec` files produced during thread-based profiling. The counter readings can either be viewed on Paraver or accumulated for analysis outside Paraver.
-</code></pre>
-  <p>
-   $ $MIR_ROOT/scripts/profiling/thread/get-event-counts.sh mir-recorder-prv
-   <br/>
-   $ cat event-counts-*.txt
-  </p>
-  <pre><code>
-## Task-based Profiling
-
-Task are first-class citizens in task-based profiling.
-
-Enable the `-g` flag to collect task statistics in a CSV file called `mir-task-stats`. Inspect the file manually or plot and visualize the fork-join task graph.
-</code></pre>
-  <p>
-   $ MIR_CONF="-g" ./fib-opt
-   <br/>
-   $ Rscript ${MIR_ROOT}/scripts/profiling/task/fork-join-graph-plot.R mir-task-stats color
-  </p>
-  <pre><code>
-### Instruction-level task profiling
-
-MIR provides a Pin-based instruction profiler that traces instructions executed by tasks.  Technically, the profiler traces instructions executed within outline functions of tasks in programs compiled using GCC. Follow below steps to build and use the profiler. 
-
-* Get Intel Pin sources and set environment variables.
-</code></pre>
-  <p>
-   $ export PIN_ROOT=
-   <pin path="" source="">
+  <blockquote>
+   <p>
+    Tip:
     <br/>
-    $ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$PIN_ROOT
-   </pin>
-  </p>
-  <pre><code>
-* Edit `PIN_ROOT/source/tools/Config/makefile.unix.config` and add `-fopenmp` to variables `TOOL_LDFLAGS_NOOPT` and `TOOL_CXXFLAGS_NOOPT`
-
-* Build the profiler.
+    The graph plotter will plot in gray scale if
+    <code>
+     gray
+    </code>
+    is supplied instead of
+    <code>
+     color
+    </code>
+    as argument.
+   </p>
+  </blockquote>
+  <ul>
+   <li>
+    Huge graphs with 50000+ tasks take a long time to plot. Plot the fork-join task graph as a tree to save time.
+   </li>
+  </ul>
+  <pre><code>$ Rscript ${MIR_ROOT}/scripts/profiling/task/tree-graph-plot.R mir-task-stats color
 </code></pre>
+  <ul>
+   <li>
+    Use
+    <code>
+     ${MIR_ROOT}/scripts/profiling/task/annotated-graph-plot.R
+    </code>
+    to plot task graphs with additional information embedded into graphical elements.
+   </li>
+  </ul>
+  <h2>
+   Case Study: Fibonacci
+  </h2>
   <p>
-   $ cd $MIR_ROOT/scripts/profiling/task
-   <br/>
-   $ make PIN_ROOT=$PIN_ROOT
+   The Fibonacci program is found in MIR_ROOT/programs/native/fib. The program takes two arguments --- the number n and the depth cutoff for recursive task creation. Let us see how to profile the program for task-based performance information.
   </p>
-  <pre><code>
-* View profiler options using `-h`.
+  <ul>
+   <li>
+    Compile the program for profiling ---  remove aggressive optimizations and disable inlining so that outline functions representing tasks are visible to the Pin-based instruction profiler. Running scons in the program directory builds the profiler-friendly executable called
+    <code>
+     fib-prof
+    </code>
+    .
+   </li>
+  </ul>
+  <pre><code>$ cd $MIR_ROOT/programs/native/fib
+$ scons 
+scons: Reading SConscript files ...
+scons: done reading SConscript files.
+scons: Building targets ...
+scons: building associated VariantDir targets: debug-build opt-build prof-build verbose-build
+...
+gcc -o prof-build/fib.o -c -std=c99 -Wall -Werror -Wno-unused-function -Wno-unused-variable -Wno-unused-but-set-variable -Wno-maybe-uninitialized -fopenmp -DLINUX -I/home/ananya/mir-dev/src -I/home/ananya/mir-dev/test/common -O2 -DNDEBUG -fno-inline-functions -fno-inline-functions-called-once -fno-optimize-sibling-calls -fno-omit-frame-pointer -g fib.c
+...
+gcc -o fib-prof prof-build/fib.o -L/home/ananya/mir-dev/src -lpthread -lm -lmir-opt
 </code></pre>
-  <p>
-   $ $PIN_ROOT/intel64/bin/pinbin -t $MIR_ROOT/scripts/profiling/task/obj-intel64/mir_of_profiler.so -h -- /usr/bin/echo
-   <br/>
-   ...
-   <br/>
-   -c  [default ]
-   <br/>
-   specify functions called (csv) from outline functions
-   <br/>
-   -o  [default mir-ofp]
-   <br/>
-   specify output file suffix
-   <br/>
-   -s  [default ]
-   <br/>
-   specify outline functions (csv)
-   <br/>
-   ...
-  </p>
-  <pre><code>
-The profiler requires outline function names under the argument `-s`.  The argument `-c` accepts names of functions which are called within tasks.  The argument `--` separates profiled program invocation from profiler arguments. 
-
-* The profiler requires handshaking with the runtime system. To enable handshaking, enable the `-p` flag in MIR_CONF.
-
-* The profiler requires single-threaded execution of the profiled program.  Provide `-w=1` in MIR_CONF while profiling. 
-
-* Create a handy alias for invoking the profiler.
+  <blockquote>
+   <p>
+    Tip:
+    <br/>
+    Look at the
+    <code>
+     SConstruct
+    </code>
+    file in MIR_ROOT/test/fib and build output to understand how the profiling-friendly build is done.
+   </p>
+  </blockquote>
+  <ul>
+   <li>
+    Identify outline functions and functions called within tasks of the
+    <code>
+     fib-prof
+    </code>
+    program using the script
+    <code>
+     of_finder.py
+    </code>
+    . The script searches for known outline function name patterns within the object files of
+    <code>
+     fib-prof
+    </code>
+    . The script lists outline functions as
+    <code>
+     OUTLINE_FUNCTIONS
+    </code>
+    and all function symbols within the object files as
+    <code>
+     CALLED_FUNCTIONS
+    </code>
+    .
+   </li>
+  </ul>
+  <pre><code>$ cd $MIR_ROOT/programs/native/fib
+$ $MIR_ROOT/scripts/profiling/task/of_finder.py prof-build/*.o
+Using "._omp_fn.|ol_" as outline function name pattern
+Processing file: prof-build/fib.o
+OUTLINE_FUNCTIONS=ol_fib_0,ol_fib_1,ol_fib_2
+CALLED_FUNCTIONS=fib_seq,fib,get_usecs,main
 </code></pre>
+  <blockquote>
+   <p>
+    Expert Tip:
+    <br/>
+    Ensure that OUTLINE_FUNCTIONS listed are those generated by GCC. Inspect the abstract syntax tree (use compilation option
+    <code>
+     -fdumptreeoptimized
+    </code>
+    ) and source files.
+   </p>
+  </blockquote>
   <p>
-   $ alias mir-inst-prof="MIR_CONF='-w=1 -p' ${PIN_ROOT}/intel64/bin/pinbin -t ${MIR_ROOT}/scripts/profiling/task/obj-intel64/mir_of_profiler.so"
+   The functions in the
+   <code>
+    CALLED_FUNCTIONS
+   </code>
+   list should be treated as functions potentially called within task contexts.  Inspect program sources and exclude those which are not called within tasks.  By looking at Fibonacci program sources, we can exclude
+   <code>
+    main
+   </code>
+   and
+   <code>
+    get_usecs
+   </code>
+   from
+   <code>
+    CALLED_FUNCTIONS
+   </code>
+   .
   </p>
-  <pre><code>* The profiler produces following outputs: 
-    1. Per-task instructions in a CSV file called `mir-ofp-instructions`. Example contents of the file are shown below. 
-
-            "task","parent","joins_at","child_number","num_children","core_id","exec_cycles","ins_count","stack_read","stack_write","mem_fp","ccr","clr","mem_read","mem_write","name"
-            1,0,0,0,2,0,21887625,58,10,15,5,12,15,4,1,"ol_fib_2"
-            2,1,0,1,2,0,610035,60,10,15,5,12,15,4,1,"ol_fib_0"
-            3,1,0,2,2,0,3183115,60,10,15,5,12,15,4,1,"ol_fib_1"
-
-        Each line shows instruction and code properties of a distinct task executed by the program. Properties are described below.
-
-        * `task`: Identifier of the task.
-        * `parent`: Identifier of the parent task. 
-        * `joins_at`: The order of synchronizing with the parent task context. 
-        * `child_number`: Order of task creation by parent.
-        * `num_children`: Indicates the number of child tasks created by the task.
-        * `exec_cycles`: Number of cycles spent executing the task including child task creation and synchronization.
-        * `core_id`: Identifier of the core that executed the task.
-        * `ins_count`: Total number of instructions executed by the task. 
-        * `stack_read`: Number of read accesses to the stack while executing instructions.
-        * `stack_write`: Number of write accesses to the stack while executing instructions.
-        * `ccr`: Computation to Communication Ratio. Indicates number of instructions executed per read or write access to memory.
-        * `clr`: Computation to Load Ratio. Indicates number of instructions executed per read access to memory.
-        * `mem_read`: Number of read accesses to memory (excluding stack) while executing instructions.
-        * `mem_write`: Number of write accesses to memory (excluding stack) while executing instructions.
-        * `name`: Name of the outline function of the task.
-
-    2. Per-task events in a file called `mir-ofp-events`. Example contents of the file are shown below. 
-
-            task,ins_count,[create],[wait]
-            14,446,[],[]
-            15,278,[],[]
-            10,60,[32,43,],[47,]
-
-        Each line in the file shows events for a distinct task executed by the program. Event occurance is indicated in terms of instruction count. Events currently supported are: 
-
-        * `create`: Indicates when child tasks were created. Example: [32,43] indicates the task 10 created its first child at instruction 32 and second child at 43. Tasks 14 and 15 did not create children tasks.
-        * `wait`: Indicates when child tasks were synchronized. Example: [47,] indicates the task 10 synchronized with all children created prior at instruction 47. 
-
-    3. Program memory map in a file called `mir-ofp-mem-map`. This is a copy of the memory map file of the program from the /proc filesystem.
-
-## Visualization
-
-MIR contains several graph plotters which can transform task-based profiling data into task graphs. The graphs can be visualized on tools such as Graphviz, yEd and Cytoscape. 
-
-* Plot the fork-join task graph using task statistics from the runtime system.
+  <blockquote>
+   <p>
+    Tip: If in doubt or when sources are not available, use the entire
+    <code>
+     CALLED_FUNCTIONS
+    </code>
+    list.
+   </p>
+   <p>
+    Expert Tip:
+    <br/>
+    Identifying functions called by tasks is necessary because the instruction count of these functions are added to the calling task's instruction count.
+   </p>
+  </blockquote>
+  <ul>
+   <li>
+    Start the instruction profiler with appropriate arguments to profile
+    <code>
+     fib-prof
+    </code>
+    .
+   </li>
+  </ul>
+  <pre><code>$ mir-inst-prof \
+    -s ol_fib_0,ol_fib_1,ol_fib_2 \
+    -c fib,fib_seq \
+    -- ./fib-prof 10 4
 </code></pre>
-  <p>
-   $ Rscript ${MIR_ROOT}/scripts/profiling/task/fork-join-graph-plot.R mir-task-stats color
-  </p>
-  <pre><code>
-&gt; Tip: 
-&gt; The graph plotter will plot in gray scale if `gray` is supplied instead of `color` as argument. 
-
-* Huge graphs with 50000+ tasks take a long time to plot. Plot the fork-join task graph as a tree to save time.
+  <blockquote>
+   <p>
+    Tip:
+    <br/>
+    If you get a missing link-library error, add PIN_ROOT/intel64/runtime to LD_LIBRARY_PATH.
+   </p>
+  </blockquote>
+  <ul>
+   <li>
+    Inspect instruction profiler output.
+   </li>
+  </ul>
+  <pre><code>$ head mir-ofp-instructions
+"task","parent","joins_at","child_number","num_children","core_id","exec_cycles","ins_count","stack_read","stack_write","mem_fp","ccr","clr","mem_read","mem_write","name"
+1,0,0,0,2,0,21887625,58,10,15,5,12,15,4,1,"ol_fib_2"
+2,1,0,1,2,0,610035,60,10,15,5,12,15,4,1,"ol_fib_0"
+3,1,0,2,2,0,3183115,60,10,15,5,12,15,4,1,"ol_fib_1"
+...
+$ head mir-ofp-events
+task,ins_count,[create],[wait]
+14,446,[],[]
+15,278,[],[]
+10,60,[32,43,],[47,]
+...
 </code></pre>
-  <p>
-   $ Rscript ${MIR_ROOT}/scripts/profiling/task/tree-graph-plot.R mir-task-stats color
-  </p>
-  <pre><code>
-* Use `${MIR_ROOT}/scripts/profiling/task/annotated-graph-plot.R` to plot task graphs with additional information embedded into graphical elements.
-
-## Case Study: Fibonacci 
-
-The Fibonacci program is found in MIR_ROOT/programs/native/fib. The program takes two arguments --- the number n and the depth cutoff for recursive task creation. Let us see how to profile the program for task-based performance information.
-
-* Compile the program for profiling ---  remove aggressive optimizations and disable inlining so that outline functions representing tasks are visible to the Pin-based instruction profiler. Running scons in the program directory builds the profiler-friendly executable called `fib-prof`.
+  <ul>
+   <li>
+    Collect task statistics.
+   </li>
+  </ul>
+  <pre><code>MIR_CONF="-g" ./fib-prof 10 4
 </code></pre>
-  <p>
-   $ cd $MIR_ROOT/programs/native/fib
-   <br/>
-   $ scons
-   <br/>
-   scons: Reading SConscript files ...
-   <br/>
-   scons: done reading SConscript files.
-   <br/>
-   scons: Building targets ...
-   <br/>
-   scons: building associated VariantDir targets: debug-build opt-build prof-build verbose-build
-   <br/>
-   ...
-   <br/>
-   gcc -o prof-build/fib.o -c -std=c99 -Wall -Werror -Wno-unused-function -Wno-unused-variable -Wno-unused-but-set-variable -Wno-maybe-uninitialized -fopenmp -DLINUX -I/home/ananya/mir-dev/src -I/home/ananya/mir-dev/test/common -O2 -DNDEBUG -fno-inline-functions -fno-inline-functions-called-once -fno-optimize-sibling-calls -fno-omit-frame-pointer -g fib.c
-   <br/>
-   ...
-   <br/>
-   gcc -o fib-prof prof-build/fib.o -L/home/ananya/mir-dev/src -lpthread -lm -lmir-opt
-  </p>
-  <pre><code>
-&gt; Tip: 
-&gt; Look at the `SConstruct` file in MIR\_ROOT/test/fib and build output to understand how the profiling-friendly build is done.
-
-* Identify outline functions and functions called within tasks of the `fib-prof` program using the script `of_finder.py`. The script searches for known outline function name patterns within the object files of `fib-prof`. The script lists outline functions as `OUTLINE_FUNCTIONS` and all function symbols within the object files as `CALLED_FUNCTIONS`.  
+  <blockquote>
+   <p>
+    Tip:
+    <br/>
+    Generate task statistics information simultaneously with other statistics to maintain consistency.
+   </p>
+  </blockquote>
+  <ul>
+   <li>
+    Summarize task statistics.
+   </li>
+  </ul>
+  <pre><code>$ Rscript ${MIR_ROOT}/scripts/profiling/task/task-stats-summary.R mir-task-stats
+$ cat mir-task-stats.info
+num_tasks: 15
+joins_at_summary: 1 2 2 1.875 2 2
 </code></pre>
-  <p>
-   $ cd $MIR_ROOT/programs/native/fib
-   <br/>
-   $ $MIR_ROOT/scripts/profiling/task/of_finder.py prof-build/*.o
-   <br/>
-   Using ".
-   <em>
-    omp_fn.|ol
-   </em>
-   " as outline function name pattern
-   <br/>
-   Processing file: prof-build/fib.o
-   <br/>
-   OUTLINE_FUNCTIONS=ol_fib_0,ol_fib_1,ol_fib_2
-   <br/>
-   CALLED_FUNCTIONS=fib_seq,fib,get_usecs,main
-  </p>
-  <pre><code>
-&gt; Expert Tip: 
-&gt; Ensure that OUTLINE_FUNCTIONS listed are those generated by GCC. Inspect the abstract syntax tree (use compilation option `-fdumptreeoptimized`) and source files.
-
-The functions in the `CALLED_FUNCTIONS` list should be treated as functions potentially called within task contexts.  Inspect program sources and exclude those which are not called within tasks.  By looking at Fibonacci program sources, we can exclude `main` and `get_usecs` from `CALLED_FUNCTIONS`. 
-
-&gt; Tip: If in doubt or when sources are not available, use the entire `CALLED_FUNCTIONS` list. 
-
-&gt; Expert Tip: 
-&gt; Identifying functions called by tasks is necessary because the instruction count of these functions are added to the calling task's instruction count. 
-
-* Start the instruction profiler with appropriate arguments to profile `fib-prof`.  
+  <ul>
+   <li>
+    Combine the instruction-level information produced by the instruction profiler with the task statistics produced by the runtime system into a single CSV file.
+   </li>
+  </ul>
+  <pre><code>$ Rscript ${MIR_ROOT}/scripts/profiling/task/gather-task-performance.R mir-task-stats mir-ofp-instructions "mir-task-perf"
 </code></pre>
-  <p>
-   $ mir-inst-prof \
-   <br/>
-   -s ol_fib_0,ol_fib_1,ol_fib_2 \
-   <br/>
-   -c fib,fib_seq \
-   <br/>
-   -- ./fib-prof 10 4
-  </p>
-  <pre><code>
-&gt; Tip: 
-&gt; If you get a missing link-library error, add PIN_ROOT/intel64/runtime to LD_LIBRARY_PATH. 
-
-* Inspect instruction profiler output. 
-
+  <ul>
+   <li>
+    Plot task graph using combined performance information and view on YEd.
+   </li>
+  </ul>
+  <pre><code>$ Rscript ${MIR_ROOT}/scripts/profiling/task/annotated-graph-plot.R mir-task-perf color
+$ yed mir-task-perf.graphml
 </code></pre>
-  <p>
-   $ head mir-ofp-instructions
-   <br/>
-   "task","parent","joins_at","child_number","num_children","core_id","exec_cycles","ins_count","stack_read","stack_write","mem_fp","ccr","clr","mem_read","mem_write","name"
-   <br/>
-   1,0,0,0,2,0,21887625,58,10,15,5,12,15,4,1,"ol_fib_2"
-   <br/>
-   2,1,0,1,2,0,610035,60,10,15,5,12,15,4,1,"ol_fib_0"
-   <br/>
-   3,1,0,2,2,0,3183115,60,10,15,5,12,15,4,1,"ol_fib_1"
-   <br/>
-   ...
-   <br/>
-   $ head mir-ofp-events
-   <br/>
-   task,ins_count,[create],[wait]
-   <br/>
-   14,446,[],[]
-   <br/>
-   15,278,[],[]
-   <br/>
-   10,60,[32,43,],[47,]
-   <br/>
-   ...
-  </p>
-  <pre><code>
-* Collect task statistics.
-</code></pre>
-  <p>
-   MIR_CONF="-g" ./fib-prof 10 4
-  </p>
-  <pre><code>&gt; Tip: 
-&gt; Generate task statistics information simultaneously with other statistics to maintain consistency.
-
-* Summarize task statistics.
-</code></pre>
-  <p>
-   $ Rscript ${MIR_ROOT}/scripts/profiling/task/task-stats-summary.R mir-task-stats
-   <br/>
-   $ cat mir-task-stats.info
-   <br/>
-   num_tasks: 15
-   <br/>
-   joins_at_summary: 1 2 2 1.875 2 2
-  </p>
-  <pre><code>
-* Combine the instruction-level information produced by the instruction profiler with the task statistics produced by the runtime system into a single CSV file.
-</code></pre>
-  <p>
-   $ Rscript ${MIR_ROOT}/scripts/profiling/task/gather-task-performance.R mir-task-stats mir-ofp-instructions "mir-task-perf"
-  </p>
-  <pre><code>* Plot task graph using combined performance information and view on YEd.
-</code></pre>
-  <p>
-   $ Rscript ${MIR_ROOT}/scripts/profiling/task/annotated-graph-plot.R mir-task-perf color
-   <br/>
-   $ yed mir-task-perf.graphml
-   <br/>
-   ```
-  </p>
  </body>
 </html>

@@ -503,7 +503,7 @@ VOID Fini(INT32 code, VOID *v)
     out.open(filename.c_str());
     std::cout << "Writing call graph information to file: " << filename << " ..." << std::endl;
     // Write as csv
-    const char* fileheader = "task,ins_count,stack_read,stack_write,mem_fp,ccr,clr,mem_read,mem_write,name";
+    const char* fileheader = "task,ins_count,stack_read,stack_write,mem_fp,ccr,clr,mem_read,mem_write,outl_func";
 #ifdef GET_INS_MIX
     out << fileheader << ",[ins_mix]" << std::endl;
 #else
