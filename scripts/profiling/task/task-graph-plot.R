@@ -144,7 +144,7 @@ first_forks <- fork_nodes_unique[first_forks_index]
 tg[to=first_forks, from=parent_first_forks, attr='kind'] <- 'scope'
 tg[to=first_forks, from=parent_first_forks, attr='color'] <- scope_edge_color   
 if("ins_count" %in% colnames(tg.data))
-    tg[to=first_forks, from=parent_first_forks, attr='weight'] <- -as.numeric(tg.data[match(parent_first_forks, tg.data$task),]$ins_count)
+    tg[to=first_forks, from=parent_first_forks, attr='weight'] <- as.numeric(tg.data[match(parent_first_forks, tg.data$task),]$ins_count)
 if(verbo) toc("Connect parent to first fork")
 
 if(!plot_tree)
@@ -156,7 +156,7 @@ if(!plot_tree)
     tg[from=leaf_tasks, to=leaf_join_nodes, attr='kind'] <- 'sync'
     tg[from=leaf_tasks, to=leaf_join_nodes, attr='color'] <- sync_edge_color
     if("ins_count" %in% colnames(tg.data))
-        tg[from=leaf_tasks, to=leaf_join_nodes, attr='weight'] <- -as.numeric(tg.data[match(leaf_tasks, tg.data$task),]$ins_count)
+        tg[from=leaf_tasks, to=leaf_join_nodes, attr='weight'] <- as.numeric(tg.data[match(leaf_tasks, tg.data$task),]$ins_count)
     if(verbo) toc("Connect leaf task to join")
 
     # Connect join to next fork
@@ -410,21 +410,48 @@ if("ins_count" %in% colnames(tg.data) && !plot_tree)
 
     # Get critical path
     if(verbo) tic(type="elapsed")
-    # get.shortest.paths does not work for negative edge weights (R-3.0.2)
-    #cp <- get.shortest.paths(tg, from=start_index, to=end_index, mode="out", output="both")
-    #cp_vertex <- unlist(cp$vpath)
-    #tg <- set.vertex.attribute(tg, name='frame.color', index=V(tg), value="black")
-    #tg <- set.vertex.attribute(tg, name='frame.color', index=cp_vertex, value="yellow")
-    #span <- sum(tg.data[match(V(tg)[cp_vertex]$name, tg.data$task),]$ins_count, na.rm=T)
-    # Can only get the length of the path 
-    span <- shortest.paths(tg, v=start_index, to=end_index, mode="out")
-    work <- sum(as.numeric(tg.data$ins_count))
+    # Topological sort
+    tsg <- topological.sort(tg)
+    # Set root path attributes
+    V(tg)[tsg[1]]$rdist <- 0
+    V(tg)[tsg[1]]$rpath <- tsg[1]
+    # Get longest paths from root
+    for(node in tsg[-1])
+    {
+      w <- E(tg)[to(node)]$weight
+      d <- V(tg)[nei(node,mode="in")]$rdist
+      wd <- w+d
+      mwd <- max(wd)
+      V(tg)[node]$rdist <- mwd
+      mwdn <- as.vector(V(tg)[nei(node,mode="in")])[which(wd == mwd)]
+      V(tg)[node]$rpath <- list(c(unlist(V(tg)[mwdn]$rpath), node))
+    }
+    # Longest path is the largest root distance
+    lpl <- max(V(tg)$rdist)
+    # Enumerate longest path
+    lpm <- unlist(V(tg)[which(V(tg)$rdist == max(V(tg)$rdist))]$rpath)
+    V(tg)$on_crit_path <- 0
+    for(node in lpm)
+    {
+      V(tg)[node]$on_crit_path <- 1
+    }
+    
+    # Write out
     tg.file.out <- paste(gsub(". $", "", tg.ofilen), ".info", sep="")
     if(verbo) print(paste("Writing file", tg.file.out))
     sink(tg.file.out)
-    print("span,work,parallelism")
-    print(c(-span, work, work/(-span)))
+    print("span (critical path)")
+    print(lpl)
+    print("work")
+    work <- sum(as.numeric(tg.data$ins_count))
+    print(work)
+    print("parallelism")
+    print(work/lpl)
     sink()
+
+    # Clear rpath since dot writing complains 
+    tg <- remove.vertex.attribute(tg,"rpath")
+
     if(verbo) toc("Critical path calculation")
 } else {
     if(verbo) tic(type="elapsed")
@@ -458,7 +485,7 @@ if(verbo) toc("Write graphml")
 
 # Write adjacency matrix file
 if(verbo) tic(type="elapsed")
-tg.file.out <- paste(gsub(". $", "", tg.ofilen), ".adjm", sep="")
+tg.file.out <- paste(gsub(". $", "", tg.ofilen), ".adjmat", sep="")
 if(verbo) print(paste("Writing file", tg.file.out))
 sink(tg.file.out)
 print(get.adjacency(tg,names=T))
@@ -473,6 +500,12 @@ sink(tg.file.out)
 print(get.edgelist(tg, names=T))
 sink()
 if(verbo) toc("Write edgelist")
+
+# Write node attributes 
+if(verbo) tic(type="elapsed")
+tg.file.out <- paste(gsub(". $", "", tg.ofilen), ".nodeattr", sep="")
+write.table(get.data.frame(tg, what="vertices"), sep=",", file=tg.file.out)
+if(verbo) toc("Write node attributes")
 
 # Warn
 wa <- warnings()
