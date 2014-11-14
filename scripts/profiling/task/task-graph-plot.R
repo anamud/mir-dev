@@ -3,7 +3,7 @@ rm(list=ls())
 
 require(igraph, quietly=TRUE)
 require(RColorBrewer, quietly=TRUE)
-require(gdata, quietly=TRUE, warn.conflicts=FALSE)
+suppressMessages(require(gdata, quietly=TRUE, warn.conflicts=FALSE))
 require(optparse, quietly=TRUE)
 options("scipen"=999) # big number of digits
 #getOption("scipen")
@@ -410,11 +410,17 @@ if("ins_count" %in% colnames(tg.data) && !plot_tree)
 
     # Get critical path
     if(verbo) tic(type="elapsed")
+    #Rprof("profile-critpathcalc.out")
+    if(verbo) print("Calculating critical path ...")
+    lntg <- length(V(tg))
+    pb <- txtProgressBar(min = 0, max = lntg+4, style = 3)
+    ctr <- 0
     # Topological sort
     tsg <- topological.sort(tg)
     # Set root path attributes
     V(tg)[tsg[1]]$rdist <- 0
     V(tg)[tsg[1]]$rpath <- tsg[1]
+    if(verbo) {ctr <- ctr + 1; setTxtProgressBar(pb, ctr);}
     # Get longest paths from root
     for(node in tsg[-1])
     {
@@ -423,20 +429,24 @@ if("ins_count" %in% colnames(tg.data) && !plot_tree)
       wd <- w+d
       mwd <- max(wd)
       V(tg)[node]$rdist <- mwd
-      mwdn <- as.vector(V(tg)[nei(node,mode="in")])[which(wd == mwd)]
+      mwdn <- as.vector(V(tg)[nei(node,mode="in")])[match(mwd,wd)]
       V(tg)[node]$rpath <- list(c(unlist(V(tg)[mwdn]$rpath), node))
+      if(verbo) {ctr <- ctr + 1; setTxtProgressBar(pb, ctr);}
     }
-    # Longest path is the largest root distance
+    ## Longest path is the largest root distance
     lpl <- max(V(tg)$rdist)
+    if(verbo) {ctr <- ctr + 1; setTxtProgressBar(pb, ctr);}
     # Enumerate longest path
-    lpm <- unlist(V(tg)[which(V(tg)$rdist == max(V(tg)$rdist))]$rpath)
+    lpm <- unlist(V(tg)[match(lpl,V(tg)$rdist)]$rpath)
     V(tg)$on_crit_path <- 0
-    for(node in lpm)
-    {
-      V(tg)[node]$on_crit_path <- 1
-    }
+    tg <- set.vertex.attribute(tg, name="on_crit_path", index=lpm, value=1)
+    if(verbo) {ctr <- ctr + 1; setTxtProgressBar(pb, ctr);}
+    close(pb)
+    #Rprof(NULL)
+    if(verbo) toc("Critical path calculation")
     
-    # Write out
+    # Calculate and write info
+    if(verbo) tic(type="elapsed")
     tg.file.out <- paste(gsub(". $", "", tg.ofilen), ".info", sep="")
     if(verbo) print(paste("Writing file", tg.file.out))
     sink(tg.file.out)
@@ -449,10 +459,16 @@ if("ins_count" %in% colnames(tg.data) && !plot_tree)
     print(work/lpl)
     sink()
 
-    # Clear rpath since dot writing complains 
+    # Clear rpath since dot/table writing complains 
     tg <- remove.vertex.attribute(tg,"rpath")
 
-    if(verbo) toc("Critical path calculation")
+    # Write out shape
+    tg.file.out <- paste(gsub(". $", "", tg.ofilen), "-shape.pdf", sep="")
+    if(verbo) print(paste("Writing file", tg.file.out))
+    pdf(tg.file.out)
+    hist(get.data.frame(tg, what="vertices")$rdist, freq=T, main="Histogram of distance from start vertex", xlab="Distance", ylab="Tasks")
+    dev.off()
+    if(verbo) toc("Calc and write info")
 } else {
     if(verbo) tic(type="elapsed")
     tg <- simplify(tg, remove.multiple=T, remove.loops=T)
@@ -504,6 +520,7 @@ if(verbo) toc("Write edgelist")
 # Write node attributes 
 if(verbo) tic(type="elapsed")
 tg.file.out <- paste(gsub(". $", "", tg.ofilen), ".nodeattr", sep="")
+if(verbo) print(paste("Writing file", tg.file.out))
 write.table(get.data.frame(tg, what="vertices"), sep=",", file=tg.file.out)
 if(verbo) toc("Write node attributes")
 

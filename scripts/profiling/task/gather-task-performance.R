@@ -41,21 +41,21 @@ toc("Read data time")
 
 tic(type="elapsed")
 # Create combined task performance table
-comb.tp <- subset(ts.data, select=c(task, parent, joins_at, child_number, num_children, core_id, exec_cycles))
+comb.tp <- subset(ts.data, select=c(task, parent, joins_at, child_number, num_children, core_id, exec_cycles, inst_parallelism))
 comb.tp <- merge(comb.tp, ip.data, by.x="task", by.y="task", all=T)
 row.has.na <- apply(comb.tp, 1, function(x){any(is.na(x))})
 sum.row.has.na <- sum(row.has.na)
 if(sum.row.has.na > 0)
 {
-  print(sprintf("Note: %d rows contained NAs in the combined task performance table", sum.row.has.na ))
+  print(sprintf("Warning: %d rows contained NAs in the combined task performance table", sum.row.has.na ))
   if(abort_on_error == T)
   {
-    print("Aborting on error!")
+    print("Aborting! Cannot tolerate NAs.")
     quit("no", 1)
   }
   else
   {
-      print("Warning! Converting NAs in the combined task performance table to zero. This will probably skew processing. For example, scaling vertex size based on mean values while plotting graphs.")
+      print("Warning! Converting NAs in the combined task performance table to 0. This will probably skew further processing. For example, scaling vertex size based on mean values while plotting graphs.")
       comb.tp[is.na(comb.tp)] <- 0
   }
 }

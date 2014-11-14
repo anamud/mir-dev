@@ -267,6 +267,7 @@ typedef struct _nx_data_env_3_t_tag
 
 /*static*/ void _smp__ol_sparselu_par_call_3(void* arg)
 {/*{{{*/
+    bool atleast_one_task_created = false;
     _nx_data_env_3_t* _args = (_nx_data_env_3_t* ) arg; 
     int *NB_0 = (int *) (_args->NB_0);
 
@@ -284,6 +285,7 @@ typedef struct _nx_data_env_3_t_tag
                 imm_args_0.kk_0 = (_args->kk_0);
 
                 mir_task_create((mir_tfunc_t) _smp__ol_sparselu_par_call_0, (void*) &imm_args_0, sizeof(_nx_data_env_0_t), 0, NULL, NULL);
+                atleast_one_task_created = true;
             }
 
         for ((_args->ii_0) = (_args->kk_0) + 1; (_args->ii_0) < (*NB_0); (_args->ii_0)++)
@@ -296,10 +298,12 @@ typedef struct _nx_data_env_3_t_tag
                 imm_args_1.kk_0 = (_args->kk_0);
 
                 mir_task_create((mir_tfunc_t) _smp__ol_sparselu_par_call_1, (void*) &imm_args_1, sizeof(_nx_data_env_1_t), 0, NULL, NULL);
+                atleast_one_task_created = true;
             }
 
         // Task wait 
-        mir_task_wait();
+        if(atleast_one_task_created) mir_task_wait();
+        atleast_one_task_created = false;
 
         for ((_args->ii_0) = (_args->kk_0) + 1; (_args->ii_0) < (*NB_0); (_args->ii_0)++)
             if ((_args->bench_0)[(_args->ii_0) * (*NB_0) + (_args->kk_0)] != ((void *) 0))
@@ -315,10 +319,12 @@ typedef struct _nx_data_env_3_t_tag
 
 
                         mir_task_create((mir_tfunc_t) _smp__ol_sparselu_par_call_2, (void*) &imm_args_2, sizeof(_nx_data_env_2_t), 0, NULL, NULL);
+                        atleast_one_task_created = true;
                     }
 
         // Task wait
-        mir_task_wait();
+        if(atleast_one_task_created) mir_task_wait();
+        atleast_one_task_created = false;
     }
 }/*}}}*/
 
