@@ -40,7 +40,7 @@ struct mir_arch_t* mir_arch_create_by_query()
 
     // Get node name into buffer and strip it of the newline at end
     char arch_name[MIR_SHORT_NAME_LEN];
-    fgets(arch_name, MIR_SHORT_NAME_LEN, fpipe);
+    MIR_ASSERT(fgets(arch_name, MIR_SHORT_NAME_LEN, fpipe) != NULL);
     for(int i=0; i<MIR_SHORT_NAME_LEN; i++)
         if(arch_name[i] == '\n')
             arch_name[i] = '\0';

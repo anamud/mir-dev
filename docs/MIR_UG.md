@@ -191,7 +191,7 @@ The `parallel` construct is deprecated. A team of threads is created when `mir_c
 
 A simple set of steps for producing MIR-supported OpenMP programs is given below:
 
-1. When parallel execution is required, create a `parallel` block with `default(none)` followed immediately by a `single` block.
+1. When parallel execution is required, create a `parallel` block with `default(none)` followed immediately by a `single` block. The `default(none)` clause avoids incorrect execution due to assumed sharing rules.
 
 2. Use the `task` construct within the `single` block to parallelize work.
 
@@ -460,7 +460,8 @@ $ Rscript ${MIR_ROOT}/scripts/profiling/task/task-graph-plot.R -d mir-task-stats
 ```
 
 > Tip: 
-> The graph plotter will plot in gray scale if `gray` is supplied instead of `color` as the palette argument. 
+> The graph plotter will plot in gray scale if `gray` is supplied instead of `color` as the palette (`-p`) argument. 
+> Critical path enumeration usually takes time. To speed up, skip critical path enumeration and calculate only its length using option `--cplo`.
 
 * Huge graphs with 50000+ tasks take a long time to plot. Plot the task graph as a tree to save time.
 ```

@@ -39,6 +39,7 @@ toc <- function(message)
 
 #Parse args
 option_list <- list(
+make_option(c("--cplo"), action="store_true", default=FALSE, help="Calculate critical path length only"),
 make_option(c("-v", "--verbose"), action="store_true", default=TRUE, help="Print output [default]"),
 make_option(c("-q", "--quiet"), action="store_false", dest="verbose", help="Print little output"),
 make_option(c("-t", "--tree"), action="store_true", default=FALSE, help="Plot task graph as tree"),
@@ -51,6 +52,7 @@ tg.color <- parsed$pal
 tg.ofilen <- parsed$out
 verbo <- parsed$verbose
 plot_tree <- parsed$tree
+cp_len_only <- parsed$cplo
 
 # Read data
 if(verbo) tic(type="elapsed")
@@ -144,7 +146,10 @@ first_forks <- fork_nodes_unique[first_forks_index]
 tg[to=first_forks, from=parent_first_forks, attr='kind'] <- 'scope'
 tg[to=first_forks, from=parent_first_forks, attr='color'] <- scope_edge_color   
 if("ins_count" %in% colnames(tg.data))
-    tg[to=first_forks, from=parent_first_forks, attr='weight'] <- as.numeric(tg.data[match(parent_first_forks, tg.data$task),]$ins_count)
+{
+    tg[to=first_forks, from=parent_first_forks, attr='ins_count'] <- as.numeric(tg.data[match(parent_first_forks, tg.data$task),]$ins_count)
+    tg[to=first_forks, from=parent_first_forks, attr='weight'] <- -as.numeric(tg.data[match(parent_first_forks, tg.data$task),]$ins_count)
+}
 if(verbo) toc("Connect parent to first fork")
 
 if(!plot_tree)
@@ -156,7 +161,10 @@ if(!plot_tree)
     tg[from=leaf_tasks, to=leaf_join_nodes, attr='kind'] <- 'sync'
     tg[from=leaf_tasks, to=leaf_join_nodes, attr='color'] <- sync_edge_color
     if("ins_count" %in% colnames(tg.data))
-        tg[from=leaf_tasks, to=leaf_join_nodes, attr='weight'] <- as.numeric(tg.data[match(leaf_tasks, tg.data$task),]$ins_count)
+    {
+        tg[from=leaf_tasks, to=leaf_join_nodes, attr='ins_count'] <- as.numeric(tg.data[match(leaf_tasks, tg.data$task),]$ins_count)
+        tg[from=leaf_tasks, to=leaf_join_nodes, attr='weight'] <- -as.numeric(tg.data[match(leaf_tasks, tg.data$task),]$ins_count)
+    }
     if(verbo) toc("Connect leaf task to join")
 
     # Connect join to next fork
@@ -367,7 +375,10 @@ tg <- set.vertex.attribute(tg, name='label', index=join_nodes_index, value='*')
 
 # Set edge attributes
 if("ins_count" %in% colnames(tg.data))
+{
     tg <- set.edge.attribute(tg, name="weight", index=which(is.na(E(tg)$weight)), value=0)
+    tg <- set.edge.attribute(tg, name="ins_count", index=which(is.na(E(tg)$ins_count)), value=0)
+}
 if(verbo) toc("Attribute setting")
 
 # Check if any fork or join vertices have bad degrees
@@ -412,36 +423,43 @@ if("ins_count" %in% colnames(tg.data) && !plot_tree)
     if(verbo) tic(type="elapsed")
     #Rprof("profile-critpathcalc.out")
     if(verbo) print("Calculating critical path ...")
-    lntg <- length(V(tg))
-    pb <- txtProgressBar(min = 0, max = lntg+4, style = 3)
-    ctr <- 0
-    # Topological sort
-    tsg <- topological.sort(tg)
-    # Set root path attributes
-    V(tg)[tsg[1]]$rdist <- 0
-    V(tg)[tsg[1]]$rpath <- tsg[1]
-    if(verbo) {ctr <- ctr + 1; setTxtProgressBar(pb, ctr);}
-    # Get longest paths from root
-    for(node in tsg[-1])
+    if(cp_len_only) 
     {
-      w <- E(tg)[to(node)]$weight
-      d <- V(tg)[nei(node,mode="in")]$rdist
-      wd <- w+d
-      mwd <- max(wd)
-      V(tg)[node]$rdist <- mwd
-      mwdn <- as.vector(V(tg)[nei(node,mode="in")])[match(mwd,wd)]
-      V(tg)[node]$rpath <- list(c(unlist(V(tg)[mwdn]$rpath), node))
+      # Get critical path length
+      sp <- shortest.paths(tg, v=start_index, to=end_index, mode="out")
+      lpl <- -as.numeric(sp)
+    } else {    
+      lntg <- length(V(tg))
+      pb <- txtProgressBar(min = 0, max = lntg+4, style = 3)
+      ctr <- 0
+      # Topological sort
+      tsg <- topological.sort(tg)
+      # Set root path attributes
+      V(tg)[tsg[1]]$rdist <- 0
+      V(tg)[tsg[1]]$rpath <- tsg[1]
       if(verbo) {ctr <- ctr + 1; setTxtProgressBar(pb, ctr);}
+      # Get longest paths from root
+      for(node in tsg[-1])
+      {
+        w <- E(tg)[to(node)]$ins_count
+        d <- V(tg)[nei(node,mode="in")]$rdist
+        wd <- w+d
+        mwd <- max(wd)
+        V(tg)[node]$rdist <- mwd
+        mwdn <- as.vector(V(tg)[nei(node,mode="in")])[match(mwd,wd)]
+        V(tg)[node]$rpath <- list(c(unlist(V(tg)[mwdn]$rpath), node))
+        if(verbo) {ctr <- ctr + 1; setTxtProgressBar(pb, ctr);}
+      }
+      ## Longest path is the largest root distance
+      lpl <- max(V(tg)$rdist)
+      if(verbo) {ctr <- ctr + 1; setTxtProgressBar(pb, ctr);}
+      # Enumerate longest path
+      lpm <- unlist(V(tg)[match(lpl,V(tg)$rdist)]$rpath)
+      V(tg)$on_crit_path <- 0
+      tg <- set.vertex.attribute(tg, name="on_crit_path", index=lpm, value=1)
+      if(verbo) {ctr <- ctr + 1; setTxtProgressBar(pb, ctr);}
+      close(pb)
     }
-    ## Longest path is the largest root distance
-    lpl <- max(V(tg)$rdist)
-    if(verbo) {ctr <- ctr + 1; setTxtProgressBar(pb, ctr);}
-    # Enumerate longest path
-    lpm <- unlist(V(tg)[match(lpl,V(tg)$rdist)]$rpath)
-    V(tg)$on_crit_path <- 0
-    tg <- set.vertex.attribute(tg, name="on_crit_path", index=lpm, value=1)
-    if(verbo) {ctr <- ctr + 1; setTxtProgressBar(pb, ctr);}
-    close(pb)
     #Rprof(NULL)
     if(verbo) toc("Critical path calculation")
     
@@ -459,15 +477,18 @@ if("ins_count" %in% colnames(tg.data) && !plot_tree)
     print(work/lpl)
     sink()
 
-    # Clear rpath since dot/table writing complains 
-    tg <- remove.vertex.attribute(tg,"rpath")
+    if(!cp_len_only) 
+    {
+        # Clear rpath since dot/table writing complains 
+        tg <- remove.vertex.attribute(tg,"rpath")
 
-    # Write out shape
-    tg.file.out <- paste(gsub(". $", "", tg.ofilen), "-shape.pdf", sep="")
-    if(verbo) print(paste("Writing file", tg.file.out))
-    pdf(tg.file.out)
-    hist(get.data.frame(tg, what="vertices")$rdist, freq=T, main="Histogram of distance from start vertex", xlab="Distance", ylab="Tasks")
-    dev.off()
+        # Write out shape
+        tg.file.out <- paste(gsub(". $", "", tg.ofilen), "-shape.pdf", sep="")
+        if(verbo) print(paste("Writing file", tg.file.out))
+        pdf(tg.file.out)
+        hist(get.data.frame(tg, what="vertices")$rdist, freq=T, main="Histogram of distance from start vertex", xlab="Distance", ylab="Tasks")
+        dev.off()
+    }
     if(verbo) toc("Calc and write info")
 } else {
     if(verbo) tic(type="elapsed")

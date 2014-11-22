@@ -77,7 +77,7 @@ debug['CCFLAGS'] += Split("""
 -gdwarf-2
 -DALLOW_DEBUG_MESSAGES
 """)
-debug['LIBS'] += ['mir-debug']
+debug.Prepend(LIBS = ['mir-debug'])
 debug.VariantDir('debug-build', '.', duplicate=0)
 debug_src = debug.Glob('debug-build/*.c')
 debug.Program(app_name +'-debug', source = debug_src)
@@ -89,9 +89,9 @@ Clean('.','debug-build')
 
 opt = env.Clone();
 opt['CCFLAGS'] += Split("""
--O2
+-O3
 """)
-opt['LIBS'] += ['mir-opt']
+opt.Prepend(LIBS = ['mir-opt'])
 opt.VariantDir('opt-build', '.', duplicate=0)
 opt_src = opt.Glob('opt-build/*.c')
 opt.Program(app_name +'-opt', source = opt_src)
@@ -113,7 +113,7 @@ prof['CCFLAGS'] += Split("""
 -g
 -DNO_BLAS
 """)
-prof['LIBS'] += ['mir-opt']
+prof.Prepend(LIBS = ['mir-opt'])
 prof.VariantDir('prof-build', '.', duplicate=0)
 prof_src = prof.Glob('prof-build/*.c')
 prof.Program(app_name +'-prof', source = prof_src)
@@ -129,7 +129,7 @@ verbose['CCFLAGS'] += Split("""
 -DALLOW_MESSAGES
 -DCHECK_RESULT
 """)
-verbose['LIBS'] += ['mir-opt']
+verbose.Prepend(LIBS = ['mir-opt'])
 verbose.VariantDir('verbose-build', '.', duplicate=0)
 verbose_src = verbose.Glob('verbose-build/*.c')
 verbose.Program(app_name +'-verbose', source = verbose_src)

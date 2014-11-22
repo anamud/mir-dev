@@ -418,7 +418,11 @@ int main(int argc, char *argv[])
      <code>
       single
      </code>
-     block.
+     block. The
+     <code>
+      default(none)
+     </code>
+     clause avoids incorrect execution due to assumed sharing rules.
     </p>
    </li>
    <li>
@@ -1053,7 +1057,17 @@ specify outline functions (csv)
     <code>
      color
     </code>
-    as the palette argument.
+    as the palette (
+    <code>
+     -p
+    </code>
+    ) argument.
+    <br/>
+    Critical path enumeration usually takes time. To speed up, skip critical path enumeration and calculate only its length using option
+    <code>
+     --cplo
+    </code>
+    .
    </p>
   </blockquote>
   <ul>
