@@ -21,7 +21,6 @@ const char* final_plate_file = "./jacobi-final.plate";
 const int max_iters = 1;
 
 // Globals
-int worksharing_chunk_size = 8;
 //int DIM = 8192;
 int DIM = 9216;
 //int BS = 256;
@@ -530,7 +529,6 @@ int main(int argc, char* argv[])
     long ts, te;
     ts = get_usecs();
     jacobi_par();
-    //jacobi_par_worksharing();
     te = get_usecs();/*}}}*/
 
 #ifdef CHECK_RESULT

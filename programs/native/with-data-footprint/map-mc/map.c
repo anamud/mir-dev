@@ -60,7 +60,7 @@ void map_init()
                 buffer[i][j] = i+1;
         long time_end = get_usecs();
         double time = (double)(time_end - time_start) / 1000000;
-        PALWAYS("Fault-in initialization time = %f seconds\n", time);
+        PALWAYS("Initialization time = %f seconds\n", time);
     }
 #endif
 }/*}}}*/
