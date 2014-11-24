@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include <sys/time.h>
 #include <math.h>
+#include <assert.h>
 #include <stdlib.h>
 #include <unistd.h>
 
@@ -451,7 +452,6 @@ void jacobi_par()
 {/*{{{*/
     for(int iters=0;iters<max_iters; iters++)
     {
-        struct mir_twc_t* twc = mir_twc_create();
         for(int i=0; i<NB; i++) 
         {
             for(int j=0; j<NB; j++) 
@@ -476,11 +476,11 @@ void jacobi_par()
             /*if(j==0 && i==0)*/
                 /*print_footprints(footprints, num_footprints);*/
 
-            mir_task_create((mir_tfunc_t) jacobi_block_wrapper, &arg, sizeof(struct jacobi_block_wrapper_arg_t), twc, num_footprints, footprints, "jacobi");
+            mir_task_create((mir_tfunc_t) jacobi_block_wrapper, &arg, sizeof(struct jacobi_block_wrapper_arg_t), num_footprints, footprints, "jacobi");
             }
         }
 //#pragma omp taskwait
-        mir_task_wait(twc);
+        mir_task_wait();
 
         // Flip plates
         float** temp = plate;
@@ -493,7 +493,7 @@ void jacobi_par()
     } 
 }/*}}}*/
 
-void for_task(int start, int end, struct mir_twc_t* twc)
+void for_task(int start, int end)
 {/*{{{*/
     for(int i=start; i<=end; i++)
     {
@@ -512,7 +512,7 @@ void for_task(int start, int end, struct mir_twc_t* twc)
         struct mir_data_footprint_t footprints[num_footprints];
         fill_footprints(i,j,footprints);
 
-        mir_task_create((mir_tfunc_t) jacobi_block_wrapper, &arg, sizeof(struct jacobi_block_wrapper_arg_t), twc, num_footprints, footprints, "for");
+        mir_task_create((mir_tfunc_t) jacobi_block_wrapper, &arg, sizeof(struct jacobi_block_wrapper_arg_t), num_footprints, footprints, "for");
         }
     }
 }/*}}}*/
@@ -521,20 +521,18 @@ struct for_task_wrapper_arg_t
 {/*{{{*/
     uint64_t start;
     uint64_t end;
-    struct mir_twc_t* twc;
 };/*}}}*/
 
 void for_task_wrapper(void* arg)
 {/*{{{*/
     struct for_task_wrapper_arg_t* warg = (struct for_task_wrapper_arg_t*) arg;
-    for_task(warg->start, warg->end, warg->twc);
+    for_task(warg->start, warg->end);
 }/*}}}*/
 
 void jacobi_par_worksharing()
 {/*{{{*/
     for(int iters=0;iters<max_iters; iters++)
     {
-        struct mir_twc_t* twc = mir_twc_create();
         // Split the task creation load among workers
         // Same action as worksharing omp for
         //uint32_t num_workers = mir_get_num_threads();
@@ -552,9 +550,7 @@ void jacobi_par_worksharing()
                     struct for_task_wrapper_arg_t arg;
                     arg.start = start;
                     arg.end = end;
-                    arg.twc = twc;
-
-                    mir_task_create((mir_tfunc_t) for_task_wrapper, &arg, sizeof(struct for_task_wrapper_arg_t), twc, 0, NULL, NULL);
+                    for_task(arg.start , arg.end);
                 }
             }
         }
@@ -567,13 +563,11 @@ void jacobi_par_worksharing()
                 struct for_task_wrapper_arg_t arg;
                 arg.start = start;
                 arg.end = end;
-                arg.twc = twc;
-
-                mir_task_create((mir_tfunc_t) for_task_wrapper, &arg, sizeof(struct for_task_wrapper_arg_t), twc, 0, NULL, NULL);
+                for_task(arg.start , arg.end);
             }
         }
 //#pragma omp taskwait
-        mir_task_wait(twc);
+        mir_task_wait();
 
         // Flip plates
         float** temp = plate;

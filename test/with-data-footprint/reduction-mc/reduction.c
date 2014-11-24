@@ -11,7 +11,7 @@ size_t PAGE_SZ = (4096/sizeof(uint64_t));
 #define MAX_DEPTH_DEFAULT 17
 #define OPR_SCALE (42)
 #define SLEEP_MS 0
-#define ENABLE_FAULT_IN 1
+//#define ENABLE_FAULT_IN 1
 #define LOOP_CNT 10
 
 uint64_t* buffer = NULL;

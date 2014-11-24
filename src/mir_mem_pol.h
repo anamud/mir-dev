@@ -17,9 +17,9 @@ void mir_mem_pol_create ();
 
 void mir_mem_pol_init ();
 
-void mir_mem_pol_reset ();
-
 void mir_mem_pol_destroy ();
+
+/*LIBINT*/ void mir_mem_pol_reset ();
 
 /*LIBINT*/ void* mir_mem_pol_allocate (size_t sz);
 

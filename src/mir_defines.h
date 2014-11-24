@@ -68,7 +68,7 @@
 // Memory allocation policy
 #define MIR_MEM_POL_CACHE_NODES 
 #define MIR_MEM_POL_RESTRICT 
-//#define MIR_MEM_POL_FAULT_IN_PAGES 
+#define MIR_MEM_POL_FAULT_IN_PAGES 
 //#define MIR_MEM_POL_LOCK_PAGES 
 // TILEPro64 specifc
 //#define MIR_PAGE_NO_LOCAL_CACHING 

@@ -371,6 +371,7 @@ void mir_destroy()
 
     // Check if workers are free
     MIR_DEBUG(MIR_DEBUG_STR "Checking if workers are done ...\n");
+    //MIR_INFORM(MIR_INFORM_STR "Checking if workers are done ...\n");
     mir_worker_check_done();
 
     // Announce destruction
@@ -381,6 +382,7 @@ void mir_destroy()
         runtime->workers[i].sig_dying = 1;
     __sync_synchronize();
     MIR_DEBUG(MIR_DEBUG_STR "Workers are done. Sent die signal.\n");
+    //MIR_INFORM(MIR_INFORM_STR "Workers are done. Sent die signal.\n");
 
     // Shutdown recorders
     if(runtime->enable_recorder == 1)
@@ -444,6 +446,7 @@ void mir_destroy()
 
     // Kill workers
     MIR_DEBUG(MIR_DEBUG_STR "Killing workers ...\n");
+    //MIR_INFORM(MIR_INFORM_STR "Killing workers ...\n");
     __sync_fetch_and_add(&g_sig_worker_alive, runtime->num_workers-1);
     for(int i=0; i<runtime->num_workers; i++) 
     {
@@ -452,11 +455,13 @@ void mir_destroy()
         __sync_synchronize();
     }
     // Wait for workers to signal dead
+    //MIR_INFORM(MIR_INFORM_STR "Waiting until workers are dead ...\n");
 wait_dead:
     if (g_sig_worker_alive == 0) goto dead;
     __sync_synchronize();
     goto wait_dead;
 dead:
+    //MIR_INFORM(MIR_INFORM_STR "Workers are dead.\n");
 
     // Deinit memory allocation policy
     MIR_DEBUG(MIR_DEBUG_STR "Stopping memory distributer ...\n");

@@ -15,7 +15,7 @@
 #define OPR_SCALE (42)
 #define SLEEP_MS 0
 #define LOOP_CNT 10
-#define REUSE_CNT 2
+#define REUSE_CNT 1
 //#define SHOW_NUMA_STATS 1
 //#define ENABLE_FAULT_IN 
 //#define ENABLE_PREFETCH 1
@@ -60,7 +60,7 @@ void map_init()
                 buffer[i][j] = i+1;
         long time_end = get_usecs();
         double time = (double)(time_end - time_start) / 1000000;
-        PALWAYS("Init time = %f seconds\n", time);
+        PALWAYS("Fault-in initialization time = %f seconds\n", time);
     }
 #endif
 }/*}}}*/

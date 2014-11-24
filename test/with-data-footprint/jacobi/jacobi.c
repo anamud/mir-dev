@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include <sys/time.h>
 #include <math.h>
+#include <assert.h>
 #include <stdlib.h>
 #include <unistd.h>
 
@@ -391,7 +392,6 @@ void jacobi_par()
     int iters;
     for(iters=0;iters<max_iters; iters++)
     {
-        struct mir_twc_t* twc = mir_twc_create();
         for(i=0; i<NB; i++) 
         {
             for(j=0; j<NB; j++) 
@@ -430,103 +430,11 @@ void jacobi_par()
             struct mir_data_footprint_t footprints[num_footprints];
             fill_footprints(i,j,footprints);
 
-            struct mir_task_t* task = mir_task_create((mir_tfunc_t) jacobi_block_wrapper, &arg, sizeof(struct jacobi_block_wrapper_arg_t), twc, num_footprints, footprints, NULL);
+            mir_task_create((mir_tfunc_t) jacobi_block_wrapper, &arg, sizeof(struct jacobi_block_wrapper_arg_t), num_footprints, footprints, NULL);
             }
         }
 //#pragma omp taskwait
-        mir_twc_wait(twc);
-
-        // Flip plates
-        float* temp = plate;
-        plate = oldplate;
-        oldplate = temp;
-        //}
-
-        // Print error in this iteration
-        PMSG("Iteration %d done!\n", iters);
-    } 
-}/*}}}*/
-
-void for_task(int start, int end, struct mir_twc_t* twc)
-{/*{{{*/
-    for(int i=start; i<=end; i++)
-    {
-        for(int j=0; j<NB; j++) 
-        {
-//#pragma omp task 
-        //jacobi_block(i, j, oldplate, plate);
-
-        // Data env
-        struct jacobi_block_wrapper_arg_t arg;
-        arg.row = i;
-        arg.col = j;
-
-        int num_footprints = get_num_footprints(i,j);
-        struct mir_data_footprint_t footprints[num_footprints];
-        fill_footprints(i,j,footprints);
-
-        struct mir_task_t* task = mir_task_create((mir_tfunc_t) jacobi_block_wrapper, &arg, sizeof(struct jacobi_block_wrapper_arg_t), twc, num_footprints, footprints, NULL);
-        }
-    }
-}/*}}}*/
-
-struct for_task_wrapper_arg_t
-{/*{{{*/
-    uint64_t start;
-    uint64_t end;
-    struct mir_twc_t* twc;
-};/*}}}*/
-
-void for_task_wrapper(void* arg)
-{/*{{{*/
-    struct for_task_wrapper_arg_t* warg = (struct for_task_wrapper_arg_t*) arg;
-    for_task(warg->start, warg->end, warg->twc);
-}/*}}}*/
-
-void jacobi_par_worksharing()
-{/*{{{*/
-    for(int iters=0;iters<max_iters; iters++)
-    {
-        struct mir_twc_t* twc = mir_twc_create();
-        // Split the task creation load among workers
-        // Same action as worksharing omp for
-        //uint32_t num_workers = mir_get_num_threads();
-        uint32_t num_workers = worksharing_chunk_size;
-        uint64_t num_iter = NB / num_workers;
-        uint64_t num_tail_iter = NB % num_workers;
-        if(num_iter > 0)
-        {
-            // Create prologue tasks
-            for(uint32_t k=0; k<num_workers; k++)
-            {
-                uint64_t start = k * num_iter;
-                uint64_t end = start + num_iter - 1;
-                {
-                    struct for_task_wrapper_arg_t arg;
-                    arg.start = start;
-                    arg.end = end;
-                    arg.twc = twc;
-
-                    struct mir_task_t* task = mir_task_create((mir_tfunc_t) for_task_wrapper, &arg, sizeof(struct for_task_wrapper_arg_t), twc, 0, NULL, NULL);
-                }
-            }
-        }
-        if(num_tail_iter > 0)
-        {
-            // Create epilogue task
-            uint64_t start = num_workers * num_iter;
-            uint64_t end = start + num_tail_iter - 1;
-            {
-                struct for_task_wrapper_arg_t arg;
-                arg.start = start;
-                arg.end = end;
-                arg.twc = twc;
-
-                struct mir_task_t* task = mir_task_create((mir_tfunc_t) for_task_wrapper, &arg, sizeof(struct for_task_wrapper_arg_t), twc, 0, NULL, NULL);
-            }
-        }
-//#pragma omp taskwait
-        mir_twc_wait(twc);
+        mir_task_wait();
 
         // Flip plates
         float* temp = plate;
@@ -541,7 +449,6 @@ void jacobi_par_worksharing()
 
 int main(int argc, char* argv[])
 {/*{{{*/
-    PABRT("This program uses explict taskwait and is currently not supported.\n");
     PMSG("Getting args ...\n");
     if(argc > 3)/*{{{*/
         PABRT("Usage: %s DIM BS\n", argv[0]);
@@ -622,8 +529,8 @@ int main(int argc, char* argv[])
     // Iterate and solve/*{{{*/
     long ts, te;
     ts = get_usecs();
-    //jacobi_par();
-    jacobi_par_worksharing();
+    jacobi_par();
+    //jacobi_par_worksharing();
     te = get_usecs();/*}}}*/
 
 #ifdef CHECK_RESULT

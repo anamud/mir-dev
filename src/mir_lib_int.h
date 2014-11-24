@@ -62,19 +62,20 @@ void mir_lock_unset(struct mir_lock_t* lock);
 
 int mir_lock_tryset(struct mir_lock_t* lock);
 /*LIBINT_END*/
-/*LIBINT*/ typedef void* (*mir_tfunc_t)(void*);
-/*LIBINT*/ void mir_task_create(mir_tfunc_t tfunc, void* data, size_t data_size, unsigned int num_data_footprints, struct mir_data_footprint_t* data_footprints, const char* name);
-/*LIBINT*/ void mir_task_create_on(mir_tfunc_t tfunc, void* data, size_t data_size, unsigned int num_data_footprints, struct mir_data_footprint_t* data_footprints, const char* name, unsigned int target);
-/*LIBINT*/ void mir_task_wait();
-/*LIBINT*/ void mir_create();
-/*LIBINT*/ void mir_destroy();
-/*LIBINT*/ void* mir_mem_pol_allocate (size_t sz);
-/*LIBINT*/ void mir_mem_pol_release (void* addr, size_t sz);
 /*LIBINT*/ int mir_get_num_threads();
 /*LIBINT*/ int mir_get_threadid();
 /*LIBINT*/ void mir_sleep_ms(uint32_t msec);
 /*LIBINT*/ void mir_sleep_us(uint32_t usec);
 /*LIBINT*/ uint64_t mir_get_cycles();
+/*LIBINT*/ void mir_create();
+/*LIBINT*/ void mir_destroy();
+/*LIBINT*/ typedef void* (*mir_tfunc_t)(void*);
+/*LIBINT*/ void mir_task_create(mir_tfunc_t tfunc, void* data, size_t data_size, unsigned int num_data_footprints, struct mir_data_footprint_t* data_footprints, const char* name);
+/*LIBINT*/ void mir_task_create_on(mir_tfunc_t tfunc, void* data, size_t data_size, unsigned int num_data_footprints, struct mir_data_footprint_t* data_footprints, const char* name, unsigned int target);
+/*LIBINT*/ void mir_task_wait();
+/*LIBINT*/ void mir_mem_pol_reset ();
+/*LIBINT*/ void* mir_mem_pol_allocate (size_t sz);
+/*LIBINT*/ void mir_mem_pol_release (void* addr, size_t sz);
 
 END_C_DECLS 
 

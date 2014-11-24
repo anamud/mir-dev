@@ -294,6 +294,7 @@ void sparselu_par_call(float **BENCH)
 
     PMSG("Computing SparseLU Factorization (%dx%d matrix with %dx%d blocks) ",
             NB,NB,BS,BS);
+    int atleast_one_task = 0;
     for (kk=0; kk<NB; kk++)
     {
         lu0(BENCH[kk*NB+kk]);
@@ -359,6 +360,7 @@ void sparselu_par_call(float **BENCH)
                     footprints[2].part_of = BENCH[kk*NB+jj];
 #endif
 
+                    atleast_one_task = 1;
                     mir_task_create((mir_tfunc_t) smp_ol_sparselu_par_call_0, (void*) &imm_args, sizeof(struct nanos_args_0_t), num_footprints, footprints, NULL);
                 }
             }
@@ -425,12 +427,15 @@ void sparselu_par_call(float **BENCH)
                     footprints[2].part_of = BENCH[ii*NB+kk];
 #endif
 
+                    atleast_one_task = 1;
                     mir_task_create((mir_tfunc_t) smp_ol_sparselu_par_call_1, (void*) &imm_args, sizeof(struct nanos_args_1_t), num_footprints, footprints, NULL);
                 }
             }
 
 //#pragma omp taskwait
-        mir_task_wait();
+        if(atleast_one_task == 1)
+            mir_task_wait();
+        atleast_one_task = 0;
 
         for (ii=kk+1; ii<NB; ii++)
             if (BENCH[ii*NB+kk] != NULL)
@@ -506,12 +511,15 @@ void sparselu_par_call(float **BENCH)
                             footprints[3].part_of = BENCH[ii*NB+jj];
 #endif
 
+                            atleast_one_task = 1;
                             mir_task_create((mir_tfunc_t) smp_ol_sparselu_par_call_2, (void*) &imm_args, sizeof(struct nanos_args_2_t), num_footprints, footprints, NULL);
                         }
                     }
 
 //#pragma omp taskwait
-        mir_task_wait();
+        if(atleast_one_task == 1)
+            mir_task_wait();
+        atleast_one_task = 0;
     }
     PMSG(" completed!\n");
 }/*}}}*/

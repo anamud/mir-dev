@@ -19,7 +19,7 @@ if os.path.isfile('HAVE_PAPI'):
         print('PAPI_ROOT is not defined. Aborting!')
         Exit(2)
 
-compilers = ['gcc','icc']
+compilers = ['icc','gcc']
 compiler = ''
 for item in compilers:
     compiler = mir_utils.which(item)

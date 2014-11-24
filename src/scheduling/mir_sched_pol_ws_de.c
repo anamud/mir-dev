@@ -149,8 +149,8 @@ bool pop_ws_de (struct mir_task_t** task)
                     worker->status->num_tasks_owned++;
                 }
 
-                if(g_num_tasks_waiting > 0)
-                    __sync_fetch_and_sub(&g_num_tasks_waiting, 1);
+                __sync_fetch_and_sub(&g_num_tasks_waiting, 1);
+                MIR_ASSERT(g_num_tasks_waiting >= 0);
                 T_DBG("Dq", *task);
 
                 found = 1;
@@ -200,8 +200,8 @@ bool pop_ws_de (struct mir_task_t** task)
                         worker->status->num_tasks_stolen++;
                     }
 
-                    if(g_num_tasks_waiting > 0)
-                        __sync_fetch_and_sub(&g_num_tasks_waiting, 1);
+                    __sync_fetch_and_sub(&g_num_tasks_waiting, 1);
+                    MIR_ASSERT(g_num_tasks_waiting >= 0);
                     T_DBG("St", *task);
 
                     found = 1;
