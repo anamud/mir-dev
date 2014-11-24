@@ -9,8 +9,58 @@
 #include "mir_worker.h"
 #include "mir_types.h"
 #include "mir_defines.h"
-#include "mir_data_footprint.h"
 #include "mir_types.h"
+#include "mir_utils.h"
+
+BEGIN_C_DECLS 
+
+// For task statistics collection
+struct mir_task_statistics_t;
+struct mir_task_statistics_t
+{
+    struct mir_task_t* task;
+    unsigned long pass_count;
+    struct mir_task_statistics_t* next;
+};
+
+/*LIBINT_DECL_BEGIN*/
+enum mir_data_access_t 
+{
+    MIR_DATA_ACCESS_READ = 0,
+    MIR_DATA_ACCESS_WRITE,
+    MIR_DATA_ACCESS_NUM_TYPES
+};
+typedef enum mir_data_access_t mir_data_access_t;
+
+struct mir_data_footprint_t
+{
+    void* base;
+    size_t type;
+    uint64_t start;
+    uint64_t end;
+    uint64_t row_sz; // FIXME: This restricts footprints to square blocks
+    mir_data_access_t data_access;
+    void* part_of;
+};
+/*LIBINT_DECL_END*/
+
+static inline void data_footprint_copy(struct mir_data_footprint_t* dest, const struct mir_data_footprint_t* src)
+{/*{{{*/
+    // Check
+    MIR_ASSERT(src != NULL);
+    MIR_ASSERT(dest != NULL);
+
+    // Copy elements
+    dest->base = src->base;
+    dest->type = src->type;
+    dest->start = src->start;
+    dest->end = src->end;
+    dest->row_sz = src->row_sz;
+    dest->data_access = src->data_access;
+    dest->part_of = src->part_of;
+}/*}}}*/
+
+END_C_DECLS 
 
 BEGIN_C_DECLS 
 
@@ -50,6 +100,7 @@ struct mir_task_t
     uint16_t core_id; 
     uint64_t exec_resume_instant;
     uint64_t exec_cycles;
+    uint32_t queue_size_at_pop;
 
     // Flags
     uint32_t done;
@@ -80,12 +131,18 @@ static void T_DBG(char*msg, struct mir_task_t *t)
 void mir_task_execute(struct mir_task_t* task);
 
 #ifdef MIR_MEM_POL_ENABLE
-struct mir_mem_node_dist_t* mir_task_get_footprint_dist(struct mir_task_t* task, mir_data_access_t access);
+struct mir_mem_node_dist_t* mir_task_get_mem_node_dist(struct mir_task_t* task, mir_data_access_t access);
 #endif
 
 struct mir_twc_t* mir_twc_create();
 
 /*LIBINT*/ void mir_task_wait();
+
+void mir_task_statistics_write_header_to_file(FILE* file);
+
+void mir_task_statistics_write_to_file(struct mir_task_statistics_t* statistics, FILE* file);
+
+void mir_task_statistics_destroy(struct mir_task_statistics_t* statistics);
 
 END_C_DECLS
 #endif

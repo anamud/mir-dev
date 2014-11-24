@@ -282,8 +282,7 @@ void GOMP_task(void (*fn)(void *), void *data, void (*copyfn)(void *, void *), l
     if(copyfn)
     {
         char* buf = mir_malloc_int(sizeof(char) * arg_size);
-        if(buf == NULL)
-            MIR_ABORT(MIR_ERROR_STR "Could not allocate memory!\n");
+        MIR_ASSERT(buf != NULL);
         copyfn(buf, data); 
         mir_task_create((mir_tfunc_t) fn, (void*) buf, (size_t)(arg_size), 0, NULL, NULL);
     }

@@ -27,6 +27,7 @@ uint16_t node_of_tilepro64(uint16_t coreid)
 
 void cores_of_tilepro64(struct mir_sbuf_t* coreids, uint16_t nodeid)
 {/*{{{*/
+    MIR_ASSERT(coreids != NULL);
     if(nodeid > 63)
         MIR_ABORT(MIR_ERROR_STR "Cores of node not found!\n");
 

@@ -27,16 +27,16 @@ struct mir_runtime_t
     struct mir_sched_pol_t* sched_pol;
     struct mir_arch_t* arch;
     uint32_t task_inlining_limit;
-    int shmid;
-    char* shm;
+    int ofp_shmid;
+    char* ofp_shm;
     struct mir_twc_t* ctwc;
 
     // Flags
     bool sig_dying;
-    bool enable_stats;
-    bool enable_task_graph_gen;
+    bool enable_worker_stats;
+    bool enable_task_stats;
     bool enable_recorder;
-    bool enable_shmem_handshake;
+    bool enable_ofp_handshake;
 };/*}}}*/
 
 /*LIBINT*/ void mir_create();

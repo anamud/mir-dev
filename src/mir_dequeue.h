@@ -131,6 +131,8 @@ cas(StgVolatilePtr p, StgWord o, StgWord n)
         *p = n;
     }
     return result;
+#elif defined(__tile__)
+#error cas() unimplemented on this architecture
 #else
 #error cas() unimplemented on this architecture
 #endif
@@ -211,6 +213,8 @@ write_barrier(void)
     __asm__ __volatile__ ("dmb  st" : : : "memory");
 #elif !defined(WITHSMP)
     return;
+#elif defined(__tile__)
+#error memory barriers unimplemented on this architecture
 #else
 #error memory barriers unimplemented on this architecture
 #endif
@@ -231,6 +235,8 @@ store_load_barrier(void)
     __asm__ __volatile__ ("dmb" : : : "memory");
 #elif !defined(WITHSMP)
     return;
+#elif defined(__tile__)
+#error memory barriers unimplemented on this architecture
 #else
 #error memory barriers unimplemented on this architecture
 #endif
@@ -252,6 +258,8 @@ load_load_barrier(void)
     __asm__ __volatile__ ("dmb" : : : "memory");
 #elif !defined(WITHSMP)
     return;
+#elif defined(__tile__)
+#error memory barriers unimplemented on this architecture
 #else
 #error memory barriers unimplemented on this architecture
 #endif

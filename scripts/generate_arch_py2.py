@@ -35,6 +35,7 @@ def write_posttext(fil):
     fil.write("""
 void cores_of_this(struct mir_sbuf_t* coreids, uint16_t nodeid)
 {{
+    MIR_ASSERT(coreids != NULL);
     coreids->size = 0;
     if(nodeid != 0)
         return;
