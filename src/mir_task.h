@@ -15,12 +15,12 @@
 BEGIN_C_DECLS 
 
 // For task statistics collection
-struct mir_task_statistics_t;
-struct mir_task_statistics_t
+// FIXME: Naming, extra indirection
+struct mir_task_list_t;
+struct mir_task_list_t
 {
     struct mir_task_t* task;
-    unsigned long pass_count;
-    struct mir_task_statistics_t* next;
+    struct mir_task_list_t* next;
 };
 
 /*LIBINT_DECL_BEGIN*/
@@ -92,6 +92,7 @@ struct mir_task_t
     mir_id_t id;
     unsigned int child_number;
     unsigned int num_children;
+    unsigned long sync_pass;
     struct mir_twc_t* twc;
     struct mir_twc_t* ctwc; // Sync counter for children
     unsigned long comm_cost;
@@ -99,6 +100,7 @@ struct mir_task_t
     struct mir_task_t* parent;
     uint16_t core_id; 
     uint64_t exec_resume_instant;
+    uint64_t exec_end_instant;
     uint64_t exec_cycles;
     uint32_t queue_size_at_pop;
 
@@ -138,11 +140,11 @@ struct mir_twc_t* mir_twc_create();
 
 /*LIBINT*/ void mir_task_wait();
 
-void mir_task_statistics_write_header_to_file(FILE* file);
+void mir_task_list_write_header_to_file(FILE* file);
 
-void mir_task_statistics_write_to_file(struct mir_task_statistics_t* statistics, FILE* file);
+void mir_task_list_write_to_file(struct mir_task_list_t* list, FILE* file);
 
-void mir_task_statistics_destroy(struct mir_task_statistics_t* statistics);
+void mir_task_list_destroy(struct mir_task_list_t* list);
 
 END_C_DECLS
 #endif

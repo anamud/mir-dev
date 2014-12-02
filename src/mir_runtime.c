@@ -413,13 +413,13 @@ void mir_destroy()
             MIR_ABORT(MIR_ERROR_STR "Cannot open task statistics file %s for writing!\n", MIR_TASK_STATS_FILE_NAME);
 
         // Write header 
-        mir_task_statistics_write_header_to_file(task_statistics_file);
+        mir_task_list_write_header_to_file(task_statistics_file);
         // Write per-worker task statistics to file
         for(int i=0; i<runtime->num_workers; i++) 
         {
-            struct mir_task_statistics_t* statistics = runtime->workers[i].task_statistics;
-            mir_task_statistics_write_to_file(statistics, task_statistics_file);
-            mir_task_statistics_destroy(statistics);
+            struct mir_task_list_t* list = runtime->workers[i].task_list;
+            mir_task_list_write_to_file(list, task_statistics_file);
+            mir_task_list_destroy(list);
         }
 
         // Close task_statistics file

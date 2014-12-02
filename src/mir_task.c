@@ -306,11 +306,18 @@ void mir_task_execute(struct mir_task_t* task)
     task->core_id = worker->core_id;
 
     // Current task timing
+    task->exec_end_instant = mir_get_cycles() - runtime->init_time;
     worker->current_task->exec_cycles += (mir_get_cycles() - worker->current_task->exec_resume_instant);
 
-    // Collect task statistics
+    // Record sync point 
+    // NOTE: All sibling tasks will have the same sync point 
+    task->sync_pass = 0;
+    if(task->twc)
+        task->sync_pass = task->twc->num_passes;
+
+    // Add to task list
     if(runtime->enable_task_stats == 1)
-        mir_worker_update_task_statistics(worker, task);
+        mir_worker_update_task_list(worker, task);
 
     // Restore task context of worker
     worker->current_task = temp;
@@ -340,7 +347,7 @@ void mir_task_execute(struct mir_task_t* task)
     __sync_synchronize();
 
     // FIXME Destroy task !
-    // NOTE: Destroying task upsets task statistics structure
+    // NOTE: Destroying task upsets task list structure
 }/*}}}*/
 
 #ifdef MIR_MEM_POL_ENABLE
@@ -462,14 +469,14 @@ void mir_task_wait()
     return;
 }/*}}}*/
 
-void mir_task_statistics_write_header_to_file(FILE* file)
+void mir_task_list_write_header_to_file(FILE* file)
 {/*{{{*/
-    fprintf(file, "task,parent,joins_at,core_id,child_number,num_children,exec_cycles,inst_parallelism\n");
+    fprintf(file, "task,parent,joins_at,core_id,child_number,num_children,exec_cycles,queue_size,exec_end\n");
 }/*}}}*/
 
-void mir_task_statistics_write_to_file(struct mir_task_statistics_t* statistics, FILE* file)
+void mir_task_list_write_to_file(struct mir_task_list_t* list, FILE* file)
 {/*{{{*/
-    struct mir_task_statistics_t* temp = statistics;
+    struct mir_task_list_t* temp = list;
     while(temp != NULL)
     {
         mir_id_t task_parent;
@@ -477,27 +484,28 @@ void mir_task_statistics_write_to_file(struct mir_task_statistics_t* statistics,
         if(temp->task->parent)
             task_parent.uid = temp->task->parent->id.uid;
 
-        fprintf(file, "%" MIR_FORMSPEC_UL ",%" MIR_FORMSPEC_UL ",%lu,%u,%u,%u,%" MIR_FORMSPEC_UL ",%u\n", 
+        fprintf(file, "%" MIR_FORMSPEC_UL ",%" MIR_FORMSPEC_UL ",%lu,%u,%u,%u,%" MIR_FORMSPEC_UL ",%u,%" MIR_FORMSPEC_UL "\n", 
                 temp->task->id.uid, 
                 task_parent.uid,
-                temp->pass_count,
+                temp->task->sync_pass,
                 temp->task->core_id,
                 temp->task->child_number,
                 temp->task->num_children,
                 temp->task->exec_cycles,
-                temp->task->queue_size_at_pop);
+                temp->task->queue_size_at_pop,
+                temp->task->exec_end_instant);
 
         temp = temp->next;
     }
 }/*}}}*/
 
-void mir_task_statistics_destroy(struct mir_task_statistics_t* statistics)
+void mir_task_list_destroy(struct mir_task_list_t* list)
 {/*{{{*/
-    struct mir_task_statistics_t* temp = statistics;
+    struct mir_task_list_t* temp = list;
     while(temp != NULL)
     {
-        struct mir_task_statistics_t* next = temp->next;
-        mir_free_int(temp, sizeof(struct mir_task_statistics_t));
+        struct mir_task_list_t* next = temp->next;
+        mir_free_int(temp, sizeof(struct mir_task_list_t));
         temp = next;
         // FIXME: Can also free the task and wait counter here!
     }

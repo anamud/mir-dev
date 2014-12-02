@@ -430,14 +430,13 @@ if("ins_count" %in% colnames(tg.data) && !plot_tree)
       lpl <- -as.numeric(sp)
     } else {    
       lntg <- length(V(tg))
-      pb <- txtProgressBar(min = 0, max = lntg+4, style = 3)
+      pb <- txtProgressBar(min = 0, max = lntg, style = 3)
       ctr <- 0
       # Topological sort
       tsg <- topological.sort(tg)
       # Set root path attributes
       V(tg)[tsg[1]]$rdist <- 0
       V(tg)[tsg[1]]$rpath <- tsg[1]
-      if(verbo) {ctr <- ctr + 1; setTxtProgressBar(pb, ctr);}
       # Get longest paths from root
       for(node in tsg[-1])
       {
@@ -452,7 +451,6 @@ if("ins_count" %in% colnames(tg.data) && !plot_tree)
       }
       ## Longest path is the largest root distance
       lpl <- max(V(tg)$rdist)
-      if(verbo) {ctr <- ctr + 1; setTxtProgressBar(pb, ctr);}
       # Enumerate longest path
       lpm <- unlist(V(tg)[match(lpl,V(tg)$rdist)]$rpath)
       V(tg)$on_crit_path <- 0

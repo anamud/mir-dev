@@ -52,7 +52,7 @@ struct mir_worker_t
     //For dedicated tasks
     struct mir_queue_t* private_queue;
     // For task statistics 
-    struct mir_task_statistics_t* task_statistics;
+    struct mir_task_list_t* task_list;
 };
 
 void mir_worker_update_bias(struct mir_worker_t* worker);
@@ -77,7 +77,7 @@ void mir_worker_statistics_write_header_to_file(FILE* file);
 
 void mir_worker_statistics_write_to_file(const struct mir_worker_statistics_t* statistics, FILE* file);
 
-void mir_worker_update_task_statistics(struct mir_worker_t* worker, struct mir_task_t* task);
+void mir_worker_update_task_list(struct mir_worker_t* worker, struct mir_task_t* task);
 
 void mir_worker_push(struct mir_worker_t* worker, struct mir_task_t* task);
 

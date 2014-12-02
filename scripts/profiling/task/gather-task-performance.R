@@ -41,7 +41,7 @@ toc("Read data time")
 
 tic(type="elapsed")
 # Create combined task performance table
-comb.tp <- subset(ts.data, select=c(task, parent, joins_at, child_number, num_children, core_id, exec_cycles, inst_parallelism))
+comb.tp <- subset(ts.data, select=c(task, parent, joins_at, child_number, num_children, core_id, exec_cycles, queue_size, exec_end))
 comb.tp <- merge(comb.tp, ip.data, by.x="task", by.y="task", all=T)
 row.has.na <- apply(comb.tp, 1, function(x){any(is.na(x))})
 sum.row.has.na <- sum(row.has.na)

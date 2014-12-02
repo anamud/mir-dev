@@ -173,7 +173,7 @@ void mir_worker_local_init(struct mir_worker_t* worker)
     worker->current_task = NULL;
 
     // For task statistics collection 
-    worker->task_statistics = NULL;
+    worker->task_list = NULL;
 
     // Create private task queue
     worker->private_queue = mir_queue_create(runtime->sched_pol->queue_capacity);
@@ -408,19 +408,15 @@ void mir_worker_statistics_write_to_file(const struct mir_worker_statistics_t* s
     }
 }/*}}}*/
 
-void mir_worker_update_task_statistics(struct mir_worker_t* worker, struct mir_task_t* task)
+void mir_worker_update_task_list(struct mir_worker_t* worker, struct mir_task_t* task)
 {/*{{{*/
     MIR_ASSERT(worker != NULL);
     MIR_ASSERT(task != NULL);
 
-    struct mir_task_statistics_t* statistics = mir_malloc_int(sizeof(struct mir_task_statistics_t));
-    MIR_ASSERT(statistics != NULL);
-    statistics->task = task;
-    if(task->twc)
-        statistics->pass_count = task->twc->num_passes;
-    else
-        statistics->pass_count = 0;
-    statistics->next = worker->task_statistics;
-    worker->task_statistics = statistics;
+    struct mir_task_list_t* list = mir_malloc_int(sizeof(struct mir_task_list_t));
+    MIR_ASSERT(list != NULL);
+    list->task = task;
+    list->next = worker->task_list;
+    worker->task_list = list;
 }/*}}}*/
 
