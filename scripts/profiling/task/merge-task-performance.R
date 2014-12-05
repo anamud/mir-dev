@@ -90,7 +90,6 @@ if(length(common) > 0)
         quit("no", 1)
     }
 
-    browser()
     dmerge <- merge(dleft, dright, by=parsed$key, all=T, suffixes=c(".left", ".right"))
 } else {
     dmerge <- merge(dleft, dright, by=parsed$key, all=T, suffixes=c(".left", ".right"))

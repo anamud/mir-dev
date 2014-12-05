@@ -25,13 +25,13 @@ toc <- function(message)
   invisible(toc)
 }
 
+# Read data
 tic(type="elapsed")
-### Read data
 print("Processing accumulated events")
 args <- commandArgs(TRUE)
-if(length(args) == 0 || length(args) == 2 || length(args) > 3) 
+if(length(args) != 1) 
 {
-  print("Arguments missing! Please provide accumulated events file (arg1). Also provide optional arguments - the task perf table (arg2) and the field name (arg3) in the task perf table with which event summary should be merged")
+  print("Error: Invaild arguments. Please provide accumulated events file (arg1).")
   quit("no", 1)
 }
 dat_file <- args[1]
@@ -39,9 +39,8 @@ dat_raw <- read.csv(dat_file, sep=':', na.strings=c(""))
 
 toc("Read data")
 
-tic(type="elapsed")
-
 # Read events and subset
+tic(type="elapsed")
 dat_raw <- dat_raw[complete.cases(dat_raw),]
 setnames(dat_raw, c("type","number","instant","count","value","meta"))
 num_events <- dat_raw[1,]$count 
@@ -62,11 +61,10 @@ dat_more_proper <- as.data.frame(apply(dat_proper[,event_names], 2, function(x) 
 dat_most_proper <- data.frame(dat_proper[,c("id")], dat_more_proper)
 setnames(dat_most_proper,c("id", event_names))
 dat_most_proper <- as.data.frame(apply(dat_most_proper, 2, function(x) as.numeric(as.character(x))))
-
 toc("Tabulating")
 
-tic(type="elapsed")
 # Summarize by id
+tic(type="elapsed")
 dat_table <- data.table(dat_most_proper)
 setkey(dat_table, id)
 dat_table_sd <- dat_table[, lapply(.SD, sd, na.rm=TRUE), by=id, .SDcols=event_names] 
@@ -79,30 +77,17 @@ dat_table_merged <- merge(dat_table_sd, dat_table_mean, by="id")
 dat_table_merged <- merge(dat_table_merged, dat_table_sum, by="id")
 toc("Summarizing")
 
-tic(type="elapsed")
 # Write out
+tic(type="elapsed")
 out_file <- paste(sub("^([^.]*).*", "\\1", dat_file), ".table", sep="")
 print(paste("Writing tabulated info to file", out_file))
+setnames(dat_most_proper, "id", "task")
 write.table(dat_most_proper, out_file, sep=",", row.names=F)
 out_file <- paste(sub("^([^.]*).*", "\\1", dat_file), ".summary", sep="")
 print(paste("Writing summary info to file", out_file))
+setnames(dat_table_merged, "id", "task")
 write.table(dat_table_merged, out_file, sep=",", row.names=F)
 toc("Writing out")
-
-if(length(args) == 3) 
-{
-    tic(type="elapsed")
-    # Merge with task perf table
-    tp_file <- args[2]
-    tp_field <- args[3]
-    tp <- read.csv(tp_file)
-    tp_merged <- merge(tp, as.data.frame(dat_table_merged), by.y="id", by.x=tp_field)
-    # FIXME: Make usage of underscore and hifen in names consistent 
-    out_file <- paste(sub("^([^.]*).*", "\\1", tp_file), ".with-events", sep="")
-    print(paste("Writing event-merged task graph to file", out_file))
-    write.table(tp_merged, out_file, sep=",", row.names=F)
-    toc("Merging events with task performance")
-}
 
 # Warn
 w <- warnings()

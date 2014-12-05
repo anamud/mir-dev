@@ -64,8 +64,8 @@ events_comb <- merge(events_comb, events_mean, by="V2", all=T)
 events_comb <- merge(events_comb, events_sd, by="V2", all=T)
 
 # Write out
-cat("Writing event counts file:", "event-counts-all.txt", "\n")
-sink("event-counts-all.txt")
+cat("Writing event summary:", "event-summary-all.txt", "\n")
+sink("event-summary-al.txt")
 print(events_comb)
 sink()
 
@@ -88,8 +88,8 @@ for(etype in etypes)
   sum.df <- as.data.frame(sapply(df, cust_summary))
   rownames(sum.df) <- cust_summary(0,T)
 
-  fi <- paste("event-counts-",etype,".txt",sep="")
-  cat("Writing individual event counts file:", fi, "\n")
+  fi <- paste("event-summary-",etype,".txt",sep="")
+  cat("Summarizing event", etype, "in file:", fi, "\n")
   sink(fi)
   print(df)
   print(sum.df)
