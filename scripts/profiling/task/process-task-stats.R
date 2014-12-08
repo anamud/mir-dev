@@ -1,6 +1,6 @@
 # Libary
-#require(dplyr, quietly=TRUE)
 suppressMessages(library(dplyr))
+require(optparse, quietly=TRUE)
 
 # Timing functions
 tic <- function(gcFirst = TRUE, type=c("elapsed", "user.self", "sys.self"))
@@ -22,13 +22,23 @@ toc <- function(message)
   invisible(toc)
 }
 
-# Constants
-verbo <- T
+# Read arguments
+option_list <- list(
+make_option(c("--noLineage"), action="store_true", default=TRUE, help="Skip task lineage calculation [default]"),
+make_option(c("-d","--data"), help = "Task stats file", metavar="FILE"),
+make_option(c("-v", "--verbose"), action="store_true", default=TRUE, help="Print output [default]"),
+make_option(c("-q", "--quiet"), action="store_false", dest="verbose", help="Print little output"))
+parsed <- parse_args(OptionParser(option_list = option_list), args = commandArgs(TRUE))
+if(!exists("data", where=parsed))
+{
+    print("Error: Invalid arguments. Check help (-h)")
+    quit("no", 1)
+}
+ts.file <- parsed$data
+verbo <- parsed$verbose
+no_lineage <- parsed$noLineage
 
 # Read data
-args <- commandArgs(TRUE)
-if(length(args) != 1) quit("no", 1)
-ts.file <- args[1]
 if(verbo) print(paste("Reading file", ts.file))
 ts.data <- read.csv(ts.file, header=TRUE)
 
@@ -50,22 +60,25 @@ sink()
 if(verbo) toc("Processing")
 
 # Calculate lineage
-if(verbo) tic(type="elapsed")
-ts.data.sub <- subset(ts.data, select=c("task", "parent"))
-ts.data.sub <- ts.data.sub[order(ts.data.sub$task),]
-ts.data.sub["lineage"] <- "NA"
-for(task in ts.data.sub$task)
+if(!no_lineage)
 {
-    parent <- ts.data.sub$parent[ts.data.sub$task == task]
-    if(parent != 0)
-        ts.data.sub$lineage[ts.data.sub$task == task] <- paste(ts.data.sub$lineage[ts.data.sub$task == parent], as.character(task), sep="-")
-    else
-        ts.data.sub$lineage[ts.data.sub$task == task] <- paste("0", as.character(task), sep="-")
+    if(verbo) tic(type="elapsed")
+    ts.data.sub <- subset(ts.data, select=c("task", "parent"))
+    ts.data.sub <- ts.data.sub[order(ts.data.sub$task),]
+    ts.data.sub["lineage"] <- "NA"
+    for(task in ts.data.sub$task)
+    {
+        parent <- ts.data.sub$parent[ts.data.sub$task == task]
+        if(parent != 0)
+            ts.data.sub$lineage[ts.data.sub$task == task] <- paste(ts.data.sub$lineage[ts.data.sub$task == parent], as.character(task), sep="-")
+        else
+            ts.data.sub$lineage[ts.data.sub$task == task] <- paste("0", as.character(task), sep="-")
+    }
+    out.file <- paste(gsub(". $", "", ts.file), ".lineage", sep="")
+    if(verbo) print(paste("Writing file", out.file))
+    write.csv(ts.data.sub, out.file, row.names=F)
+    if(verbo) toc("Lineage calculation")
 }
-out.file <- paste(gsub(". $", "", ts.file), ".lineage", sep="")
-if(verbo) print(paste("Writing file", out.file))
-write.csv(ts.data.sub, out.file, row.names=F)
-if(verbo) toc("Lineage calculation")
 
 # Summarize
 if(verbo) tic(type="elapsed")

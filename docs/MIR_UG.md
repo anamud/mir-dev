@@ -26,7 +26,7 @@ Enabling extended features such as profiling, locality-aware scheduling and data
 * GCC with OpenMP support (for linking task-based OpenMP programs)
 * PAPI (for reading hardware performance counters during profiling)
 * Paraver (for visualizing thread execution traces)
-* Python 2.X and 3.X (for executing profiling scripts)
+* Python 2.X and 3.X (for executing various scripts)
 * Intel Pin sources (for profiling instructions executed by tasks)
 * R  (for executing profiling scripts)
 * R packages:
