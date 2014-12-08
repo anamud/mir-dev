@@ -45,7 +45,7 @@ for(task in max.exec.end$task)
 out.file <- paste(gsub(". $", "", ts.file), ".processed", sep="")
 if(verbo) print(paste("Writing file", out.file))
 sink(out.file)
-print(ts.data)
+write.csv(ts.data, out.file, row.names=F)
 sink()
 if(verbo) toc("Processing")
 
@@ -80,6 +80,18 @@ join.freq <- ts.data %>% group_by(parent, joins_at) %>% summarise(count = n())
 cat(summary(join.freq$count))
 cat("\n")
 sink()
+
+# Plot useful summaries
+out.file <- "task-execution-load-balance.pdf"
+if(verbo) print(paste("Writing file", out.file))
+pdf(file=out.file)
+barplot(as.table(tapply(ts.data$exec_cycles, ts.data$core_id, FUN= function(x) {sum(as.numeric(x))} )), log="y", xlab="core", ylab="task execution [log-cycles]")
+garbage <- dev.off()
+out.file <- "task-count-load-balance.pdf"
+if(verbo) print(paste("Writing file", out.file))
+pdf(file=out.file)
+barplot(as.table(tapply(ts.data$task, ts.data$core_id, FUN=length)), xlab="core", ylab="tasks")
+garbage <- dev.off()
 if(verbo) toc("Summarizing")
 
 # Warn

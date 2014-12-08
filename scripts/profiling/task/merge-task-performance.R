@@ -28,7 +28,7 @@ make_option(c("-v", "--verbose"), action="store_true", default=TRUE, help="Print
 make_option(c("-q", "--quiet"), action="store_false", dest="verbose", help="Print little output"),
 make_option(c("-l","--left"), help = "Table 1", metavar="FILE"),
 make_option(c("-r","--right"), help = "Table 2", metavar="FILE"),
-make_option(c("-o","--out"), default="merged", help = "Output file name [default \"%default\"]", metavar="STRING"),
+make_option(c("-o","--out"), default="merged-task-perf", help = "Output file name [default \"%default\"]", metavar="STRING"),
 make_option(c("-k","--key"), help = "Column used for merging"))
 parsed <- parse_args(OptionParser(option_list = option_list), args = commandArgs(TRUE))
 if(!exists("left", where=parsed) | !exists("right", where=parsed) | !exists("key", where=parsed))

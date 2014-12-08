@@ -37,7 +37,7 @@ toc <- function(message)
   invisible(toc)
 }
 
-#Parse args
+# Parse args
 option_list <- list(
 make_option(c("--noCPE"), action="store_true", default=FALSE, help="Skip critical path enumeration. Calculate critical path length only."),
 make_option(c("-v", "--verbose"), action="store_true", default=TRUE, help="Print output [default]"),
@@ -63,6 +63,12 @@ cp_len_only <- parsed$noCPE
 if(verbo) tic(type="elapsed")
 tg.data <- read.csv(tg.file, header=TRUE)
 if(verbo) toc("Read data")
+
+# Remove non-sense data
+if(verbo) tic(type="elapsed")
+# Remove background task 
+tg.data <- tg.data[!is.na(tg.data$parent),]
+if(verbo) toc("Removing non-sense data")
 
 # Set colors
 if(verbo) tic(type="elapsed")
