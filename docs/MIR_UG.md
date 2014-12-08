@@ -383,7 +383,7 @@ $ Rscript ${MIR_ROOT}/scripts/profiling/task/plot-task-graph.R -d mir-task-stats
 
 The `mir-task-stats` can also be processed for additional information such as number of tasks and task lineage (UID for tasks).
 ``` 
-$ Rscript ${MIR_ROOT}/scripts/profiling/task/process-task-stats.R mir-task-stats
+$ Rscript ${MIR_ROOT}/scripts/profiling/task/process-task-stats.R -d mir-task-stats
 $ cat mir-task-stats.info
 num_tasks: 15
 joins_at_summary: 1 2 2 1.875 2 2
@@ -578,7 +578,7 @@ MIR_CONF="-g" ./fib-prof 10 4
 
 * Summarize task statistics.
 ``` 
-$ Rscript ${MIR_ROOT}/scripts/profiling/task/process-task-stats.R mir-task-stats
+$ Rscript ${MIR_ROOT}/scripts/profiling/task/process-task-stats.R -d mir-task-stats
 $ cat mir-task-stats.info
 num_tasks: 15
 joins_at_summary: 1 2 2 1.875 2 2

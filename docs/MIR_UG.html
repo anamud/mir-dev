@@ -78,7 +78,7 @@
     Paraver (for visualizing thread execution traces)
    </li>
    <li>
-    Python 2.X and 3.X (for executing profiling scripts)
+    Python 2.X and 3.X (for executing various scripts)
    </li>
    <li>
     Intel Pin sources (for profiling instructions executed by tasks)
@@ -787,7 +787,7 @@ $ Rscript ${MIR_ROOT}/scripts/profiling/task/plot-task-graph.R -d mir-task-stats
    </code>
    can also be processed for additional information such as number of tasks and task lineage (UID for tasks).
   </p>
-  <pre><code>$ Rscript ${MIR_ROOT}/scripts/profiling/task/process-task-stats.R mir-task-stats
+  <pre><code>$ Rscript ${MIR_ROOT}/scripts/profiling/task/process-task-stats.R -d mir-task-stats
 $ cat mir-task-stats.info
 num_tasks: 15
 joins_at_summary: 1 2 2 1.875 2 2
@@ -1286,7 +1286,7 @@ task,ins_count,[create],[wait]
     Summarize task statistics.
    </li>
   </ul>
-  <pre><code>$ Rscript ${MIR_ROOT}/scripts/profiling/task/process-task-stats.R mir-task-stats
+  <pre><code>$ Rscript ${MIR_ROOT}/scripts/profiling/task/process-task-stats.R -d mir-task-stats
 $ cat mir-task-stats.info
 num_tasks: 15
 joins_at_summary: 1 2 2 1.875 2 2
