@@ -3,9 +3,7 @@
 ### Read data
 args <- commandArgs(TRUE)
 if(length(args) != 2) quit("no", 1)
-cat("Reading states file:", args[1], "\n")
 states <- read.csv(args[1], header=T)
-cat("Reading tasks file:", args[2], "\n")
 tasks <- read.csv(args[2], header=T)
 
 ### Custom summary function
@@ -48,8 +46,9 @@ sum.df <- as.data.frame(sapply(states.tasks.processed, cust_summary))
 rownames(sum.df) <- cust_summary(0,T)
 
 ### Print summary to file
-out.file <- paste(gsub(". $", "", args[1]), ".info", sep="")
-cat("Writing summary file:", out.file, "\n")
+#out.file <- paste(gsub(". $", "", args[1]), ".info", sep="")
+out.file <- "states.info"
+cat("Writing state summary in file:", out.file, "\n")
 sink(out.file)
 print(states.tasks.processed)
 print(sum.df)

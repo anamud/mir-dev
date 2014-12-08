@@ -82,7 +82,7 @@ struct mir_recorder_t* mir_recorder_create(uint16_t id)
 
     // Open buffer file
     char buffer_file_name[MIR_LONG_NAME_LEN];
-    sprintf(buffer_file_name, "%s-prv-%d.rec", MIR_RECORDER_FILE_NAME_SUFFIX, id);
+    sprintf(buffer_file_name, "%s-trace-%d.rec", MIR_RECORDER_FILE_NAME_PREFIX, id);
     recorder->buffer_file = fopen(buffer_file_name, "w");
     MIR_ASSERT(recorder->buffer_file != NULL);
 
@@ -172,7 +172,7 @@ void mir_recorder_destroy(struct mir_recorder_t* recorder)
 
     // Write state time to file
     char state_time_filename[MIR_LONG_NAME_LEN];
-    sprintf(state_time_filename, "%s-state-time-%d.rec", MIR_RECORDER_FILE_NAME_SUFFIX, recorder->id);
+    sprintf(state_time_filename, "%s-state-time-%d.rec", MIR_RECORDER_FILE_NAME_PREFIX, recorder->id);
 
     // Open state_time_file
     FILE* state_time_file = fopen(state_time_filename, "w");
@@ -203,7 +203,7 @@ void mir_recorder_destroy(struct mir_recorder_t* recorder)
     {
         // Make config file name
         char config_filename[MIR_LONG_NAME_LEN];
-        sprintf(config_filename, "%s-prv-config.rec", MIR_RECORDER_FILE_NAME_SUFFIX);
+        sprintf(config_filename, "%s-trace-config.rec", MIR_RECORDER_FILE_NAME_PREFIX);
 
         // Open config file
         FILE* config_file = fopen(config_filename, "w");

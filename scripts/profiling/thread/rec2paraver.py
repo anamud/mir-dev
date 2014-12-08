@@ -21,32 +21,14 @@ creation_time = 0
 destruction_time = 0
 num_workers = 0
 unknown_happenings_found = False
-paraver_file_suffix = ''
 
 def parse_worker_files():
-    global num_workers, creation_time, destruction_time, unknown_happenings_found, paraver_file_suffix
+    global num_workers, creation_time, destruction_time, unknown_happenings_found
 
     # Open the prv file and write its header
     # For now, the header is hardcoded with single node and as many processors as workers
-    if(paraver_file_suffix != ''):
-        prv_name = paraver_file_suffix + '-paraver.prv'
-    else:
-        prv_name = str(creation_time) + '-paraver.prv'
+    prv_name = 'mir-recorder-trace.prv'
     prv = open(prv_name, 'w')
-
-    ## Open the perfctrinfo file pci
-    #if(paraver_file_suffix != ''):
-        #pci_name = paraver_file_suffix + '.perfctrinfo'
-    #else:
-        #pci_name = str(creation_time) + '.perfctrinfo'
-    #pci = open(pci_name, 'w')
-
-    ## Open the task meta info file tmi
-    #if(paraver_file_suffix != ''):
-        #tmi_name = paraver_file_suffix + '.taskmetainfo'
-    #else:
-        #tmi_name = str(creation_time) + '.taskmetainfo'
-    #tmi = open(tmi_name, 'w')
 
     # Paraver header data
     write_date = strftime("%d/%m/%Y at %H:%M", gmtime())
@@ -59,7 +41,7 @@ def parse_worker_files():
     for i in range(0, num_workers):
 
         # Read worker record
-        worker_file_name = str(creation_time) + '-recorder-' + str(i) + '.rec'
+        worker_file_name = 'mir-recorder-trace-' + str(i) + '.rec'
         worker_file = open(worker_file_name, 'r')
         lines = worker_file.readlines()
         worker_file.close()
@@ -72,10 +54,7 @@ def parse_worker_files():
             event_dict = {}
 
             # We can now write the paraver pcf file
-            if(paraver_file_suffix != ''):
-                pcf_name = paraver_file_suffix + '-paraver.pcf'
-            else:
-                pcf_name = str(creation_time) + '-paraver.pcf'
+            pcf_name = 'mir-recorder-trace.pcf'
             pcf = open(pcf_name, 'w')
 
             # pcf state colors
@@ -137,8 +116,6 @@ def parse_worker_files():
                     # Add paraver prv file event line
                     event_string = '2:%d:1:1:%d:%d:%d:%s\n' %(i+1,i+1,int(happening[2])-creation_time, event_dict[ed_split[0]], ed_split[1]) 
                     prv.write(event_string)
-                    #if(ed_split[0] == 'PAPI_RES_STL'):
-                        #pci.write('%s\t' %(ed_split[1]) )
 
             else:
                 unknown_happenings_found = True
@@ -163,31 +140,15 @@ def parse_worker_files():
                 if(cbtime < etime and cpid == sid):
                     state_string = '1:%d:1:1:%d:%d:%d:%d\n' %(i+1,i+1,btime,cbtime,typ) 
                     prv.write(state_string)
-                    #if(len(state) == 6):
-                        ## Write tmi string
-                        #tmi_str = 'worker=%d:%d:%d:%d:%s\n' %(i+1, btime, cbtime, typ, state[5])
-                        #tmi.write(tmi_str)
                     btime = cetime 
                 else:
                     break
             # Write the last chunk
             state_string = '1:%d:1:1:%d:%d:%d:%d\n' %(i+1,i+1,btime,etime,typ) 
             prv.write(state_string)
-            #if(len(state) == 6):
-                ## Write tmi string
-                #tmi_str = 'worker=%d:%d:%d:%d:%s\n' %(i+1, btime, etime, typ, state[5])
-                #tmi.write(tmi_str)
     
     # Finally close the paraver prv file
     prv.close()
-
-    ## Finally close the pci file
-    #pci.write('\n')
-    #pci.close()
-
-    ## Finally close the tmi file
-    #tmi.write('\n')
-    #tmi.close()
 
 def parse_input_file(file_name):
     global num_workers, creation_time, destruction_time
@@ -206,31 +167,20 @@ def print_stats():
     global num_workers, creation_time, destruction_time 
     print 'creation_time = %d, destruction_time = %d, num_worker = %d' %(creation_time, destruction_time, num_workers)
 
-def set_paraver_file_suffix(suffix):
-    global paraver_file_suffix
-    paraver_file_suffix = suffix
-
 def main():
-    p = optparse.OptionParser(description='Converts mir recorder files to paraver format (vite). Takes appconfig.rec file as input. Optional args: paraver_name_suffix, no print', prog='mirtoparaver', version='mirtoparaver v0.1', usage='mirtoparaver *.appconfig.rec')
+    p = optparse.OptionParser(description='Converts recorder files to paraver format. Takes *-recorder-prv-config.rec file as input. Optional args: quiet', prog='mirtoparaver', version='mirtoparaver v0.2', usage='mirtoparaver *-prv-config.rec [quiet]')
     options, arguments = p.parse_args()
     if len(arguments) == 1:
         print 'Parsing file: ' + arguments[0]
-        set_paraver_file_suffix('');
         parse_input_file(arguments[0])
         parse_worker_files()
         print_stats()
     elif len(arguments) == 2:
-        print 'Parsing file: ' + arguments[0]
-        set_paraver_file_suffix(arguments[1]);
-        parse_input_file(arguments[0])
-        parse_worker_files()
-        print_stats()
-    elif len(arguments) == 3:
-        #print 'Parsing file: ' + arguments[0]
-        set_paraver_file_suffix(arguments[1]);
-        parse_input_file(arguments[0])
-        parse_worker_files()
-        #print_stats()
+        if(arguments[1] == "quiet"):
+            parse_input_file(arguments[0])
+            parse_worker_files()
+        else:
+            p.print_help()
     else:
         p.print_help()
 

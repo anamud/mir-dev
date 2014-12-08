@@ -33,7 +33,7 @@ Enabling extended features such as profiling, locality-aware scheduling and data
     * optparse (for parsing data)
     * igraph (for task graph processing)
     * RColorBrewer (for colors)
-    * gdata, plyr (for data structure transformations)
+    * gdata, plyr, dplyr, data.table (for data structure transformations)
 * Graphviz (for task graph plotting)
 
 ## Source Structure
@@ -46,7 +46,7 @@ The source repository is structured intuitively. Files and directories have purp
     |__scheduling : scheduling policies
     |__arch : architecture specific sources 
 |__scripts 
-    |__donkeys : helper scripts, dirty hacks
+    |__helpers : helpful scripts, dirty hacks
     |__profiling : all things related to profiling
         |__task	
         |__thread
@@ -54,7 +54,7 @@ The source repository is structured intuitively. Files and directories have purp
     |__common : build scripts
     |__native : native interface programs
         |__fib
-            |__donkeys : testing scripts
+            |__helpers : testing scripts
 	|__bots : BOTS port
     |__omp : OpenMP interface programs
         |__fib
@@ -255,6 +255,19 @@ MIR has several runtime configurable options which can be set using the environm
 $ cd $MIR_ROOT/test/fib
 $ scons 
 $ MIR_CONF="-h" ./fib-opt 3
+MIR_INFO: Valid options in MIR_CONF environment variable ...
+-h print this help message
+-w=<int> number of workers
+-s=<str> task scheduling policy. Choose among central, central-stack, ws, ws-de and numa.
+-r enable worker recorder
+-x=<int> task inlining limit based on num tasks per worker
+-i collect worker statistics
+-l=<int> worker stack size in MB
+-q=<int> task queue capacity
+-m=<str> memory allocation policy. Choose among coarse, fine and system.
+-y=<csv> schedule policy specific parameters. Policy numa: data size in bytes below which task is dealt to worker's private queue.
+-g collect task statistics
+-p enable handshake with Outline Function Profiler [Note: Supported only for a single worker!]
 ```
 
 ### Binding workers to cores
@@ -299,25 +312,24 @@ $ cat mir-worker-stats
 ```
 ==TODO:== Explain file contents
 
-Enable the `-r` flag to get detailed per-thread state and event information in a set of `mir-recorder-prv-*.rec` files. Each file represents a worker thread. The files can be inspected individually or combined and visualized using Paraver.
+MIR contains a module called the `recorder` which produces detailed execution traces. Use the `-r` flag to enable the recorder and get detailed state and event traces in a set of `mir-recorder-trace-*.rec` files. Each file represents a worker thread. The files can be inspected individually or combined and visualized using Paraver.
 ```
 $ MIR_CONF="-r" ./fib-opt
-$ $MIR_ROOT/scripts/profiling/thread/mirtoparaver.py \
-mir-recorder-prv-config.rec 
-$ wxparaver mir-recorder.prv
+$ $MIR_ROOT/scripts/profiling/thread/rec2paraver.py \
+mir-recorder-trace-config.rec 
+$ wxparaver mir-recorder-trace.prv
 ```
 
-A set of `mir-recorder-state-time-*.rec` files are also created when `-r` is enabled. The files contain thread state duration information which can be accumulated for analysis without Paraver.
+A set of `mir-recorder-state-time-*.rec` files are also created when `-r` is set. These files contain thread state duration information which can be accumulated for analysis without Paraver.
 ```
-$ $MIR_ROOT/scripts/profiling/thread/get-state-stats.sh \
+$ $MIR_ROOT/scripts/profiling/thread/get-states.sh \
 mir-recorder-state-time
-$ cat state-file-acc.info
+$ cat accumulated-state-file.info
 ```
 
 ### Enabling hardware performance counters
 
 MIR can read hardware performance counters during thread events. This process is not fully automated and needs a little bit of hands-on work from the user.  
-
 * Install PAPI.  
 
 * Set the `PAPI_ROOT` environment variable 
@@ -338,7 +350,7 @@ $grep -i HW_PERF $MIR_ROOT/src/mir_defines.h
 
 * Enable PAPI hardware performance counters of interest in `MIR_ROOT/src/mir_recorder.c`.  
 ```
-$ grep -i "{\"PAPI_" $MIR_ROOT/src/mir_recorder.c
+$ grep -i "{PAPI_" $MIR_ROOT/src/mir_recorder.c
 {"PAPI_TOT_INS", 0x0},
 {"PAPI_TOT_CYC", 0x0},
 /*{"PAPI_L2_DCM", 0x0},*/
@@ -352,10 +364,10 @@ $ grep -i "{\"PAPI_" $MIR_ROOT/src/mir_recorder.c
 $ scons -c && scons
 ```
 
-Performance counter readings will be now be added to `mir-recorder-prv-*.rec` files produced during thread-based profiling. The counter readings can either be viewed on Paraver or accumulated for analysis outside Paraver.
+Performance counter readings will be now be added to `mir-recorder-trace-*.rec` files produced by the recorder during thread-based profiling. The counter readings can either be viewed on Paraver or accumulated for analysis outside Paraver.
 ```
-$ $MIR_ROOT/scripts/profiling/thread/get-event-counts.sh mir-recorder-prv
-$ cat event-counts-*.txt
+$ $MIR_ROOT/scripts/profiling/thread/get-events.sh mir-recorder-trace.prv
+$ cat event-summary-*.txt
 ```
 
 ## Task-based Profiling
@@ -365,9 +377,23 @@ Task are first-class citizens in task-based profiling.
 Enable the `-g` flag to collect task statistics in a CSV file called `mir-task-stats`. Inspect the file manually or plot and visualize the fork-join task graph.
 ```
 $ MIR_CONF="-g" ./fib-opt
-$ Rscript ${MIR_ROOT}/scripts/profiling/task/fork-join-graph-plot.R mir-task-stats color
+$ Rscript ${MIR_ROOT}/scripts/profiling/task/plot-task-graph.R -d mir-task-stats -c color
 ```
 ==TODO:== Explain file contents.
+
+The `mir-task-stats` can also be processed for additional information such as number of tasks and task lineage (UID for tasks).
+``` 
+$ Rscript ${MIR_ROOT}/scripts/profiling/task/process-task-stats.R mir-task-stats
+$ cat mir-task-stats.info
+num_tasks: 15
+joins_at_summary: 1 2 2 1.875 2 2
+$ cat mir-task-stats.lineage
+"task","parent","lineage"
+1,0,"0-1"
+2,1,"0-1-2"
+3,1,"0-1-3"
+...
+```
 
 ### Instruction-level task profiling
 
@@ -456,22 +482,22 @@ MIR has a nice graph plotter which can transform task-based profiling data into 
 
 * Plot the fork-join task graph using task statistics from the runtime system.
 ```
-$ Rscript ${MIR_ROOT}/scripts/profiling/task/task-graph-plot.R -d mir-task-stats -p color
+$ Rscript ${MIR_ROOT}/scripts/profiling/task/plot-task-graph.R -d mir-task-stats -p color
 ```
 
 > Tip: 
 > The graph plotter will plot in gray scale if `gray` is supplied instead of `color` as the palette (`-p`) argument. 
-> Critical path enumeration usually takes time. To speed up, skip critical path enumeration and calculate only its length using option `--cplo`.
+> Critical path enumeration usually takes time. To speed up, skip critical path enumeration and calculate only its length using option `--noCPE`.
 
 * Huge graphs with 50000+ tasks take a long time to plot. Plot the task graph as a tree to save time.
 ```
-$ Rscript ${MIR_ROOT}/scripts/profiling/task/task-graph-plot.R -t -d mir-task-stats -p color
+$ Rscript ${MIR_ROOT}/scripts/profiling/task/plot-task-graph.R -t -d mir-task-stats -p color
 ```
 
-* The graph plotter can annotate task graph elements with performance information. Combine the instruction-level information produced by the instruction profiler with the task statistics produced by the runtime system into a single CSV file. Plot task graph using combined performance information.
+* The graph plotter can annotate task graph elements with performance information. Merge the instruction-level information produced by the instruction profiler with the task statistics produced by the runtime system into a single CSV file. Plot task graph using combined performance information.
 ``` 
-$ Rscript ${MIR_ROOT}/scripts/profiling/task/gather-task-performance.R mir-task-stats mir-ofp-instructions "mir-task-perf"
-$ Rscript ${MIR_ROOT}/scripts/profiling/task/task-graph-plot.R -d mir-task-perf -p color
+$ Rscript ${MIR_ROOT}/scripts/profiling/task/merge-task-performance.R -l mir-task-stats -r mir-ofp-instructions -k "task"
+$ Rscript ${MIR_ROOT}/scripts/profiling/task/plot-task-graph.R -d mir-task-perf -p color
 ``` 
 
 ## Case Study: Fibonacci 
@@ -487,7 +513,7 @@ scons: done reading SConscript files.
 scons: Building targets ...
 scons: building associated VariantDir targets: debug-build opt-build prof-build verbose-build
 ...
-gcc -o prof-build/fib.o -c -std=c99 -Wall -Werror -Wno-unused-function -Wno-unused-variable -Wno-unused-but-set-variable -Wno-maybe-uninitialized -fopenmp -DLINUX -I/home/ananya/mir-dev/src -I/home/ananya/mir-dev/test/common -O2 -DNDEBUG -fno-inline-functions -fno-inline-functions-called-once -fno-optimize-sibling-calls -fno-omit-frame-pointer -g fib.c
+gcc -o prof-build/fib.o -c -std=c99 -Wall -Werror -Wno-unused-function -Wno-unused-variable -Wno-unused-but-set-variable -Wno-maybe-uninitialized -fopenmp -DLINUX -I/home/ananya/mir-dev/src -I/home/ananya/mir-dev/programs/common -O2 -DNDEBUG -fno-inline-functions -fno-inline-functions-called-once -fno-optimize-sibling-calls -fno-omit-frame-pointer -g fib.c
 ...
 gcc -o fib-prof prof-build/fib.o -L/home/ananya/mir-dev/src -lpthread -lm -lmir-opt
 ```
@@ -530,7 +556,7 @@ $ mir-inst-prof \
 
 ``` 
 $ head mir-ofp-instructions
-"task","parent","joins_at","child_number","num_children","core_id","exec_cycles","ins_count","stack_read","stack_write","mem_fp","ccr","clr","mem_read","mem_write","outl_funcf"
+"task","parent","joins_at","child_number","num_children","core_id","exec_cycles","ins_count","stack_read","stack_write","mem_fp","ccr","clr","mem_read","mem_write","outl_func"
 1,0,0,0,2,0,21887625,58,10,15,5,12,15,4,1,"ol_fib_2"
 2,1,0,1,2,0,610035,60,10,15,5,12,15,4,1,"ol_fib_0"
 3,1,0,2,2,0,3183115,60,10,15,5,12,15,4,1,"ol_fib_1"
@@ -552,7 +578,7 @@ MIR_CONF="-g" ./fib-prof 10 4
 
 * Summarize task statistics.
 ``` 
-$ Rscript ${MIR_ROOT}/scripts/profiling/task/task-stats-summary.R mir-task-stats
+$ Rscript ${MIR_ROOT}/scripts/profiling/task/process-task-stats.R mir-task-stats
 $ cat mir-task-stats.info
 num_tasks: 15
 joins_at_summary: 1 2 2 1.875 2 2
@@ -560,11 +586,11 @@ joins_at_summary: 1 2 2 1.875 2 2
 
 * Combine the instruction-level information produced by the instruction profiler with the task statistics produced by the runtime system into a single CSV file.
 ``` 
-$ Rscript ${MIR_ROOT}/scripts/profiling/task/gather-task-performance.R mir-task-stats mir-ofp-instructions "mir-task-perf"
+$ Rscript ${MIR_ROOT}/scripts/profiling/task/merge-task-performance.R -l mir-task-stats -r mir-ofp-instructions -k "task"
 ```
 * Plot task graph using combined performance information and view on YEd.
 ``` 
-$ Rscript ${MIR_ROOT}/scripts/profiling/task/task-graph-plot.R -d mir-task-perf -p color
-$ yed mir-task-perf.graphml
+$ Rscript ${MIR_ROOT}/scripts/profiling/task/plot-task-graph.R -d mir-task-perf -p color
+$ yed task-graph.graphml
 ```
 

@@ -39,20 +39,25 @@ toc <- function(message)
 
 #Parse args
 option_list <- list(
-make_option(c("--cplo"), action="store_true", default=FALSE, help="Calculate critical path length only"),
+make_option(c("--noCPE"), action="store_true", default=FALSE, help="Skip critical path enumeration. Calculate critical path length only."),
 make_option(c("-v", "--verbose"), action="store_true", default=TRUE, help="Print output [default]"),
 make_option(c("-q", "--quiet"), action="store_false", dest="verbose", help="Print little output"),
 make_option(c("-t", "--tree"), action="store_true", default=FALSE, help="Plot task graph as tree"),
-make_option(c("-d","--data"),default="mir-task-stats", help = "Task performance data file [default \"%default\"]", metavar="FILE"),
+make_option(c("-d","--data"), help = "Task performance data file", metavar="FILE"),
 make_option(c("-p","--pal"), default="color", help = "Color palette for graph elements [default \"%default\"]"),
 make_option(c("-o","--out"), default="task-graph", help = "Output file suffix [default \"%default\"]", metavar="STRING"))
 parsed <- parse_args(OptionParser(option_list = option_list), args = commandArgs(TRUE))
+if(!exists("data", where=parsed))
+{
+    print("Error: Invalid arguments. Check help (-h)")
+    quit("no", 1)
+}
 tg.file <- parsed$data
 tg.color <- parsed$pal
 tg.ofilen <- parsed$out
 verbo <- parsed$verbose
 plot_tree <- parsed$tree
-cp_len_only <- parsed$cplo
+cp_len_only <- parsed$noCPE
 
 # Read data
 if(verbo) tic(type="elapsed")
