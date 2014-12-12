@@ -43,6 +43,12 @@ if(0 != os.system(MIR_ROOT+'/src/generate_lib_int.sh')):
     print('Could not generate library interface. Build cannot continue!')
     Exit(2)
 
+# Generate coremap
+print('Getting core map ...')
+if(0 != os.system('cat /proc/cpuinfo | grep -s \"core id\" | cut -d\":\" -f2 > core-map')):
+    print('Could not get core map. Build cannot continue!')
+    Exit(2)
+
 env = Environment()
 env['CC'] = [compiler[0]]
 env['CCFLAGS'] = Split("""
