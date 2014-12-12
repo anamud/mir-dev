@@ -104,7 +104,7 @@ struct mir_worker_t* mir_worker_get_context()
     return worker;
 }/*}}}*/
 
-static int worker_get_cpu()
+static int worker_get_cpu_affinity()
 {/*{{{*/
     cpu_set_t set;
     CPU_ZERO(&set);
@@ -125,6 +125,22 @@ static int worker_get_cpu()
 
     return cpu;
 }/*}}}*/
+
+static inline int get_system_core_ind(int logical_core)
+{
+    int sys_core_ind = -1;
+    for(int i=0; i<MIR_WORKER_MAX_COUNT; i++)
+    {
+        if(runtime->system_core_map[i] == logical_core)
+        {
+            sys_core_ind = i;
+            break;
+        }
+    }
+
+    MIR_ASSERT(sys_core_ind != -1);
+    return sys_core_ind;
+}
 
 void mir_worker_local_init(struct mir_worker_t* worker)
 {/*{{{*/
@@ -148,7 +164,8 @@ void mir_worker_local_init(struct mir_worker_t* worker)
 #else
     cpu_set_t cpu_set;
     CPU_ZERO(&cpu_set);
-    CPU_SET(worker->core_id, &cpu_set);
+    int sys_core_ind = get_system_core_ind(worker->core_id);
+    CPU_SET(sys_core_ind, &cpu_set);
     sched_setaffinity((pid_t)0, sizeof(cpu_set), &cpu_set);
 #endif
 
@@ -162,7 +179,11 @@ void mir_worker_local_init(struct mir_worker_t* worker)
     }
 
     // Wait till bound
-    while(worker->core_id != worker_get_cpu());
+#ifdef __tile__
+    // TODO
+#else
+    while(sys_core_ind != worker_get_cpu_affinity());
+#endif
 
     // Create worker recorder
     worker->recorder = NULL;

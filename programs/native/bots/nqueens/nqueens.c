@@ -165,6 +165,7 @@ void nqueens(int n, int j, char *a, int *solutions, int depth)
     memset(csols,0,n*sizeof(int));
 
     /* try each possible position for queen <j> */
+    int atleast_one_task = 0;
     for (i = 0; i < n; i++) 
     {
         if ( depth < cutoff_value ) 
@@ -179,6 +180,7 @@ void nqueens(int n, int j, char *a, int *solutions, int depth)
                 imm_args.i = i;
 
                 mir_task_create((mir_tfunc_t) smp_ol_nqueens_0, (void*) &imm_args, sizeof(struct nanos_args_0_t), 0, NULL, NULL);
+                atleast_one_task = 1;
         } 
         else 
         {
@@ -189,7 +191,7 @@ void nqueens(int n, int j, char *a, int *solutions, int depth)
     }
 
     // Wait for tasks to finish
-    mir_task_wait();
+    if(atleast_one_task) mir_task_wait();
 
     for ( i = 0; i < n; i++) 
         *solutions += csols[i];

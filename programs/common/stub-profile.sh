@@ -7,7 +7,7 @@ ${PIN_ROOT:?"PIN_ROOT is not set! Aborting!"}
 scons
 
 # Take timestamp
-timestamp=`date +"%Y-%m-%d %T"`
+touch timestamp
 
 # Profile tasks of application
 echo "Profiling tasks of application ${APP} using input ${INPUT} ..."
@@ -32,7 +32,7 @@ then
     Rscript ${MIR_ROOT}/scripts/profiling/task/plot-task-graph.R -d merged-task-perf -p color -o ser-par-task-graph
     # Plot tree task graph 
     echo "Plotting tree task graph ..."
-    Rscript ${MIR_ROOT}/scripts/profiling/task/plot-task-graph.R -d merged-task-perf -t -p color -o ser-par-task-graph
+    Rscript ${MIR_ROOT}/scripts/profiling/task/plot-task-graph.R -d merged-task-perf -t -p color -o tree-task-graph
 else
     echo "Not processing profiling data!"
 fi
@@ -50,7 +50,7 @@ max=`ls -1d prof_results_* | sed -e "s/prof_results_//g" | tr -dc '[0-9\n]' | so
 outdir=prof_results_${OFILE_PREFIX}_$((max + 1))
 mkdir $outdir
 echo "Copying profiling data to" $outdir
-find . -maxdepth 1 -type f -newermt "$timestamp" -exec mv {} $outdir \;
+find . -maxdepth 1 -type f -newer timestamp -exec mv {} $outdir \;
 cp $BASH_SOURCE $outdir
 
 # Set context for upper level

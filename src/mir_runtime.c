@@ -58,6 +58,32 @@ static void mir_preconfig_init()
     int rval = pthread_key_create(&runtime->worker_index, NULL); 
     MIR_ASSERT(rval == 0);
 
+    // System settings
+    // Get core affinity
+    runtime->system_core_map = mir_malloc_int(sizeof(uint16_t) * MIR_WORKER_MAX_COUNT);
+    MIR_ASSERT(runtime->system_core_map != NULL);
+    {
+        FILE * fp;
+        char buf[MIR_SHORT_NAME_LEN];
+        size_t ctr = 0;
+
+        char* mir_root = getenv("MIR_ROOT");
+        char path[PATH_MAX];
+        strcpy(path, mir_root);
+        strcat(path, "/src/core-map" );
+
+        fp = fopen(path, "r");
+        MIR_ASSERT(fp != NULL);
+
+        while (fgets (buf, sizeof(buf), fp)) {
+            MIR_ASSERT(ctr < MIR_WORKER_MAX_COUNT);
+            runtime->system_core_map[ctr] = atoi(buf);
+            ctr++;
+        };
+
+        fclose(fp);
+    }
+
     // Flags
     runtime->sig_dying = 0;
     runtime->enable_worker_stats = 0;
@@ -463,6 +489,7 @@ dead:
     // Release runtime memory
     MIR_DEBUG(MIR_DEBUG_STR "Releasing runtime memory ...\n");
     mir_free_int(runtime->worker_core_map, sizeof(uint16_t) * runtime->arch->num_cores);
+    mir_free_int(runtime->system_core_map, sizeof(uint16_t) * runtime->arch->num_cores);
     mir_free_int(runtime, sizeof(struct mir_runtime_t));
 
     // Report allocated memory (unfreed memory)
