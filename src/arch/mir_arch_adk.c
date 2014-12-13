@@ -18,7 +18,16 @@ void destroy_adk()
 }/*}}}*/
 
 uint16_t sys_cpu_of_adk(uint16_t cpuid)
-{ return cpuid; }
+{ 
+    struct mir_arch_topology_t topology_adk[] = {
+        {0,0,0,0,0},
+        {1,2,1,0,0},
+        {2,3,2,0,0},
+        {3,6,3,0,0}
+    };
+    MIR_ASSERT(topology_adk[cpuid].log_cpu == cpuid);
+    return topology_adk[cpuid].sys_cpu;
+}
 
 uint16_t node_of_adk(uint16_t cpuid)
 {/*{{{*/
@@ -74,6 +83,7 @@ struct mir_arch_t arch_adk =
     .config = config_adk,
     .create = create_adk,
     .destroy = destroy_adk,
+    .sys_cpu_of = sys_cpu_of_adk,
     .node_of = node_of_adk,
     .cpus_of = cpus_of_adk,
     .vicinity_of = vicinity_of_adk,

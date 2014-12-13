@@ -341,6 +341,7 @@ struct mir_arch_t arch_gothmog =
     .config = config_gothmog,
     .create = create_gothmog,
     .destroy = destroy_gothmog,
+    .sys_cpu_of = sys_cpu_of_gothmog,
     .node_of = node_of_gothmog,
     .cpus_of = cpus_of_gothmog,
     .vicinity_of = vicinity_of_gothmog,

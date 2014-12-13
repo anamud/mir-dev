@@ -73,6 +73,7 @@ struct mir_arch_t arch_tilepro64 =
     .config = config_tilepro64,
     .create = create_tilepro64,
     .destroy = destroy_tilepro64,
+    .sys_cpu_of = sys_cpu_of_tilepro64,
     .node_of = node_of_tilepro64,
     .cpus_of = cpus_of_tilepro64,
     .vicinity_of = vicinity_of_tilepro64,
