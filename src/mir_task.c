@@ -303,7 +303,7 @@ void mir_task_execute(struct mir_task_t* task)
     //MIR_INFORM(MIR_INFORM_STR "Task %" MIR_FORMSPEC_UL " executed on worker %d\n", task->id.uid, worker->id);
 
     // Record where executed
-    task->core_id = worker->core_id;
+    task->cpu_id = worker->cpu_id;
 
     // Current task timing
     task->exec_end_instant = mir_get_cycles() - runtime->init_time;
@@ -471,7 +471,7 @@ void mir_task_wait()
 
 void mir_task_list_write_header_to_file(FILE* file)
 {/*{{{*/
-    fprintf(file, "task,parent,joins_at,core_id,child_number,num_children,exec_cycles,queue_size,exec_end\n");
+    fprintf(file, "task,parent,joins_at,cpu_id,child_number,num_children,exec_cycles,queue_size,exec_end\n");
 }/*}}}*/
 
 void mir_task_list_write_to_file(struct mir_task_list_t* list, FILE* file)
@@ -488,7 +488,7 @@ void mir_task_list_write_to_file(struct mir_task_list_t* list, FILE* file)
                 temp->task->id.uid, 
                 task_parent.uid,
                 temp->task->sync_pass,
-                temp->task->core_id,
+                temp->task->cpu_id,
                 temp->task->child_number,
                 temp->task->num_children,
                 temp->task->exec_cycles,

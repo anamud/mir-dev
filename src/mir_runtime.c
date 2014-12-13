@@ -51,38 +51,12 @@ static void mir_preconfig_init()
 
     // Workers
     runtime->num_workers = runtime->arch->num_cores;
-    runtime->worker_core_map = mir_malloc_int(sizeof(uint16_t) * runtime->arch->num_cores);
-    MIR_ASSERT(runtime->worker_core_map != NULL);
+    runtime->worker_cpu_map = mir_malloc_int(sizeof(uint16_t) * runtime->arch->num_cores);
+    MIR_ASSERT(runtime->worker_cpu_map != NULL);
     for(int i=0; i<runtime->num_workers; i++)
-        runtime->worker_core_map[i] = (uint16_t) i;
+        runtime->worker_cpu_map[i] = (uint16_t) i;
     int rval = pthread_key_create(&runtime->worker_index, NULL); 
     MIR_ASSERT(rval == 0);
-
-    // System settings
-    // Get core affinity
-    runtime->system_core_map = mir_malloc_int(sizeof(uint16_t) * MIR_WORKER_MAX_COUNT);
-    MIR_ASSERT(runtime->system_core_map != NULL);
-    {
-        FILE * fp;
-        char buf[MIR_SHORT_NAME_LEN];
-        size_t ctr = 0;
-
-        char* mir_root = getenv("MIR_ROOT");
-        char path[PATH_MAX];
-        strcpy(path, mir_root);
-        strcat(path, "/src/core-map" );
-
-        fp = fopen(path, "r");
-        MIR_ASSERT(fp != NULL);
-
-        while (fgets (buf, sizeof(buf), fp)) {
-            MIR_ASSERT(ctr < MIR_WORKER_MAX_COUNT);
-            runtime->system_core_map[ctr] = atoi(buf);
-            ctr++;
-        };
-
-        fclose(fp);
-    }
 
     // Flags
     runtime->sig_dying = 0;
@@ -152,17 +126,17 @@ static void mir_postconfig_init()
     __sync_synchronize();
 #endif
 #ifdef MIR_WORKER_EXPLICIT_BIND
-    const char* worker_core_map_str = getenv("MIR_WORKER_CORE_MAP");
-    if(worker_core_map_str)
-        if(strlen(worker_core_map_str) > 0)
+    const char* worker_cpu_map_str = getenv("MIR_WORKER_CPU_MAP");
+    if(worker_cpu_map_str)
+        if(strlen(worker_cpu_map_str) > 0)
         {
-            MIR_DEBUG(MIR_DEBUG_STR "Reading worker to core map ...\n");
+            MIR_DEBUG(MIR_DEBUG_STR "Reading worker to cpu map ...\n");
 
             // Copy to buf
             char str[MIR_LONG_NAME_LEN];
-            strcpy(str, worker_core_map_str);
+            strcpy(str, worker_cpu_map_str);
 
-            // Parse for core ids
+            // Parse for cpu ids
             uint16_t tok_cnt = 0;
             char* tok = strtok (str, ",");
             while (tok != NULL && tok_cnt < runtime->num_workers)
@@ -170,7 +144,7 @@ static void mir_postconfig_init()
                 int id;
                 sscanf (tok, "%d", &id);
                 //MIR_DEBUG(MIR_DEBUG_STR "Read token %d ...\n", id);
-                runtime->worker_core_map[tok_cnt] = (uint16_t) id;
+                runtime->worker_cpu_map[tok_cnt] = (uint16_t) id;
                 tok_cnt++;
                 tok = strtok (NULL, ",");
             }
@@ -182,7 +156,7 @@ static void mir_postconfig_init()
         // FIXME: Master thread stack size, how to set?
         struct mir_worker_t* worker = &runtime->workers[i];
         worker->id = i;
-        worker->core_id = runtime->worker_core_map[i];
+        worker->cpu_id = runtime->worker_cpu_map[i];
         if(worker->id != 0)
             mir_worker_master_init(worker);
         if(worker->id == 0)
@@ -488,8 +462,7 @@ dead:
 
     // Release runtime memory
     MIR_DEBUG(MIR_DEBUG_STR "Releasing runtime memory ...\n");
-    mir_free_int(runtime->worker_core_map, sizeof(uint16_t) * runtime->arch->num_cores);
-    mir_free_int(runtime->system_core_map, sizeof(uint16_t) * runtime->arch->num_cores);
+    mir_free_int(runtime->worker_cpu_map, sizeof(uint16_t) * runtime->arch->num_cores);
     mir_free_int(runtime, sizeof(struct mir_runtime_t));
 
     // Report allocated memory (unfreed memory)

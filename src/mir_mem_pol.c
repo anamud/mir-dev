@@ -256,7 +256,7 @@ advance:
 #ifdef MIR_MEM_POL_RESTRICT
     bool allowed = false;
     for(int i=0; i<runtime->num_workers; i++)
-        if(runtime->arch->node_of(runtime->workers[i].core_id) == mem_pol->node)
+        if(runtime->arch->node_of(runtime->workers[i].cpu_id) == mem_pol->node)
         {
             allowed = true;
             break;
@@ -350,8 +350,8 @@ static void* allocate_fine(size_t sz)
     numa_bitmask_clearall(mask);
     for(int i=0; i<runtime->num_workers; i++)
     {
-        //MIR_DEBUG(MIR_DEBUG_STR "Selecting node %d for allocation\n", runtime->arch->node_of(runtime->workers[i].core_id));
-        numa_bitmask_setbit(mask, runtime->arch->node_of(runtime->workers[i].core_id));
+        //MIR_DEBUG(MIR_DEBUG_STR "Selecting node %d for allocation\n", runtime->arch->node_of(runtime->workers[i].cpu_id));
+        numa_bitmask_setbit(mask, runtime->arch->node_of(runtime->workers[i].cpu_id));
     }
 #else
     numa_bitmask_setall(mask);
@@ -454,7 +454,7 @@ static void* allocate_local(size_t sz)
 
     // Get this worker's node
     struct mir_worker_t* worker = mir_worker_get_context();
-    int node = runtime->arch->node_of(worker->core_id);
+    int node = runtime->arch->node_of(worker->cpu_id);
 
 #ifndef __tile__
     numa_set_bind_policy(1);
@@ -641,7 +641,7 @@ void mir_mem_pol_create ()
 void mir_mem_pol_init ()
 {/*{{{*/
 #ifdef MIR_MEM_POL_RESTRICT 
-    mem_pol->node = runtime->arch->node_of(runtime->workers[0].core_id);
+    mem_pol->node = runtime->arch->node_of(runtime->workers[0].cpu_id);
 #endif
 }/*}}}*/
 

@@ -17,9 +17,12 @@ void destroy_gothmog()
     return;
 }/*}}}*/
 
-uint16_t node_of_gothmog(uint16_t coreid)
+uint16_t sys_cpu_of_gothmog(uint16_t cpuid)
+{ return cpuid; }
+
+uint16_t node_of_gothmog(uint16_t cpuid)
 {/*{{{*/
-    switch(coreid)
+    switch(cpuid)
     {
         case 0:
         case 1:
@@ -86,59 +89,59 @@ uint16_t node_of_gothmog(uint16_t coreid)
             return 7;
             break;
         default:
-            MIR_ABORT(MIR_ERROR_STR "Node of core not found!\n");
+            MIR_ABORT(MIR_ERROR_STR "Node of CPU not found!\n");
             break;
     }
 }/*}}}*/
 
-void cores_of_gothmog(struct mir_sbuf_t* coreids, uint16_t nodeid)
+void cpus_of_gothmog(struct mir_sbuf_t* cpuids, uint16_t nodeid)
 {/*{{{*/
-    MIR_ASSERT(coreids != NULL);
-    coreids->size = 0;
+    MIR_ASSERT(cpuids != NULL);
+    cpuids->size = 0;
     switch(nodeid)
     {
         case 0:
-            coreids->size = 6;
-            for(int i=0, basecore=0; i<6; i++)
-                coreids->buf[i] = basecore+i;
+            cpuids->size = 6;
+            for(int i=0, basecpu=0; i<6; i++)
+                cpuids->buf[i] = basecpu+i;
             break;
         case 1:
-            coreids->size = 6;
-            for(int i=0, basecore=6; i<6; i++)
-                coreids->buf[i] = basecore+i;
+            cpuids->size = 6;
+            for(int i=0, basecpu=6; i<6; i++)
+                cpuids->buf[i] = basecpu+i;
             break;
         case 2:
-            coreids->size = 6;
-            for(int i=0, basecore=12; i<6; i++)
-                coreids->buf[i] = basecore+i;
+            cpuids->size = 6;
+            for(int i=0, basecpu=12; i<6; i++)
+                cpuids->buf[i] = basecpu+i;
             break;
         case 3:
-            coreids->size = 6;
-            for(int i=0, basecore=18; i<6; i++)
-                coreids->buf[i] = basecore+i;
+            cpuids->size = 6;
+            for(int i=0, basecpu=18; i<6; i++)
+                cpuids->buf[i] = basecpu+i;
             break;
         case 4:
-            coreids->size = 6;
-            for(int i=0, basecore=24; i<6; i++)
-                coreids->buf[i] = basecore+i;
+            cpuids->size = 6;
+            for(int i=0, basecpu=24; i<6; i++)
+                cpuids->buf[i] = basecpu+i;
             break;
         case 5:
-            coreids->size = 6;
-            for(int i=0, basecore=30; i<6; i++)
-                coreids->buf[i] = basecore+i;
+            cpuids->size = 6;
+            for(int i=0, basecpu=30; i<6; i++)
+                cpuids->buf[i] = basecpu+i;
             break;
         case 6:
-            coreids->size = 6;
-            for(int i=0, basecore=36; i<6; i++)
-                coreids->buf[i] = basecore+i;
+            cpuids->size = 6;
+            for(int i=0, basecpu=36; i<6; i++)
+                cpuids->buf[i] = basecpu+i;
             break;
         case 7:
-            coreids->size = 6;
-            for(int i=0, basecore=42; i<6; i++)
-                coreids->buf[i] = basecore+i;
+            cpuids->size = 6;
+            for(int i=0, basecpu=42; i<6; i++)
+                cpuids->buf[i] = basecpu+i;
             break;
         default:
-            MIR_ABORT(MIR_ERROR_STR "Cores of node not found!\n");
+            MIR_ABORT(MIR_ERROR_STR "CPU of node not found!\n");
             break;
     }
 }/*}}}*/
@@ -339,7 +342,7 @@ struct mir_arch_t arch_gothmog =
     .create = create_gothmog,
     .destroy = destroy_gothmog,
     .node_of = node_of_gothmog,
-    .cores_of = cores_of_gothmog,
+    .cpus_of = cpus_of_gothmog,
     .vicinity_of = vicinity_of_gothmog,
     .comm_cost_of = comm_cost_of_gothmog
 };/*}}}*/

@@ -126,22 +126,6 @@ static int worker_get_cpu_affinity()
     return cpu;
 }/*}}}*/
 
-static inline int get_system_core_ind(int logical_core)
-{
-    int sys_core_ind = -1;
-    for(int i=0; i<MIR_WORKER_MAX_COUNT; i++)
-    {
-        if(runtime->system_core_map[i] == logical_core)
-        {
-            sys_core_ind = i;
-            break;
-        }
-    }
-
-    MIR_ASSERT(sys_core_ind != -1);
-    return sys_core_ind;
-}
-
 void mir_worker_local_init(struct mir_worker_t* worker)
 {/*{{{*/
     MIR_ASSERT(worker != NULL);
@@ -157,15 +141,15 @@ void mir_worker_local_init(struct mir_worker_t* worker)
     worker->backoff_us = MIR_WORKER_EXP_BOFF_RESET;
 
     // Bind the worker
-    MIR_DEBUG(MIR_DEBUG_STR "Binding worker %d to core %d\n", worker->id, worker->core_id);
+    MIR_DEBUG(MIR_DEBUG_STR "Binding worker %d to cpu %d\n", worker->id, worker->cpu_id);
 #ifdef __tile__
-    int ret = tmc_cpus_set_my_cpu(worker->core_id);
+    int ret = tmc_cpus_set_my_cpu(worker->cpu_id);
     MIR_ASSERT(ret == 0);
 #else
     cpu_set_t cpu_set;
     CPU_ZERO(&cpu_set);
-    int sys_core_ind = get_system_core_ind(worker->core_id);
-    CPU_SET(sys_core_ind, &cpu_set);
+    int sys_cpu = runtime->arch->sys_cpu_of(worker->cpu_id);
+    CPU_SET(sys_cpu, &cpu_set);
     sched_setaffinity((pid_t)0, sizeof(cpu_set), &cpu_set);
 #endif
 
@@ -182,7 +166,7 @@ void mir_worker_local_init(struct mir_worker_t* worker)
 #ifdef __tile__
     // TODO
 #else
-    while(sys_core_ind != worker_get_cpu_affinity());
+    while(sys_cpu != worker_get_cpu_affinity());
 #endif
 
     // Create worker recorder

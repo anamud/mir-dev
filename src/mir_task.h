@@ -98,7 +98,7 @@ struct mir_task_t
     unsigned long comm_cost;
     char name[MIR_SHORT_NAME_LEN];
     struct mir_task_t* parent;
-    uint16_t core_id; 
+    uint16_t cpu_id; 
     uint64_t exec_resume_instant;
     uint64_t exec_end_instant;
     uint64_t exec_cycles;

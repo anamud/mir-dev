@@ -135,7 +135,7 @@ bool pop_ws (struct mir_task_t** task)
     uint32_t num_queues = sp->num_queues;
     struct mir_worker_t* worker = mir_worker_get_context(); 
     MIR_ASSERT(NULL != worker);
-    uint16_t node = runtime->arch->node_of(worker->core_id);
+    uint16_t node = runtime->arch->node_of(worker->cpu_id);
 
     // First try to pop from own queue
     //if(runtime->enable_recorder == 1)

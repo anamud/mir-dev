@@ -6,6 +6,15 @@
 
 BEGIN_C_DECLS
 
+struct mir_arch_topology_t
+{ 
+    uint16_t log_cpu; 
+    uint16_t sys_cpu;
+    uint16_t core;
+    uint16_t socket;
+    uint16_t node;
+};
+
 struct mir_arch_t 
 {/*{{{*/
     // Constants
@@ -19,8 +28,9 @@ struct mir_arch_t
     void (*config) (const char* conf_str);
     void (*create) ();
     void (*destroy) ();
-    uint16_t (*node_of) (uint16_t coreid);
-    void (*cores_of) (struct mir_sbuf_t* coreids, uint16_t nodeid);
+    uint16_t (*sys_cpu_of) (uint16_t cpuid);
+    uint16_t (*node_of) (uint16_t cpuid);
+    void (*cpus_of) (struct mir_sbuf_t* cpuids, uint16_t nodeid);
     uint16_t (*vicinity_of) (uint16_t* neighbors, uint16_t nodeid, uint16_t diameter);
     uint16_t (*comm_cost_of) (uint16_t from_nodeid, uint16_t to_nodeid);
 };/*}}}*/

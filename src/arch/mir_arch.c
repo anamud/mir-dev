@@ -9,18 +9,16 @@
 
 extern struct mir_arch_t arch_this; // 1
 extern struct mir_arch_t arch_adk; // 2
-extern struct mir_arch_t arch_gatti; // 3
-extern struct mir_arch_t arch_firenze; // 4
-extern struct mir_arch_t arch_gothmog; // 5
-extern struct mir_arch_t arch_tilepro64; // 6 = MIR_ARCH_NUM_PREDEF
+extern struct mir_arch_t arch_firenze; // 3
+extern struct mir_arch_t arch_gothmog; // 4
+extern struct mir_arch_t arch_tilepro64; // 5 = MIR_ARCH_NUM_PREDEF
 
 // WARNING and NOTE: Make sure predef architecture count == num entries in predef architecture struct
-#define MIR_ARCH_NUM_PREDEF 6
+#define MIR_ARCH_NUM_PREDEF 5
 static struct mir_arch_t* mir_arch_predef[MIR_ARCH_NUM_PREDEF] = 
 {/*{{{*/
     &arch_this,
     &arch_adk,
-    &arch_gatti,
     &arch_firenze,
     &arch_gothmog,
     &arch_tilepro64

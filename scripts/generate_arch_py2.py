@@ -4,7 +4,7 @@
 
 import sys
 import os
-import multiprocessing
+import csv
 
 def write_pretext(fil):
     fil.write("""/* DO NOT EDIT. THIS FILE IS AUTO-GENERATED. */
@@ -21,7 +21,10 @@ void create_this()
 void destroy_this()
 { return; }
 
-uint16_t node_of_this(uint16_t coreid)
+uint16_t sys_cpu_of_this(uint16_t cpuid)
+{ return cpuid; }
+
+uint16_t node_of_this(uint16_t cpuid)
 { return 0; }
 
 uint16_t vicinity_of_this(uint16_t* neighbors, uint16_t nodeid, uint16_t diameter)
@@ -32,19 +35,26 @@ uint16_t comm_cost_of_this(uint16_t from_nodeid, uint16_t to_nodeid)
 """)
 
 def write_posttext(fil):
+    print 'Reading {0}/topology_this'.format(os.path.dirname(fil.name))
+    with open('{0}/topology_this'.format(os.path.dirname(fil.name)), 'r') as f:
+        reader = csv.reader(f)
+        ctr = 0
+        for row in reader:
+            ctr = ctr + 1
+        ctr = ctr - 1
     fil.write("""
-void cores_of_this(struct mir_sbuf_t* coreids, uint16_t nodeid)
+void cpus_of_this(struct mir_sbuf_t* cpuids, uint16_t nodeid)
 {{
-    MIR_ASSERT(coreids != NULL);
-    coreids->size = 0;
+    MIR_ASSERT(cpuids != NULL);
+    cpuids->size = 0;
     if(nodeid != 0)
         return;
     else
     {{
-        unsigned int num_cores = {0};
-        coreids->size = num_cores;
-        for(int i=0; i<num_cores; i++)
-            coreids->buf[i] = i;
+        unsigned int num_cpus = {0};
+        cpuids->size = num_cpus;
+        for(int i=0; i<num_cpus; i++)
+            cpuids->buf[i] = i;
     }}
 }}
 struct mir_arch_t arch_this = 
@@ -57,12 +67,13 @@ struct mir_arch_t arch_this =
     .config = config_this,
     .create = create_this,
     .destroy = destroy_this,
+    .sys_cpu_of = sys_cpu_of_this,
     .node_of = node_of_this,
-    .cores_of = cores_of_this,
+    .cpus_of = cpus_of_this,
     .vicinity_of = vicinity_of_this,
     .comm_cost_of = comm_cost_of_this
 }};
-""".format(multiprocessing.cpu_count(),multiprocessing.cpu_count()))
+""".format(ctr,ctr))
 
 def main():
     if(len(sys.argv) > 2):

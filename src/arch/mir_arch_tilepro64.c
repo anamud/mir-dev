@@ -17,22 +17,25 @@ void destroy_tilepro64()
     return;
 }/*}}}*/
 
-uint16_t node_of_tilepro64(uint16_t coreid)
-{/*{{{*/
-    if(coreid > 63)
-        MIR_ABORT(MIR_ERROR_STR "Node of core not found!\n");
+uint16_t sys_cpu_of_tilepro64(uint16_t cpuid)
+{ return cpuid; }
 
-    return coreid;
+uint16_t node_of_tilepro64(uint16_t cpuid)
+{/*{{{*/
+    if(cpuid > 63)
+        MIR_ABORT(MIR_ERROR_STR "Node of CPU not found!\n");
+
+    return cpuid;
 }/*}}}*/
 
-void cores_of_tilepro64(struct mir_sbuf_t* coreids, uint16_t nodeid)
+void cpus_of_tilepro64(struct mir_sbuf_t* cpuids, uint16_t nodeid)
 {/*{{{*/
-    MIR_ASSERT(coreids != NULL);
+    MIR_ASSERT(cpuids != NULL);
     if(nodeid > 63)
-        MIR_ABORT(MIR_ERROR_STR "Cores of node not found!\n");
+        MIR_ABORT(MIR_ERROR_STR "CPU of node not found!\n");
 
-    coreids->size = 1;
-    coreids->buf[0] = nodeid;
+    cpuids->size = 1;
+    cpuids->buf[0] = nodeid;
 }/*}}}*/
 
 uint16_t vicinity_of_tilepro64(uint16_t* neighbors, uint16_t nodeid, uint16_t diameter)
@@ -71,7 +74,7 @@ struct mir_arch_t arch_tilepro64 =
     .create = create_tilepro64,
     .destroy = destroy_tilepro64,
     .node_of = node_of_tilepro64,
-    .cores_of = cores_of_tilepro64,
+    .cpus_of = cpus_of_tilepro64,
     .vicinity_of = vicinity_of_tilepro64,
     .comm_cost_of = comm_cost_of_tilepro64
 };/*}}}*/

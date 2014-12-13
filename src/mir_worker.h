@@ -41,7 +41,7 @@ struct mir_worker_t
 {
     pthread_t pthread;
     uint16_t id;
-    uint16_t core_id;
+    uint16_t cpu_id;
     uint16_t bias;
     uint32_t backoff_us;
     struct mir_lock_t sig_die;

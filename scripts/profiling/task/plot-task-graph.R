@@ -308,18 +308,18 @@ if("mem_fp" %in% colnames(tg.data))
     p_task_color <- task_color_pal[as.numeric(cut(tg.data$mem_fp, task_color_bins))]
     tg <- set.vertex.attribute(tg, name='mem_fp_to_color', index=task_index, value=p_task_color)
 }
-if("core_id" %in% colnames(tg.data))
+if("cpu_id" %in% colnames(tg.data))
 {
-    # Set color to indicate core_id
-    core_ids <- tg.data$core_id
-    core_colors <- rainbow(max(core_ids)+1)
-    tg <- set.vertex.attribute(tg, name='core_id_to_color', index=task_index, value=core_colors[core_ids+1])
-    # Write core_id colors for reference
-    tg.file.out <- paste(gsub(". $", "", tg.ofilen), ".core_id_to_color", sep="")
+    # Set color to indicate cpu_id
+    cpu_ids <- tg.data$cpu_id
+    cpu_colors <- rainbow(max(cpu_ids)+1)
+    tg <- set.vertex.attribute(tg, name='cpu_id_to_color', index=task_index, value=cpu_colors[cpu_ids+1])
+    # Write cpu_id colors for reference
+    tg.file.out <- paste(gsub(". $", "", tg.ofilen), ".cpu_id_to_color", sep="")
     if(verbo) print(paste("Writing file", tg.file.out))
-    unique_core_ids <- unique(core_ids)
+    unique_cpu_ids <- unique(cpu_ids)
     sink(tg.file.out)
-    print(data.frame(core=unique_core_ids, color=core_colors[unique_core_ids+1]),row.names=F)
+    print(data.frame(cpu=unique_cpu_ids, color=cpu_colors[unique_cpu_ids+1]),row.names=F)
     sink()
 }
 if("outl_func" %in% colnames(tg.data))

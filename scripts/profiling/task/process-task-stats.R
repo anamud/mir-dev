@@ -44,7 +44,7 @@ ts.data <- read.csv(ts.file, header=TRUE)
 
 # Find task executed last per worker
 if(verbo) tic(type="elapsed")
-max.exec.end <- ts.data %>% group_by(core_id) %>% filter(exec_end == max(exec_end))
+max.exec.end <- ts.data %>% group_by(cpu_id) %>% filter(exec_end == max(exec_end))
 ts.data["last_to_finish"] <- F
 for(task in max.exec.end$task)
 {
@@ -98,12 +98,12 @@ sink()
 out.file <- "task-execution-load-balance.pdf"
 if(verbo) print(paste("Writing file", out.file))
 pdf(file=out.file)
-barplot(as.table(tapply(ts.data$exec_cycles, ts.data$core_id, FUN= function(x) {sum(as.numeric(x))} )), log="y", xlab="core", ylab="task execution [log-cycles]")
+barplot(as.table(tapply(ts.data$exec_cycles, ts.data$cpu_id, FUN= function(x) {sum(as.numeric(x))} )), log="y", xlab="cpu", ylab="task execution [log-cycles]")
 garbage <- dev.off()
 out.file <- "task-count-load-balance.pdf"
 if(verbo) print(paste("Writing file", out.file))
 pdf(file=out.file)
-barplot(as.table(tapply(ts.data$task, ts.data$core_id, FUN=length)), xlab="core", ylab="tasks")
+barplot(as.table(tapply(ts.data$task, ts.data$cpu_id, FUN=length)), xlab="cpu", ylab="tasks")
 garbage <- dev.off()
 if(verbo) toc("Summarizing")
 

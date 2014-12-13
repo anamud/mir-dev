@@ -136,7 +136,7 @@ bool pop_central_stack (struct mir_task_t** task)
     MIR_ASSERT(NULL != queue);
     struct mir_worker_t* worker = mir_worker_get_context(); 
     MIR_ASSERT(NULL != worker);
-    uint16_t node = runtime->arch->node_of(worker->core_id);
+    uint16_t node = runtime->arch->node_of(worker->cpu_id);
 
     if(mir_stack_size(queue) > 0)
     {
