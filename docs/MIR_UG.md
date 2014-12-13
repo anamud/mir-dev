@@ -17,6 +17,9 @@ MIR is intended to be used by advanced task-based programmers. Knowledge of comp
 * GCC.
 * Binutils.
 * Scons build system.
+* R  (for executing scripts)
+* R packages
+    * data.table (for data structure transformations)
 
 ## Optional Requirements
 
@@ -28,7 +31,6 @@ Enabling extended features such as profiling, locality-aware scheduling and data
 * Paraver (for visualizing thread execution traces)
 * Python 2.X and 3.X (for executing various scripts)
 * Intel Pin sources (for profiling instructions executed by tasks)
-* R  (for executing profiling scripts)
 * R packages:
     * optparse (for parsing data)
     * igraph (for task graph processing)
@@ -383,7 +385,7 @@ $ Rscript ${MIR_ROOT}/scripts/profiling/task/plot-task-graph.R -d mir-task-stats
 
 The `mir-task-stats` can also be processed for additional information such as number of tasks and task lineage (UID for tasks).
 ``` 
-$ Rscript ${MIR_ROOT}/scripts/profiling/task/process-task-stats.R -d mir-task-stats
+$ Rscript ${MIR_ROOT}/scripts/profiling/task/process-task-stats.R -d mir-task-stats --lineage
 $ cat mir-task-stats.info
 num_tasks: 15
 joins_at_summary: 1 2 2 1.875 2 2
@@ -439,7 +441,7 @@ $ alias mir-inst-prof="MIR_CONF='-w=1 -p' ${PIN_ROOT}/intel64/bin/pinbin -t ${MI
 * The profiler produces following outputs: 
 	1. Per-task instructions in a CSV file called `mir-ofp-instructions`. Example contents of the file are shown below. 
 		
-			"task","parent","joins_at","child_number","num_children","core_id","exec_cycles","ins_count","stack_read","stack_write","mem_fp","ccr","clr","mem_read","mem_write","outl_func"
+			"task","parent","joins_at","child_number","num_children","cpu_id","exec_cycles","ins_count","stack_read","stack_write","mem_fp","ccr","clr","mem_read","mem_write","outl_func"
 			1,0,0,0,2,0,21887625,58,10,15,5,12,15,4,1,"ol_fib_2"
 			2,1,0,1,2,0,610035,60,10,15,5,12,15,4,1,"ol_fib_0"
 			3,1,0,2,2,0,3183115,60,10,15,5,12,15,4,1,"ol_fib_1"
@@ -452,7 +454,7 @@ $ alias mir-inst-prof="MIR_CONF='-w=1 -p' ${PIN_ROOT}/intel64/bin/pinbin -t ${MI
 	  	* `child_number`: Order of task creation by parent.
 	  	* `num_children`: Indicates the number of child tasks created by the task.
 	  	* `exec_cycles`: Number of cycles spent executing the task including child task creation and synchronization.
-	  	* `core_id`: Identifier of the core that executed the task.
+	  	* `cpu_id`: Identifier of the CPU that executed the task.
 	  	* `ins_count`: Total number of instructions executed by the task. 
 	  	* `stack_read`: Number of read accesses to the stack while executing instructions.
 	  	* `stack_write`: Number of write accesses to the stack while executing instructions.
@@ -556,7 +558,7 @@ $ mir-inst-prof \
 
 ``` 
 $ head mir-ofp-instructions
-"task","parent","joins_at","child_number","num_children","core_id","exec_cycles","ins_count","stack_read","stack_write","mem_fp","ccr","clr","mem_read","mem_write","outl_func"
+"task","parent","joins_at","child_number","num_children","cpu_id","exec_cycles","ins_count","stack_read","stack_write","mem_fp","ccr","clr","mem_read","mem_write","outl_func"
 1,0,0,0,2,0,21887625,58,10,15,5,12,15,4,1,"ol_fib_2"
 2,1,0,1,2,0,610035,60,10,15,5,12,15,4,1,"ol_fib_0"
 3,1,0,2,2,0,3183115,60,10,15,5,12,15,4,1,"ol_fib_1"

@@ -24,7 +24,7 @@ toc <- function(message)
 
 # Read arguments
 option_list <- list(
-make_option(c("--noLineage"), action="store_true", default=TRUE, help="Skip task lineage calculation [default]"),
+make_option(c("--lineage"), action="store_true", default=FALSE, help="Calculate task lineage"),
 make_option(c("-d","--data"), help = "Task stats file", metavar="FILE"),
 make_option(c("-v", "--verbose"), action="store_true", default=TRUE, help="Print output [default]"),
 make_option(c("-q", "--quiet"), action="store_false", dest="verbose", help="Print little output"))
@@ -36,7 +36,7 @@ if(!exists("data", where=parsed))
 }
 ts.file <- parsed$data
 verbo <- parsed$verbose
-no_lineage <- parsed$noLineage
+calc_lineage <- parsed$lineage
 
 # Read data
 if(verbo) print(paste("Reading file", ts.file))
@@ -60,7 +60,7 @@ sink()
 if(verbo) toc("Processing")
 
 # Calculate lineage
-if(!no_lineage)
+if(calc_lineage)
 {
     if(verbo) tic(type="elapsed")
     ts.data.sub <- subset(ts.data, select=c("task", "parent"))

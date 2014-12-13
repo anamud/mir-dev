@@ -1,5 +1,6 @@
 === RUNTIME SYSTEM ===
 Add TILEPro64 support.
+Test on Valaruko.
 Add clang support.
 Improve OpenMP 3.0 support.
 Add support for implicit data dependence resolution.

@@ -23,7 +23,7 @@ if [ ${PROCESS_PROFILE_DATA} -eq 1 ]
 then
     # Process task stats 
     echo "Processing task statistics ..."
-    Rscript ${MIR_ROOT}/scripts/profiling/task/process-task-stats.R mir-task-stats
+    Rscript ${MIR_ROOT}/scripts/profiling/task/process-task-stats.R -d mir-task-stats
     # Merge task performance data
     echo "Merging task performance data ..."
     Rscript ${MIR_ROOT}/scripts/profiling/task/merge-task-performance.R -l mir-task-stats -r mir-ofp-instructions -k "task" -o "merged-task-perf"

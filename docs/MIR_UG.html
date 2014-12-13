@@ -57,6 +57,17 @@
    <li>
     Scons build system.
    </li>
+   <li>
+    R  (for executing scripts)
+   </li>
+   <li>
+    R packages
+    <ul>
+     <li>
+      data.table (for data structure transformations)
+     </li>
+    </ul>
+   </li>
   </ul>
   <h2>
    Optional Requirements
@@ -82,9 +93,6 @@
    </li>
    <li>
     Intel Pin sources (for profiling instructions executed by tasks)
-   </li>
-   <li>
-    R  (for executing profiling scripts)
    </li>
    <li>
     R packages:
@@ -787,7 +795,7 @@ $ Rscript ${MIR_ROOT}/scripts/profiling/task/plot-task-graph.R -d mir-task-stats
    </code>
    can also be processed for additional information such as number of tasks and task lineage (UID for tasks).
   </p>
-  <pre><code>$ Rscript ${MIR_ROOT}/scripts/profiling/task/process-task-stats.R -d mir-task-stats
+  <pre><code>$ Rscript ${MIR_ROOT}/scripts/profiling/task/process-task-stats.R -d mir-task-stats --lineage
 $ cat mir-task-stats.info
 num_tasks: 15
 joins_at_summary: 1 2 2 1.875 2 2
@@ -918,7 +926,7 @@ specify outline functions (csv)
        </code>
        . Example contents of the file are shown below.
       </p>
-      <pre><code>"task","parent","joins_at","child_number","num_children","core_id","exec_cycles","ins_count","stack_read","stack_write","mem_fp","ccr","clr","mem_read","mem_write","outl_func"
+      <pre><code>"task","parent","joins_at","child_number","num_children","cpu_id","exec_cycles","ins_count","stack_read","stack_write","mem_fp","ccr","clr","mem_read","mem_write","outl_func"
 1,0,0,0,2,0,21887625,58,10,15,5,12,15,4,1,"ol_fib_2"
 2,1,0,1,2,0,610035,60,10,15,5,12,15,4,1,"ol_fib_0"
 3,1,0,2,2,0,3183115,60,10,15,5,12,15,4,1,"ol_fib_1"
@@ -965,9 +973,9 @@ specify outline functions (csv)
        </li>
        <li>
         <code>
-         core_id
+         cpu_id
         </code>
-        : Identifier of the core that executed the task.
+        : Identifier of the CPU that executed the task.
        </li>
        <li>
         <code>
@@ -1255,7 +1263,7 @@ CALLED_FUNCTIONS=fib_seq,fib,get_usecs,main
    </li>
   </ul>
   <pre><code>$ head mir-ofp-instructions
-"task","parent","joins_at","child_number","num_children","core_id","exec_cycles","ins_count","stack_read","stack_write","mem_fp","ccr","clr","mem_read","mem_write","outl_func"
+"task","parent","joins_at","child_number","num_children","cpu_id","exec_cycles","ins_count","stack_read","stack_write","mem_fp","ccr","clr","mem_read","mem_write","outl_func"
 1,0,0,0,2,0,21887625,58,10,15,5,12,15,4,1,"ol_fib_2"
 2,1,0,1,2,0,610035,60,10,15,5,12,15,4,1,"ol_fib_0"
 3,1,0,2,2,0,3183115,60,10,15,5,12,15,4,1,"ol_fib_1"
