@@ -11,6 +11,8 @@ if(length(args) != 1)
     quit("no", 1)
 }
 dat <- read.csv(args[1])
+print("Table structure")
+str(dat)
 print("Standard R Summary")
 summary(dat)
 print("Standard Devation")
