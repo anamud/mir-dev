@@ -292,12 +292,42 @@ if("ins_count" %in% colnames(tg.data))
     p_task_size <- task_size_mult * as.numeric(cut(tg.data$ins_count, task_size_bins))
     tg <- set.vertex.attribute(tg, name='ins_count_to_size', index=task_index, value=p_task_size)
 }
+if("work_cycles" %in% colnames(tg.data))
+{
+    # Set size in proportion to average ins count
+    #mean_val <- mean(tg.data$work_cycles)
+    #p_task_size <- task_size_mult * (tg.data$work_cycles/mean_val)
+    p_task_size <- task_size_mult * as.numeric(cut(tg.data$work_cycles, task_size_bins))
+    tg <- set.vertex.attribute(tg, name='work_cycles_to_size', index=task_index, value=p_task_size)
+}
+if("overhead_cycles" %in% colnames(tg.data))
+{
+    # Set size in proportion to average ins count
+    #mean_val <- mean(tg.data$overhead_cycles)
+    #p_task_size <- task_size_mult * (tg.data$overhead_cycles/mean_val)
+    p_task_size <- task_size_mult * as.numeric(cut(tg.data$overhead_cycles, task_size_bins))
+    tg <- set.vertex.attribute(tg, name='overhead_cycles_to_size', index=task_index, value=p_task_size)
+}
 if("exec_cycles" %in% colnames(tg.data))
 {
     # Set height in proportion to exec_cycles
     exec_cycles <- tg.data$exec_cycles
     exec_cycles_norm <- 1 + ((exec_cycles - min(exec_cycles)) / (max(exec_cycles) - min(exec_cycles)))
     tg <- set.vertex.attribute(tg, name='exec_cycles_to_height', index=task_index, value=exec_cycles_norm*task_size)
+}
+if("work_cycles" %in% colnames(tg.data))
+{
+    # Set height in proportion to work_cycles
+    work_cycles <- tg.data$work_cycles
+    work_cycles_norm <- 1 + ((work_cycles - min(work_cycles)) / (max(work_cycles) - min(work_cycles)))
+    tg <- set.vertex.attribute(tg, name='work_cycles_to_height', index=task_index, value=work_cycles_norm*task_size)
+}
+if("overhead_cycles" %in% colnames(tg.data))
+{
+    # Set height in proportion to overhead_cycles
+    overhead_cycles <- tg.data$overhead_cycles
+    overhead_cycles_norm <- 1 + ((overhead_cycles - min(overhead_cycles)) / (max(overhead_cycles) - min(overhead_cycles)))
+    tg <- set.vertex.attribute(tg, name='overhead_cycles_to_height', index=task_index, value=overhead_cycles_norm*task_size)
 }
 # Set color   
 # Constants

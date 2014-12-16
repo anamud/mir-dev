@@ -185,6 +185,11 @@ void map_deinit()
     free(buffer/*, sizeof(uint64_t*) * num_tasks*/);
 }/*}}}*/
 
+void main_task_wrapper(void* arg)
+{/*{{{*/
+    map_par();
+}/*}}}*/
+
 int main(int argc, char *argv[])
 {/*{{{*/
     if (argc > 4)
@@ -214,7 +219,8 @@ int main(int argc, char *argv[])
 #endif
 
     long par_time_start = get_usecs();
-    map_par();
+    mir_task_create((mir_tfunc_t) main_task_wrapper, NULL, 0, 0, NULL, NULL);
+    mir_task_wait();
     long par_time_end = get_usecs();
     double par_time = (double)( par_time_end - par_time_start) / 1000000;
 

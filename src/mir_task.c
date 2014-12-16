@@ -64,6 +64,9 @@ static inline struct mir_task_t* mir_task_create_common(mir_tfunc_t tfunc, void*
 {/*{{{*/
     MIR_ASSERT(tfunc != NULL);
 
+    // Overhead measurement
+    uint64_t start_instant = mir_get_cycles();
+
     struct mir_task_t* task = NULL;
 #ifdef MIR_TASK_ALLOCATE_ON_STACK
     task = (struct mir_task_t*) alloca (sizeof(struct mir_task_t));
@@ -152,6 +155,9 @@ static inline struct mir_task_t* mir_task_create_common(mir_tfunc_t tfunc, void*
     task->done = 0;
     task->taken = 0;
 
+    // Overhead measurement
+    if(worker->current_task) worker->current_task->overhead_cycles += (mir_get_cycles() - start_instant);
+
     // Task is now created
     T_DBG("Cr", task);
 
@@ -162,8 +168,18 @@ static inline void mir_task_schedule(struct mir_task_t* task)
 {/*{{{*/
     MIR_ASSERT(task != NULL);
 
+    // Overhead measurement
+    uint64_t start_instant = mir_get_cycles();
+
     // Push task to the scheduling policy
-    runtime->sched_pol->push(task);
+    bool pushed = runtime->sched_pol->push(task);
+
+    // Overhead measurement
+    if(pushed)
+    {
+        struct mir_worker_t* worker = mir_worker_get_context(); MIR_ASSERT(worker != NULL); 
+        if(worker->current_task) worker->current_task->overhead_cycles += (mir_get_cycles() - start_instant);
+    }
 
     //__sync_synchronize();
     T_DBG("Sb", task);
@@ -174,10 +190,16 @@ static inline void mir_task_schedule_on_worker(struct mir_task_t* task, unsigned
     MIR_ASSERT(workerid < runtime->num_workers);
     MIR_ASSERT(task != NULL);
 
+    // Overhead measurement
+    uint64_t start_instant = mir_get_cycles();
+
     // Push task to specific worker 
     struct mir_worker_t* worker = &runtime->workers[workerid];
     MIR_ASSERT(worker != NULL);
     mir_worker_push(worker, task);
+
+    // Overhead measurement
+    if(worker->current_task) worker->current_task->overhead_cycles += (mir_get_cycles() - start_instant);
 
     //__sync_synchronize();
     T_DBG("Sb", task);
@@ -284,8 +306,9 @@ void mir_task_execute(struct mir_task_t* task)
     worker->current_task = task;
 
     // Current task timing
-    worker->current_task->exec_cycles = 0;
-    worker->current_task->exec_resume_instant = mir_get_cycles();
+    task->exec_cycles = 0;
+    task->exec_resume_instant = mir_get_cycles();
+    task->overhead_cycles = 0;
 
     // Write task id to shared memory.
     if(runtime->enable_ofp_handshake == 1)
@@ -307,7 +330,7 @@ void mir_task_execute(struct mir_task_t* task)
 
     // Current task timing
     task->exec_end_instant = mir_get_cycles() - runtime->init_time;
-    worker->current_task->exec_cycles += (mir_get_cycles() - worker->current_task->exec_resume_instant);
+    task->exec_cycles += (mir_get_cycles() - task->exec_resume_instant);
 
     // Record sync point 
     // NOTE: All sibling tasks will have the same sync point 
@@ -414,17 +437,17 @@ struct mir_twc_t* mir_twc_create()
     MIR_ASSERT(twc != NULL);
 
     // Book-keeping
-   for(int i=0; i<runtime->num_workers; i++)
+    for(int i=0; i<runtime->num_workers; i++)
        twc->count_per_worker[i] = 0;
-   twc->count = 0;
+    twc->count = 0;
 
     // Reset num times passed
-   twc->num_passes = 0;
+    twc->num_passes = 0;
 
-   // Set parent context
-   twc->parent = mir_worker_get_context()->current_task;
+    // Set parent context
+    twc->parent = mir_worker_get_context()->current_task;
 
-   return twc;
+    return twc;
 }/*}}}*/
 
 void mir_task_wait()
@@ -471,7 +494,7 @@ void mir_task_wait()
 
 void mir_task_list_write_header_to_file(FILE* file)
 {/*{{{*/
-    fprintf(file, "task,parent,joins_at,cpu_id,child_number,num_children,exec_cycles,queue_size,exec_end\n");
+    fprintf(file, "task,parent,joins_at,cpu_id,child_number,num_children,exec_cycles,overhead_cycles,queue_size,exec_end\n");
 }/*}}}*/
 
 void mir_task_list_write_to_file(struct mir_task_list_t* list, FILE* file)
@@ -484,7 +507,7 @@ void mir_task_list_write_to_file(struct mir_task_list_t* list, FILE* file)
         if(temp->task->parent)
             task_parent.uid = temp->task->parent->id.uid;
 
-        fprintf(file, "%" MIR_FORMSPEC_UL ",%" MIR_FORMSPEC_UL ",%lu,%u,%u,%u,%" MIR_FORMSPEC_UL ",%u,%" MIR_FORMSPEC_UL "\n", 
+        fprintf(file, "%" MIR_FORMSPEC_UL ",%" MIR_FORMSPEC_UL ",%lu,%u,%u,%u,%" MIR_FORMSPEC_UL ",%" MIR_FORMSPEC_UL ",%u,%" MIR_FORMSPEC_UL "\n", 
                 temp->task->id.uid, 
                 task_parent.uid,
                 temp->task->sync_pass,
@@ -492,6 +515,7 @@ void mir_task_list_write_to_file(struct mir_task_list_t* list, FILE* file)
                 temp->task->child_number,
                 temp->task->num_children,
                 temp->task->exec_cycles,
+                temp->task->overhead_cycles,
                 temp->task->queue_size_at_pop,
                 temp->task->exec_end_instant);
 
