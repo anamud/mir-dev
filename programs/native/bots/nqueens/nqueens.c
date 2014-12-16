@@ -179,7 +179,7 @@ void nqueens(int n, int j, char *a, int *solutions, int depth)
                 imm_args.csols = csols;
                 imm_args.i = i;
 
-                mir_task_create((mir_tfunc_t) smp_ol_nqueens_0, (void*) &imm_args, sizeof(struct nanos_args_0_t), 0, NULL, NULL);
+                mir_task_create((mir_tfunc_t) smp_ol_nqueens_0, (void*) &imm_args, sizeof(struct nanos_args_0_t), 0, NULL, "smp_ol_nqueens_0");
                 atleast_one_task = 1;
         } 
         else 

@@ -902,7 +902,7 @@ void OptimizedStrassenMultiply_par(REAL *C, REAL *A, REAL *B, unsigned MatrixSiz
             imm_args.Depth = Depth;
             imm_args.QuadrantSize = QuadrantSize;
             imm_args.M2 = M2;
-            mir_task_create((mir_tfunc_t) smp_ol_OptimizedStrassenMultiply_par_0, (void*) &imm_args, sizeof(imm_args), 0, NULL, NULL);
+            mir_task_create((mir_tfunc_t) smp_ol_OptimizedStrassenMultiply_par_0, (void*) &imm_args, sizeof(imm_args), 0, NULL, "OptimizedStrassenMultiply_par_0");
         }
 /*#pragma omp task untied*/
         /*OptimizedStrassenMultiply_par(M2, A11, B11, QuadrantSize, QuadrantSize, RowWidthA, RowWidthB, Depth+1);*/
@@ -915,7 +915,7 @@ void OptimizedStrassenMultiply_par(REAL *C, REAL *A, REAL *B, unsigned MatrixSiz
             imm_args.S1 = S1;
             imm_args.S5 = S5;
             imm_args.M5 = M5;
-            mir_task_create((mir_tfunc_t) smp_ol_OptimizedStrassenMultiply_par_1, (void*) &imm_args, sizeof(imm_args), 0, NULL, NULL);
+            mir_task_create((mir_tfunc_t) smp_ol_OptimizedStrassenMultiply_par_1, (void*) &imm_args, sizeof(imm_args), 0, NULL, "OptimizedStrassenMultiply_par_1");
         }
 /*#pragma omp task untied*/
         /*OptimizedStrassenMultiply_par(M5, S1, S5, QuadrantSize, QuadrantSize, QuadrantSize, QuadrantSize, Depth+1);*/
@@ -928,7 +928,7 @@ void OptimizedStrassenMultiply_par(REAL *C, REAL *A, REAL *B, unsigned MatrixSiz
             imm_args.S2 = S2;
             imm_args.S6 = S6;
             imm_args.T1sMULT = T1sMULT;
-            mir_task_create((mir_tfunc_t) smp_ol_OptimizedStrassenMultiply_par_2, (void*) &imm_args, sizeof(imm_args), 0, NULL, NULL);
+            mir_task_create((mir_tfunc_t) smp_ol_OptimizedStrassenMultiply_par_2, (void*) &imm_args, sizeof(imm_args), 0, NULL, "OptimizedStrassenMultiply_par_2");
         }
 /*#pragma omp task untied*/
         /*OptimizedStrassenMultiply_par(T1sMULT, S2, S6,  QuadrantSize, QuadrantSize, QuadrantSize, QuadrantSize, Depth+1);*/
@@ -942,7 +942,7 @@ void OptimizedStrassenMultiply_par(REAL *C, REAL *A, REAL *B, unsigned MatrixSiz
             imm_args.C22 = C22;
             imm_args.S3 = S3;
             imm_args.S7 = S7;
-            mir_task_create((mir_tfunc_t) smp_ol_OptimizedStrassenMultiply_par_3, (void*) &imm_args, sizeof(imm_args), 0, NULL, NULL);
+            mir_task_create((mir_tfunc_t) smp_ol_OptimizedStrassenMultiply_par_3, (void*) &imm_args, sizeof(imm_args), 0, NULL, "OptimizedStrassenMultiply_par_3");
         }
 /*#pragma omp task untied*/
         /*OptimizedStrassenMultiply_par(C22, S3, S7, QuadrantSize, RowWidthC [>FIXME<], QuadrantSize, QuadrantSize, Depth+1);*/
@@ -958,7 +958,7 @@ void OptimizedStrassenMultiply_par(REAL *C, REAL *A, REAL *B, unsigned MatrixSiz
             imm_args.QuadrantSize = QuadrantSize;
             imm_args.A12 = A12;
             imm_args.B21 = B21;
-            mir_task_create((mir_tfunc_t) smp_ol_OptimizedStrassenMultiply_par_4, (void*) &imm_args, sizeof(imm_args), 0, NULL, NULL); 
+            mir_task_create((mir_tfunc_t) smp_ol_OptimizedStrassenMultiply_par_4, (void*) &imm_args, sizeof(imm_args), 0, NULL, "OptimizedStrassenMultiply_par_4"); 
         }
 /*#pragma omp task untied*/
         /*OptimizedStrassenMultiply_par(C11, A12, B21, QuadrantSize, RowWidthC, RowWidthA, RowWidthB, Depth+1);*/
@@ -973,7 +973,7 @@ void OptimizedStrassenMultiply_par(REAL *C, REAL *A, REAL *B, unsigned MatrixSiz
             imm_args.C12 = C12;
             imm_args.B22 = B22;
             imm_args.S4 = S4;
-            mir_task_create((mir_tfunc_t) smp_ol_OptimizedStrassenMultiply_par_5, (void*) &imm_args, sizeof(imm_args), 0, NULL, NULL);
+            mir_task_create((mir_tfunc_t) smp_ol_OptimizedStrassenMultiply_par_5, (void*) &imm_args, sizeof(imm_args), 0, NULL, "OptimizedStrassenMultiply_par_5");
         }
 /*#pragma omp task untied*/
         /*OptimizedStrassenMultiply_par(C12, S4, B22, QuadrantSize, RowWidthC, QuadrantSize, RowWidthB, Depth+1);*/
@@ -988,7 +988,7 @@ void OptimizedStrassenMultiply_par(REAL *C, REAL *A, REAL *B, unsigned MatrixSiz
             imm_args.C21 = C21;
             imm_args.A22 = A22;
             imm_args.S8 = S8;
-            mir_task_create((mir_tfunc_t) smp_ol_OptimizedStrassenMultiply_par_6, (void*) &imm_args, sizeof(imm_args), 0, NULL, NULL);
+            mir_task_create((mir_tfunc_t) smp_ol_OptimizedStrassenMultiply_par_6, (void*) &imm_args, sizeof(imm_args), 0, NULL, "OptimizedStrassenMultiply_par_6");
         }
 /*#pragma omp task untied*/
         /*OptimizedStrassenMultiply_par(C21, A22, S8, QuadrantSize, RowWidthC, RowWidthA, QuadrantSize, Depth+1);*/

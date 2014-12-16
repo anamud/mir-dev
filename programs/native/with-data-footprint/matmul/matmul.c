@@ -272,7 +272,7 @@ void compute(struct timeval *start, struct timeval *stop, unsigned long NB, unsi
             footprints[f].data_access = MIR_DATA_ACCESS_WRITE;
             footprints[f].part_of = C[i][j];
 
-            mir_task_create((mir_tfunc_t) compute_task_wrapper, &arg, sizeof(struct compute_task_wrapper_arg_t), DIM+DIM+2, footprints, NULL);
+            mir_task_create((mir_tfunc_t) compute_task_wrapper, &arg, sizeof(struct compute_task_wrapper_arg_t), DIM+DIM+2, footprints, "compute_task_wrapper");
         }
 
 //#pragma omp taskwait
@@ -408,7 +408,7 @@ void init (unsigned long argc, char **argv, unsigned long * N_p, unsigned long *
                     arg.end = end;
                     arg.twc = twc;
 
-                    struct mir_task_t* task = mir_task_create((mir_tfunc_t) malloc_task_wrapper, &arg, sizeof(struct malloc_task_wrapper_arg_t), 0, NULL, NULL);
+                    mir_task_create((mir_tfunc_t) malloc_task_wrapper, &arg, sizeof(struct malloc_task_wrapper_arg_t), 0, NULL, "malloc_task_wrapper");
                 }
             }
         }
@@ -423,7 +423,7 @@ void init (unsigned long argc, char **argv, unsigned long * N_p, unsigned long *
                 arg.end = end;
                 arg.twc = twc;
 
-                mir_task_create((mir_tfunc_t) malloc_task_wrapper, &arg, sizeof(struct malloc_task_wrapper_arg_t), 0, NULL, NULL);
+                mir_task_create((mir_tfunc_t) malloc_task_wrapper, &arg, sizeof(struct malloc_task_wrapper_arg_t), 0, NULL, "malloc_task_wrapper");
             }
         }
 

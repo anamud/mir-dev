@@ -235,7 +235,7 @@ unsigned long long parTreeSearch(int depth, Node *parent, int numChildren)
         imm_args.nodePtr = nodePtr;
         imm_args.i = i;
 
-        mir_task_create((mir_tfunc_t) smp_ol_parTreeSearch_2, (void*) &imm_args, sizeof(struct nanos_args_2_t), 0, NULL, NULL);
+        mir_task_create((mir_tfunc_t) smp_ol_parTreeSearch_2, (void*) &imm_args, sizeof(struct nanos_args_2_t), 0, NULL, "smp_ol_parTreeSearch_2");
     }
 
     mir_task_wait();

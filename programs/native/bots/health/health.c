@@ -453,7 +453,7 @@ void sim_village_par(struct Village *village)
             struct nanos_args_0_t imm_args; 
             imm_args.vlist = vlist;
 
-            mir_task_create((mir_tfunc_t) smp_ol_sim_village_par_0, (void*) &imm_args, sizeof(imm_args), 0, NULL, NULL); 
+            mir_task_create((mir_tfunc_t) smp_ol_sim_village_par_0, (void*) &imm_args, sizeof(imm_args), 0, NULL, "smp_ol_sim_village_par_0"); 
         }
 /*#pragma omp task untied*/
          /*sim_village_par(vlist);*/

@@ -494,7 +494,7 @@ void mir_task_wait()
 
 void mir_task_list_write_header_to_file(FILE* file)
 {/*{{{*/
-    fprintf(file, "task,parent,joins_at,cpu_id,child_number,num_children,exec_cycles,overhead_cycles,queue_size,exec_end\n");
+    fprintf(file, "task,parent,joins_at,cpu_id,child_number,num_children,exec_cycles,overhead_cycles,queue_size,exec_end,tag\n");
 }/*}}}*/
 
 void mir_task_list_write_to_file(struct mir_task_list_t* list, FILE* file)
@@ -507,7 +507,7 @@ void mir_task_list_write_to_file(struct mir_task_list_t* list, FILE* file)
         if(temp->task->parent)
             task_parent.uid = temp->task->parent->id.uid;
 
-        fprintf(file, "%" MIR_FORMSPEC_UL ",%" MIR_FORMSPEC_UL ",%lu,%u,%u,%u,%" MIR_FORMSPEC_UL ",%" MIR_FORMSPEC_UL ",%u,%" MIR_FORMSPEC_UL "\n", 
+        fprintf(file, "%" MIR_FORMSPEC_UL ",%" MIR_FORMSPEC_UL ",%lu,%u,%u,%u,%" MIR_FORMSPEC_UL ",%" MIR_FORMSPEC_UL ",%u,%" MIR_FORMSPEC_UL ",%s\n", 
                 temp->task->id.uid, 
                 task_parent.uid,
                 temp->task->sync_pass,
@@ -517,7 +517,8 @@ void mir_task_list_write_to_file(struct mir_task_list_t* list, FILE* file)
                 temp->task->exec_cycles,
                 temp->task->overhead_cycles,
                 temp->task->queue_size_at_pop,
-                temp->task->exec_end_instant);
+                temp->task->exec_end_instant,
+                temp->task->name);
 
         temp = temp->next;
     }

@@ -125,7 +125,7 @@ typedef struct data_env_2_t_tag
         imm_args_0.n_0 = n;
         imm_args_0.d_0 = d;
 
-        mir_task_create((mir_tfunc_t) ol_fib_0, (void*) &imm_args_0, sizeof(data_env_0_t), 0, NULL, NULL);
+        mir_task_create((mir_tfunc_t) ol_fib_0, (void*) &imm_args_0, sizeof(data_env_0_t), 0, NULL, "ol_fib_0");
         
         // Create task2
         data_env_1_t imm_args_1;
@@ -133,7 +133,7 @@ typedef struct data_env_2_t_tag
         imm_args_1.n_0 = n;
         imm_args_1.d_0 = d;
 
-        mir_task_create((mir_tfunc_t) ol_fib_1, (void*) &imm_args_1, sizeof(data_env_1_t), 0, NULL, NULL);
+        mir_task_create((mir_tfunc_t) ol_fib_1, (void*) &imm_args_1, sizeof(data_env_1_t), 0, NULL, "ol_fib_1");
 
         // Task wait
         mir_task_wait();
@@ -199,7 +199,7 @@ int main(int argc, char **argv)
     imm_args_2.n_0 = num;
     imm_args_2.d_0 = 0;
 
-    mir_task_create((mir_tfunc_t) ol_fib_2, (void*) &imm_args_2, sizeof(data_env_2_t), 0, NULL, NULL);
+    mir_task_create((mir_tfunc_t) ol_fib_2, (void*) &imm_args_2, sizeof(data_env_2_t), 0, NULL, "ol_fib_2");
     
     // Task wait
     mir_task_wait();
