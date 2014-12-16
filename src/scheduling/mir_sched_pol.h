@@ -24,7 +24,7 @@ struct mir_sched_pol_t
     void (*config) (const char* conf_str);
     void (*create) ();
     void (*destroy) ();
-    void (*push) (struct mir_task_t* );
+    bool (*push) (struct mir_task_t* );
     bool (*pop) (struct mir_task_t**);
 };
 

@@ -151,7 +151,7 @@ static inline bool is_data_dist_significant(struct mir_mem_node_dist_t* dist)
     return true;
 }/*}}}*/
 
-void push_numa (struct mir_task_t* task)
+bool push_numa (struct mir_task_t* task)
 {/*{{{*/
     MIR_ASSERT(NULL != task);
     //if(runtime->enable_recorder == 1)
@@ -161,6 +161,7 @@ void push_numa (struct mir_task_t* task)
     struct mir_worker_t* this_worker = mir_worker_get_context();
     MIR_ASSERT(NULL != this_worker);
     bool push_to_alt_queue = false;
+    bool pushed = true;
 
     // Push task onto node with the least access cost to read data footprint
     // If no data footprint, push task onto this worker's node
@@ -228,6 +229,7 @@ void push_numa (struct mir_task_t* task)
     if( false == mir_queue_push(queue, (void*) task) )
     {
 #ifdef MIR_INLINE_TASK_IF_QUEUE_FULL 
+        pushed = false;
         mir_task_execute(task);
         // Update stats
         if(runtime->enable_worker_stats)
@@ -248,6 +250,8 @@ void push_numa (struct mir_task_t* task)
 
     //if(runtime->enable_recorder == 1)
     //MIR_RECORDER_STATE_END(NULL, 0);
+
+    return pushed;
 }/*}}}*/
 
 bool pop_numa (struct mir_task_t** task)

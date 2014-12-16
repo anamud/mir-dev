@@ -51,6 +51,9 @@ for(task in max.exec.end$task)
     ts.data$last_to_finish[ts.data$task == task] <- T
 }
 
+# Calc work cycles
+ts.data$work_cycles <- ts.data$exec_cycles - ts.data$overhead_cycles
+
 # Write out processed data
 out.file <- paste(gsub(". $", "", ts.file), ".processed", sep="")
 if(verbo) print(paste("Writing file", out.file))

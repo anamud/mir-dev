@@ -241,7 +241,14 @@ void mir_worker_do_work(struct mir_worker_t* worker, bool backoff)
     struct mir_task_t* task = NULL;
     bool work_available = 0;
 
+    // Overhead measurement 
+    uint64_t start_instant = mir_get_cycles();
+
     work_available = mir_worker_pop(worker, &task);
+
+    // Overhead measurement 
+    if(worker->current_task) worker->current_task->overhead_cycles += (mir_get_cycles() - start_instant); 
+
     if(work_available == 1) 
     {
         // Update busy counter
@@ -259,7 +266,14 @@ void mir_worker_do_work(struct mir_worker_t* worker, bool backoff)
         return;
     }
     
+    // Overhead measurement 
+    start_instant = mir_get_cycles();
+
     work_available = runtime->sched_pol->pop(&task);
+
+    // Overhead measurement 
+    if(worker->current_task) worker->current_task->overhead_cycles += (mir_get_cycles() - start_instant); 
+
     if(work_available == 1) 
     {
         // Update busy counter
@@ -277,6 +291,9 @@ void mir_worker_do_work(struct mir_worker_t* worker, bool backoff)
         return;
     }
     
+    // Overhead measurement 
+    start_instant = mir_get_cycles();
+
     // Do other useful things such as ...
     // Release independant tasks
     // For now we backoff
@@ -284,6 +301,9 @@ void mir_worker_do_work(struct mir_worker_t* worker, bool backoff)
     {
         mir_worker_backoff(worker);
     }
+    
+    // Overhead measurement 
+    if(worker->current_task) worker->current_task->overhead_cycles += (mir_get_cycles() - start_instant); 
 }/*}}}*/
 
 void mir_worker_check_done()

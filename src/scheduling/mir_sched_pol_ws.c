@@ -91,7 +91,7 @@ void destroy_ws ()
     sp->queues = NULL;
 }/*}}}*/
 
-void push_ws (struct mir_task_t* task)
+bool push_ws (struct mir_task_t* task)
 {/*{{{*/
     MIR_ASSERT(NULL != task);
     //if(runtime->enable_recorder == 1)
@@ -101,12 +101,15 @@ void push_ws (struct mir_task_t* task)
     struct mir_worker_t* worker = mir_worker_get_context(); 
     MIR_ASSERT(NULL != worker);
 
+    bool pushed = true;
+
     // Push task to this workers queue 
     struct mir_queue_t* queue = runtime->sched_pol->queues[worker->id];
     MIR_ASSERT(NULL != queue);
     if( false == mir_queue_push(queue, (void*) task) )
     {
 #ifdef MIR_INLINE_TASK_IF_QUEUE_FULL 
+        pushed = false;
         mir_task_execute(task);
         // Update stats
         if(runtime->enable_worker_stats)
@@ -125,6 +128,8 @@ void push_ws (struct mir_task_t* task)
 
     //if(runtime->enable_recorder == 1)
     //MIR_RECORDER_STATE_END(NULL, 0);
+
+    return pushed;
 }/*}}}*/
 
 bool pop_ws (struct mir_task_t** task)
