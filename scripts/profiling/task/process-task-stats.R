@@ -51,6 +51,9 @@ for(task in max.exec.end$task)
     ts.data$last_to_finish[ts.data$task == task] <- T
 }
 
+# Calc work cycles
+ts.data$work_cycles <- ts.data$exec_cycles - ts.data$overhead_cycles
+
 # Write out processed data
 out.file <- paste(gsub(". $", "", ts.file), ".processed", sep="")
 if(verbo) print(paste("Writing file", out.file))
@@ -98,12 +101,24 @@ sink()
 out.file <- "task-execution-load-balance.pdf"
 if(verbo) print(paste("Writing file", out.file))
 pdf(file=out.file)
-barplot(as.table(tapply(ts.data$exec_cycles, ts.data$cpu_id, FUN= function(x) {sum(as.numeric(x))} )), log="y", xlab="cpu", ylab="task execution [log-cycles]")
+barplot(as.table(tapply(ts.data$work_cycles, ts.data$cpu_id, FUN= function(x) {sum(as.numeric(x))} )), log="y", xlab="cpu", ylab="task execution [log-cycles]")
 garbage <- dev.off()
 out.file <- "task-count-load-balance.pdf"
 if(verbo) print(paste("Writing file", out.file))
 pdf(file=out.file)
 barplot(as.table(tapply(ts.data$task, ts.data$cpu_id, FUN=length)), xlab="cpu", ylab="tasks")
+garbage <- dev.off()
+out.file <- "task-execution-by-name.pdf"
+if(verbo) print(paste("Writing file", out.file))
+pdf(file=out.file)
+par(las=2)
+barplot(as.table(tapply(ts.data$work_cycles, ts.data$tag, FUN= function(x) {sum(as.numeric(x))} )), log="y", xlab="", ylab="task execution [log-cycles]")
+garbage <- dev.off()
+out.file <- "task-count-by-name.pdf"
+if(verbo) print(paste("Writing file", out.file))
+pdf(file=out.file)
+par(las=2)
+barplot(as.table(tapply(ts.data$task, ts.data$tag, FUN=length)), xlab="", ylab="tasks")
 garbage <- dev.off()
 if(verbo) toc("Summarizing")
 

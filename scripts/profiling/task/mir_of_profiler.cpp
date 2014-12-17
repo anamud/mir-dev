@@ -24,7 +24,7 @@ KNOB<BOOL>   KnobCalcMemShare(KNOB_MODE_WRITEONCE, "pintool",
     "m", "0", "calculate memory sharing (NOTE: a time consuming process!)");
 
 #define EXCLUDE_STACK_INS_FROM_MEM_FP 1
-//#define GET_INS_MIX 1
+#define GET_INS_MIX 1
 
 // MIR shared memory connection
 // DO NOT CHANGE DEFINED VALUES WITHOUT MAKING A SIMILAR CHANGE IN MIR
@@ -505,7 +505,18 @@ VOID Fini(INT32 code, VOID *v)
     // Write as csv
     const char* fileheader = "task,ins_count,stack_read,stack_write,mem_fp,ccr,clr,mem_read,mem_write,outl_func";
 #ifdef GET_INS_MIX
-    out << fileheader << ",[ins_mix]" << std::endl;
+    string ins_catg = ",";
+    for(unsigned int c=0; c<XED_CATEGORY_LAST; c++)
+    {
+        if(c!=0)
+        {
+            ins_catg += ",";
+            ins_catg += xed_category_enum_t2str((const xed_category_enum_t)c);
+        }
+        else
+            ins_catg += xed_category_enum_t2str((const xed_category_enum_t)c);
+    }
+    out << fileheader << ins_catg << std::endl;
 #else
     out << fileheader << std::endl;
 #endif
@@ -524,12 +535,14 @@ VOID Fini(INT32 code, VOID *v)
             << stat->mem_write << ","
             << stat->name;
 #ifdef GET_INS_MIX 
-        out << ",[";
+        out << ",";
         for(int c=0; c<XED_CATEGORY_LAST; c++)
         {
-            out << stat->ins_mix[c] << ",";
+            if(c!=0)
+                out << "," << stat->ins_mix[c];
+            else
+                out << stat->ins_mix[c];
         }
-        out << "]";
 #endif
         out << std::endl;
     }

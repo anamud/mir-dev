@@ -955,7 +955,7 @@ void compute_w_coefficients(int n, int a, int b, COMPLEX * W)
             imm_args.a = a;
             imm_args.W = W;
             imm_args.ab = ab;
-            mir_task_create((mir_tfunc_t) smp_ol_compute_w_coefficients_0, (void*) &imm_args, sizeof(imm_args), 0, NULL, NULL);
+            mir_task_create((mir_tfunc_t) smp_ol_compute_w_coefficients_0, (void*) &imm_args, sizeof(imm_args), 0, NULL, "smp_ol_compute_w_coefficients_0");
         }
         // Task2
         /*#pragma omp task untied*/
@@ -967,7 +967,7 @@ void compute_w_coefficients(int n, int a, int b, COMPLEX * W)
             imm_args.b = b;
             imm_args.W = W;
             imm_args.ab = ab;
-            mir_task_create((mir_tfunc_t) smp_ol_compute_w_coefficients_1, (void*) &imm_args, sizeof(imm_args), 0, NULL, NULL);
+            mir_task_create((mir_tfunc_t) smp_ol_compute_w_coefficients_1, (void*) &imm_args, sizeof(imm_args), 0, NULL, "smp_ol_compute_w_coefficients_1");
         }
         mir_task_wait();
         //#pragma omp taskwait
@@ -1057,7 +1057,7 @@ void unshuffle(int a, int b, COMPLEX * in, COMPLEX * out, int r, int m)
             imm_args.r = r;
             imm_args.m = m;
             imm_args.ab = ab;
-            mir_task_create((mir_tfunc_t) smp_ol_unshuffle_2, (void*) &imm_args, sizeof(imm_args), 0, NULL, NULL);
+            mir_task_create((mir_tfunc_t) smp_ol_unshuffle_2, (void*) &imm_args, sizeof(imm_args), 0, NULL, "smp_ol_unshuffle_2");
         }
         // Task4
         /*#pragma omp task untied*/
@@ -1071,7 +1071,7 @@ void unshuffle(int a, int b, COMPLEX * in, COMPLEX * out, int r, int m)
             imm_args.r = r;
             imm_args.m = m;
             imm_args.ab = ab;
-            mir_task_create((mir_tfunc_t) smp_ol_unshuffle_3, (void*) &imm_args, sizeof(imm_args), 0, NULL, NULL);
+            mir_task_create((mir_tfunc_t) smp_ol_unshuffle_3, (void*) &imm_args, sizeof(imm_args), 0, NULL, "smp_ol_unshuffle_3");
         }
         mir_task_wait();
         //#pragma omp taskwait
@@ -1157,7 +1157,7 @@ void fft_twiddle_gen(int i, int i1, COMPLEX * in, COMPLEX * out, COMPLEX * W, in
             imm_args.nWdn = nWdn;
             imm_args.r = r;
             imm_args.m = m;
-            mir_task_create((mir_tfunc_t) smp_ol_fft_twiddle_gen_4, (void*) &imm_args, sizeof(imm_args), 0, NULL, NULL);
+            mir_task_create((mir_tfunc_t) smp_ol_fft_twiddle_gen_4, (void*) &imm_args, sizeof(imm_args), 0, NULL, "smp_ol_fft_twiddle_gen_4");
         }
     } else {
         int i2 = (i + i1) / 2;
@@ -1177,7 +1177,7 @@ void fft_twiddle_gen(int i, int i1, COMPLEX * in, COMPLEX * out, COMPLEX * W, in
             imm_args.r = r;
             imm_args.m = m;
             imm_args.i2 = i2;
-            mir_task_create((mir_tfunc_t) smp_ol_fft_twiddle_gen_5, (void*) &imm_args, sizeof(imm_args), 0, NULL, NULL);
+            mir_task_create((mir_tfunc_t) smp_ol_fft_twiddle_gen_5, (void*) &imm_args, sizeof(imm_args), 0, NULL, "smp_ol_fft_twiddle_gen_5");
         }
         // Task7
         /*#pragma omp task untied*/
@@ -1195,7 +1195,7 @@ void fft_twiddle_gen(int i, int i1, COMPLEX * in, COMPLEX * out, COMPLEX * W, in
             imm_args.r = r;
             imm_args.m = m;
             imm_args.i2 = i2;
-            mir_task_create((mir_tfunc_t) smp_ol_fft_twiddle_gen_6, (void*) &imm_args, sizeof(imm_args), 0, NULL, NULL);
+            mir_task_create((mir_tfunc_t) smp_ol_fft_twiddle_gen_6, (void*) &imm_args, sizeof(imm_args), 0, NULL, "smp_ol_fft_twiddle_gen_6");
         }
     }
     mir_task_wait();
@@ -1274,7 +1274,7 @@ void fft_twiddle_2(int a, int b, COMPLEX * in, COMPLEX * out, COMPLEX * W, int n
             imm_args.nWdn = nWdn;
             imm_args.m = m;
             imm_args.ab = ab;
-            mir_task_create((mir_tfunc_t) smp_ol_fft_twiddle_2_7, (void*) &imm_args, sizeof(imm_args), 0, NULL, NULL);
+            mir_task_create((mir_tfunc_t) smp_ol_fft_twiddle_2_7, (void*) &imm_args, sizeof(imm_args), 0, NULL, "smp_ol_fft_twiddle_2_7");
         }
         // Task9
         /*#pragma omp task untied*/
@@ -1290,7 +1290,7 @@ void fft_twiddle_2(int a, int b, COMPLEX * in, COMPLEX * out, COMPLEX * W, int n
             imm_args.nWdn = nWdn;
             imm_args.m = m;
             imm_args.ab = ab;
-            mir_task_create((mir_tfunc_t) smp_ol_fft_twiddle_2_8, (void*) &imm_args, sizeof(imm_args), 0, NULL, NULL);
+            mir_task_create((mir_tfunc_t) smp_ol_fft_twiddle_2_8, (void*) &imm_args, sizeof(imm_args), 0, NULL, "smp_ol_fft_twiddle_2_8");
         }
         mir_task_wait();
         //#pragma omp taskwait
@@ -1356,7 +1356,7 @@ void fft_unshuffle_2(int a, int b, COMPLEX * in, COMPLEX * out, int m)
             imm_args.out = out;
             imm_args.m = m;
             imm_args.ab = ab;
-            mir_task_create((mir_tfunc_t) smp_ol_fft_unshuffle_2_9, (void*) &imm_args, sizeof(imm_args), 0, NULL, NULL);
+            mir_task_create((mir_tfunc_t) smp_ol_fft_unshuffle_2_9, (void*) &imm_args, sizeof(imm_args), 0, NULL, "smp_ol_fft_unshuffle_2_9");
         }
         // Task11
         /*#pragma omp task untied*/
@@ -1369,7 +1369,7 @@ void fft_unshuffle_2(int a, int b, COMPLEX * in, COMPLEX * out, int m)
             imm_args.out = out;
             imm_args.m = m;
             imm_args.ab = ab;
-            mir_task_create((mir_tfunc_t) smp_ol_fft_unshuffle_2_10, (void*) &imm_args, sizeof(imm_args), 0, NULL, NULL);
+            mir_task_create((mir_tfunc_t) smp_ol_fft_unshuffle_2_10, (void*) &imm_args, sizeof(imm_args), 0, NULL, "smp_ol_fft_unshuffle_2_10");
         }
         mir_task_wait();
         //#pragma omp taskwait
@@ -1512,7 +1512,7 @@ void fft_twiddle_4(int a, int b, COMPLEX * in, COMPLEX * out, COMPLEX * W, int n
             imm_args.nWdn = nWdn;
             imm_args.m = m;
             imm_args.ab = ab;
-            mir_task_create((mir_tfunc_t) smp_ol_fft_twiddle_4_11, (void*) &imm_args, sizeof(imm_args), 0, NULL, NULL);
+            mir_task_create((mir_tfunc_t) smp_ol_fft_twiddle_4_11, (void*) &imm_args, sizeof(imm_args), 0, NULL, "smp_ol_fft_twiddle_4_11");
         }
         // Task13
         /*#pragma omp task untied*/
@@ -1528,7 +1528,7 @@ void fft_twiddle_4(int a, int b, COMPLEX * in, COMPLEX * out, COMPLEX * W, int n
             imm_args.nWdn = nWdn;
             imm_args.m = m;
             imm_args.ab = ab;
-            mir_task_create((mir_tfunc_t) smp_ol_fft_twiddle_4_12, (void*) &imm_args, sizeof(imm_args), 0, NULL, NULL);
+            mir_task_create((mir_tfunc_t) smp_ol_fft_twiddle_4_12, (void*) &imm_args, sizeof(imm_args), 0, NULL, "smp_ol_fft_twiddle_4_12");
         }
         mir_task_wait();
         //#pragma omp taskwait
@@ -1632,7 +1632,7 @@ void fft_unshuffle_4(int a, int b, COMPLEX * in, COMPLEX * out, int m)
             imm_args.out = out;
             imm_args.m = m;
             imm_args.ab = ab;
-            mir_task_create((mir_tfunc_t) smp_ol_fft_unshuffle_4_13, (void*) &imm_args, sizeof(imm_args), 0, NULL, NULL);
+            mir_task_create((mir_tfunc_t) smp_ol_fft_unshuffle_4_13, (void*) &imm_args, sizeof(imm_args), 0, NULL, "smp_ol_fft_unshuffle_4_13");
         }
         // Task15
         /*#pragma omp task untied*/
@@ -1645,7 +1645,7 @@ void fft_unshuffle_4(int a, int b, COMPLEX * in, COMPLEX * out, int m)
             imm_args.out = out;
             imm_args.m = m;
             imm_args.ab = ab;
-            mir_task_create((mir_tfunc_t) smp_ol_fft_unshuffle_4_14, (void*) &imm_args, sizeof(imm_args), 0, NULL, NULL);
+            mir_task_create((mir_tfunc_t) smp_ol_fft_unshuffle_4_14, (void*) &imm_args, sizeof(imm_args), 0, NULL, "smp_ol_fft_unshuffle_4_14");
         }
         //#pragma omp taskwait
     }
@@ -1946,7 +1946,7 @@ void fft_twiddle_8(int a, int b, COMPLEX * in, COMPLEX * out, COMPLEX * W, int n
             imm_args.nWdn = nWdn;
             imm_args.m = m;
             imm_args.ab = ab;
-            mir_task_create((mir_tfunc_t) smp_ol_fft_twiddle_8_15, (void*) &imm_args, sizeof(imm_args), 0, NULL, NULL);
+            mir_task_create((mir_tfunc_t) smp_ol_fft_twiddle_8_15, (void*) &imm_args, sizeof(imm_args), 0, NULL, "smp_ol_fft_twiddle_8_15");
         }
         // Task17
         /*#pragma omp task untied*/
@@ -1962,7 +1962,7 @@ void fft_twiddle_8(int a, int b, COMPLEX * in, COMPLEX * out, COMPLEX * W, int n
             imm_args.nWdn = nWdn;
             imm_args.m = m;
             imm_args.ab = ab;
-            mir_task_create((mir_tfunc_t) smp_ol_fft_twiddle_8_16, (void*) &imm_args, sizeof(imm_args), 0, NULL, NULL);
+            mir_task_create((mir_tfunc_t) smp_ol_fft_twiddle_8_16, (void*) &imm_args, sizeof(imm_args), 0, NULL, "smp_ol_fft_twiddle_8_16");
         }
         mir_task_wait();
         //#pragma omp taskwait
@@ -2158,7 +2158,7 @@ void fft_unshuffle_8(int a, int b, COMPLEX * in, COMPLEX * out, int m)
             imm_args.out = out;
             imm_args.m = m;
             imm_args.ab = ab;
-            mir_task_create((mir_tfunc_t) smp_ol_fft_unshuffle_8_17, (void*) &imm_args, sizeof(imm_args), 0, NULL, NULL);
+            mir_task_create((mir_tfunc_t) smp_ol_fft_unshuffle_8_17, (void*) &imm_args, sizeof(imm_args), 0, NULL, "smp_ol_fft_unshuffle_8_17");
         }
         // Task19
         /*#pragma omp task untied*/
@@ -2171,7 +2171,7 @@ void fft_unshuffle_8(int a, int b, COMPLEX * in, COMPLEX * out, int m)
             imm_args.out = out;
             imm_args.m = m;
             imm_args.ab = ab;
-            mir_task_create((mir_tfunc_t) smp_ol_fft_unshuffle_8_18, (void*) &imm_args, sizeof(imm_args), 0, NULL, NULL);
+            mir_task_create((mir_tfunc_t) smp_ol_fft_unshuffle_8_18, (void*) &imm_args, sizeof(imm_args), 0, NULL, "smp_ol_fft_unshuffle_8_18");
         }
         mir_task_wait();
         //#pragma omp taskwait
@@ -2849,7 +2849,7 @@ void fft_twiddle_16(int a, int b, COMPLEX * in, COMPLEX * out, COMPLEX * W, int 
             imm_args.nWdn = nWdn;
             imm_args.m = m;
             imm_args.ab = ab;
-            mir_task_create((mir_tfunc_t) smp_ol_fft_twiddle_16_19, (void*) &imm_args, sizeof(imm_args), 0, NULL, NULL);
+            mir_task_create((mir_tfunc_t) smp_ol_fft_twiddle_16_19, (void*) &imm_args, sizeof(imm_args), 0, NULL, "smp_ol_fft_twiddle_16_19");
         }
         // Task21
         /*#pragma omp task untied*/
@@ -2865,7 +2865,7 @@ void fft_twiddle_16(int a, int b, COMPLEX * in, COMPLEX * out, COMPLEX * W, int 
             imm_args.nWdn = nWdn;
             imm_args.m = m;
             imm_args.ab = ab;
-            mir_task_create((mir_tfunc_t) smp_ol_fft_twiddle_16_20, (void*) &imm_args, sizeof(imm_args), 0, NULL, NULL);
+            mir_task_create((mir_tfunc_t) smp_ol_fft_twiddle_16_20, (void*) &imm_args, sizeof(imm_args), 0, NULL, "smp_ol_fft_twiddle_16_20");
         }
         mir_task_wait();
         //#pragma omp taskwait
@@ -3277,7 +3277,7 @@ void fft_unshuffle_16(int a, int b, COMPLEX * in, COMPLEX * out, int m)
             imm_args.out = out;
             imm_args.m = m;
             imm_args.ab = ab;
-            mir_task_create((mir_tfunc_t) smp_ol_fft_unshuffle_16_21, (void*) &imm_args, sizeof(imm_args), 0, NULL, NULL);
+            mir_task_create((mir_tfunc_t) smp_ol_fft_unshuffle_16_21, (void*) &imm_args, sizeof(imm_args), 0, NULL, "smp_ol_fft_unshuffle_16_21");
         }
         // Task23
         /*#pragma omp task untied*/
@@ -3290,7 +3290,7 @@ void fft_unshuffle_16(int a, int b, COMPLEX * in, COMPLEX * out, int m)
             imm_args.out = out;
             imm_args.m = m;
             imm_args.ab = ab;
-            mir_task_create((mir_tfunc_t) smp_ol_fft_unshuffle_16_22, (void*) &imm_args, sizeof(imm_args), 0, NULL, NULL);
+            mir_task_create((mir_tfunc_t) smp_ol_fft_unshuffle_16_22, (void*) &imm_args, sizeof(imm_args), 0, NULL, "smp_ol_fft_unshuffle_16_22");
         }
         mir_task_wait();
         //#pragma omp taskwait
@@ -4848,7 +4848,7 @@ void fft_twiddle_32(int a, int b, COMPLEX * in, COMPLEX * out, COMPLEX * W, int 
             imm_args.nWdn = nWdn;
             imm_args.m = m;
             imm_args.ab = ab;
-            mir_task_create((mir_tfunc_t) smp_ol_fft_twiddle_32_23, (void*) &imm_args, sizeof(imm_args), 0, NULL, NULL);
+            mir_task_create((mir_tfunc_t) smp_ol_fft_twiddle_32_23, (void*) &imm_args, sizeof(imm_args), 0, NULL, "smp_ol_fft_twiddle_32_23");
         }
         // Task25
         /*#pragma omp task untied*/
@@ -4864,7 +4864,7 @@ void fft_twiddle_32(int a, int b, COMPLEX * in, COMPLEX * out, COMPLEX * W, int 
             imm_args.nWdn = nWdn;
             imm_args.m = m;
             imm_args.ab = ab;
-            mir_task_create((mir_tfunc_t) smp_ol_fft_twiddle_32_24, (void*) &imm_args, sizeof(imm_args), 0, NULL, NULL);
+            mir_task_create((mir_tfunc_t) smp_ol_fft_twiddle_32_24, (void*) &imm_args, sizeof(imm_args), 0, NULL, "smp_ol_fft_twiddle_32_24");
         }
         mir_task_wait();
         //#pragma omp taskwait
@@ -5772,7 +5772,7 @@ void fft_unshuffle_32(int a, int b, COMPLEX * in, COMPLEX * out, int m)
             imm_args.out = out;
             imm_args.m = m;
             imm_args.ab = ab;
-            mir_task_create((mir_tfunc_t) smp_ol_fft_unshuffle_32_25, (void*) &imm_args, sizeof(imm_args), 0, NULL, NULL);
+            mir_task_create((mir_tfunc_t) smp_ol_fft_unshuffle_32_25, (void*) &imm_args, sizeof(imm_args), 0, NULL, "smp_ol_fft_unshuffle_32_25");
         }
         // Task27
         /*#pragma omp task untied*/
@@ -5785,7 +5785,7 @@ void fft_unshuffle_32(int a, int b, COMPLEX * in, COMPLEX * out, int m)
             imm_args.out = out;
             imm_args.m = m;
             imm_args.ab = ab;
-            mir_task_create((mir_tfunc_t) smp_ol_fft_unshuffle_32_26, (void*) &imm_args, sizeof(imm_args), 0, NULL, NULL);
+            mir_task_create((mir_tfunc_t) smp_ol_fft_unshuffle_32_26, (void*) &imm_args, sizeof(imm_args), 0, NULL, "smp_ol_fft_unshuffle_32_26");
         }
         mir_task_wait();
         //#pragma omp taskwait
@@ -5936,7 +5936,7 @@ void fft_aux(int n, COMPLEX * in, COMPLEX * out, int *factors, COMPLEX * W, int 
                 imm_args.in = in;
                 imm_args.out = out;
                 imm_args.m = m;
-                mir_task_create((mir_tfunc_t) smp_ol_fft_aux_27, (void*) &imm_args, sizeof(imm_args), 0, NULL, NULL);
+                mir_task_create((mir_tfunc_t) smp_ol_fft_aux_27, (void*) &imm_args, sizeof(imm_args), 0, NULL, "smp_ol_fft_aux_27");
             }
         } else if (r == 16) {
             // Task29
@@ -5948,7 +5948,7 @@ void fft_aux(int n, COMPLEX * in, COMPLEX * out, int *factors, COMPLEX * W, int 
                 imm_args.in = in;
                 imm_args.out = out;
                 imm_args.m = m;
-                mir_task_create((mir_tfunc_t) smp_ol_fft_aux_28, (void*) &imm_args, sizeof(imm_args), 0, NULL, NULL);
+                mir_task_create((mir_tfunc_t) smp_ol_fft_aux_28, (void*) &imm_args, sizeof(imm_args), 0, NULL, "smp_ol_fft_aux_28");
             }
         } else if (r == 8) {
             // Task30
@@ -5960,7 +5960,7 @@ void fft_aux(int n, COMPLEX * in, COMPLEX * out, int *factors, COMPLEX * W, int 
                 imm_args.in = in;
                 imm_args.out = out;
                 imm_args.m = m;
-                mir_task_create((mir_tfunc_t) smp_ol_fft_aux_29, (void*) &imm_args, sizeof(imm_args), 0, NULL, NULL);
+                mir_task_create((mir_tfunc_t) smp_ol_fft_aux_29, (void*) &imm_args, sizeof(imm_args), 0, NULL, "smp_ol_fft_aux_29");
             }
         } else if (r == 4) {
             // Task31
@@ -5972,7 +5972,7 @@ void fft_aux(int n, COMPLEX * in, COMPLEX * out, int *factors, COMPLEX * W, int 
                 imm_args.in = in;
                 imm_args.out = out;
                 imm_args.m = m;
-                mir_task_create((mir_tfunc_t) smp_ol_fft_aux_30, (void*) &imm_args, sizeof(imm_args), 0, NULL, NULL);
+                mir_task_create((mir_tfunc_t) smp_ol_fft_aux_30, (void*) &imm_args, sizeof(imm_args), 0, NULL, "smp_ol_fft_aux_30");
             }
         } else if (r == 2) {
             // Task32
@@ -5984,7 +5984,7 @@ void fft_aux(int n, COMPLEX * in, COMPLEX * out, int *factors, COMPLEX * W, int 
                 imm_args.in = in;
                 imm_args.out = out;
                 imm_args.m = m;
-                mir_task_create((mir_tfunc_t) smp_ol_fft_aux_31, (void*) &imm_args, sizeof(imm_args), 0, NULL, NULL);
+                mir_task_create((mir_tfunc_t) smp_ol_fft_aux_31, (void*) &imm_args, sizeof(imm_args), 0, NULL, "smp_ol_fft_aux_31");
             }
         } else
             unshuffle(0, m, in, out, r, m);
@@ -6006,7 +6006,7 @@ void fft_aux(int n, COMPLEX * in, COMPLEX * out, int *factors, COMPLEX * W, int 
                 imm_args.nW = nW;
                 imm_args.m = m;
                 imm_args.k = k;
-                mir_task_create((mir_tfunc_t) smp_ol_fft_aux_32, (void*) &imm_args, sizeof(imm_args), 0, NULL, NULL);
+                mir_task_create((mir_tfunc_t) smp_ol_fft_aux_32, (void*) &imm_args, sizeof(imm_args), 0, NULL, "smp_ol_fft_aux_32");
             }
         }
         mir_task_wait();
@@ -6029,7 +6029,7 @@ void fft_aux(int n, COMPLEX * in, COMPLEX * out, int *factors, COMPLEX * W, int 
             imm_args.W = W;
             imm_args.nW = nW;
             imm_args.m = m;
-            mir_task_create((mir_tfunc_t) smp_ol_fft_aux_33, (void*) &imm_args, sizeof(imm_args), 0, NULL, NULL);
+            mir_task_create((mir_tfunc_t) smp_ol_fft_aux_33, (void*) &imm_args, sizeof(imm_args), 0, NULL, "smp_ol_fft_aux_33");
         }
     } else if (r == 4) {
         // Task35
@@ -6044,7 +6044,7 @@ void fft_aux(int n, COMPLEX * in, COMPLEX * out, int *factors, COMPLEX * W, int 
             imm_args.W = W;
             imm_args.nW = nW;
             imm_args.m = m;
-            mir_task_create((mir_tfunc_t) smp_ol_fft_aux_34, (void*) &imm_args, sizeof(imm_args), 0, NULL, NULL);
+            mir_task_create((mir_tfunc_t) smp_ol_fft_aux_34, (void*) &imm_args, sizeof(imm_args), 0, NULL, "smp_ol_fft_aux_34");
         }
     } else if (r == 8) {
         // Task36
@@ -6059,7 +6059,7 @@ void fft_aux(int n, COMPLEX * in, COMPLEX * out, int *factors, COMPLEX * W, int 
             imm_args.W = W;
             imm_args.nW = nW;
             imm_args.m = m;
-            mir_task_create((mir_tfunc_t) smp_ol_fft_aux_35, (void*) &imm_args, sizeof(imm_args), 0, NULL, NULL);
+            mir_task_create((mir_tfunc_t) smp_ol_fft_aux_35, (void*) &imm_args, sizeof(imm_args), 0, NULL, "smp_ol_fft_aux_35");
         }
     } else if (r == 16) {
         // Task37
@@ -6074,7 +6074,7 @@ void fft_aux(int n, COMPLEX * in, COMPLEX * out, int *factors, COMPLEX * W, int 
             imm_args.W = W;
             imm_args.nW = nW;
             imm_args.m = m;
-            mir_task_create((mir_tfunc_t) smp_ol_fft_aux_36, (void*) &imm_args, sizeof(imm_args), 0, NULL, NULL);
+            mir_task_create((mir_tfunc_t) smp_ol_fft_aux_36, (void*) &imm_args, sizeof(imm_args), 0, NULL, "smp_ol_fft_aux_36");
         }
     } else if (r == 32) {
         // Task38
@@ -6089,7 +6089,7 @@ void fft_aux(int n, COMPLEX * in, COMPLEX * out, int *factors, COMPLEX * W, int 
             imm_args.W = W;
             imm_args.nW = nW;
             imm_args.m = m;
-            mir_task_create((mir_tfunc_t) smp_ol_fft_aux_37, (void*) &imm_args, sizeof(imm_args), 0, NULL, NULL);
+            mir_task_create((mir_tfunc_t) smp_ol_fft_aux_37, (void*) &imm_args, sizeof(imm_args), 0, NULL, "smp_ol_fft_aux_37");
         }
     } else {
         // Task39
@@ -6105,7 +6105,7 @@ void fft_aux(int n, COMPLEX * in, COMPLEX * out, int *factors, COMPLEX * W, int 
             imm_args.nW = nW;
             imm_args.r = r;
             imm_args.m = m;
-            mir_task_create((mir_tfunc_t) smp_ol_fft_aux_38, (void*) &imm_args, sizeof(imm_args), 0, NULL, NULL);
+            mir_task_create((mir_tfunc_t) smp_ol_fft_aux_38, (void*) &imm_args, sizeof(imm_args), 0, NULL, "smp_ol_fft_aux_38");
         }
     }
 

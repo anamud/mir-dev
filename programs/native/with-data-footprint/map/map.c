@@ -97,7 +97,7 @@ void for_task(uint64_t start, uint64_t end/*, struct mir_twc_t* twc*/)
             footprint.data_access = MIR_DATA_ACCESS_READ;
             footprint.part_of = NULL;
 
-            struct mir_task_t* task = mir_task_create((mir_tfunc_t) map_wrapper, &arg, sizeof(struct map_wrapper_arg_t), twc, 1, &footprint, NULL);
+            mir_task_create((mir_tfunc_t) map_wrapper, &arg, sizeof(struct map_wrapper_arg_t), twc, 1, &footprint, "map_wrapper");
         }
     }/*}}}*/
     mir_twc_wait(twc);
@@ -140,7 +140,7 @@ void map_par()
                 arg.end = end;
                 /*arg.twc = twc;*/
 
-                struct mir_task_t* task = mir_task_create((mir_tfunc_t) for_task_wrapper, &arg, sizeof(struct for_task_wrapper_arg_t), twc, 0, NULL, NULL);
+                mir_task_create((mir_tfunc_t) for_task_wrapper, &arg, sizeof(struct for_task_wrapper_arg_t), twc, 0, NULL, "for_task_wrapper");
             }
         }
     }
@@ -155,7 +155,7 @@ void map_par()
             arg.end = end;
             /*arg.twc = twc;*/
 
-            struct mir_task_t* task = mir_task_create((mir_tfunc_t) for_task_wrapper, &arg, sizeof(struct for_task_wrapper_arg_t), twc, 0, NULL, NULL);
+            mir_task_create((mir_tfunc_t) for_task_wrapper, &arg, sizeof(struct for_task_wrapper_arg_t), twc, 0, NULL, "for_task_wrapper");
         }
     }
 

@@ -65,6 +65,7 @@ struct _perf_ctr_map perf_ctr_map[4] = {
 struct _perf_ctr_map perf_ctr_map[MIR_RECORDER_NUM_PAPI_HWPC] = {
     {"PAPI_TOT_INS", 0x0},
     {"PAPI_TOT_CYC", 0x0},
+    /*{"PAPI_LD_INS", 0x0},*/
     /*{"PAPI_L2_DCM", 0x0},*/
     /*{"PAPI_RES_STL", 0x0},*/
     /*{"PAPI_L1_DCA", 0x0},*/

@@ -117,7 +117,7 @@ void for_task(uint64_t start, uint64_t end, uint64_t depth/*, struct mir_twc_t* 
             footprints[2].data_access = MIR_DATA_ACCESS_WRITE;
             footprints[2].part_of = buffer;
 
-            struct mir_task_t* task = mir_task_create((mir_tfunc_t) reduce_wrapper, &arg, sizeof(struct reduce_wrapper_arg_t), twc, 3, footprints, NULL);
+            mir_task_create((mir_tfunc_t) reduce_wrapper, &arg, sizeof(struct reduce_wrapper_arg_t), twc, 3, footprints, "reduce_wrapper");
         }
     }/*}}}*/
     mir_twc_wait(twc);
@@ -168,7 +168,7 @@ void reduce_par()
                     arg.depth = i;
                     //arg.twc = twc;
 
-                    struct mir_task_t* task = mir_task_create((mir_tfunc_t) for_task_wrapper, &arg, sizeof(struct for_task_wrapper_arg_t), twc, 0, NULL, NULL);
+                    mir_task_create((mir_tfunc_t) for_task_wrapper, &arg, sizeof(struct for_task_wrapper_arg_t), twc, 0, NULL, "for_task_wrapper");
                 }
                 //for_task(start, end, i);
             }
@@ -185,7 +185,7 @@ void reduce_par()
                 arg.depth = i;
                 //arg.twc = twc;
 
-                struct mir_task_t* task = mir_task_create((mir_tfunc_t) for_task_wrapper, &arg, sizeof(struct for_task_wrapper_arg_t), twc, 0, NULL, NULL);
+                mir_task_create((mir_tfunc_t) for_task_wrapper, &arg, sizeof(struct for_task_wrapper_arg_t), twc, 0, NULL, "for_task_wrapper");
             }
             //for_task(start, end, i);
         }

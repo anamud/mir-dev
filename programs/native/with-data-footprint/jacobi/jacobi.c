@@ -429,7 +429,7 @@ void jacobi_par()
             struct mir_data_footprint_t footprints[num_footprints];
             fill_footprints(i,j,footprints);
 
-            mir_task_create((mir_tfunc_t) jacobi_block_wrapper, &arg, sizeof(struct jacobi_block_wrapper_arg_t), num_footprints, footprints, NULL);
+            mir_task_create((mir_tfunc_t) jacobi_block_wrapper, &arg, sizeof(struct jacobi_block_wrapper_arg_t), num_footprints, footprints, "jacobi_block_wrapper");
             }
         }
 //#pragma omp taskwait

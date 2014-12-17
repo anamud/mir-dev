@@ -114,7 +114,7 @@ void for_task(uint64_t start, uint64_t end, uint64_t depth)
             footprints[2].data_access = MIR_DATA_ACCESS_WRITE;
             footprints[2].part_of = buffer;
 
-            mir_task_create((mir_tfunc_t) reduce_wrapper, &arg, sizeof(struct reduce_wrapper_arg_t), 3, footprints, NULL);
+            mir_task_create((mir_tfunc_t) reduce_wrapper, &arg, sizeof(struct reduce_wrapper_arg_t), 3, footprints, "reduce_wrapper");
         }
     }/*}}}*/
 }/*}}}*/

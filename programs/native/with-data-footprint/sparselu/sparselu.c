@@ -361,7 +361,7 @@ void sparselu_par_call(float **BENCH)
 #endif
 
                     atleast_one_task = 1;
-                    mir_task_create((mir_tfunc_t) smp_ol_sparselu_par_call_0, (void*) &imm_args, sizeof(struct nanos_args_0_t), num_footprints, footprints, NULL);
+                    mir_task_create((mir_tfunc_t) smp_ol_sparselu_par_call_0, (void*) &imm_args, sizeof(struct nanos_args_0_t), num_footprints, footprints, "smp_ol_sparselu_par_call_0");
                 }
             }
 
@@ -428,7 +428,7 @@ void sparselu_par_call(float **BENCH)
 #endif
 
                     atleast_one_task = 1;
-                    mir_task_create((mir_tfunc_t) smp_ol_sparselu_par_call_1, (void*) &imm_args, sizeof(struct nanos_args_1_t), num_footprints, footprints, NULL);
+                    mir_task_create((mir_tfunc_t) smp_ol_sparselu_par_call_1, (void*) &imm_args, sizeof(struct nanos_args_1_t), num_footprints, footprints, "smp_ol_sparselu_par_call_1");
                 }
             }
 
@@ -512,7 +512,7 @@ void sparselu_par_call(float **BENCH)
 #endif
 
                             atleast_one_task = 1;
-                            mir_task_create((mir_tfunc_t) smp_ol_sparselu_par_call_2, (void*) &imm_args, sizeof(struct nanos_args_2_t), num_footprints, footprints, NULL);
+                            mir_task_create((mir_tfunc_t) smp_ol_sparselu_par_call_2, (void*) &imm_args, sizeof(struct nanos_args_2_t), num_footprints, footprints, "smp_ol_sparselu_par_call_2");
                         }
                     }
 
