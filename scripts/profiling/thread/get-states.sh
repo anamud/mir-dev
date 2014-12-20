@@ -28,7 +28,7 @@ shift $(( OPTIND - 1 ))
 # Collect state time from all recorders
 OUTF=accumulated-state-time.rec
 rm -f $OUTF
-cat $@ > $OUTF 
+cat "$@" > $OUTF 
 sed '/THREAD/d' $OUTF > $OUTF.body
 sed '/THREAD/!d' $OUTF > $OUTF.header
 LC_NUMERIC=C sort -n $OUTF.body > $OUTF.body.sorted

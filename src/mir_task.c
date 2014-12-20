@@ -91,6 +91,7 @@ static inline struct mir_task_t* mir_task_create_common(mir_tfunc_t tfunc, void*
     task->id.uid = __sync_fetch_and_add(&(g_tasks_uidc), 1);
 
     // Task name
+    MIR_ASSERT(strlen(MIR_TASK_DEFAULT_NAME) < MIR_SHORT_NAME_LEN);
     strcpy(task->name, MIR_TASK_DEFAULT_NAME);
     if(name)
     {/*{{{*/
@@ -280,13 +281,17 @@ void mir_task_execute(struct mir_task_t* task)
     struct mir_worker_t* worker = mir_worker_get_context();
     MIR_ASSERT(worker != NULL);
 
-    // FIXME: Don't create metadata when recorder is not enabled!
     if(runtime->enable_recorder == 1)
     {
         // Compose event metadata
         char event_meta_data_pre[MIR_RECORDER_EVENT_META_DATA_MAX_SIZE-1] = {0};
         if(worker->current_task)
-            sprintf(event_meta_data_pre, "%" MIR_FORMSPEC_UL ",%s", worker->current_task->id.uid, worker->current_task->name);
+        {
+            char temp[MIR_LONG_NAME_LEN] = {0};
+            sprintf(temp, "%" MIR_FORMSPEC_UL ",%s", worker->current_task->id.uid, worker->current_task->name);
+            MIR_ASSERT(strlen(temp) < (MIR_RECORDER_EVENT_META_DATA_MAX_SIZE-1));
+            strcpy(event_meta_data_pre, temp);
+        }
         else
             sprintf(event_meta_data_pre, "0, NULL");
         // Record event 
@@ -353,7 +358,10 @@ void mir_task_execute(struct mir_task_t* task)
     {
         // Record event and state
         char event_meta_data_post[MIR_RECORDER_EVENT_META_DATA_MAX_SIZE-1] = {0};
-        sprintf(event_meta_data_post, "%" MIR_FORMSPEC_UL ",%s", task->id.uid, task->name);
+        char temp[MIR_LONG_NAME_LEN] = {0};
+        sprintf(temp, "%" MIR_FORMSPEC_UL ",%s", task->id.uid, task->name);
+        MIR_ASSERT(strlen(temp) < (MIR_RECORDER_EVENT_META_DATA_MAX_SIZE-1));
+        strcpy(event_meta_data_post, temp);
         MIR_RECORDER_STATE_END(&event_meta_data_post[0], MIR_RECORDER_EVENT_META_DATA_MAX_SIZE-1);
         MIR_RECORDER_EVENT(&event_meta_data_post[0], MIR_RECORDER_EVENT_META_DATA_MAX_SIZE-1);
     }

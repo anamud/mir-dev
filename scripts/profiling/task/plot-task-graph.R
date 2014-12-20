@@ -160,6 +160,12 @@ if("ins_count" %in% colnames(tg.data))
 {
     tg[to=first_forks, from=parent_first_forks, attr='ins_count'] <- as.numeric(tg.data[match(parent_first_forks, tg.data$task),]$ins_count)
     tg[to=first_forks, from=parent_first_forks, attr='weight'] <- -as.numeric(tg.data[match(parent_first_forks, tg.data$task),]$ins_count)
+} else {
+    if("work_cycles" %in% colnames(tg.data))
+    {
+        tg[to=first_forks, from=parent_first_forks, attr='work_cycles'] <- as.numeric(tg.data[match(parent_first_forks, tg.data$task),]$work_cycles)
+        tg[to=first_forks, from=parent_first_forks, attr='weight'] <- -as.numeric(tg.data[match(parent_first_forks, tg.data$task),]$work_cycles)
+    }
 }
 if(verbo) toc("Connect parent to first fork")
 
@@ -175,7 +181,14 @@ if(!plot_tree)
     {
         tg[from=leaf_tasks, to=leaf_join_nodes, attr='ins_count'] <- as.numeric(tg.data[match(leaf_tasks, tg.data$task),]$ins_count)
         tg[from=leaf_tasks, to=leaf_join_nodes, attr='weight'] <- -as.numeric(tg.data[match(leaf_tasks, tg.data$task),]$ins_count)
+    } else {
+        if("work_cycles" %in% colnames(tg.data))
+        {
+            tg[from=leaf_tasks, to=leaf_join_nodes, attr='work_cycles'] <- as.numeric(tg.data[match(leaf_tasks, tg.data$task),]$work_cycles)
+            tg[from=leaf_tasks, to=leaf_join_nodes, attr='weight'] <- -as.numeric(tg.data[match(leaf_tasks, tg.data$task),]$work_cycles)
+        }
     }
+
     if(verbo) toc("Connect leaf task to join")
 
     # Connect join to next fork
@@ -367,11 +380,17 @@ if("outl_func" %in% colnames(tg.data))
     sink()
 }
 
+# Mark leaf tasks
+leaf_tasks <- setdiff(tg.data$task, parent_nodes_unique)
+leaf_task_index <- match(as.character(leaf_tasks), V(tg)$name)
+tg <- set.vertex.attribute(tg, name='leaf', index=leaf_task_index, value='T')
+
 # Set label and color of 'task 0'
 start_index <- V(tg)$name == '0'
 tg <- set.vertex.attribute(tg, name='color', index=start_index, value=other_color)
 tg <- set.vertex.attribute(tg, name='label', index=start_index, value='S')
 tg <- set.vertex.attribute(tg, name='size', index=start_index, value=start_size)
+
 # Set label and color of 'task E'
 end_index <- V(tg)$name == "E"
 tg <- set.vertex.attribute(tg, name='color', index=end_index, value=other_color)
@@ -419,6 +438,12 @@ if("ins_count" %in% colnames(tg.data))
 {
     tg <- set.edge.attribute(tg, name="weight", index=which(is.na(E(tg)$weight)), value=0)
     tg <- set.edge.attribute(tg, name="ins_count", index=which(is.na(E(tg)$ins_count)), value=0)
+} else {
+    if("work_cycles" %in% colnames(tg.data))
+    {
+        tg <- set.edge.attribute(tg, name="weight", index=which(is.na(E(tg)$weight)), value=0)
+        tg <- set.edge.attribute(tg, name="work_cycles", index=which(is.na(E(tg)$work_cycles)), value=0)
+    }
 }
 if(verbo) toc("Attribute setting")
 
@@ -500,13 +525,14 @@ if("ins_count" %in% colnames(tg.data) && !plot_tree)
       close(pb)
     }
     #Rprof(NULL)
-    if(verbo) toc("Critical path calculation")
+    if(verbo) toc("Critical path calculation (based on instructions)")
     
     # Calculate and write info
     if(verbo) tic(type="elapsed")
     tg.file.out <- paste(gsub(". $", "", tg.ofilen), ".info", sep="")
     if(verbo) print(paste("Writing file", tg.file.out))
     sink(tg.file.out)
+    print("Unit = Instructions")
     print("span (critical path)")
     print(lpl)
     print("work")
@@ -525,7 +551,85 @@ if("ins_count" %in% colnames(tg.data) && !plot_tree)
         tg.file.out <- paste(gsub(". $", "", tg.ofilen), "-shape.pdf", sep="")
         if(verbo) print(paste("Writing file", tg.file.out))
         pdf(tg.file.out)
-        hist(get.data.frame(tg, what="vertices")$rdist, freq=T, main="Histogram of distance from start vertex", xlab="Distance", ylab="Tasks")
+        hist(get.data.frame(tg, what="vertices")$rdist, freq=T, main="Histogram of distance from start vertex", xlab="Distance [instructions]", ylab="Tasks")
+        dev.off()
+    }
+    if(verbo) toc("Calc and write info")
+} else if("work_cycles" %in% colnames(tg.data) && !plot_tree) {
+    # Simplify - DO NOT USE. Fucks up the critical path analysis.
+    #if(verbo) tic(type="elapsed")
+    #tg <- simplify(tg, edge.attr.comb=toString)
+    #if(verbo) toc("Simplify")
+
+    # Get critical path
+    if(verbo) tic(type="elapsed")
+    #Rprof("profile-critpathcalc.out")
+    if(verbo) print("Calculating critical path ...")
+    if(cp_len_only) 
+    {
+      # Get critical path length
+      sp <- shortest.paths(tg, v=start_index, to=end_index, mode="out")
+      lpl <- -as.numeric(sp)
+    } else {    
+      lntg <- length(V(tg))
+      pb <- txtProgressBar(min = 0, max = lntg, style = 3)
+      ctr <- 0
+      # Topological sort
+      tsg <- topological.sort(tg)
+      # Set root path attributes
+      V(tg)[tsg[1]]$rdist <- 0
+      V(tg)[tsg[1]]$rpath <- tsg[1]
+      # Get longest paths from root
+      for(node in tsg[-1])
+      {
+        w <- E(tg)[to(node)]$work_cycles
+        d <- V(tg)[nei(node,mode="in")]$rdist
+        wd <- w+d
+        mwd <- max(wd)
+        V(tg)[node]$rdist <- mwd
+        mwdn <- as.vector(V(tg)[nei(node,mode="in")])[match(mwd,wd)]
+        V(tg)[node]$rpath <- list(c(unlist(V(tg)[mwdn]$rpath), node))
+        if(verbo) {ctr <- ctr + 1; setTxtProgressBar(pb, ctr);}
+      }
+      ## Longest path is the largest root distance
+      lpl <- max(V(tg)$rdist)
+      # Enumerate longest path
+      lpm <- unlist(V(tg)[match(lpl,V(tg)$rdist)]$rpath)
+      V(tg)$on_crit_path <- 0
+      tg <- set.vertex.attribute(tg, name="on_crit_path", index=lpm, value=1)
+      if(verbo) {ctr <- ctr + 1; setTxtProgressBar(pb, ctr);}
+      close(pb)
+    }
+    #Rprof(NULL)
+    if(verbo) toc("Critical path calculation (based on cycles)")
+    
+    # Calculate and write info
+    if(verbo) tic(type="elapsed")
+    tg.file.out <- paste(gsub(". $", "", tg.ofilen), ".info", sep="")
+    if(verbo) print(paste("Writing file", tg.file.out))
+    sink(tg.file.out)
+    print("Unit = Cycles")
+    print("span (critical path)")
+    print(lpl)
+    print("work")
+    work <- sum(as.numeric(tg.data$work_cycles))
+    print(work)
+    print("parallelism")
+    print(work/lpl)
+    sink()
+
+    if(!cp_len_only) 
+    {
+        # Clear rpath since dot/table writing complains 
+        tg <- remove.vertex.attribute(tg,"rpath")
+
+        # Write out shape
+        tg.file.out <- paste(gsub(". $", "", tg.ofilen), "-shape.pdf", sep="")
+        if(verbo) print(paste("Writing file", tg.file.out))
+        pdf(tg.file.out)
+        rdist.data <- get.data.frame(tg, what="vertices")$rdist
+        hist(rdist.data, freq=T, main="Histogram of distance from start vertex", xlab="Distance [cycles]", ylab="Tasks")
+        #lines(density(rdist.data, na.rm= TRUE, adjust=2),col="blue", lwd=2)
         dev.off()
     }
     if(verbo) toc("Calc and write info")

@@ -10,7 +10,7 @@ fi
 # Collect state time from all recorders
 OUTF=accumulated-events.rec
 rm -f $OUTF
-cat $@ > $OUTF 
+cat "$@" > $OUTF 
 sed -n '/^e:/p' $OUTF > $OUTF.temp
 cat $OUTF.temp > $OUTF
 rm -f $OUTF.temp
