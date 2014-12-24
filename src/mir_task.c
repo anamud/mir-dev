@@ -148,6 +148,11 @@ static inline struct mir_task_t* mir_task_create_common(mir_tfunc_t tfunc, void*
         __sync_fetch_and_add(&(task->parent->num_children), 1);
         task->child_number = task->parent->num_children;
     }
+    else
+    {
+        __sync_fetch_and_add(&(runtime->num_children_tasks), 1);
+        task->child_number = runtime->num_children_tasks;
+    }
 
     // Other book-keeping
     task->queue_size_at_pop = 0;

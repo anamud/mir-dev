@@ -173,6 +173,7 @@ alive:
 
     // Global taskwait counter
     runtime->ctwc = mir_twc_create();
+    runtime->num_children_tasks = 0;
 
 #ifdef MIR_MEM_POL_ENABLE
     // Memory allocation policy

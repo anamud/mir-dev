@@ -551,7 +551,9 @@ if("ins_count" %in% colnames(tg.data) && !plot_tree)
         tg.file.out <- paste(gsub(". $", "", tg.ofilen), "-shape.pdf", sep="")
         if(verbo) print(paste("Writing file", tg.file.out))
         pdf(tg.file.out)
-        hist(get.data.frame(tg, what="vertices")$rdist, freq=T, main="Histogram of distance from start vertex", xlab="Distance [instructions]", ylab="Tasks")
+        tgdf <- get.data.frame(tg, what="vertices")
+        tgdf <- tgdf[!is.na(as.numeric(tgdf$label)),]
+        hist(tgdf$rdist, freq=T, main="Histogram of distance from start vertex", xlab="Distance [instructions]", ylab="Tasks")
         dev.off()
     }
     if(verbo) toc("Calc and write info")
@@ -627,8 +629,9 @@ if("ins_count" %in% colnames(tg.data) && !plot_tree)
         tg.file.out <- paste(gsub(". $", "", tg.ofilen), "-shape.pdf", sep="")
         if(verbo) print(paste("Writing file", tg.file.out))
         pdf(tg.file.out)
-        rdist.data <- get.data.frame(tg, what="vertices")$rdist
-        hist(rdist.data, freq=T, main="Histogram of distance from start vertex", xlab="Distance [cycles]", ylab="Tasks")
+        tgdf <- get.data.frame(tg, what="vertices")
+        tgdf <- tgdf[!is.na(as.numeric(tgdf$label)),]
+        hist(tgdf$rdist, freq=T, main="Histogram of distance from start vertex", xlab="Distance [cycles]", ylab="Tasks")
         #lines(density(rdist.data, na.rm= TRUE, adjust=2),col="blue", lwd=2)
         dev.off()
     }

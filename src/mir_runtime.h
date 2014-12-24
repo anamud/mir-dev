@@ -30,6 +30,7 @@ struct mir_runtime_t
     int ofp_shmid;
     char* ofp_shm;
     struct mir_twc_t* ctwc;
+    unsigned int num_children_tasks;
 
     // Flags
     bool sig_dying;

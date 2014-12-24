@@ -66,17 +66,26 @@ if(verbo) toc("Processing")
 if(calc_lineage)
 {
     if(verbo) tic(type="elapsed")
-    ts.data.sub <- subset(ts.data, select=c("task", "parent"))
+    # Lineage = child number chain
+    ts.data.sub <- subset(ts.data, select=c("task", "parent", "child_number"))
     ts.data.sub <- ts.data.sub[order(ts.data.sub$task),]
     ts.data.sub["lineage"] <- "NA"
     for(task in ts.data.sub$task)
     {
         parent <- ts.data.sub$parent[ts.data.sub$task == task]
+        child_number <- ts.data.sub$child_number[ts.data.sub$task == task]
         if(parent != 0)
-            ts.data.sub$lineage[ts.data.sub$task == task] <- paste(ts.data.sub$lineage[ts.data.sub$task == parent], as.character(task), sep="-")
+            ts.data.sub$lineage[ts.data.sub$task == task] <- paste(ts.data.sub$lineage[ts.data.sub$task == parent], as.character(child_number), sep="-")
         else
-            ts.data.sub$lineage[ts.data.sub$task == task] <- paste("0", as.character(task), sep="-")
+            ts.data.sub$lineage[ts.data.sub$task == task] <- paste("R", as.character(child_number), sep="-")
     }
+    # Sanity check
+    if(anyDuplicated(ts.data.sub$lineage))
+    {
+        print("Error: Duplicate lineages exist. Aborting!")
+        quit("no", 1)
+    }
+    # Write out
     out.file <- paste(gsub(". $", "", ts.file), ".lineage", sep="")
     if(verbo) print(paste("Writing file", out.file))
     write.csv(ts.data.sub, out.file, row.names=F)
