@@ -222,7 +222,7 @@ void mir_task_create(mir_tfunc_t tfunc, void* data, size_t data_size, unsigned i
         // Update worker stats
         struct mir_worker_t* worker = mir_worker_get_context(); 
         MIR_ASSERT(worker != NULL);
-        if(runtime->enable_worker_stats)
+        if(runtime->enable_worker_stats == 1)
             worker->statistics->num_tasks_inlined++;
         return;
         // FIXME: What about reporting inlining to the Pin profiler!?
@@ -251,7 +251,7 @@ void mir_task_create_on_worker(mir_tfunc_t tfunc, void* data, size_t data_size, 
         tfunc(data);
         // Update worker stats
         struct mir_worker_t* worker = mir_worker_get_context(); 
-        if(runtime->enable_worker_stats)
+        if(runtime->enable_worker_stats == 1)
             worker->statistics->num_tasks_inlined++;
         return;
         // FIXME: What about reporting inlining to the Pin profiler!?

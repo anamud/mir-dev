@@ -174,7 +174,7 @@ bool push_numa (struct mir_task_t* task)
             /*MIR_INFORM("Task %" MIR_FORMSPEC_UL " ignored!\n", task->id.uid);*/
             least_cost_worker = this_worker;
             push_to_alt_queue = true;
-            if(runtime->enable_worker_stats)
+            if(runtime->enable_worker_stats == 1)
                 task->comm_cost = mir_mem_node_dist_get_comm_cost(dist, runtime->arch->node_of(least_cost_worker->cpu_id));
         }
         else
@@ -207,7 +207,7 @@ bool push_numa (struct mir_task_t* task)
             } while (i!=bias);
             mir_worker_update_bias(this_worker);
 
-            if(runtime->enable_worker_stats)
+            if(runtime->enable_worker_stats == 1)
                 task->comm_cost = least_comm_cost;
 
             /*MIR_INFORM("Task %" MIR_FORMSPEC_UL " scheduled on node %d!\n", task->id.uid, runtime->arch->node_of(least_cost_worker->cpu_id));*/
@@ -232,7 +232,7 @@ bool push_numa (struct mir_task_t* task)
         pushed = false;
         mir_task_execute(task);
         // Update stats
-        if(runtime->enable_worker_stats)
+        if(runtime->enable_worker_stats == 1)
             this_worker->statistics->num_tasks_inlined++;
 #else
         MIR_ABORT(MIR_ERROR_STR "Cannot enque task. Increase queue capacity using MIR_CONF.\n");
@@ -244,7 +244,7 @@ bool push_numa (struct mir_task_t* task)
         __sync_fetch_and_add(&g_num_tasks_waiting, 1);
         
         // Update stats
-        if(runtime->enable_worker_stats)
+        if(runtime->enable_worker_stats == 1)
             this_worker->statistics->num_tasks_created++;
     }
 
@@ -277,7 +277,7 @@ bool pop_numa (struct mir_task_t** task)
         if(*task)
         {
             // Update stats
-            if(runtime->enable_worker_stats)
+            if(runtime->enable_worker_stats == 1)
             {
                 // task->comm-cost already calculated in push
                 if((*task)->comm_cost != -1)
@@ -314,7 +314,7 @@ bool pop_numa (struct mir_task_t** task)
         if(*task)
         {
             // Update stats
-            if(runtime->enable_worker_stats)
+            if(runtime->enable_worker_stats == 1)
             {
                 // task->comm-cost already calculated in push
                 if((*task)->comm_cost != -1)
@@ -358,7 +358,7 @@ bool pop_numa (struct mir_task_t** task)
             if(*task) 
             {
                 // Update stats
-                if(runtime->enable_worker_stats)
+                if(runtime->enable_worker_stats == 1)
                 {
                     struct mir_mem_node_dist_t* dist = mir_task_get_mem_node_dist(*task, MIR_DATA_ACCESS_READ);
                     if(dist)
@@ -419,7 +419,7 @@ bool pop_numa (struct mir_task_t** task)
                 if(*task)
                 {
                     // Update stats
-                    if(runtime->enable_worker_stats)
+                    if(runtime->enable_worker_stats == 1)
                     {
                         struct mir_mem_node_dist_t* dist = mir_task_get_mem_node_dist(*task, MIR_DATA_ACCESS_READ);
                         //struct mir_mem_node_dist_t* dist = mir_task_get_mem_node_dist(*task, MIR_DATA_ACCESS_WRITE);

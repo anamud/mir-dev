@@ -109,7 +109,7 @@ bool push_central_stack (struct mir_task_t* task)
         pushed = false;
         mir_task_execute(task);
         // Update stats
-        if(runtime->enable_worker_stats)
+        if(runtime->enable_worker_stats == 1)
             worker->statistics->num_tasks_inlined++;
 #else
         MIR_ABORT(MIR_ERROR_STR "Cannot enque task. Increase queue capacity using MIR_CONF.\n");
@@ -119,7 +119,7 @@ bool push_central_stack (struct mir_task_t* task)
     {
         __sync_fetch_and_add(&g_num_tasks_waiting, 1);
         // Update stats
-        if(runtime->enable_worker_stats)
+        if(runtime->enable_worker_stats == 1)
             worker->statistics->num_tasks_created++;
     }
 
@@ -153,7 +153,7 @@ bool pop_central_stack (struct mir_task_t** task)
                 (*task)->queue_size_at_pop = mir_stack_size(queue);
 
             // Update stats
-            if(runtime->enable_worker_stats)
+            if(runtime->enable_worker_stats == 1)
             {
 #ifdef MIR_MEM_POL_ENABLE
                 struct mir_mem_node_dist_t* dist = mir_task_get_mem_node_dist(*task, MIR_DATA_ACCESS_READ);
@@ -171,7 +171,7 @@ bool pop_central_stack (struct mir_task_t** task)
             found = 1;
 
             // Update stats
-            if(runtime->enable_worker_stats)
+            if(runtime->enable_worker_stats == 1)
                 worker->statistics->num_tasks_owned++;
         }
     }

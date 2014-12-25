@@ -501,26 +501,39 @@ if("ins_count" %in% colnames(tg.data) && !plot_tree)
       # Topological sort
       tsg <- topological.sort(tg)
       # Set root path attributes
-      V(tg)[tsg[1]]$rdist <- 0
-      V(tg)[tsg[1]]$rpath <- tsg[1]
+      V(tg)$rdist[tsg[1]] <- 0
+      V(tg)$rpath[tsg[1]] <- tsg[1]
+      # Get data frame of graph object
+      vgdf <- get.data.frame(tg, what="vertices")
       # Get longest paths from root
       for(node in tsg[-1])
       {
-        w <- E(tg)[to(node)]$ins_count
-        d <- V(tg)[nei(node,mode="in")]$rdist
+        # Get distance from node's predecessors
+        ni <- incident(tg, node, mode="in")
+        w <- E(tg)$ins_count[ni]
+        # Get distance from root to node's predecessors
+        nn <- neighbors(tg, node, mode="in") 
+        d <- vgdf$rdist[nn]
+        # Add distances (assuming one-one corr.)
         wd <- w+d
+        # Set node's distance from root to max of added distances 
         mwd <- max(wd)
-        V(tg)[node]$rdist <- mwd
-        mwdn <- as.vector(V(tg)[nei(node,mode="in")])[match(mwd,wd)]
-        V(tg)[node]$rpath <- list(c(unlist(V(tg)[mwdn]$rpath), node))
+        vgdf$rdist[node] <- mwd
+        # Set node's path from root to path of max of added distances
+        mwdn <- as.vector(nn)[match(mwd,wd)]
+        nrp <- list(c(unlist(vgdf$rpath[mwdn]), node))
+        vgdf$rpath[node] <- nrp
         if(verbo) {ctr <- ctr + 1; setTxtProgressBar(pb, ctr);}
       }
       ## Longest path is the largest root distance
-      lpl <- max(V(tg)$rdist)
+      lpl <- max(vgdf$rdist)
       # Enumerate longest path
-      lpm <- unlist(V(tg)[match(lpl,V(tg)$rdist)]$rpath)
-      V(tg)$on_crit_path <- 0
-      tg <- set.vertex.attribute(tg, name="on_crit_path", index=lpm, value=1)
+      lpm <- unlist(vgdf$rpath[match(lpl,vgdf$rdist)])    
+      vgdf$on_crit_path <- 0
+      vgdf$on_crit_path[lpm] <- 1
+      # Set back on graph
+      tg <- set.vertex.attribute(tg, name="on_crit_path", index=V(tg), value=vgdf$on_crit_path) 
+      tg <- set.vertex.attribute(tg, name="rdist", index=V(tg), value=vgdf$rdist)
       if(verbo) {ctr <- ctr + 1; setTxtProgressBar(pb, ctr);}
       close(pb)
     }
@@ -581,24 +594,37 @@ if("ins_count" %in% colnames(tg.data) && !plot_tree)
       # Set root path attributes
       V(tg)[tsg[1]]$rdist <- 0
       V(tg)[tsg[1]]$rpath <- tsg[1]
+      # Get data frame of graph object
+      vgdf <- get.data.frame(tg, what="vertices")
       # Get longest paths from root
       for(node in tsg[-1])
       {
-        w <- E(tg)[to(node)]$work_cycles
-        d <- V(tg)[nei(node,mode="in")]$rdist
+        # Get distance from node's predecessors
+        ni <- incident(tg, node, mode="in")
+        w <- E(tg)$work_cycles[ni]
+        # Get distance from root to node's predecessors
+        nn <- neighbors(tg, node, mode="in") 
+        d <- vgdf$rdist[nn]
+        # Add distances (assuming one-one corr.)
         wd <- w+d
+        # Set node's distance from root to max of added distances 
         mwd <- max(wd)
-        V(tg)[node]$rdist <- mwd
-        mwdn <- as.vector(V(tg)[nei(node,mode="in")])[match(mwd,wd)]
-        V(tg)[node]$rpath <- list(c(unlist(V(tg)[mwdn]$rpath), node))
+        vgdf$rdist[node] <- mwd
+        # Set node's path from root to path of max of added distances
+        mwdn <- as.vector(nn)[match(mwd,wd)]
+        nrp <- list(c(unlist(vgdf$rpath[mwdn]), node))
+        vgdf$rpath[node] <- nrp
         if(verbo) {ctr <- ctr + 1; setTxtProgressBar(pb, ctr);}
       }
       ## Longest path is the largest root distance
-      lpl <- max(V(tg)$rdist)
+      lpl <- max(vgdf$rdist)
       # Enumerate longest path
-      lpm <- unlist(V(tg)[match(lpl,V(tg)$rdist)]$rpath)
-      V(tg)$on_crit_path <- 0
-      tg <- set.vertex.attribute(tg, name="on_crit_path", index=lpm, value=1)
+      lpm <- unlist(vgdf$rpath[match(lpl,vgdf$rdist)])    
+      vgdf$on_crit_path <- 0
+      vgdf$on_crit_path[lpm] <- 1
+      # Set back on graph
+      tg <- set.vertex.attribute(tg, name="on_crit_path", index=V(tg), value=vgdf$on_crit_path) 
+      tg <- set.vertex.attribute(tg, name="rdist", index=V(tg), value=vgdf$rdist)
       if(verbo) {ctr <- ctr + 1; setTxtProgressBar(pb, ctr);}
       close(pb)
     }

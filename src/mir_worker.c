@@ -155,7 +155,7 @@ void mir_worker_local_init(struct mir_worker_t* worker)
 
     // Create and reset worker statistics counters
     worker->statistics = NULL;
-    if(runtime->enable_worker_stats)
+    if(runtime->enable_worker_stats == 1)
     {
         worker->statistics = (struct mir_worker_statistics_t*) mir_malloc_int (sizeof(struct mir_worker_statistics_t));
         MIR_ASSERT(worker->statistics != NULL);
@@ -171,7 +171,7 @@ void mir_worker_local_init(struct mir_worker_t* worker)
 
     // Create worker recorder
     worker->recorder = NULL;
-    if(runtime->enable_recorder)
+    if(runtime->enable_recorder == 1)
         worker->recorder = mir_recorder_create(worker->id);
 
     // Set current task
@@ -207,7 +207,7 @@ void mir_worker_push(struct mir_worker_t* worker, struct mir_task_t* task)
 
     __sync_fetch_and_add(&g_num_tasks_waiting, 1);
     // Update stats
-    if(runtime->enable_worker_stats)
+    if(runtime->enable_worker_stats == 1)
         worker->statistics->num_tasks_created++;
 }/*}}}*/
 
