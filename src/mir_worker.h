@@ -5,7 +5,6 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
-#include <stdbool.h>
 
 #include "mir_defines.h"
 #include "mir_lock.h"
@@ -45,7 +44,7 @@ struct mir_worker_t
     uint16_t bias;
     uint32_t backoff_us;
     struct mir_lock_t sig_die;
-    bool sig_dying;
+    int sig_dying;
     struct mir_task_t* current_task;
     struct mir_worker_statistics_t* statistics;
     struct mir_recorder_t* recorder;
@@ -61,7 +60,7 @@ void mir_worker_master_init(struct mir_worker_t* worker);
 
 void mir_worker_local_init(struct mir_worker_t* worker);
 
-void mir_worker_do_work(struct mir_worker_t* worker, bool backoff);
+void mir_worker_do_work(struct mir_worker_t* worker, int backoff);
 
 void mir_worker_check_done();
 

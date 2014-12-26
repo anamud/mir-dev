@@ -4,7 +4,7 @@
 #include <pthread.h>
 #include <stdint.h>
 #include <stdlib.h>
-#include <stdbool.h>
+#include <stdint.h>
 
 #include "mir_worker.h"
 #include "arch/mir_arch.h"
@@ -33,11 +33,11 @@ struct mir_runtime_t
     unsigned int num_children_tasks;
 
     // Flags
-    bool sig_dying;
-    bool enable_worker_stats;
-    bool enable_task_stats;
-    bool enable_recorder;
-    bool enable_ofp_handshake;
+    int sig_dying;
+    int enable_worker_stats;
+    int enable_task_stats;
+    int enable_recorder;
+    int enable_ofp_handshake;
 };/*}}}*/
 
 /*LIBINT*/ void mir_create();

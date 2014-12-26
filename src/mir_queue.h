@@ -4,7 +4,6 @@
 #include "mir_lock.h"
 #include <stdint.h>
 #include <stdlib.h>
-#include <stdbool.h>
 #include "mir_types.h"
 
 BEGIN_C_DECLS 
@@ -46,7 +45,7 @@ struct mir_queue_t* mir_queue_create(uint32_t capacity);
 void mir_queue_destroy(struct mir_queue_t* queue);
 
 // Add an element to the queue
-bool mir_queue_push(struct mir_queue_t* queue, void* data);
+int mir_queue_push(struct mir_queue_t* queue, void* data);
 
 // Remove an element from the queue
 void mir_queue_pop(struct mir_queue_t* queue, void** data);

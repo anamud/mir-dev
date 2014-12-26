@@ -2,7 +2,6 @@
 #include <stdint.h>
 #include <string.h>
 #include <stdlib.h>
-#include <stdbool.h>
 
 #include "mir_types.h"
 #include "mir_defines.h"

@@ -18,7 +18,6 @@
 #endif
 #include <string.h>
 #include <stdlib.h>
-#include <stdbool.h>
 #include <math.h>
 #include <unistd.h>
 
@@ -254,11 +253,11 @@ advance:
     mem_pol->node++;
     mem_pol->node = mem_pol->node % runtime->arch->num_nodes;
 #ifdef MIR_MEM_POL_RESTRICT
-    bool allowed = false;
+    int allowed = 0;
     for(int i=0; i<runtime->num_workers; i++)
         if(runtime->arch->node_of(runtime->workers[i].cpu_id) == mem_pol->node)
         {
-            allowed = true;
+            allowed = 1;
             break;
         }
     if(!allowed) goto advance;
@@ -339,7 +338,7 @@ static void* allocate_fine(size_t sz)
 
     void* addr = NULL;
     size_t new_sz = sz + sizeof(struct mem_header_t);
-    bool faulted_in = false;
+    int faulted_in = 0;
 
 #ifndef __tile__
     int cur_pol;
@@ -368,7 +367,7 @@ static void* allocate_fine(size_t sz)
     // Fault it in
     //memset(addr, 0, new_sz);
     fault_all_pages(addr, new_sz);
-    faulted_in = true;
+    faulted_in = 1;
 #endif
 #else
     tmc_alloc_t home = TMC_ALLOC_INIT;
@@ -386,11 +385,11 @@ static void* allocate_fine(size_t sz)
 #ifdef MIR_MEM_POL_CACHE_NODES 
     // Have to fault in the pages!
     // Or else the query will not work
-    if(faulted_in == false)
+    if(faulted_in == 0)
     {
         //memset(addr, 0, new_sz);
         fault_all_pages(addr, new_sz);
-        faulted_in = true;
+        faulted_in = 1;
     }
 
     // Create node cache

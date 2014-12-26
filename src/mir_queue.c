@@ -4,8 +4,6 @@
 #include "mir_defines.h"
 #include "mir_lock.h"
 
-#include <stdbool.h>
-
 struct mir_queue_t* mir_queue_create(uint32_t capacity)
 {/*{{{*/
     MIR_ASSERT(capacity > 0);
@@ -40,7 +38,7 @@ void mir_queue_destroy(struct mir_queue_t* queue)
     queue = NULL;
 }/*}}}*/
 
-bool mir_queue_push(struct mir_queue_t* queue, void* data)
+int mir_queue_push(struct mir_queue_t* queue, void* data)
 {/*{{{*/
     MIR_ASSERT(queue != NULL);
     MIR_ASSERT(data != NULL);
@@ -52,7 +50,7 @@ bool mir_queue_push(struct mir_queue_t* queue, void* data)
         Q_DBG("queue full!", queue);
         //__sync_synchronize();
         mir_lock_unset(&(queue->enq_lock));
-        return false;
+        return 0;
     }
 
     queue->buffer[queue->in] = data;
@@ -64,7 +62,7 @@ bool mir_queue_push(struct mir_queue_t* queue, void* data)
     //__sync_synchronize();
     mir_lock_unset(&(queue->enq_lock));
 
-    return true;
+    return 1;
 }/*}}}*/
 
 void mir_queue_pop(struct mir_queue_t* queue, void** data)

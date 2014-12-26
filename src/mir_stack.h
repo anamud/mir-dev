@@ -4,7 +4,6 @@
 #include "mir_lock.h"
 #include <stdint.h>
 #include <stdlib.h>
-#include <stdbool.h>
 #include "mir_types.h"
 
 BEGIN_C_DECLS 
@@ -43,7 +42,7 @@ struct mir_stack_t* mir_stack_create(uint32_t capacity);
 void mir_stack_destroy(struct mir_stack_t* stack);
 
 // Add an element to the stack
-bool mir_stack_push(struct mir_stack_t* stack, void* data);
+int mir_stack_push(struct mir_stack_t* stack, void* data);
 
 // Remove an element from the stack
 void mir_stack_pop(struct mir_stack_t* stack, void** data);

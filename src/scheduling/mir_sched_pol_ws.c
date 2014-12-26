@@ -11,7 +11,6 @@
 #include "mir_mem_pol.h"
 #endif 
 
-#include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
@@ -91,7 +90,7 @@ void destroy_ws ()
     sp->queues = NULL;
 }/*}}}*/
 
-bool push_ws (struct mir_task_t* task)
+int push_ws (struct mir_task_t* task)
 {/*{{{*/
     MIR_ASSERT(NULL != task);
     //if(runtime->enable_recorder == 1)
@@ -101,15 +100,15 @@ bool push_ws (struct mir_task_t* task)
     struct mir_worker_t* worker = mir_worker_get_context(); 
     MIR_ASSERT(NULL != worker);
 
-    bool pushed = true;
+    int pushed = 1;
 
     // Push task to this workers queue 
     struct mir_queue_t* queue = runtime->sched_pol->queues[worker->id];
     MIR_ASSERT(NULL != queue);
-    if( false == mir_queue_push(queue, (void*) task) )
+    if( 0 == mir_queue_push(queue, (void*) task) )
     {
 #ifdef MIR_INLINE_TASK_IF_QUEUE_FULL 
-        pushed = false;
+        pushed = 0;
         mir_task_execute(task);
         // Update stats
         if(runtime->enable_worker_stats == 1)
@@ -132,9 +131,9 @@ bool push_ws (struct mir_task_t* task)
     return pushed;
 }/*}}}*/
 
-bool pop_ws (struct mir_task_t** task)
+int pop_ws (struct mir_task_t** task)
 {/*{{{*/
-    bool found = 0;
+    int found = 0;
     struct mir_sched_pol_t* sp = runtime->sched_pol;
     MIR_ASSERT(NULL != sp);
     uint32_t num_queues = sp->num_queues;

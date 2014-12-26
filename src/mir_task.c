@@ -17,7 +17,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <alloca.h>
-#include <stdbool.h>
 
 extern struct mir_runtime_t* runtime;
 extern uint32_t g_num_tasks_waiting;
@@ -40,24 +39,24 @@ static inline unsigned int mir_twc_reduce(struct mir_twc_t* twc)
         return 1; // sum == twc->count
 }/*}}}*/
 
-static inline bool inline_necessary()
+static inline int inline_necessary()
 {/*{{{*/
     if(runtime->task_inlining_limit == 0)
-        return false;
+        return 0;
 
     // Temporary solution to enable inlining unconditionally
     // FIXME: Make this better. Maybe a negative number based condition 
     // ... or based on a number gt num_workers
     if(runtime->task_inlining_limit == 1)
-        return true;
+        return 1;
 
     if(0 == strcmp(runtime->sched_pol->name, "numa"))
-        return false;
+        return 0;
 
     if((g_num_tasks_waiting/runtime->num_workers) >= runtime->task_inlining_limit)
-        return true;
+        return 1;
 
-    return false;
+    return 0;
 }/*}}}*/
 
 static inline struct mir_task_t* mir_task_create_common(mir_tfunc_t tfunc, void* data, size_t data_size, unsigned int num_data_footprints, const struct mir_data_footprint_t* data_footprints, const char* name)
@@ -178,10 +177,10 @@ static inline void mir_task_schedule(struct mir_task_t* task)
     uint64_t start_instant = mir_get_cycles();
 
     // Push task to the scheduling policy
-    bool pushed = runtime->sched_pol->push(task);
+    int pushed = runtime->sched_pol->push(task);
 
     // Overhead measurement
-    if(pushed)
+    if(pushed == 1)
     {
         struct mir_worker_t* worker = mir_worker_get_context(); MIR_ASSERT(worker != NULL); 
         if(worker->current_task) worker->current_task->overhead_cycles += (mir_get_cycles() - start_instant);
@@ -216,7 +215,7 @@ void mir_task_create(mir_tfunc_t tfunc, void* data, size_t data_size, unsigned i
     MIR_ASSERT(tfunc != NULL);
 
     // To inline or not to line, that is the grand question!
-    if(inline_necessary())
+    if(inline_necessary() == 1)
     {
         tfunc(data);
         // Update worker stats
@@ -483,11 +482,11 @@ void mir_task_wait()
     {
         // __sync_synchronize();
 #ifdef MIR_WORKER_BACKOFF_DURING_SYNC
-        // Sync with backoff=true
-        mir_worker_do_work(worker, true);
+        // Sync with backoff=1
+        mir_worker_do_work(worker, 1);
 #else
-        // Sync with backoff=false
-        mir_worker_do_work(worker, false);
+        // Sync with backoff=0
+        mir_worker_do_work(worker, 0);
 #endif
     }
 

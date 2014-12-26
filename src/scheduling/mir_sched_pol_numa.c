@@ -11,7 +11,6 @@
 #include "mir_mem_pol.h"
 #endif 
 
-#include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
@@ -128,7 +127,7 @@ void destroy_numa ()
     sp->alt_queues = NULL;
 }/*}}}*/
 
-static inline bool is_data_dist_significant(struct mir_mem_node_dist_t* dist)
+static inline int is_data_dist_significant(struct mir_mem_node_dist_t* dist)
 {/*{{{*/
     // Lower limit by default is the L3 cache available per core
     size_t low_limit = (runtime->arch->llc_size_KB * 1024) / (runtime->arch->num_cores / runtime->arch->num_nodes);
@@ -142,16 +141,16 @@ static inline bool is_data_dist_significant(struct mir_mem_node_dist_t* dist)
 
     // Check if data from all node is large enough
     if(stat.sum < low_limit)
-        return false;
+        return 0;
 
     // FIXME: Refine this!
     if(stat.sd == 0.0)
-        return false;
+        return 0;
 
-    return true;
+    return 1;
 }/*}}}*/
 
-bool push_numa (struct mir_task_t* task)
+int push_numa (struct mir_task_t* task)
 {/*{{{*/
     MIR_ASSERT(NULL != task);
     //if(runtime->enable_recorder == 1)
@@ -160,8 +159,8 @@ bool push_numa (struct mir_task_t* task)
     struct mir_worker_t* least_cost_worker = NULL;
     struct mir_worker_t* this_worker = mir_worker_get_context();
     MIR_ASSERT(NULL != this_worker);
-    bool push_to_alt_queue = false;
-    bool pushed = true;
+    int push_to_alt_queue = 0;
+    int pushed = 1;
 
     // Push task onto node with the least access cost to read data footprint
     // If no data footprint, push task onto this worker's node
@@ -169,11 +168,11 @@ bool push_numa (struct mir_task_t* task)
     //struct mir_mem_node_dist_t* dist = mir_task_get_mem_node_dist(task, MIR_DATA_ACCESS_WRITE);
     if(dist)
     {
-        if(is_data_dist_significant(dist) == false)
+        if(is_data_dist_significant(dist) == 0)
         {
             /*MIR_INFORM("Task %" MIR_FORMSPEC_UL " ignored!\n", task->id.uid);*/
             least_cost_worker = this_worker;
-            push_to_alt_queue = true;
+            push_to_alt_queue = 1;
             if(runtime->enable_worker_stats == 1)
                 task->comm_cost = mir_mem_node_dist_get_comm_cost(dist, runtime->arch->node_of(least_cost_worker->cpu_id));
         }
@@ -216,20 +215,20 @@ bool push_numa (struct mir_task_t* task)
     else
     {
         least_cost_worker = this_worker;
-        push_to_alt_queue = true;
+        push_to_alt_queue = 1;
     }
 
     // Push task to worker's queue
     struct mir_queue_t* queue = NULL;
-    if(push_to_alt_queue == true)
+    if(push_to_alt_queue == 1)
         queue = runtime->sched_pol->alt_queues[runtime->arch->node_of(least_cost_worker->cpu_id)];
     else
         queue = runtime->sched_pol->queues[runtime->arch->node_of(least_cost_worker->cpu_id)];
     MIR_ASSERT(NULL != queue);
-    if( false == mir_queue_push(queue, (void*) task) )
+    if( 0 == mir_queue_push(queue, (void*) task) )
     {
 #ifdef MIR_INLINE_TASK_IF_QUEUE_FULL 
-        pushed = false;
+        pushed = 0;
         mir_task_execute(task);
         // Update stats
         if(runtime->enable_worker_stats == 1)
@@ -254,9 +253,9 @@ bool push_numa (struct mir_task_t* task)
     return pushed;
 }/*}}}*/
 
-bool pop_numa (struct mir_task_t** task)
+int pop_numa (struct mir_task_t** task)
 {/*{{{*/
-    bool found = 0;
+    int found = 0;
     struct mir_sched_pol_t* sp = runtime->sched_pol;
     MIR_ASSERT(NULL != sp);
     uint32_t num_queues = sp->num_queues;

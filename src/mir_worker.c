@@ -12,7 +12,6 @@
 #include <tmc/cpus.h>
 #endif
 #include <string.h>
-#include <stdbool.h>
 
 // FIXME: Make these per-worker
 // PJ says kill the thread upon exit
@@ -45,8 +44,8 @@ static void* mir_worker_loop(void* arg)
     // Now do useful work
     while(1)
     {
-        // Do work with backoff=true
-        mir_worker_do_work(worker, true);
+        // Do work with backoff=1
+        mir_worker_do_work(worker, 1);
 
         // Check for runtime shutdown
         // __sync_synchronize();
@@ -202,7 +201,7 @@ void mir_worker_push(struct mir_worker_t* worker, struct mir_task_t* task)
     MIR_ASSERT(worker != NULL);
     MIR_ASSERT(task != NULL);
 
-    if( false == mir_queue_push(worker->private_queue, (void*) task) )
+    if( 0 == mir_queue_push(worker->private_queue, (void*) task) )
         MIR_ABORT(MIR_ERROR_STR "Cannot enque task into private queue. Increase queue capacity using MIR_CONF.\n");
 
     __sync_fetch_and_add(&g_num_tasks_waiting, 1);
@@ -211,12 +210,12 @@ void mir_worker_push(struct mir_worker_t* worker, struct mir_task_t* task)
         worker->statistics->num_tasks_created++;
 }/*}}}*/
 
-static inline bool mir_worker_pop(struct mir_worker_t* worker, struct mir_task_t** task)
+static inline int mir_worker_pop(struct mir_worker_t* worker, struct mir_task_t** task)
 {/*{{{*/
     MIR_ASSERT(worker != NULL);
     MIR_ASSERT(task != NULL);
 
-    bool found = 0;
+    int found = 0;
     struct mir_queue_t* queue = worker->private_queue;
     MIR_ASSERT(worker->private_queue != NULL);
     if(mir_queue_size(queue) > 0)
@@ -233,13 +232,13 @@ static inline bool mir_worker_pop(struct mir_worker_t* worker, struct mir_task_t
     return found;
 }/*}}}*/
 
-void mir_worker_do_work(struct mir_worker_t* worker, bool backoff)
+void mir_worker_do_work(struct mir_worker_t* worker, int backoff)
 {/*{{{*/
     MIR_ASSERT(worker != NULL);
 
     // Try to find tasks to execute
     struct mir_task_t* task = NULL;
-    bool work_available = 0;
+    int work_available = 0;
 
     // Overhead measurement 
     uint64_t start_instant = mir_get_cycles();

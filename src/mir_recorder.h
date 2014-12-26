@@ -3,7 +3,6 @@
 
 #include <stdint.h>
 #include <stdlib.h>
-#include <stdbool.h>
 #include "mir_types.h"
 
 BEGIN_C_DECLS 

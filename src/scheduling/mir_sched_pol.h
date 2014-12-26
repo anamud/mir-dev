@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 #include <stdlib.h>
-#include <stdbool.h>
+#include <stdint.h>
 
 #include "mir_task.h"
 #include "mir_queue.h"
@@ -24,8 +24,8 @@ struct mir_sched_pol_t
     void (*config) (const char* conf_str);
     void (*create) ();
     void (*destroy) ();
-    bool (*push) (struct mir_task_t* );
-    bool (*pop) (struct mir_task_t**);
+    int (*push) (struct mir_task_t* );
+    int (*pop) (struct mir_task_t**);
 };
 
 struct mir_sched_pol_t* mir_sched_pol_get_by_name(const char* name);

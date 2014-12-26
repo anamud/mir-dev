@@ -4,8 +4,6 @@
 #include "mir_defines.h"
 #include "mir_lock.h"
 
-#include <stdbool.h>
-
 struct mir_stack_t* mir_stack_create(uint32_t capacity)
 {/*{{{*/
     struct mir_stack_t* stack = (struct mir_stack_t*)mir_cmalloc_int(sizeof(struct mir_stack_t));
@@ -34,7 +32,7 @@ void mir_stack_destroy(struct mir_stack_t* stack)
     stack = NULL;
 }/*}}}*/
 
-bool mir_stack_push(struct mir_stack_t* stack, void* data)
+int mir_stack_push(struct mir_stack_t* stack, void* data)
 {/*{{{*/
     MIR_ASSERT(stack != NULL);
     MIR_ASSERT(data != NULL);
@@ -46,7 +44,7 @@ bool mir_stack_push(struct mir_stack_t* stack, void* data)
         S_DBG("stack full!", stack);
         //__sync_synchronize();
         mir_lock_unset(&(stack->lock));
-        return false;
+        return 0;
     }
     stack->buffer[stack->head] = (void*) data;
     stack->head++;
@@ -54,7 +52,7 @@ bool mir_stack_push(struct mir_stack_t* stack, void* data)
     //__sync_synchronize();
     mir_lock_unset(&(stack->lock));
 
-    return true;
+    return 1;
 }/*}}}*/
 
 void mir_stack_pop(struct mir_stack_t* stack, void** data)
