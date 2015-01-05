@@ -14,7 +14,7 @@ fork_size <- join_size
 start_size <- 15
 end_size <- start_size
 task_size <- 30
-task_size_mult <- 8
+task_size_mult <- 10
 task_size_bins <- 10
 
 # Timing functions
@@ -318,7 +318,9 @@ if("overhead_cycles" %in% colnames(tg.data))
     # Set size in proportion to average ins count
     #mean_val <- mean(tg.data$overhead_cycles)
     #p_task_size <- task_size_mult * (tg.data$overhead_cycles/mean_val)
-    p_task_size <- task_size_mult * as.numeric(cut(tg.data$overhead_cycles, task_size_bins))
+    ovhc_unique <- unique(tg.data$overhead_cycles)
+    if(length(ovhc_unique) == 1) p_task_size <- task_size_mult
+    else p_task_size <- task_size_mult * as.numeric(cut(tg.data$overhead_cycles, task_size_bins))
     tg <- set.vertex.attribute(tg, name='overhead_cycles_to_size', index=task_index, value=p_task_size)
 }
 if("exec_cycles" %in% colnames(tg.data))

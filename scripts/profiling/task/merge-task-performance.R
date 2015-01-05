@@ -29,7 +29,8 @@ make_option(c("-q", "--quiet"), action="store_false", dest="verbose", help="Prin
 make_option(c("-l","--left"), help = "Table 1", metavar="FILE"),
 make_option(c("-r","--right"), help = "Table 2", metavar="FILE"),
 make_option(c("-o","--out"), default="merged-task-perf", help = "Output file name [default \"%default\"]", metavar="STRING"),
-make_option(c("-k","--key"), help = "Column used for merging"))
+make_option(c("-k","--key"), help = "Column used for merging"),
+make_option(c("-c","--common"), default="prompt", help = "How to treat common columns? Choose from: left, right, both, avoid, prompt [default \"%default\"]", metavar="STRING"))
 parsed <- parse_args(OptionParser(option_list = option_list), args = commandArgs(TRUE))
 if(!exists("left", where=parsed) | !exists("right", where=parsed) | !exists("key", where=parsed))
 {
@@ -57,36 +58,55 @@ if(length(common) > 0)
 {
     print("Tables contain common columns: ")
     print(common)
-    print("Enter choice for merging common columns: both [b], all left [l], all right [r], avoid [a] or selection [s].")
-    mc <- scan(file = "stdin", what=character(), n=1, quiet=T)
-    if(mc == 'b') {
-    } else if(mc == 'l') {
-        dright <- subset(dright, select=(setdiff(colnames(dright), common)))
-    } else if(mc == 'r') {
-        dleft <- subset(dleft, select=(setdiff(colnames(dleft), common)))
-    } else if(mc == 'a') {
-        dleft <- subset(dleft, select=(setdiff(colnames(dleft), common)))
-        dright <- subset(dright, select=(setdiff(colnames(dright), common)))
-    } else if(mc == 's') {
-        for(c in common)
-        {
-            print(paste("Enter choice for merging column <", c, ">: both [b], left [l], right [r] or avoid [a]."))
-            mcs <- scan(file = "stdin", what=character(), n=1, quiet=T)
-            if(mcs == 'b') {
-            } else if(mcs == 'l') {
-                dright <- subset(dright, select=(setdiff(colnames(dright), c)))
-            } else if(mcs == 'r') {
-                dleft <- subset(dleft, select=(setdiff(colnames(dleft), c)))
-            } else if(mcs == 'a') {
-                dright <- subset(dright, select=(setdiff(colnames(dright), c)))
-                dleft <- subset(dleft, select=(setdiff(colnames(dleft), c)))
-            } else {
-                print("Error: Invalid choice. Aborting!")
-                quit("no", 1)
+    if(parsed$common == "prompt")
+    {
+        print("Merging common columns:  prompt ")
+        print("Enter choice for merging common columns: both [b], all from left [l], all from right [r], avoid [a] or make selection [s].")
+        mc <- scan(file = "stdin", what=character(), n=1, quiet=T)
+        if(mc == 'b') {
+        } else if(mc == 'l') {
+            dright <- subset(dright, select=(setdiff(colnames(dright), common)))
+        } else if(mc == 'r') {
+            dleft <- subset(dleft, select=(setdiff(colnames(dleft), common)))
+        } else if(mc == 'a') {
+            dleft <- subset(dleft, select=(setdiff(colnames(dleft), common)))
+            dright <- subset(dright, select=(setdiff(colnames(dright), common)))
+        } else if(mc == 's') {
+            for(c in common)
+            {
+                print(paste("Enter choice for merging column <", c, ">: both [b], left [l], right [r] or avoid [a]."))
+                mcs <- scan(file = "stdin", what=character(), n=1, quiet=T)
+                if(mcs == 'b') {
+                } else if(mcs == 'l') {
+                    dright <- subset(dright, select=(setdiff(colnames(dright), c)))
+                } else if(mcs == 'r') {
+                    dleft <- subset(dleft, select=(setdiff(colnames(dleft), c)))
+                } else if(mcs == 'a') {
+                    dright <- subset(dright, select=(setdiff(colnames(dright), c)))
+                    dleft <- subset(dleft, select=(setdiff(colnames(dleft), c)))
+                } else {
+                    print("Error: Invalid choice. Aborting!")
+                    quit("no", 1)
+                }
             }
+        } else {
+            print("Error: Invalid choice. Aborting!")
+            quit("no", 1)
         }
+    } else if (parsed$common == "both") {
+        print("Merging common columns: both")
+    } else if (parsed$common == "left") {
+        print("Merging common columns:  all from left")
+        dright <- subset(dright, select=(setdiff(colnames(dright), common)))
+    } else if (parsed$common == "right") {
+        print("Merging common columns: all from right")
+        dleft <- subset(dleft, select=(setdiff(colnames(dleft), common)))
+    } else if (parsed$common == "avoid") {
+        print("Merging common columns: avoid")
+        dleft <- subset(dleft, select=(setdiff(colnames(dleft), common)))
+        dright <- subset(dright, select=(setdiff(colnames(dright), common)))
     } else {
-        print("Error: Invalid choice. Aborting!")
+        print("Error: Invalid --common/-c input. Check help (-h)")
         quit("no", 1)
     }
 
