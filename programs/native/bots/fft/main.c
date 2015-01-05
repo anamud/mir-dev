@@ -13,6 +13,17 @@ long get_usecs(void)
     return t.tv_sec * 1000000 + t.tv_usec;
 }/*}}}*/
 
+struct main_task_wrapper_arg_t 
+{/*{{{*/
+    int n; COMPLEX * in; COMPLEX * out;
+};/*}}}*/
+
+void main_task_wrapper(void* arg)
+{/*{{{*/
+    struct main_task_wrapper_arg_t* warg = (struct main_task_wrapper_arg_t*) arg;
+    fft(warg->n, warg->in, warg->out);
+}/*}}}*/
+
 int main(int argc, char *argv[])
 {/*{{{*/
     if (argc > 2)
@@ -38,7 +49,12 @@ int main(int argc, char *argv[])
     }
 
     long par_time_start = get_usecs();
-    fft(arg_size, in, out1);
+    struct main_task_wrapper_arg_t mt_arg;
+    mt_arg.n = arg_size;
+    mt_arg.in = in;
+    mt_arg.out = out1;
+    mir_task_create((mir_tfunc_t) main_task_wrapper, &mt_arg, sizeof(struct main_task_wrapper_arg_t), 0, NULL, "main_task_wrapper");
+    mir_task_wait();
     long par_time_end = get_usecs();
     double par_time = (double)( par_time_end - par_time_start) / 1000000;
 

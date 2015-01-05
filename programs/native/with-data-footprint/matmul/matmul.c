@@ -212,10 +212,8 @@ void compute_task_wrapper(void* arg)
     compute_task(warg->i, warg->j, warg->NB, warg->DIM, warg->A, warg->B, warg->C);
 }/*}}}*/
 
-void compute(struct timeval *start, struct timeval *stop, unsigned long NB, unsigned long DIM, float *A[DIM][DIM], float *B[DIM][DIM], float *C[DIM][DIM])
+void compute(unsigned long NB, unsigned long DIM, float *A[DIM][DIM], float *B[DIM][DIM], float *C[DIM][DIM])
 {/*{{{*/
-    gettimeofday(start,NULL);
-
     for (unsigned long i = 0; i < DIM; i++)
         for (unsigned long j = 0; j < DIM; j++)
         {
@@ -277,7 +275,6 @@ void compute(struct timeval *start, struct timeval *stop, unsigned long NB, unsi
 
 //#pragma omp taskwait
     mir_task_wait();
-    gettimeofday(stop,NULL);
 }/*}}}*/
 
 static void convert_to_blocks(unsigned long NB,unsigned long DIM, unsigned long N, float *Alin, float *A[DIM][DIM])
@@ -466,14 +463,43 @@ void init_seq (unsigned long N, unsigned long DIM)
     free(Clin);
 }/*}}}*/
 
-int main(int argc, char *argv[])
+struct main_task_wrapper_arg_t 
 {/*{{{*/
-    // local vars
-    unsigned long N, DIM;
+    unsigned long N;
+    unsigned long DIM;
+};/*}}}*/
 
+void main_task_wrapper(void* arg)
+{/*{{{*/
     struct timeval start;
     struct timeval stop;
     unsigned long elapsed;
+
+    struct main_task_wrapper_arg_t* warg = (struct main_task_wrapper_arg_t*) arg;
+
+    gettimeofday(&start,NULL);
+    
+    compute((unsigned long) BSIZE, warg->DIM, (void *)A, (void *)B, (void *)C);
+    
+    gettimeofday(&stop,NULL);
+
+    // Report
+    // Dimension
+    unsigned long N = warg->N;
+    PMSG("Matrix dimension: %ld\n",N);
+    // time in usecs
+    elapsed = 1000000 * (stop.tv_sec - start.tv_sec);
+    elapsed += stop.tv_usec - start.tv_usec;
+    PMSG ("Time %f secs\n", (double)(elapsed)/1000000);
+    // performance in MFLOPS
+    PMSG("Perf %lu MFlops\n", (unsigned long)((((double)N)*((double)N)*((double)N)*2)/elapsed));
+    PMSG("Perf %lu MBytes/s\n", (unsigned long)((((double)N)*((double)N)*2*sizeof(float))/elapsed));
+    PALWAYS("%fs\n", (double)(elapsed)/1000000);
+}/*}}}*/
+
+int main(int argc, char *argv[])
+{/*{{{*/
+    unsigned long N, DIM;
 
     mir_create();
 
@@ -481,7 +507,11 @@ int main(int argc, char *argv[])
     init(argc, argv, &N, &DIM);
 
     // compute
-    compute(&start, &stop,(unsigned long) BSIZE, DIM, (void *)A, (void *)B, (void *)C);
+    struct main_task_wrapper_arg_t mt_arg;
+    mt_arg.N = N;
+    mt_arg.DIM = DIM;
+    mir_task_create((mir_tfunc_t) main_task_wrapper, &mt_arg, sizeof(struct main_task_wrapper_arg_t), 0, NULL, "main_task_wrapper");
+    mir_task_wait();
 
 #ifdef CHECK_RESULT
 //#if 0
@@ -500,16 +530,6 @@ int main(int argc, char *argv[])
     elapsed_seq += stop_seq.tv_usec - start_seq.tv_usec;
     PMSG ("Seq. time %f secs\n", (double)(elapsed_seq)/1000000);
 #endif
-
-    elapsed = 1000000 * (stop.tv_sec - start.tv_sec);
-    elapsed += stop.tv_usec - start.tv_usec;
-    PMSG("Matrix dimension: %ld\n",N);
-    // time in usecs
-    PMSG ("Time %f secs\n", (double)(elapsed)/1000000);
-    // performance in MFLOPS
-    PMSG("Perf %lu MFlops\n", (unsigned long)((((double)N)*((double)N)*((double)N)*2)/elapsed));
-    PMSG("Perf %lu MBytes/s\n", (unsigned long)((((double)N)*((double)N)*2*sizeof(float))/elapsed));
-    PALWAYS("%fs\n", (double)(elapsed)/1000000);
 
     deinit(DIM);
 

@@ -212,6 +212,17 @@ int verify_queens (int size)
     return TEST_UNSUCCESSFUL;
 }/*}}}*/
 
+struct main_task_wrapper_arg_t 
+{/*{{{*/
+    int n;
+};/*}}}*/
+
+void main_task_wrapper(void* arg)
+{/*{{{*/
+    struct main_task_wrapper_arg_t* warg = (struct main_task_wrapper_arg_t*) arg;
+    find_queens(warg->n);
+}/*}}}*/
+
 int main(int argc, char *argv[])
 {/*{{{*/
     if (argc > 3)
@@ -229,7 +240,10 @@ int main(int argc, char *argv[])
     PMSG("Computing nqueens %d %d ... \n", size, cutoff_value);
 
     long par_time_start = get_usecs();
-    find_queens(size);
+    struct main_task_wrapper_arg_t mt_arg;
+    mt_arg.n = size;
+    mir_task_create((mir_tfunc_t) main_task_wrapper, &mt_arg, sizeof(struct main_task_wrapper_arg_t), 0, NULL, "main_task_wrapper");
+    mir_task_wait();
     long par_time_end = get_usecs();
     double par_time = (double)( par_time_end - par_time_start) / 1000000;
 

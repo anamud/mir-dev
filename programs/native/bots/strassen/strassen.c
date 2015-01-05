@@ -1138,6 +1138,17 @@ void strassen_main_seq(REAL *A, REAL *B, REAL *C, int n)
     PDBG(" completed!\n");
 }/*}}}*/
 
+struct main_task_wrapper_arg_t 
+{/*{{{*/
+    REAL *A; REAL *B; REAL *C; int n;
+};/*}}}*/
+
+void main_task_wrapper(void* arg)
+{/*{{{*/
+    struct main_task_wrapper_arg_t* warg = (struct main_task_wrapper_arg_t*) arg;
+    strassen_main_par(warg->A, warg->B, warg->C, warg->n);
+}/*}}}*/
+
 int main(int argc, char **argv)
 {/*{{{*/
     if (argc > 4)
@@ -1175,7 +1186,13 @@ int main(int argc, char **argv)
     init_matrix(arg_size, B, arg_size);
 
     long par_time_start = get_usecs();
-    strassen_main_par(C, A, B, arg_size);
+    struct main_task_wrapper_arg_t mt_arg;
+    mt_arg.A = C;
+    mt_arg.B = A;
+    mt_arg.C = B;
+    mt_arg.n = arg_size;
+    mir_task_create((mir_tfunc_t) main_task_wrapper, &mt_arg, sizeof(struct main_task_wrapper_arg_t), 0, NULL, "main_task_wrapper");
+    mir_task_wait();
     long par_time_end = get_usecs();
     double par_time = (double)( par_time_end - par_time_start) / 1000000;
 

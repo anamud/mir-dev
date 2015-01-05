@@ -446,6 +446,11 @@ void jacobi_par()
     } 
 }/*}}}*/
 
+void main_task_wrapper(void* arg)
+{/*{{{*/
+    jacobi_par();
+}/*}}}*/
+
 int main(int argc, char* argv[])
 {/*{{{*/
     PMSG("Getting args ...\n");
@@ -528,7 +533,8 @@ int main(int argc, char* argv[])
     // Iterate and solve/*{{{*/
     long ts, te;
     ts = get_usecs();
-    jacobi_par();
+    mir_task_create((mir_tfunc_t) main_task_wrapper, NULL, 0, 0, NULL, "main_task_wrapper");
+    mir_task_wait();
     te = get_usecs();/*}}}*/
 
 #ifdef CHECK_RESULT
