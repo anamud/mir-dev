@@ -70,6 +70,7 @@ if os.path.isfile('HAVE_LIBNUMA'):
 
 if os.path.isfile('HAVE_PAPI'):
     env['CCFLAGS'] += ['-I' + PAPI_ROOT+'/include']
+    env['CCFLAGS'] += ['-DMIR_RECORDER_USE_HW_PERF_COUNTERS']
 
 #####################
 # Debug environment #

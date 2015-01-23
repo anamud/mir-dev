@@ -83,10 +83,10 @@ struct mir_twc_t
 struct mir_task_t
 {/*{{{*/
     mir_tfunc_t func;
-#ifdef MIR_TASK_VARIABLE_DATA_SIZE
-    char* data;
-#else
+#ifdef MIR_TASK_FIXED_DATA_SIZE
     char data[MIR_TASK_DATA_MAX_SIZE];
+#else
+    char* data;
 #endif
     size_t data_size;
     mir_id_t id;

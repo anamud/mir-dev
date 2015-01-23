@@ -3,7 +3,7 @@
 
 # Introduction
 
-MIR is a task-based runtime system library written using C99. MIR scales well for medium-grained task-based programs. MIR provides a simple native interface for writing task-based programs. In addition, a subset of the OpenMP 3.0 tasks interface is supported. MIR is flexible --- the user can experiment with different scheduling policies. Example: Locality-aware scheduling and data distribution on NUMA systems. MIR supports extensive performance analysis and profiling features. Users can quickly solve performance problems using detailed thread-based and task-based performance information profiled by MIR.
+MIR is a task-based runtime system library written using C99 that provides detailed thread-based and task-based performance. MIR scales well for medium-grained task-based programs. MIR supports subset of the OpenMP 3.0 tasks interface and a low level native interface for writing task-based programs. MIR allows the user to experiment with memory distribution policies and different scheduling policies. Example: Locality-aware scheduling and data distribution on NUMA systems.
 
 # Intended Audience
 MIR is intended to be used by advanced task-based programmers. Knowledge of compilation and runtime system role in task-based programming is required to use and appreciate MIR. 
@@ -79,7 +79,7 @@ $ cd $MIR_ROOT/src
 $ scons
 ```
 
-> Expert Tip: 
+> Expert Tip:
 > Ensure MIR_ROOT/src/SConstruct matches your build intention.
 
 ### Enabling data distribution and locality-aware scheduling on NUMA systems
@@ -97,8 +97,7 @@ $ scons -c && scons
 ```
 
 ## Testing
-The Fibonacci program in MIR_ROOT/programs/native/fib is recommended for testing. Try different runtime system configurations
-and program inputs. Verify correctness and scalability. Other programs in MIR_ROOT/programs can also be used for testing.
+Try different runtime system configurations and program inputs on Fibonacci in MIR_ROOT/programs/native/fib. Other programs in MIR_ROOT/programs can also be used for testing.
 ```
 $ cd $MIR_ROOT/programs/native/fib
 $ scons -c
@@ -113,9 +112,84 @@ $ ./fib-opt
 
 # Programming
 
+## OpenMP 3.0 Tasks Interface
+
+ A restricted subset of OpenMP 3.0 tasks --- the `task` and `taskwait` constructs --- is supported. Although minimal, the subset is sufficient for writing most task-based programs. 
+
+The `parallel` construct is deprecated. A team of threads is created when `mir_create` is called. The team is disbanded when `mir_destroy` is called.
+
+> Note: 
+> OpenMP tasks are supported by intercepting GCC translated calls to GNU libgomp. OpenMP 3.0 task interface support is therefore restricted to programs compiled using GCC.
+
+### Tips for writing MIR-supported OpenMP programs 
+
+- Initialize and release the runtime system explicitly by calling `mir_create` and `mir_destroy`.
+
+- Do not think in terms of threads. 
+	- Do not use the `parallel` construct to share work.
+	- Do not use barriers to synchronize threads.
+
+- Think solely in terms of tasks.  
+	- Use the `task` construct to parallelize work. 
+	- Use clauses `shared`, `firstprivate` and `private` to indicate the data environment.
+	- Use `taskwait` to synchronize tasks.
+
+- Use `mir_lock` instead of the `critical` construct or use OS locks such as `pthread_lock`.
+
+- Use GCC atomic builtins for flushing and atomic operations.
+
+- Study example programs in MIR_ROOT/programs/omp.
+
+A simple set of steps for producing MIR-supported OpenMP programs is given below:
+
+1. When parallel execution is required, create a `parallel` block with `default(none)` followed immediately by a `single` block. The `default(none)` clause avoids incorrect execution due to assumed sharing rules.
+
+2. Use the `task` construct within the `single` block to parallelize work.
+
+3. Synchronize tasks using the `taskwait` construct explicitly. Do not rely on implicit barriers and taskwaits.
+
+4. Parallelizing work inside a master task context is helpful while interpreting profiling results.
+
+5. Compile and link with the native OpenMP implementation (preferably libgomp) and check if the program runs correctly.
+
+6. Include `mir_public_int.h`. Call `mir_create` in the beginning of main and call `mir_destroy` at the end of main. Delete `parallel` and `single` blocks.
+
+7. Compile and link with the appropriate MIR library (opt/debug). The program is now ready. 
+
+The native interface example rewritten using above steps is shown below.
+
+```
+int main(int argc, char *argv[])
+{
+    // Initialize the runtime system
+    mir_create();
+
+#pragma omp task
+{
+    // Now parallelize the work involved
+    // Work in this case: create as many tasks 
+    // ... as there are threads
+    int num_workers = mir_get_num_threads();
+    for(int i=0; i<num_workers; i++)
+    {
+        #pragma omp task firstprivate(i)
+            foo(i);
+    }
+        
+    // Wait for tasks to finish
+    #pragma omp taskwait
+}
+// Wait for master task to finish
+#pragma omp taskwait
+    // Release runtime system resources
+    mir_destroy();
+
+    return 0;
+}
+```
 ## Native Interface
 
-The native interface for task-based programming is friendly, even to non-experts. Look at mir_public_int.h in MIR_ROOT/src for interface details and programs in MIR_ROOT/programs for interface usage examples. A simple program using the native interface is shown
+Look at mir_public_int.h in MIR_ROOT/src for interface details and programs in MIR_ROOT/programs/native for interface usage examples. A simple program using the native interface is shown
 below.
 ```
 #include "mir_public_int.h"
@@ -163,92 +237,12 @@ int main(int argc, char *argv[])
     return 0;
 }
 ```
-## OpenMP 3.0 Tasks Interface
-
- A restricted subset of OpenMP 3.0 tasks --- the `task` and `taskwait` constructs --- is supported. Although minimal, the subset is sufficient for writing most task-based programs. 
-
-The `parallel` construct is deprecated. A team of threads is created when `mir_create` is called. The team is disbanded when `mir_destroy` is called.
-
-> Note: 
-> OpenMP tasks are supported by intercepting GCC translated calls to GNU libgomp. OpenMP 3.0 task interface support is therefore restricted to programs compiled using GCC.
-
-### Tips for writing MIR-supported OpenMP programs 
-
-- Initialize and release the runtime system explicitly by calling `mir_create` and `mir_destroy`.
-
-- Do not think in terms of threads. 
-	- Do not use the `parallel` construct to share work.
-	- Do not use barriers to synchronize threads.
-
-- Think solely in terms of tasks.  
-	- Use the `task` construct to parallelize work. 
-	- Use clauses `shared`, `firstprivate` and `private` to indicate the data environment.
-	- Use `taskwait` to synchronize tasks.
-
-- Use `mir_lock` instead of the `critical` construct or use OS locks such as `pthread_lock`.
-
-- Use GCC atomic builtins for flushing and atomic operations.
-
-- Study example programs in MIR_ROOT/programs/omp.
-
-A simple set of steps for producing MIR-supported OpenMP programs is given below:
-
-1. When parallel execution is required, create a `parallel` block with `default(none)` followed immediately by a `single` block. The `default(none)` clause avoids incorrect execution due to assumed sharing rules.
-
-2. Use the `task` construct within the `single` block to parallelize work.
-
-3. Synchronize tasks using the `taskwait` construct explicitly. Do not rely on implicit barriers and taskwaits.
-
-4. Parallelizing work inside a master task context is helpful while interpreting profiling results.
-
-5. Compile and link with the native OpenMP implementation (preferably libgomp) and check if the program runs correctly.
-
-6. Comment out the `parallel` and `single` blocks, initialize the MIR runtime system right in the beginning of the program by calling `mir_create` and release it at the end of the program by calling `mir_destroy`, include `mir_public_int.h`.
-
-7. Compile and link with the appropriate MIR library (opt/debug). The program is now ready. 
-
-The native interface example rewritten using above steps is shown below.
-
-```
-int main(int argc, char *argv[])
-{
-    // Initialize the runtime system
-    mir_create();
-
-//#pragma omp parallel default(none)
-//{
-//#pragma omp single
-//{
-// Master task context: helpful for interpreting profiling results.
-#pragma omp task
-{
-    // Now parallelize the work involved
-    // Work in this case: create as many tasks 
-    // ... as there are threads
-    int num_workers = mir_get_num_threads();
-    for(int i=0; i<num_workers; i++)
-    {
-        #pragma omp task firstprivate(i)
-            foo(i);
-    }
-        
-    // Wait for tasks to finish
-    #pragma omp taskwait
-}
-// Wait for master task to finish
-#pragma omp taskwait
-//}
-//}
-    // Release runtime system resources
-    mir_destroy();
-
-    return 0;
-}
-```
-
 ## Compiling and Linking
 
-Look at `SConstruct`, the Scons build file accompanying each program to understand how to compile and link with the MIR library. Observing verbose build messages is also recommended.
+Add `-lmir-opt` to `LDFLAGS`. Enable MIR to intercept function calls
+correctly by adding `-fno-inline-functions
+-fno-inline-functions-called-once -fno-optimize-sibling-calls
+-fno-omit-frame-pointer -g` to `CFLAGS` and/or `CXXFLAGS`.
 
 ## Runtime Configuration
 
@@ -314,7 +308,7 @@ $ cat mir-worker-stats
 ```
 ==TODO:== Explain file contents
 
-MIR contains a module called the `recorder` which produces detailed execution traces. Use the `-r` flag to enable the recorder and get detailed state and event traces in a set of `mir-recorder-trace-*.rec` files. Each file represents a worker thread. The files can be inspected individually or combined and visualized using Paraver.
+MIR contains a `recorder` which produces execution traces. Use the `-r` flag to enable the recorder and get detailed state and event traces in a set of `mir-recorder-trace-*.rec` files. Each file represents a worker thread. The files can be inspected individually or combined and visualized using Paraver.
 ```
 $ MIR_CONF="-r" ./fib-opt
 $ $MIR_ROOT/scripts/profiling/thread/rec2paraver.py \
@@ -331,7 +325,7 @@ $ cat accumulated-state-file.info
 
 ### Enabling hardware performance counters
 
-MIR can read hardware performance counters during thread events. This process is not fully automated and needs a little bit of hands-on work from the user.  
+MIR can read hardware performance counters through PAPI during thread events.
 * Install PAPI.  
 
 * Set the `PAPI_ROOT` environment variable 
@@ -344,13 +338,7 @@ $ export PAPI_ROOT=<PAPI install path>
 $ touch $MIR_ROOT/src/HAVE_PAPI
 ```
 
-* Enable the preprocessor definition `MIR_RECORDER_USE_HW_PERF_COUNTERS` in `MIR_ROOT/src/mir_defines.h`.  
-```
-$grep -i HW_PERF $MIR_ROOT/src/mir_defines.h
-#define MIR_RECORDER_USE_HW_PERF_COUNTERS 
-```
-
-* Enable PAPI hardware performance counters of interest in `MIR_ROOT/src/mir_recorder.c`.  
+* Enable additional PAPI hardware performance counters by editing `MIR_ROOT/src/mir_recorder.c`.  
 ```
 $ grep -i "{PAPI_" $MIR_ROOT/src/mir_recorder.c
 {"PAPI_TOT_INS", 0x0},
@@ -366,7 +354,7 @@ $ grep -i "{PAPI_" $MIR_ROOT/src/mir_recorder.c
 $ scons -c && scons
 ```
 
-Performance counter readings will be now be added to `mir-recorder-trace-*.rec` files produced by the recorder during thread-based profiling. The counter readings can either be viewed on Paraver or accumulated for analysis outside Paraver.
+Performance counter values will appear in the `mir-recorder-trace-*.rec` files produced by the recorder during thread-based profiling. The counter readings can either be viewed on Paraver or accumulated for analysis outside Paraver.
 ```
 $ $MIR_ROOT/scripts/profiling/thread/get-events.sh mir-recorder-trace.prv
 $ cat event-summary-*.txt
@@ -383,17 +371,19 @@ $ Rscript ${MIR_ROOT}/scripts/profiling/task/plot-task-graph.R -d mir-task-stats
 ```
 ==TODO:== Explain file contents.
 
-The `mir-task-stats` can also be processed for additional information such as number of tasks and task lineage (UID for tasks).
+The `mir-task-stats` file can be further processed for additional information such as number of tasks and task lineage (UID for tasks). 
 ``` 
 $ Rscript ${MIR_ROOT}/scripts/profiling/task/process-task-stats.R -d mir-task-stats --lineage
 $ cat mir-task-stats.info
 num_tasks: 15
 joins_at_summary: 1 2 2 1.875 2 2
-$ cat mir-task-stats.lineage
+$ head mir-task-stats.lineage
 "task","parent","lineage"
 1,0,"0-1"
 2,1,"0-1-2"
 3,1,"0-1-3"
+...
+$ head mir-task-stats.processed
 ...
 ```
 
@@ -404,7 +394,7 @@ MIR provides a Pin-based instruction profiler that traces instructions executed 
 * Get Intel Pin sources and set environment variables.
 ```
 $ export PIN_ROOT=<Pin source path>
-$ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$PIN_ROOT
+$ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$PIN_ROOT:$PIN_ROOT/intel64/runtime
 ```
 
 * Edit `PIN_ROOT/source/tools/Config/makefile.unix.config` and add `-fopenmp` to variables `TOOL_LDFLAGS_NOOPT` and `TOOL_CXXFLAGS_NOOPT`
@@ -441,20 +431,11 @@ $ alias mir-inst-prof="MIR_CONF='-w=1 -p' ${PIN_ROOT}/intel64/bin/pinbin -t ${MI
 * The profiler produces following outputs: 
 	1. Per-task instructions in a CSV file called `mir-ofp-instructions`. Example contents of the file are shown below. 
 		
-			"task","parent","joins_at","child_number","num_children","cpu_id","exec_cycles","ins_count","stack_read","stack_write","mem_fp","ccr","clr","mem_read","mem_write","outl_func"
-			1,0,0,0,2,0,21887625,58,10,15,5,12,15,4,1,"ol_fib_2"
-			2,1,0,1,2,0,610035,60,10,15,5,12,15,4,1,"ol_fib_0"
-			3,1,0,2,2,0,3183115,60,10,15,5,12,15,4,1,"ol_fib_1"
+		== TODO: Add file contents ==
 		
 		Each line shows instruction and code properties of a distinct task executed by the program. Properties are described below.
 	
-  		* `task`: Identifier of the task.
-  		* `parent`: Identifier of the parent task. 
-  		* `joins_at`: The order of synchronizing with the parent task context. 
-	  	* `child_number`: Order of task creation by parent.
-	  	* `num_children`: Indicates the number of child tasks created by the task.
-	  	* `exec_cycles`: Number of cycles spent executing the task including child task creation and synchronization.
-	  	* `cpu_id`: Identifier of the CPU that executed the task.
+  		* `task`: Identifier of the task.  		
 	  	* `ins_count`: Total number of instructions executed by the task. 
 	  	* `stack_read`: Number of read accesses to the stack while executing instructions.
 	  	* `stack_write`: Number of write accesses to the stack while executing instructions.
@@ -498,7 +479,8 @@ $ Rscript ${MIR_ROOT}/scripts/profiling/task/plot-task-graph.R -t -d mir-task-st
 
 * The graph plotter can annotate task graph elements with performance information. Merge the instruction-level information produced by the instruction profiler with the task statistics produced by the runtime system into a single CSV file. Plot task graph using combined performance information.
 ``` 
-$ Rscript ${MIR_ROOT}/scripts/profiling/task/merge-task-performance.R -l mir-task-stats -r mir-ofp-instructions -k "task"
+$ Rscript ${MIR_ROOT}/scripts/profiling/task/process-task-stats.R -d mir-task-stats
+$ Rscript ${MIR_ROOT}/scripts/profiling/task/merge-task-performance.R -l mir-task-stats.processed -r mir-ofp-instructions -k "task" -o mir-task-perf
 $ Rscript ${MIR_ROOT}/scripts/profiling/task/plot-task-graph.R -d mir-task-perf -p color
 ``` 
 
@@ -551,17 +533,14 @@ $ mir-inst-prof \
     -- ./fib-prof 10 4
 ```
 
-> Tip: 
-> If you get a missing link-library error, add PIN_ROOT/intel64/runtime to LD_LIBRARY_PATH. 
-
 * Inspect instruction profiler output. 
 
 ``` 
 $ head mir-ofp-instructions
-"task","parent","joins_at","child_number","num_children","cpu_id","exec_cycles","ins_count","stack_read","stack_write","mem_fp","ccr","clr","mem_read","mem_write","outl_func"
-1,0,0,0,2,0,21887625,58,10,15,5,12,15,4,1,"ol_fib_2"
-2,1,0,1,2,0,610035,60,10,15,5,12,15,4,1,"ol_fib_0"
-3,1,0,2,2,0,3183115,60,10,15,5,12,15,4,1,"ol_fib_1"
+"task","ins_count","stack_read","stack_write","mem_fp","ccr","clr","mem_read","mem_write","outl_func"
+1,21887625,58,10,15,5,12,15,4,1,"ol_fib_2"
+2,610035,60,10,15,5,12,15,4,1,"ol_fib_0"
+3,3183115,60,10,15,5,12,15,4,1,"ol_fib_1"
 ...
 $ head mir-ofp-events
 task,ins_count,[create],[wait]
@@ -576,7 +555,7 @@ task,ins_count,[create],[wait]
 MIR_CONF="-g" ./fib-prof 10 4
 ```
 > Tip: 
-> Generate task statistics information simultaneously with other statistics to maintain consistency.
+> Generate task statistics information simultaneously with other statistics to maintain consistency. Or you will have to merge using lineage as key.
 
 * Summarize task statistics.
 ``` 
@@ -584,11 +563,12 @@ $ Rscript ${MIR_ROOT}/scripts/profiling/task/process-task-stats.R -d mir-task-st
 $ cat mir-task-stats.info
 num_tasks: 15
 joins_at_summary: 1 2 2 1.875 2 2
+$ head mir-task-stats.processed
 ```
 
 * Combine the instruction-level information produced by the instruction profiler with the task statistics produced by the runtime system into a single CSV file.
 ``` 
-$ Rscript ${MIR_ROOT}/scripts/profiling/task/merge-task-performance.R -l mir-task-stats -r mir-ofp-instructions -k "task"
+$ Rscript ${MIR_ROOT}/scripts/profiling/task/merge-task-performance.R -l mir-task-stats.processed -r mir-ofp-instructions -k "task" -o mir-task-perf
 ```
 * Plot task graph using combined performance information and view on YEd.
 ``` 

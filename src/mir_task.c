@@ -76,11 +76,11 @@ static inline struct mir_task_t* mir_task_create_common(mir_tfunc_t tfunc, void*
 
     // Task function and argument data
     task->func = tfunc;
-#ifdef MIR_TASK_VARIABLE_DATA_SIZE
+#ifdef MIR_TASK_FIXED_DATA_SIZE
+    MIR_ASSERT(data_size <= MIR_TASK_DATA_MAX_SIZE);
+#else
     task->data = mir_malloc_int (sizeof(char) * data_size);
     MIR_ASSERT(task->data != NULL);
-#else
-    MIR_ASSERT(data_size <= MIR_TASK_DATA_MAX_SIZE);
 #endif
     task->data_size = data_size;
     memcpy((void*)&task->data[0], data, data_size);

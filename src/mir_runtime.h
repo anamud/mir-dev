@@ -30,6 +30,7 @@ struct mir_runtime_t
     int ofp_shmid;
     char* ofp_shm;
     struct mir_twc_t* ctwc;
+    struct mir_lock_t omp_critsec_lock;
     unsigned int num_children_tasks;
 
     // Flags

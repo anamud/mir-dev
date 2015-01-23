@@ -58,6 +58,10 @@ static void mir_preconfig_init()
     int rval = pthread_key_create(&runtime->worker_index, NULL); 
     MIR_ASSERT(rval == 0);
 
+    // OpenMP support
+    // This is the unnamed critical section lock
+    mir_lock_create(&runtime->omp_critsec_lock); 
+
     // Flags
     runtime->sig_dying = 0;
     runtime->enable_worker_stats = 0;
@@ -460,6 +464,10 @@ dead:
     // Deinit architecture
     MIR_DEBUG(MIR_DEBUG_STR "Releasing architecture memory ...\n");
     runtime->arch->destroy();
+
+    // OpenMP support
+    // Destroy unnamed omp critical lock
+    mir_lock_destroy(&runtime->omp_critsec_lock); 
 
     // Release runtime memory
     MIR_DEBUG(MIR_DEBUG_STR "Releasing runtime memory ...\n");

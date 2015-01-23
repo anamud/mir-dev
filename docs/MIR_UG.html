@@ -27,7 +27,7 @@
    Introduction
   </h1>
   <p>
-   MIR is a task-based runtime system library written using C99. MIR scales well for medium-grained task-based programs. MIR provides a simple native interface for writing task-based programs. In addition, a subset of the OpenMP 3.0 tasks interface is supported. MIR is flexible --- the user can experiment with different scheduling policies. Example: Locality-aware scheduling and data distribution on NUMA systems. MIR supports extensive performance analysis and profiling features. Users can quickly solve performance problems using detailed thread-based and task-based performance information profiled by MIR.
+   MIR is a task-based runtime system library written using C99 that provides detailed thread-based and task-based performance. MIR scales well for medium-grained task-based programs. MIR supports subset of the OpenMP 3.0 tasks interface and a low level native interface for writing task-based programs. MIR allows the user to experiment with memory distribution policies and different scheduling policies. Example: Locality-aware scheduling and data distribution on NUMA systems.
   </p>
   <h1>
    Intended Audience
@@ -200,9 +200,7 @@ $ scons -c &amp;&amp; scons
    Testing
   </h2>
   <p>
-   The Fibonacci program in MIR_ROOT/programs/native/fib is recommended for testing. Try different runtime system configurations
-   <br/>
-   and program inputs. Verify correctness and scalability. Other programs in MIR_ROOT/programs can also be used for testing.
+   Try different runtime system configurations and program inputs on Fibonacci in MIR_ROOT/programs/native/fib. Other programs in MIR_ROOT/programs can also be used for testing.
   </p>
   <pre><code>$ cd $MIR_ROOT/programs/native/fib
 $ scons -c
@@ -221,59 +219,6 @@ $ ./fib-opt
   <h1>
    Programming
   </h1>
-  <h2>
-   Native Interface
-  </h2>
-  <p>
-   The native interface for task-based programming is friendly, even to non-experts. Look at mir_public_int.h in MIR_ROOT/src for interface details and programs in MIR_ROOT/programs for interface usage examples. A simple program using the native interface is shown
-   <br/>
-   below.
-  </p>
-  <pre><code>#include "mir_public_int.h"
-void foo(int id)
-{
-printf(stderr, "Hello from task %d\n", id);
-}
-
-// Task outline function argument
-struct foo_wrapper_arg_t
-{
-int id;
-};
-
-// Task outline function
-void foo_wrapper(void* arg)
-{
-    struct foo_wrapper_arg_t* farg = (struct foo_wrapper_arg_t*)(arg);
-    foo(farg-&gt;id);
-}
-
-int main(int argc, char *argv[])
-{
-    // Initialize the runtime system
-    mir_create();
-
-    // Create as many tasks as there are threads
-    int num_workers = mir_get_num_threads();
-    for(int i=0; i&lt;num_workers; i++)
-    {
-        struct foo_wrapper_arg_t arg;
-        arg.id = i;
-        mir_task_create((mir_tfunc_t) foo_wrapper, 
-                        &amp;arg, 
-                        sizeof(struct foo_wrapper_arg_t), 
-                        0, NULL, NULL);
-    }
-
-    // Wait for tasks to finish
-    mir_task_wait();
-
-    // Release runtime system resources
-    mir_destroy();
-
-    return 0;
-}
-</code></pre>
   <h2>
    OpenMP 3.0 Tasks Interface
   </h2>
@@ -467,7 +412,19 @@ int main(int argc, char *argv[])
    </li>
    <li>
     <p>
-     Comment out the
+     Include
+     <code>
+      mir_public_int.h
+     </code>
+     . Call
+     <code>
+      mir_create
+     </code>
+     in the beginning of main and call
+     <code>
+      mir_destroy
+     </code>
+     at the end of main. Delete
      <code>
       parallel
      </code>
@@ -475,19 +432,7 @@ int main(int argc, char *argv[])
      <code>
       single
      </code>
-     blocks, initialize the MIR runtime system right in the beginning of the program by calling
-     <code>
-      mir_create
-     </code>
-     and release it at the end of the program by calling
-     <code>
-      mir_destroy
-     </code>
-     , include
-     <code>
-      mir_public_int.h
-     </code>
-     .
+     blocks.
     </p>
    </li>
    <li>
@@ -504,11 +449,6 @@ int main(int argc, char *argv[])
     // Initialize the runtime system
     mir_create();
 
-//#pragma omp parallel default(none)
-//{
-//#pragma omp single
-//{
-// Master task context: helpful for interpreting profiling results.
 #pragma omp task
 {
     // Now parallelize the work involved
@@ -526,8 +466,59 @@ int main(int argc, char *argv[])
 }
 // Wait for master task to finish
 #pragma omp taskwait
-//}
-//}
+    // Release runtime system resources
+    mir_destroy();
+
+    return 0;
+}
+</code></pre>
+  <h2>
+   Native Interface
+  </h2>
+  <p>
+   Look at mir_public_int.h in MIR_ROOT/src for interface details and programs in MIR_ROOT/programs/native for interface usage examples. A simple program using the native interface is shown
+   <br/>
+   below.
+  </p>
+  <pre><code>#include "mir_public_int.h"
+void foo(int id)
+{
+printf(stderr, "Hello from task %d\n", id);
+}
+
+// Task outline function argument
+struct foo_wrapper_arg_t
+{
+int id;
+};
+
+// Task outline function
+void foo_wrapper(void* arg)
+{
+    struct foo_wrapper_arg_t* farg = (struct foo_wrapper_arg_t*)(arg);
+    foo(farg-&gt;id);
+}
+
+int main(int argc, char *argv[])
+{
+    // Initialize the runtime system
+    mir_create();
+
+    // Create as many tasks as there are threads
+    int num_workers = mir_get_num_threads();
+    for(int i=0; i&lt;num_workers; i++)
+    {
+        struct foo_wrapper_arg_t arg;
+        arg.id = i;
+        mir_task_create((mir_tfunc_t) foo_wrapper, 
+                        &amp;arg, 
+                        sizeof(struct foo_wrapper_arg_t), 
+                        0, NULL, NULL);
+    }
+
+    // Wait for tasks to finish
+    mir_task_wait();
+
     // Release runtime system resources
     mir_destroy();
 
@@ -538,11 +529,31 @@ int main(int argc, char *argv[])
    Compiling and Linking
   </h2>
   <p>
-   Look at
+   Add
    <code>
-    SConstruct
+    -lmir-opt
    </code>
-   , the Scons build file accompanying each program to understand how to compile and link with the MIR library. Observing verbose build messages is also recommended.
+   to
+   <code>
+    LDFLAGS
+   </code>
+   . Enable MIR to intercept function calls
+   <br/>
+   correctly by adding
+   <code>
+    -fno-inline-functions
+-fno-inline-functions-called-once -fno-optimize-sibling-calls
+-fno-omit-frame-pointer -g
+   </code>
+   to
+   <code>
+    CFLAGS
+   </code>
+   and/or
+   <code>
+    CXXFLAGS
+   </code>
+   .
   </p>
   <h2>
    Runtime Configuration
@@ -648,11 +659,11 @@ $ cat mir-worker-stats
    Explain file contents
   </p>
   <p>
-   MIR contains a module called the
+   MIR contains a
    <code>
     recorder
    </code>
-   which produces detailed execution traces. Use the
+   which produces execution traces. Use the
    <code>
     -r
    </code>
@@ -686,7 +697,7 @@ $ cat accumulated-state-file.info
    Enabling hardware performance counters
   </h3>
   <p>
-   MIR can read hardware performance counters during thread events. This process is not fully automated and needs a little bit of hands-on work from the user.
+   MIR can read hardware performance counters through PAPI during thread events.
    <br/>
    * Install PAPI.
   </p>
@@ -714,23 +725,7 @@ $ cat accumulated-state-file.info
 </code></pre>
   <ul>
    <li>
-    Enable the preprocessor definition
-    <code>
-     MIR_RECORDER_USE_HW_PERF_COUNTERS
-    </code>
-    in
-    <code>
-     MIR_ROOT/src/mir_defines.h
-    </code>
-    .
-   </li>
-  </ul>
-  <pre><code>$grep -i HW_PERF $MIR_ROOT/src/mir_defines.h
-#define MIR_RECORDER_USE_HW_PERF_COUNTERS 
-</code></pre>
-  <ul>
-   <li>
-    Enable PAPI hardware performance counters of interest in
+    Enable additional PAPI hardware performance counters by editing
     <code>
      MIR_ROOT/src/mir_recorder.c
     </code>
@@ -753,7 +748,7 @@ $ cat accumulated-state-file.info
   <pre><code>$ scons -c &amp;&amp; scons
 </code></pre>
   <p>
-   Performance counter readings will be now be added to
+   Performance counter values will appear in the
    <code>
     mir-recorder-trace-*.rec
    </code>
@@ -793,17 +788,19 @@ $ Rscript ${MIR_ROOT}/scripts/profiling/task/plot-task-graph.R -d mir-task-stats
    <code>
     mir-task-stats
    </code>
-   can also be processed for additional information such as number of tasks and task lineage (UID for tasks).
+   file can be further processed for additional information such as number of tasks and task lineage (UID for tasks).
   </p>
   <pre><code>$ Rscript ${MIR_ROOT}/scripts/profiling/task/process-task-stats.R -d mir-task-stats --lineage
 $ cat mir-task-stats.info
 num_tasks: 15
 joins_at_summary: 1 2 2 1.875 2 2
-$ cat mir-task-stats.lineage
+$ head mir-task-stats.lineage
 "task","parent","lineage"
 1,0,"0-1"
 2,1,"0-1-2"
 3,1,"0-1-3"
+...
+$ head mir-task-stats.processed
 ...
 </code></pre>
   <h3>
@@ -818,7 +815,7 @@ $ cat mir-task-stats.lineage
    </li>
   </ul>
   <pre><code>$ export PIN_ROOT=&lt;Pin source path&gt;
-$ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$PIN_ROOT
+$ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$PIN_ROOT:$PIN_ROOT/intel64/runtime
 </code></pre>
   <ul>
    <li>
@@ -926,11 +923,11 @@ specify outline functions (csv)
        </code>
        . Example contents of the file are shown below.
       </p>
-      <pre><code>"task","parent","joins_at","child_number","num_children","cpu_id","exec_cycles","ins_count","stack_read","stack_write","mem_fp","ccr","clr","mem_read","mem_write","outl_func"
-1,0,0,0,2,0,21887625,58,10,15,5,12,15,4,1,"ol_fib_2"
-2,1,0,1,2,0,610035,60,10,15,5,12,15,4,1,"ol_fib_0"
-3,1,0,2,2,0,3183115,60,10,15,5,12,15,4,1,"ol_fib_1"
-</code></pre>
+      <p>
+       <mark>
+        TODO: Add file contents
+       </mark>
+      </p>
       <p>
        Each line shows instruction and code properties of a distinct task executed by the program. Properties are described below.
       </p>
@@ -940,42 +937,6 @@ specify outline functions (csv)
          task
         </code>
         : Identifier of the task.
-       </li>
-       <li>
-        <code>
-         parent
-        </code>
-        : Identifier of the parent task.
-       </li>
-       <li>
-        <code>
-         joins_at
-        </code>
-        : The order of synchronizing with the parent task context.
-       </li>
-       <li>
-        <code>
-         child_number
-        </code>
-        : Order of task creation by parent.
-       </li>
-       <li>
-        <code>
-         num_children
-        </code>
-        : Indicates the number of child tasks created by the task.
-       </li>
-       <li>
-        <code>
-         exec_cycles
-        </code>
-        : Number of cycles spent executing the task including child task creation and synchronization.
-       </li>
-       <li>
-        <code>
-         cpu_id
-        </code>
-        : Identifier of the CPU that executed the task.
        </li>
        <li>
         <code>
@@ -1120,7 +1081,8 @@ specify outline functions (csv)
     The graph plotter can annotate task graph elements with performance information. Merge the instruction-level information produced by the instruction profiler with the task statistics produced by the runtime system into a single CSV file. Plot task graph using combined performance information.
    </li>
   </ul>
-  <pre><code>$ Rscript ${MIR_ROOT}/scripts/profiling/task/merge-task-performance.R -l mir-task-stats -r mir-ofp-instructions -k "task"
+  <pre><code>$ Rscript ${MIR_ROOT}/scripts/profiling/task/process-task-stats.R -d mir-task-stats
+$ Rscript ${MIR_ROOT}/scripts/profiling/task/merge-task-performance.R -l mir-task-stats.processed -r mir-ofp-instructions -k "task" -o mir-task-perf
 $ Rscript ${MIR_ROOT}/scripts/profiling/task/plot-task-graph.R -d mir-task-perf -p color
 </code></pre>
   <h2>
@@ -1250,23 +1212,16 @@ CALLED_FUNCTIONS=fib_seq,fib,get_usecs,main
     -c fib,fib_seq \
     -- ./fib-prof 10 4
 </code></pre>
-  <blockquote>
-   <p>
-    Tip:
-    <br/>
-    If you get a missing link-library error, add PIN_ROOT/intel64/runtime to LD_LIBRARY_PATH.
-   </p>
-  </blockquote>
   <ul>
    <li>
     Inspect instruction profiler output.
    </li>
   </ul>
   <pre><code>$ head mir-ofp-instructions
-"task","parent","joins_at","child_number","num_children","cpu_id","exec_cycles","ins_count","stack_read","stack_write","mem_fp","ccr","clr","mem_read","mem_write","outl_func"
-1,0,0,0,2,0,21887625,58,10,15,5,12,15,4,1,"ol_fib_2"
-2,1,0,1,2,0,610035,60,10,15,5,12,15,4,1,"ol_fib_0"
-3,1,0,2,2,0,3183115,60,10,15,5,12,15,4,1,"ol_fib_1"
+"task","ins_count","stack_read","stack_write","mem_fp","ccr","clr","mem_read","mem_write","outl_func"
+1,21887625,58,10,15,5,12,15,4,1,"ol_fib_2"
+2,610035,60,10,15,5,12,15,4,1,"ol_fib_0"
+3,3183115,60,10,15,5,12,15,4,1,"ol_fib_1"
 ...
 $ head mir-ofp-events
 task,ins_count,[create],[wait]
@@ -1286,7 +1241,7 @@ task,ins_count,[create],[wait]
    <p>
     Tip:
     <br/>
-    Generate task statistics information simultaneously with other statistics to maintain consistency.
+    Generate task statistics information simultaneously with other statistics to maintain consistency. Or you will have to merge using lineage as key.
    </p>
   </blockquote>
   <ul>
@@ -1298,13 +1253,14 @@ task,ins_count,[create],[wait]
 $ cat mir-task-stats.info
 num_tasks: 15
 joins_at_summary: 1 2 2 1.875 2 2
+$ head mir-task-stats.processed
 </code></pre>
   <ul>
    <li>
     Combine the instruction-level information produced by the instruction profiler with the task statistics produced by the runtime system into a single CSV file.
    </li>
   </ul>
-  <pre><code>$ Rscript ${MIR_ROOT}/scripts/profiling/task/merge-task-performance.R -l mir-task-stats -r mir-ofp-instructions -k "task"
+  <pre><code>$ Rscript ${MIR_ROOT}/scripts/profiling/task/merge-task-performance.R -l mir-task-stats.processed -r mir-ofp-instructions -k "task" -o mir-task-perf
 </code></pre>
   <ul>
    <li>

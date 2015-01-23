@@ -24,11 +24,13 @@ bool GOMP_barrier_cancel (void)
 
 void GOMP_critical_start (void)
 {
-    MIR_ABORT(MIR_ERROR_STR "GOMP_critical_start not implemented yet!\n");
+    // MIR_ABORT(MIR_ERROR_STR "GOMP_critical_start not implemented yet!\n");
+    mir_lock_set(&runtime->omp_critsec_lock);
 }
 void GOMP_critical_end (void)
 {
-    MIR_ABORT(MIR_ERROR_STR "GOMP_critical_end not implemented yet!\n");
+    // MIR_ABORT(MIR_ERROR_STR "GOMP_critical_end not implemented yet!\n");
+    mir_lock_unset(&runtime->omp_critsec_lock);
 }
 void GOMP_critical_name_start (void ** a0)
 {
