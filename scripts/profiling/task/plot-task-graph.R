@@ -16,6 +16,8 @@ end_size <- start_size
 task_size <- 30
 task_size_mult <- 10
 task_size_bins <- 10
+fork_size_mult <- 10
+fork_size_bins <- 10
 
 # Timing functions
 tic <- function(gcFirst = TRUE, type=c("elapsed", "user.self", "sys.self"))
@@ -279,11 +281,23 @@ if(!plot_tree)
     if(verbo) toc("Connect last fork of 0 to node E")
 }
 
+# Calc work inflation
+# TODO: Move this elsewhere. This does not belong here.
+if(verbo) tic(type="elapsed")
+if("work_cycles" %in% colnames(tg.data) & "work_cycles.1" %in% colnames(tg.data))
+{
+    tg.data$work_inflation <- tg.data$work_cycles/tg.data$work_cycles.1
+}
+if("overhead_cycles" %in% colnames(tg.data) & "overhead_cycles.1" %in% colnames(tg.data))
+{
+    tg.data$overhead_inflation <- tg.data$overhead_cycles/tg.data$overhead_cycles.1
+}
+if(verbo) toc("Calculating work inflation")
+
 # Set attributes
 if(verbo) tic(type="elapsed")
 # Common vertex attributes
 V(tg)$label <- V(tg)$name
-
 # Set task vertex attributes
 task_index <- match(as.character(tg.data$task), V(tg)$name)
 # Set annotations
@@ -297,89 +311,59 @@ for (annot in colnames(tg.data))
 tg <- set.vertex.attribute(tg, name='size', index=task_index, value=task_size)
 tg <- set.vertex.attribute(tg, name='width', index=task_index, value=task_size)
 tg <- set.vertex.attribute(tg, name='height', index=task_index, value=task_size)
-if("ins_count" %in% colnames(tg.data))
+# Attributes scaled to size
+size_scaled <- c("ins_count", "work_cycles", "overhead_cycles", "exec_cycles")
+for(attrib in size_scaled)
 {
-    # Set size in proportion to average ins count
-    #mean_val <- mean(tg.data$ins_count)
-    #p_task_size <- task_size_mult * (tg.data$ins_count/mean_val)
-    p_task_size <- task_size_mult * as.numeric(cut(tg.data$ins_count, task_size_bins))
-    tg <- set.vertex.attribute(tg, name='ins_count_to_size', index=task_index, value=p_task_size)
-}
-if("work_cycles" %in% colnames(tg.data))
-{
-    # Set size in proportion to average ins count
-    #mean_val <- mean(tg.data$work_cycles)
-    #p_task_size <- task_size_mult * (tg.data$work_cycles/mean_val)
-    p_task_size <- task_size_mult * as.numeric(cut(tg.data$work_cycles, task_size_bins))
-    tg <- set.vertex.attribute(tg, name='work_cycles_to_size', index=task_index, value=p_task_size)
-}
-if("overhead_cycles" %in% colnames(tg.data))
-{
-    # Set size in proportion to average ins count
-    #mean_val <- mean(tg.data$overhead_cycles)
-    #p_task_size <- task_size_mult * (tg.data$overhead_cycles/mean_val)
-    ovhc_unique <- unique(tg.data$overhead_cycles)
-    if(length(ovhc_unique) == 1) p_task_size <- task_size_mult
-    else p_task_size <- task_size_mult * as.numeric(cut(tg.data$overhead_cycles, task_size_bins))
-    tg <- set.vertex.attribute(tg, name='overhead_cycles_to_size', index=task_index, value=p_task_size)
-}
-if("exec_cycles" %in% colnames(tg.data))
-{
-    # Set height in proportion to exec_cycles
-    exec_cycles <- tg.data$exec_cycles
-    exec_cycles_norm <- 1 + ((exec_cycles - min(exec_cycles)) / (max(exec_cycles) - min(exec_cycles)))
-    tg <- set.vertex.attribute(tg, name='exec_cycles_to_height', index=task_index, value=exec_cycles_norm*task_size)
-}
-if("work_cycles" %in% colnames(tg.data))
-{
-    # Set height in proportion to work_cycles
-    work_cycles <- tg.data$work_cycles
-    work_cycles_norm <- 1 + ((work_cycles - min(work_cycles)) / (max(work_cycles) - min(work_cycles)))
-    tg <- set.vertex.attribute(tg, name='work_cycles_to_height', index=task_index, value=work_cycles_norm*task_size)
-}
-if("overhead_cycles" %in% colnames(tg.data))
-{
-    # Set height in proportion to overhead_cycles
-    overhead_cycles <- tg.data$overhead_cycles
-    overhead_cycles_norm <- 1 + ((overhead_cycles - min(overhead_cycles)) / (max(overhead_cycles) - min(overhead_cycles)))
-    tg <- set.vertex.attribute(tg, name='overhead_cycles_to_height', index=task_index, value=overhead_cycles_norm*task_size)
+    if(attrib %in% colnames(tg.data))
+    {
+        # Set size
+        attrib_unique <- unique(tg.data[,attrib])
+        if(length(attrib_unique) == 1) p_task_size <- task_size_mult
+        else p_task_size <- task_size_mult * as.numeric(cut(tg.data[,attrib], task_size_bins))
+        annot_name <- paste(attrib, "_to_size", sep="")
+        tg <- set.vertex.attribute(tg, name=annot_name, index=task_index, value=p_task_size)
+        # Set height
+        attrib_val <- tg.data[,attrib]
+        attrib_val_norm <- 1 + ((attrib_val - min(attrib_val)) / (max(attrib_val) - min(attrib_val)))
+        annot_name <- paste(attrib, "_to_height", sep="")
+        tg <- set.vertex.attribute(tg, name=annot_name, index=task_index, value=attrib_val_norm*task_size)
+    }
 }
 # Set color   
 # Constants
 tg <- set.vertex.attribute(tg, name='color', index=task_index, value=task_color)
-if("mem_fp" %in% colnames(tg.data))
+# Scale attributes to color
+attrib_color_scaled <- c("mem_fp", "PAPI_RES_STL_sum", "work_inflation", "overhead_inflation")
+for(attrib in attrib_color_scaled)
 {
-    # Set color in proportion to average mem fp
-    p_task_color <- task_color_pal[as.numeric(cut(tg.data$mem_fp, task_color_bins))]
-    tg <- set.vertex.attribute(tg, name='mem_fp_to_color', index=task_index, value=p_task_color)
+    if(attrib %in% colnames(tg.data))
+    {
+        # Set color in proportion to attrib
+        p_task_color <- task_color_pal[as.numeric(cut(tg.data[,attrib], task_color_bins))]
+        annot_name <- paste(attrib, "_to_color", sep="")
+        tg <- set.vertex.attribute(tg, name=annot_name, index=task_index, value=p_task_color)
+    }
 }
-if("cpu_id" %in% colnames(tg.data))
+# Set attributes to distinct color
+attrib_color_distinct <- c("core_id", "cpu_id", "outl_func", "tag")
+for(attrib in attrib_color_distinct)
 {
-    # Set color to indicate cpu_id
-    cpu_ids <- tg.data$cpu_id
-    cpu_colors <- rainbow(max(cpu_ids)+1)
-    tg <- set.vertex.attribute(tg, name='cpu_id_to_color', index=task_index, value=cpu_colors[cpu_ids+1])
-    # Write cpu_id colors for reference
-    tg.file.out <- paste(gsub(". $", "", tg.ofilen), ".cpu_id_to_color", sep="")
-    if(verbo) print(paste("Writing file", tg.file.out))
-    unique_cpu_ids <- unique(cpu_ids)
-    sink(tg.file.out)
-    print(data.frame(cpu=unique_cpu_ids, color=cpu_colors[unique_cpu_ids+1]),row.names=F)
-    sink()
-}
-if("outl_func" %in% colnames(tg.data))
-{
-    # Set color to indicate outline function name
-    ol_funcs <- as.character(tg.data$name)
-    unique_ol_funcs <- unique(ol_funcs)
-    ol_funcs_colors <- rainbow(length(unique_ol_funcs))
-    tg <- set.vertex.attribute(tg, name='of_to_color', index=task_index, value=ol_funcs_colors[match(ol_funcs, unique_ol_funcs)])
-    # Write outline function colors for reference
-    tg.file.out <- paste(gsub(". $", "", tg.ofilen), ".of_to_color", sep="")
-    if(verbo) print(paste("Writing file", tg.file.out))
-    sink(tg.file.out)
-    print(data.frame(ol_funcs=unique_ol_funcs, color=ol_funcs_colors), row.names=F)
-    sink()
+    if(attrib %in% colnames(tg.data))
+    {
+        # Map distinct color to attrib
+        attrib_val <- as.character(tg.data[,attrib])
+        unique_attrib_val <- unique(attrib_val)
+        attrib_color <- rainbow(length(unique_attrib_val))
+        annot_name <- paste(attrib, "_to_color", sep="")
+        tg <- set.vertex.attribute(tg, name=annot_name, index=task_index, value=attrib_color[match(attrib_val, unique_attrib_val)])
+        # Write colors for reference
+        tg.file.out <- paste(gsub(". $", "", tg.ofilen), annot_name, sep=".")
+        if(verbo) print(paste("Writing file", tg.file.out))
+        sink(tg.file.out)
+        print(data.frame(value=unique_attrib_val, color=attrib_color), row.names=F)
+        sink()
+    }
 }
 
 # Mark leaf tasks
@@ -404,9 +388,9 @@ fork_nodes_index <- startsWith(V(tg)$name, 'f')
 tg <- set.vertex.attribute(tg, name='size', index=fork_nodes_index, value=fork_size)
 tg <- set.vertex.attribute(tg, name='color', index=fork_nodes_index, value=fork_color)
 tg <- set.vertex.attribute(tg, name='label', index=fork_nodes_index, value='^')
+# Set fork balance in terms of exec_cycles
 if("exec_cycles" %in% colnames(tg.data))
 {
-    # Set fork balance
     get_fork_bal <- function(fork)
     {
       # Get fork info
@@ -423,7 +407,33 @@ if("exec_cycles" %in% colnames(tg.data))
       bal
     }
     fork_bal <- as.vector(sapply(V(tg)[fork_nodes_index]$name, get_fork_bal))
-    tg <- set.vertex.attribute(tg, name='work_balance_to_size', index=fork_nodes_index, value=fork_bal*fork_size)
+    tg <- set.vertex.attribute(tg, name='exec_balance', index=fork_nodes_index, value=fork_bal*fork_size)
+    p_fork_size <- fork_size_mult * as.numeric(cut(fork_bal, fork_size_bins))
+    tg <- set.vertex.attribute(tg, name='exec_balance_to_size', index=fork_nodes_index, value=p_fork_size)
+}
+# Set fork balance in terms of work_cycles
+if("work_cycles" %in% colnames(tg.data))
+{
+    # Set fork balance
+    get_fork_bal <- function(fork)
+    {
+      # Get fork info
+      fork_split <- unlist(strsplit(fork, "\\."))
+      parent <- as.numeric(fork_split[2])
+      join_count <- as.numeric(fork_split[3])
+      
+      # Get work_cycles
+      work_cycles <- tg.data[tg.data$parent == parent & tg.data$joins_at == join_count, ]$work_cycles
+      
+      # Compute balance
+      bal <- max(work_cycles)/min(work_cycles)
+      
+      bal
+    }
+    fork_bal <- as.vector(sapply(V(tg)[fork_nodes_index]$name, get_fork_bal))
+    tg <- set.vertex.attribute(tg, name='work_balance', index=fork_nodes_index, value=fork_bal)
+    p_fork_size <- fork_size_mult * as.numeric(cut(fork_bal, fork_size_bins))
+    tg <- set.vertex.attribute(tg, name='work_balance_to_size', index=fork_nodes_index, value=p_fork_size)
 }
 
 # Set join vertex attributes 
