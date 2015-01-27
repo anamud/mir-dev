@@ -481,13 +481,8 @@ void mir_task_wait()
     while(mir_twc_reduce(twc) != 1)
     {
         // __sync_synchronize();
-#ifdef MIR_WORKER_BACKOFF_DURING_SYNC
-        // Sync with backoff=1
-        mir_worker_do_work(worker, 1);
-#else
-        // Sync with backoff=0
-        mir_worker_do_work(worker, 0);
-#endif
+        // Sync with or without backoff
+        mir_worker_do_work(worker, MIR_WORKER_BACKOFF_DURING_SYNC);
     }
 
     // Update num times passed

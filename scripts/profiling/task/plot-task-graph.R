@@ -83,7 +83,7 @@ if(tg.color == "color") {
     sync_edge_color <- join_color
     scope_edge_color <-"black" 
     cont_edge_color <- "black"
-    colorf <- colorRampPalette(c("lightskyblue", "steelblue"))
+    colorf <- colorRampPalette(c("blue", "red"))
 } else if(tg.color == "gray") {
     join_color <- "#D3D3D3"  # light gray
     fork_color <- "#D3D3D3"  # light gray
@@ -93,7 +93,7 @@ if(tg.color == "color") {
     sync_edge_color <- "black"
     scope_edge_color <-"black" 
     cont_edge_color <- "black"
-    colorf <- colorRampPalette(c("gray80", "gray80"))
+    colorf <- colorRampPalette(c("gray10", "gray90"))
 } else {
     print("Unsupported color format. Supported formats: color, gray. Defaulting to color.")
     join_color <- "#FF7F50"  # coral
@@ -104,12 +104,14 @@ if(tg.color == "color") {
     sync_edge_color <- join_color
     scope_edge_color <-"black" 
     cont_edge_color <- "black"
-    colorf <- colorRampPalette(c("lightskyblue", "steelblue"))
+    colorf <- colorRampPalette(c("blue", "red"))
 }
 
 # Task color binning
 task_color_bins <- 10
 task_color_pal <- colorf(task_color_bins)
+fork_color_bins <- 10
+fork_color_pal <- colorf(fork_color_bins)
 if(verbo) toc("Setting colors")
 
 # Create node lists
@@ -294,6 +296,15 @@ if("overhead_cycles" %in% colnames(tg.data) & "overhead_cycles.1" %in% colnames(
 }
 if(verbo) toc("Calculating work inflation")
 
+# Calc memory hierarchy utilization
+# TODO: Move this elsewhere. This does not belong here.
+if(verbo) tic(type="elapsed")
+if("work_cycles" %in% colnames(tg.data) & "PAPI_RES_STL_sum" %in% colnames(tg.data))
+{
+    tg.data$mem_hier_util <- tg.data$PAPI_RES_STL_sum/tg.data$work_cycles
+}
+if(verbo) toc("Calculating memory hierarchy utilization")
+
 # Set attributes
 if(verbo) tic(type="elapsed")
 # Common vertex attributes
@@ -334,7 +345,7 @@ for(attrib in size_scaled)
 # Constants
 tg <- set.vertex.attribute(tg, name='color', index=task_index, value=task_color)
 # Scale attributes to color
-attrib_color_scaled <- c("mem_fp", "PAPI_RES_STL_sum", "work_inflation", "overhead_inflation")
+attrib_color_scaled <- c("mem_fp", "PAPI_RES_STL_sum", "mem_hier_util", "work_inflation", "overhead_inflation")
 for(attrib in attrib_color_scaled)
 {
     if(attrib %in% colnames(tg.data))
@@ -346,7 +357,7 @@ for(attrib in attrib_color_scaled)
     }
 }
 # Set attributes to distinct color
-attrib_color_distinct <- c("core_id", "cpu_id", "outl_func", "tag")
+attrib_color_distinct <- c("cpu_id", "outl_func", "tag")
 for(attrib in attrib_color_distinct)
 {
     if(attrib %in% colnames(tg.data))
@@ -400,9 +411,10 @@ if("exec_cycles" %in% colnames(tg.data))
       
       # Get exec_cycles
       exec_cycles <- tg.data[tg.data$parent == parent & tg.data$joins_at == join_count, ]$exec_cycles
+      exec_cycles <- exec_cycles[!is.na(exec_cycles)]
       
       # Compute balance
-      bal <- max(exec_cycles)/min(exec_cycles)
+      bal <- max(exec_cycles)/mean(exec_cycles)
       
       bal
     }
@@ -424,9 +436,10 @@ if("work_cycles" %in% colnames(tg.data))
       
       # Get work_cycles
       work_cycles <- tg.data[tg.data$parent == parent & tg.data$joins_at == join_count, ]$work_cycles
+      work_cycles <- work_cycles[!is.na(work_cycles)]
       
       # Compute balance
-      bal <- max(work_cycles)/min(work_cycles)
+      bal <- max(work_cycles)/mean(work_cycles)
       
       bal
     }
@@ -434,6 +447,36 @@ if("work_cycles" %in% colnames(tg.data))
     tg <- set.vertex.attribute(tg, name='work_balance', index=fork_nodes_index, value=fork_bal)
     p_fork_size <- fork_size_mult * as.numeric(cut(fork_bal, fork_size_bins))
     tg <- set.vertex.attribute(tg, name='work_balance_to_size', index=fork_nodes_index, value=p_fork_size)
+}
+# Set fork scatter
+if("cpu_id" %in% colnames(tg.data))
+{
+    # Set fork scatter
+    get_fork_scatter <- function(fork)
+    {
+      # Get fork info
+      fork_split <- unlist(strsplit(fork, "\\."))
+      parent <- as.numeric(fork_split[2])
+      join_count <- as.numeric(fork_split[3])
+      
+      # Get cpu_id
+      cpu_id <- tg.data[tg.data$parent == parent & tg.data$joins_at == join_count, ]$cpu_id
+      cpu_id <- cpu_id[!is.na(cpu_id)]
+      
+      # Compute scatter
+      if(length(cpu_id) > 1)
+          scatter <- c(dist(cpu_id))
+      else 
+          scatter <- 0
+      
+      median(scatter)
+    }
+    fork_scatter <- as.vector(sapply(V(tg)[fork_nodes_index]$name, get_fork_scatter))
+    tg <- set.vertex.attribute(tg, name='scatter', index=fork_nodes_index, value=fork_scatter)
+    p_fork_size <- fork_size_mult * as.numeric(cut(fork_scatter, fork_size_bins))
+    tg <- set.vertex.attribute(tg, name='scatter_to_size', index=fork_nodes_index, value=p_fork_size)
+    p_fork_color <- fork_color_pal[as.numeric(cut(fork_scatter, fork_color_bins))]
+    tg <- set.vertex.attribute(tg, name='scatter_to_color', index=fork_nodes_index, value=p_fork_color)
 }
 
 # Set join vertex attributes 
