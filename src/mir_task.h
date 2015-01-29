@@ -11,6 +11,7 @@
 #include "mir_defines.h"
 #include "mir_types.h"
 #include "mir_utils.h"
+#include "mir_loop.h"
 
 BEGIN_C_DECLS 
 
@@ -104,6 +105,7 @@ struct mir_task_t
     uint64_t exec_cycles;
     uint64_t overhead_cycles;
     uint32_t queue_size_at_pop;
+    struct mir_loop_des_t* loop;
 
     // Flags
     uint32_t done;
@@ -130,6 +132,8 @@ static void T_DBG(char*msg, struct mir_task_t *t)
 /*LIBINT*/ void mir_task_create(mir_tfunc_t tfunc, void* data, size_t data_size, unsigned int num_data_footprints, struct mir_data_footprint_t* data_footprints, const char* name);
 
 /*LIBINT*/ void mir_task_create_on_worker(mir_tfunc_t tfunc, void* data, size_t data_size, unsigned int num_data_footprints, struct mir_data_footprint_t* data_footprints, const char* name, unsigned int target);
+
+/*LIBINT*/ void mir_loop_task_create(mir_tfunc_t tfunc, void* data, struct mir_loop_des_t* loop, const char* name);
 
 void mir_task_execute(struct mir_task_t* task);
 

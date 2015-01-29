@@ -8,6 +8,7 @@
 #include "mir_utils.h"
 #include "mir_memory.h"
 #include "mir_queue.h"
+#include "mir_loop.h"
 
 #ifdef MIR_MEM_POL_ENABLE
 #include "mir_mem_pol.h"
@@ -76,14 +77,19 @@ static inline struct mir_task_t* mir_task_create_common(mir_tfunc_t tfunc, void*
 
     // Task function and argument data
     task->func = tfunc;
-#ifdef MIR_TASK_FIXED_DATA_SIZE
-    MIR_ASSERT(data_size <= MIR_TASK_DATA_MAX_SIZE);
-#else
-    task->data = mir_malloc_int (sizeof(char) * data_size);
-    MIR_ASSERT(task->data != NULL);
-#endif
     task->data_size = data_size;
-    memcpy((void*)&task->data[0], data, data_size);
+    if(data_size > 0)
+    {
+#ifdef MIR_TASK_FIXED_DATA_SIZE
+        MIR_ASSERT(data_size <= MIR_TASK_DATA_MAX_SIZE);
+#else
+        task->data = mir_malloc_int (sizeof(char) * data_size);
+        MIR_ASSERT(task->data != NULL);
+#endif
+        memcpy((void*)&task->data[0], data, data_size);
+    }
+    else
+        task->data = data; 
 
     // Task unique id
     // A running number
@@ -159,6 +165,9 @@ static inline struct mir_task_t* mir_task_create_common(mir_tfunc_t tfunc, void*
     // Flags
     task->done = 0;
     task->taken = 0;
+
+    // Loop
+    task->loop = NULL;
 
     // Overhead measurement
     if(worker->current_task) worker->current_task->overhead_cycles += (mir_get_cycles() - start_instant);
@@ -244,19 +253,7 @@ void mir_task_create(mir_tfunc_t tfunc, void* data, size_t data_size, unsigned i
 
 void mir_task_create_on_worker(mir_tfunc_t tfunc, void* data, size_t data_size, unsigned int num_data_footprints, struct mir_data_footprint_t* data_footprints, const char* name, unsigned int workerid)
 {/*{{{*/
-    // To inline or not to line, that is the grand question!
-    if(inline_necessary())
-    {
-        tfunc(data);
-        // Update worker stats
-        struct mir_worker_t* worker = mir_worker_get_context(); 
-        if(runtime->enable_worker_stats == 1)
-            worker->statistics->num_tasks_inlined++;
-        return;
-        // FIXME: What about reporting inlining to the Pin profiler!?
-    }
-
-    // Go on and create the task
+    // Create the task
     if(runtime->enable_recorder == 1)
         MIR_RECORDER_STATE_BEGIN(MIR_STATE_TCREATE);
 
@@ -266,6 +263,31 @@ void mir_task_create_on_worker(mir_tfunc_t tfunc, void* data, size_t data_size, 
 
     // Schedule task
     mir_task_schedule_on_worker(task, workerid);
+
+    if(runtime->enable_recorder == 1)
+        MIR_RECORDER_STATE_END(NULL, 0);
+}/*}}}*/
+
+void mir_loop_task_create(mir_tfunc_t tfunc, void* data, struct mir_loop_des_t* loop, const char* name)
+{/*{{{*/
+    // Create the task
+    if(runtime->enable_recorder == 1)
+        MIR_RECORDER_STATE_BEGIN(MIR_STATE_TCREATE);
+
+    // Create task on all workers
+    int num_workers = runtime->num_workers;
+    for(int i=0; i<num_workers; i++)
+    {
+        // Create task
+        struct mir_task_t* task = mir_task_create_common(tfunc, data, 0, 0, NULL, name);
+        MIR_ASSERT(task != NULL);
+
+        // Set loop
+        task->loop = loop;
+
+        // Schedule on worker
+        mir_task_schedule_on_worker(task, i);
+    }
 
     if(runtime->enable_recorder == 1)
         MIR_RECORDER_STATE_END(NULL, 0);

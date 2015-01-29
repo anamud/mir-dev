@@ -33,6 +33,10 @@ struct mir_runtime_t
     struct mir_lock_t omp_critsec_lock;
     unsigned int num_children_tasks;
 
+    // Initialization control
+    unsigned int init_count;
+    int destroyed;
+
     // Flags
     int sig_dying;
     int enable_worker_stats;

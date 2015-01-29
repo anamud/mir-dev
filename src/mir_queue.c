@@ -1,8 +1,8 @@
-#include "mir_queue.h"
-#include "mir_utils.h"
-#include "mir_memory.h"
 #include "mir_defines.h"
 #include "mir_lock.h"
+#include "mir_memory.h"
+#include "mir_queue.h"
+#include "mir_utils.h"
 
 struct mir_queue_t* mir_queue_create(uint32_t capacity)
 {/*{{{*/

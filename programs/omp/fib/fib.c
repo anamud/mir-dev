@@ -124,9 +124,6 @@ static int check_fib()
 
 int main(int argc, char **argv)
 {/*{{{*/
-    // Init the runtime
-    mir_create();
-
     if (argc > 3)
         PMSG("Usage: %s number cut_off\n", argv[0]);
 
@@ -140,15 +137,15 @@ int main(int argc, char **argv)
     PMSG("Computing fib %d %d ... \n", num, cutoff_value);
 
     long par_time_start = get_usecs();
-//#pragma omp parallel
-//{
-//#pragma omp single
-//{
+#pragma omp parallel
+{
+#pragma omp single
+{
 #pragma omp task
     par_res = fib(num, 0);
 #pragma omp taskwait
-//}
-//}
+}
+}
     long par_time_end = get_usecs();
     double par_time = (double)( par_time_end - par_time_start) / 1000000;
 
@@ -170,8 +167,6 @@ int main(int argc, char **argv)
 
     PMSG("%s(%d,%d),check=%d in %s,time=%f secs\n", argv[0], num, cutoff_value, check, TEST_ENUM_STRING, par_time);
     PALWAYS("%fs\n", par_time);
-
-    mir_destroy();
 
     return 0;
 }/*}}}*/

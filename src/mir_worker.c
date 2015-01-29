@@ -1,17 +1,18 @@
-#include "mir_worker.h"
-#include "mir_task.h"
-#include "mir_recorder.h"
-#include "scheduling/mir_sched_pol.h"
-#include "mir_runtime.h"
-#include "mir_memory.h"
-#include "mir_utils.h"
-#include "mir_lock.h"
 #include "mir_defines.h"
+#include "mir_lock.h"
+#include "mir_memory.h"
+#include "mir_recorder.h"
+#include "mir_runtime.h"
+#include "mir_task.h"
+#include "mir_utils.h"
+#include "mir_worker.h"
+#include "scheduling/mir_sched_pol.h"
 
 #ifdef __tile__
 #include <tmc/cpus.h>
 #endif
 #include <string.h>
+
 
 // FIXME: Make these per-worker
 // PJ says kill the thread upon exit

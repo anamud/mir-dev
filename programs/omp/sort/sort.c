@@ -449,9 +449,15 @@ int main(int argc, char **argv)
 
     sort_init();
     long par_time_start = get_usecs();
+#pragma omp parallel
+{
+#pragma omp single
+{
 #pragma omp task
     sort_par();
 #pragma omp taskwait
+}
+}
     long par_time_end = get_usecs();
     double par_time = (double)( par_time_end - par_time_start) / 1000000;
 
@@ -464,9 +470,6 @@ int main(int argc, char **argv)
 
     PMSG("%s(%lu),check=%d in %s,time=%f secs\n", argv[0], arg_size, check, TEST_ENUM_STRING, par_time);
     PALWAYS("%fs\n", par_time);
-
-    // Pull down the runtime
-    mir_destroy();
 
     return 0;
 }/*}}}*/

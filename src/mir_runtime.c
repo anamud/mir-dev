@@ -35,6 +35,11 @@ uint32_t g_sig_worker_alive = 0;
 static void mir_preconfig_init()
 {/*{{{*/
     MIR_DEBUG(MIR_DEBUG_STR "Starting initialization ...\n");
+
+    // Initialization control 
+    runtime->init_count = 1;
+    runtime->destroyed = 0;
+
     // Arch
     runtime->arch = mir_arch_create_by_query();
     MIR_ASSERT(runtime->arch != NULL);
@@ -329,7 +334,16 @@ static void mir_config()
 
 void mir_create()
 {/*{{{*/
+    // Create only if first call
+    if(runtime != NULL)
+    {
+        MIR_ASSERT(runtime->destroyed == 0);
+        __sync_fetch_and_add(&(runtime->init_count), 1);
+        return;
+    }
+
     // Create the global runtime
+    MIR_ASSERT(runtime == NULL);
     runtime = mir_malloc_int(sizeof(struct mir_runtime_t));
     if( NULL == runtime )
         MIR_ABORT(MIR_ERROR_STR "Unable to create the runtime!\n");
@@ -350,6 +364,16 @@ void mir_create()
 
 void mir_destroy()
 {/*{{{*/
+    // Destroy only once
+    MIR_ASSERT(runtime->destroyed == 0);
+
+    // Destory only if corresponding to first call to mir_create
+    __sync_fetch_and_sub(&(runtime->init_count), 1);
+    if(runtime->init_count == 0)
+        runtime->destroyed = 1;
+    else
+        return;
+
     // Set a marking event
     if(runtime->enable_recorder == 1)
         MIR_RECORDER_EVENT(NULL,0);
@@ -472,7 +496,7 @@ dead:
     // Release runtime memory
     MIR_DEBUG(MIR_DEBUG_STR "Releasing runtime memory ...\n");
     mir_free_int(runtime->worker_cpu_map, sizeof(uint16_t) * runtime->arch->num_cores);
-    mir_free_int(runtime, sizeof(struct mir_runtime_t));
+    // We let this linger to detect multiple non-nested calls to mir_create. // mir_free_int(runtime, sizeof(struct mir_runtime_t));
 
     // Report allocated memory (unfreed memory)
     MIR_DEBUG(MIR_DEBUG_STR "Total unfreed memory=%" MIR_FORMSPEC_UL " bytes\n", mir_get_allocated_memory());
