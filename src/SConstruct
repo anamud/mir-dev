@@ -7,8 +7,9 @@ import sys
 
 MIR_ROOT = os.environ.get('MIR_ROOT')
 if(MIR_ROOT == None):
-    print('MIR_ROOT is not defined. Aborting!')
-    Exit(2)
+    # Use the parent directory of the directory this SConstruct resides in.
+    this_sconscript_file = (lambda x:x).func_code.co_filename
+    MIR_ROOT=File(this_sconscript_file).Dir("..").abspath
 
 sys.path.append(MIR_ROOT + '/scripts')
 import mir_utils
@@ -63,7 +64,7 @@ if os.path.isfile('HAVE_PAPI'):
 # FIXME: This runs every time rather than only when sources have changed.
 if not env.GetOption('clean'):
     print('Detecting topology ... [foolproof, runs each time irrespective of build state.]')
-    if(0 != os.system('Rscript ' + MIR_ROOT+'/scripts/detect_arch.R')):
+    if(0 != os.system('MIR_ROOT=' + MIR_ROOT +' Rscript ' + MIR_ROOT +'/scripts/detect_arch.R')):
         print('Could not detect topology. Build cannot continue!')
         Exit(2)
 
@@ -92,11 +93,11 @@ debug['CCFLAGS'] += Split("""
 -ggdb
 -DMIR_ENABLE_DEBUG
 """)
-debug.VariantDir('debug-build', '.', duplicate=0)
+debug.VariantDir('debug-build', MIR_ROOT+'/src', duplicate=0)
 debug_src = debug.Glob('debug-build/*.c')
 debug_src += debug.Glob('debug-build/arch/*.c')
 debug_src += debug.Glob('debug-build/scheduling/*.c')
-debug.Library(target = 'mir-debug', source = debug_src)
+debug.Library(target = MIR_ROOT+'src/mir-debug', source = debug_src)
 
 ###################
 # Opt environment #
@@ -104,8 +105,8 @@ debug.Library(target = 'mir-debug', source = debug_src)
 
 opt = env.Clone();
 opt['CCFLAGS'] += ['-O2']
-opt.VariantDir('opt-build', '.', duplicate=0)
+opt.VariantDir('opt-build', MIR_ROOT+'/src', duplicate=0)
 opt_src = opt.Glob('opt-build/*.c')
 opt_src += opt.Glob('opt-build/arch/*.c')
 opt_src += opt.Glob('opt-build/scheduling/*.c')
-opt.Library('mir-opt', source = opt_src)
+opt.Library(MIR_ROOT+'src/mir-opt', source = opt_src)
