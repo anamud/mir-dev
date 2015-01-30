@@ -508,9 +508,6 @@ void mir_task_wait()
     else
         twc = runtime->ctwc;
 
-    // Prevent empty synchronizations
-    MIR_ASSERT(twc->count > 0);
-
     // Wait and do useful work
     while(mir_twc_reduce(twc) != 1)
     {
