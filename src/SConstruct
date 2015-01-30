@@ -13,12 +13,14 @@ if(MIR_ROOT == None):
 sys.path.append(MIR_ROOT + '/scripts')
 import mir_utils
 
+# Check for PAPI support
 if os.path.isfile('HAVE_PAPI'):
     PAPI_ROOT = os.environ.get('PAPI_ROOT')
     if(PAPI_ROOT == None):
         print('PAPI_ROOT is not defined. Aborting!')
         Exit(2)
 
+# Choose compiler
 compilers = ['gcc','icc']
 compiler = ''
 for item in compilers:
@@ -29,27 +31,7 @@ if(len(compiler) == 0):
     print('Could not find a compiler. Aborting!')
     Exit(2)
 
-# Detect topology
-# FIXME: This runs every time rather than only when sources have changed.
-print('Detecting topology ...')
-if(0 != os.system('Rscript ' + MIR_ROOT+'/scripts/detect_arch.R')):
-    print('Could not detect topology. Build cannot continue!')
-    Exit(2)
-
-#if not os.path.isfile('arch/mir_arch_this.c'):
-# FIXME: This runs every time rather than only when sources have changed.
-print('Generating generic architecture description ...')
-if(0 != os.system(MIR_ROOT+'/scripts/generate_arch.py arch')):
-    print('Could not generate generic architecture description. Build cannot continue!')
-    Exit(2)
-
-#if not os.path.isfile('mir_lib_int.h'):
-# FIXME: This runs every time rather than only when sources have changed.
-print('Generating library interface ...')
-if(0 != os.system(MIR_ROOT+'/src/generate_lib_int.sh')):
-    print('Could not generate library interface. Build cannot continue!')
-    Exit(2)
-
+# Base environment
 env = Environment()
 env['CC'] = [compiler[0]]
 env['CCFLAGS'] = Split("""
@@ -65,12 +47,36 @@ env['CCFLAGS'] = Split("""
 
 env['CCFLAGS'] += ['-I' + MIR_ROOT+'/src']
 
+# Enable libnuma usage
 if os.path.isfile('HAVE_LIBNUMA'):
     env['CCFLAGS'] += ['-DMIR_MEM_POL_ENABLE']
 
+# Enable PAPI usage
 if os.path.isfile('HAVE_PAPI'):
     env['CCFLAGS'] += ['-I' + PAPI_ROOT+'/include']
     env['CCFLAGS'] += ['-DMIR_RECORDER_USE_HW_PERF_COUNTERS']
+
+# Detect topology
+# FIXME: This runs every time rather than only when sources have changed.
+if not env.GetOption('clean'):
+    print('Detecting topology ... [foolproof, runs each time irrespective of build state.]')
+    if(0 != os.system('Rscript ' + MIR_ROOT+'/scripts/detect_arch.R')):
+        print('Could not detect topology. Build cannot continue!')
+        Exit(2)
+
+    #if not os.path.isfile('arch/mir_arch_this.c'):
+    # FIXME: This runs every time rather than only when sources have changed.
+    print('Generating generic architecture description ...')
+    if(0 != os.system(MIR_ROOT+'/scripts/generate_arch.py arch')):
+        print('Could not generate generic architecture description. Build cannot continue!')
+        Exit(2)
+
+    #if not os.path.isfile('mir_lib_int.h'):
+    # FIXME: This runs every time rather than only when sources have changed.
+    print('Generating library interface ...')
+    if(0 != os.system(MIR_ROOT+'/src/generate_lib_int.sh')):
+        print('Could not generate library interface. Build cannot continue!')
+        Exit(2)
 
 #####################
 # Debug environment #
