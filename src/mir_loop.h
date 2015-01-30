@@ -12,6 +12,7 @@ struct mir_loop_des_t
     long incr;
     long chunk_size;
     long next;
+    long static_trip;
     struct mir_lock_t lock;
 };
 /*LIBINT_DECL_END*/

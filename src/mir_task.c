@@ -268,25 +268,45 @@ void mir_task_create_on_worker(mir_tfunc_t tfunc, void* data, size_t data_size, 
         MIR_RECORDER_STATE_END(NULL, 0);
 }/*}}}*/
 
-void mir_loop_task_create(mir_tfunc_t tfunc, void* data, struct mir_loop_des_t* loop, const char* name)
+void mir_loop_task_create(mir_tfunc_t tfunc, void* data, struct mir_loop_des_t* loops, int num_loops, const char* name)
 {/*{{{*/
     // Create the task
     if(runtime->enable_recorder == 1)
         MIR_RECORDER_STATE_BEGIN(MIR_STATE_TCREATE);
 
-    // Create task on all workers
-    int num_workers = runtime->num_workers;
-    for(int i=0; i<num_workers; i++)
+    if(num_loops == 1)
     {
-        // Create task
-        struct mir_task_t* task = mir_task_create_common(tfunc, data, 0, 0, NULL, name);
-        MIR_ASSERT(task != NULL);
+        // Create task on all workers
+        int num_workers = runtime->num_workers;
+        for(int i=0; i<num_workers; i++)
+        {
+            // Create task
+            struct mir_task_t* task = mir_task_create_common(tfunc, data, 0, 0, NULL, name);
+            MIR_ASSERT(task != NULL);
 
-        // Set loop
-        task->loop = loop;
+            // Set loop
+            task->loop = &loops[0];
 
-        // Schedule on worker
-        mir_task_schedule_on_worker(task, i);
+            // Schedule on worker
+            mir_task_schedule_on_worker(task, i);
+        }
+    }
+    else
+    {
+        // Create task on all workers
+        int num_workers = runtime->num_workers;
+        for(int i=0; i<num_workers; i++)
+        {
+            // Create task
+            struct mir_task_t* task = mir_task_create_common(tfunc, data, 0, 0, NULL, name);
+            MIR_ASSERT(task != NULL);
+
+            // Set loop
+            task->loop = &loops[i];
+
+            // Schedule on worker
+            mir_task_schedule_on_worker(task, i);
+        }
     }
 
     if(runtime->enable_recorder == 1)

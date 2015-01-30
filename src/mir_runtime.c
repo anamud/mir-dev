@@ -15,6 +15,7 @@
 #include "scheduling/mir_sched_pol.h"
 #include "arch/mir_arch.h"
 #include "mir_utils.h"
+#include "mir_omp_int.h"
 
 #ifdef MIR_MEM_POL_ENABLE
 #include "mir_mem_pol.h"
@@ -66,6 +67,9 @@ static void mir_preconfig_init()
     // OpenMP support
     // This is the unnamed critical section lock
     mir_lock_create(&runtime->omp_critsec_lock); 
+    runtime->omp_for_schedule = OFS_STATIC;
+    runtime->omp_for_chunk_size = 0;
+    GOMP_parse_schedule();
 
     // Flags
     runtime->sig_dying = 0;
@@ -95,16 +99,7 @@ static void mir_postconfig_init()
         // Attach
         runtime->ofp_shm = shmat(runtime->ofp_shmid, NULL, 0); 
         MIR_ASSERT(runtime->ofp_shm != NULL);
-
-        /*// Test. Write something.*/
-        /*char testchar = 'A';*/
-        /*for(int i=0; i<=MIR_OFP_SHM_SIZE; i++)*/
-        /*{*/
-            /*runtime->ofp_shm[i] = testchar;*/
-            /*testchar++;*/
-        /*}*/
-        /*runtime->ofp_shm[MIR_OFP_SHM_SIZE-1] = '\0';*/
-    }/*}}}*/
+   }/*}}}*/
     else
     {/*{{{*/
         runtime->ofp_shmid = -1;

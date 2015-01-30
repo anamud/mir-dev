@@ -44,7 +44,7 @@ int main(int argc, char **argv)
 #pragma omp single
 {
 // OMP parallel for does not create a team of threads in any case. It works only inside a parallel block.
-#pragma omp parallel for schedule(dynamic)
+#pragma omp parallel for schedule(runtime)
     for (int i = 0; i < 1024; ++i)
     {
         int result = fib_seq(num);

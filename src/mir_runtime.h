@@ -13,6 +13,7 @@
 #include "scheduling/mir_sched_pol.h"
 #include "mir_task.h"
 #include "mir_types.h"
+#include "mir_omp_int.h"
 
 BEGIN_C_DECLS 
 
@@ -30,12 +31,16 @@ struct mir_runtime_t
     int ofp_shmid;
     char* ofp_shm;
     struct mir_twc_t* ctwc;
-    struct mir_lock_t omp_critsec_lock;
     unsigned int num_children_tasks;
 
     // Initialization control
     unsigned int init_count;
     int destroyed;
+
+    // OpenMP support
+    struct mir_lock_t omp_critsec_lock;
+    enum omp_for_schedule_t omp_for_schedule;
+    long omp_for_chunk_size;
 
     // Flags
     int sig_dying;

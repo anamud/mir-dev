@@ -7,8 +7,20 @@
 
 BEGIN_C_DECLS 
 
-/* Taken from https://gcc.gnu.org/git/?p=gcc.git;a=tree;f=libgomp;hb=HEAD on 21 May 2014*/
-// FIXME: Warning!! Fragile!! This can cause a header version mismatch when linked with libgomp. Add a check! 
+enum omp_for_schedule_t
+{
+  OFS_RUNTIME,
+  OFS_STATIC,
+  OFS_DYNAMIC,
+  OFS_GUIDED,
+  OFS_AUTO
+};
+
+/* Refactored from GCC git repository git://gcc.gnu.org/git/gcc.git HEAD ae76874abdf11bb77597f7285cb115bd78e82fda */
+// FIXME: Warning!! Fragile!! Potential version mismatch when linked with different libgomp on system. Add a check! 
+
+/* env.c */
+void GOMP_parse_schedule (void);
 
 /* barrier.c */
 
@@ -21,11 +33,12 @@ void GOMP_critical_end (void);
 
 /* loop.c */
 
-bool GOMP_loop_dynamic_start (long start, long end, long incr, long chunk_size, long *istart, long *iend);
 bool GOMP_loop_dynamic_next (long *istart, long *iend);
-void GOMP_parallel_loop_dynamic_start (void (*fn) (void *), void *data, unsigned num_threads, long start, long end, long incr, long chunk_size);
 void GOMP_parallel_loop_dynamic (void (*fn) (void *), void *data, unsigned num_threads, long start, long end, long incr, long chunk_size, unsigned flags);
-
+bool GOMP_loop_static_next (long *istart, long *iend);
+void GOMP_parallel_loop_static (void (*fn) (void *), void *data, unsigned num_threads, long start, long end, long incr, long chunk_size, unsigned flags);
+bool GOMP_loop_runtime_next (long *istart, long *iend);
+void GOMP_parallel_loop_runtime (void (*fn) (void *), void *data, unsigned num_threads, long start, long end, long incr, unsigned flags);
 void GOMP_loop_end (void);
 void GOMP_loop_end_nowait (void);
 

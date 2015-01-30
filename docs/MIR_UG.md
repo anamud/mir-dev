@@ -36,7 +36,9 @@ Enabling extended features such as profiling, locality-aware scheduling and data
     * igraph (for task graph processing)
     * RColorBrewer (for colors)
     * gdata, plyr, dplyr, data.table (for data structure transformations)
-* Graphviz (for task graph plotting)
+* yEd (for task graph viewing, preferred)
+* Graphviz (for task graph viewing)
+* Cytoscape (for task graph viewing)
 
 ## Source Structure
 
@@ -114,7 +116,7 @@ $ ./fib-opt
 
 ## OpenMP 3.0 Tasks Interface
 
- A restricted subset of OpenMP 3.0 tasks --- the `task` and `taskwait` constructs --- is supported. Although minimal, the subset is sufficient for writing most task-based programs. 
+A restricted subset of OpenMP 3.0 tasks --- the `task` and `taskwait` constructs --- is supported. Although minimal, the subset is sufficient for writing most task-based programs. 
 
 The `parallel` construct is deprecated. A team of threads is created when `mir_create` is called. The team is disbanded when `mir_destroy` is called.
 
@@ -261,7 +263,7 @@ MIR_INFO: Valid options in MIR_CONF environment variable ...
 -l=<int> worker stack size in MB
 -q=<int> task queue capacity
 -m=<str> memory allocation policy. Choose among coarse, fine and system.
--y=<csv> schedule policy specific parameters. Policy numa: data size in bytes below which task is dealt to worker's private queue.
+-y=<csv> schedule policy specific parameters. Policy numa: data size in bytes below which task is dealt to private worker queue.
 -g collect task statistics
 -p enable handshake with Outline Function Profiler [Note: Supported only for a single worker!]
 ```
@@ -306,7 +308,7 @@ Enable the `-i` flag to get basic load-balance information in a CSV file called 
 $ MIR_CONF="-i" ./fib-opt
 $ cat mir-worker-stats
 ```
-==TODO:== Explain file contents
+==TODO:== Explain file contents.
 
 MIR contains a `recorder` which produces execution traces. Use the `-r` flag to enable the recorder and get detailed state and event traces in a set of `mir-recorder-trace-*.rec` files. Each file represents a worker thread. The files can be inspected individually or combined and visualized using Paraver.
 ```
@@ -322,6 +324,7 @@ $ $MIR_ROOT/scripts/profiling/thread/get-states.sh \
 mir-recorder-state-time
 $ cat accumulated-state-file.info
 ```
+==TODO:== Explain file contents.
 
 ### Enabling hardware performance counters
 
@@ -359,6 +362,7 @@ Performance counter values will appear in the `mir-recorder-trace-*.rec` files p
 $ $MIR_ROOT/scripts/profiling/thread/get-events.sh mir-recorder-trace.prv
 $ cat event-summary-*.txt
 ```
+==TODO:== Explain file contents.
 
 ## Task-based Profiling
 
@@ -375,17 +379,10 @@ The `mir-task-stats` file can be further processed for additional information su
 ``` 
 $ Rscript ${MIR_ROOT}/scripts/profiling/task/process-task-stats.R -d mir-task-stats --lineage
 $ cat mir-task-stats.info
-num_tasks: 15
-joins_at_summary: 1 2 2 1.875 2 2
 $ head mir-task-stats.lineage
-"task","parent","lineage"
-1,0,"0-1"
-2,1,"0-1-2"
-3,1,"0-1-3"
-...
 $ head mir-task-stats.processed
-...
 ```
+==TODO:== Explain file contents.
 
 ### Instruction-level task profiling
 
@@ -423,15 +420,20 @@ The profiler requires outline function names under the argument `-s`.  The argum
 
 * The profiler requires single-threaded execution of the profiled program.  Provide `-w=1` in MIR_CONF while profiling. 
 
-* Create a handy alias for invoking the profiler.
+* Information from the profiler becomes meaningful when correlated with task statistics information.  Provide `-g` in MIR_CONF while profiling. 
+
+* Create a handy shell function for invoking the profiler and to enable task statistics collection.
 ```
-$ alias mir-inst-prof="MIR_CONF='-w=1 -p' ${PIN_ROOT}/intel64/bin/pinbin -t ${MIR_ROOT}/scripts/profiling/task/obj-intel64/mir_of_profiler.so"
+$ function mir-inst-prof()
+{
+    "MIR_CONF='-w=1 -p -g' ${PIN_ROOT}/intel64/bin/pinbin -t ${MIR_ROOT}/scripts/profiling/task/obj-intel64/mir_of_profiler.so"
+}
 
 ```
 * The profiler produces following outputs: 
 	1. Per-task instructions in a CSV file called `mir-ofp-instructions`. Example contents of the file are shown below. 
 		
-		== TODO: Add file contents ==
+		== TODO: Add file contents. ==
 		
 		Each line shows instruction and code properties of a distinct task executed by the program. Properties are described below.
 	
@@ -465,7 +467,7 @@ MIR has a nice graph plotter which can transform task-based profiling data into 
 
 * Plot the fork-join task graph using task statistics from the runtime system.
 ```
-$ Rscript ${MIR_ROOT}/scripts/profiling/task/plot-task-graph.R -d mir-task-stats -p color
+$ Rscript ${MIR_ROOT}/scripts/profiling/task/plot-task-graph.R -d mir-task-stats.processed -p color
 ```
 
 > Tip: 
@@ -477,13 +479,12 @@ $ Rscript ${MIR_ROOT}/scripts/profiling/task/plot-task-graph.R -d mir-task-stats
 $ Rscript ${MIR_ROOT}/scripts/profiling/task/plot-task-graph.R -t -d mir-task-stats -p color
 ```
 
-* The graph plotter can annotate task graph elements with performance information. Merge the instruction-level information produced by the instruction profiler with the task statistics produced by the runtime system into a single CSV file. Plot task graph using combined performance information.
+* The graph plotter can annotate task graph elements with performance information. Merge the instruction-level information produced by the instruction profiler with the task statistics produced by the runtime system, for the same run, into a single CSV file. Plot task graph using combined performance information.
 ``` 
 $ Rscript ${MIR_ROOT}/scripts/profiling/task/process-task-stats.R -d mir-task-stats
 $ Rscript ${MIR_ROOT}/scripts/profiling/task/merge-task-performance.R -l mir-task-stats.processed -r mir-ofp-instructions -k "task" -o mir-task-perf
 $ Rscript ${MIR_ROOT}/scripts/profiling/task/plot-task-graph.R -d mir-task-perf -p color
 ``` 
-
 ## Case Study: Fibonacci 
 
 The Fibonacci program is found in MIR_ROOT/programs/native/fib. The program takes two arguments --- the number n and the depth cutoff for recursive task creation. Let us see how to profile the program for task-based performance information.
@@ -516,7 +517,7 @@ CALLED_FUNCTIONS=fib_seq,fib,get_usecs,main
 ```
 
 > Expert Tip: 
-> Ensure that OUTLINE_FUNCTIONS listed are those generated by GCC. Inspect the abstract syntax tree (use compilation option `-fdumptreeoptimized`) and source files.
+> Ensure that OUTLINE_FUNCTIONS listed are those generated by GCC. Inspect the abstract syntax tree (use compilation option `-fdump-tree-optimized`) and source files.
 
 The functions in the `CALLED_FUNCTIONS` list should be treated as functions potentially called within task contexts.  Inspect program sources and exclude those which are not called within tasks.  By looking at Fibonacci program sources, we can exclude `main` and `get_usecs` from `CALLED_FUNCTIONS`. 
 	
@@ -525,7 +526,7 @@ The functions in the `CALLED_FUNCTIONS` list should be treated as functions pote
 > Expert Tip: 
 > Identifying functions called by tasks is necessary because the instruction count of these functions are added to the calling task's instruction count. 
 
-* Start the instruction profiler with appropriate arguments to profile `fib-prof`.  
+* Start the instruction profiler with appropriate arguments to profile `fib-prof`.  Also collect task statistics at the same time.
 ``` 
 $ mir-inst-prof \
     -s ol_fib_0,ol_fib_1,ol_fib_2 \
@@ -537,36 +538,23 @@ $ mir-inst-prof \
 
 ``` 
 $ head mir-ofp-instructions
-"task","ins_count","stack_read","stack_write","mem_fp","ccr","clr","mem_read","mem_write","outl_func"
-1,21887625,58,10,15,5,12,15,4,1,"ol_fib_2"
-2,610035,60,10,15,5,12,15,4,1,"ol_fib_0"
-3,3183115,60,10,15,5,12,15,4,1,"ol_fib_1"
-...
 $ head mir-ofp-events
-task,ins_count,[create],[wait]
-14,446,[],[]
-15,278,[],[]
-10,60,[32,43,],[47,]
-...
 ```
 
-* Collect task statistics.
+* Inspect task statistics.
 ```
-MIR_CONF="-g" ./fib-prof 10 4
+$ head mir-task-stats
 ```
-> Tip: 
-> Generate task statistics information simultaneously with other statistics to maintain consistency. Or you will have to merge using lineage as key.
 
 * Summarize task statistics.
 ``` 
 $ Rscript ${MIR_ROOT}/scripts/profiling/task/process-task-stats.R -d mir-task-stats
 $ cat mir-task-stats.info
-num_tasks: 15
-joins_at_summary: 1 2 2 1.875 2 2
 $ head mir-task-stats.processed
+$ head mir-task-stats.lineage
 ```
 
-* Combine the instruction-level information produced by the instruction profiler with the task statistics produced by the runtime system into a single CSV file.
+* Combine the instruction-level information produced by the instruction profiler with the task statistics produced by the runtime system into a single CSV file. Note that these files come from the same run.
 ``` 
 $ Rscript ${MIR_ROOT}/scripts/profiling/task/merge-task-performance.R -l mir-task-stats.processed -r mir-ofp-instructions -k "task" -o mir-task-perf
 ```
