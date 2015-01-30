@@ -97,7 +97,7 @@ debug.VariantDir('debug-build', MIR_ROOT+'/src', duplicate=0)
 debug_src = debug.Glob('debug-build/*.c')
 debug_src += debug.Glob('debug-build/arch/*.c')
 debug_src += debug.Glob('debug-build/scheduling/*.c')
-debug.Library(target = MIR_ROOT+'src/mir-debug', source = debug_src)
+debug.Library(target = 'mir-debug', source = debug_src)
 
 ###################
 # Opt environment #
@@ -109,4 +109,4 @@ opt.VariantDir('opt-build', MIR_ROOT+'/src', duplicate=0)
 opt_src = opt.Glob('opt-build/*.c')
 opt_src += opt.Glob('opt-build/arch/*.c')
 opt_src += opt.Glob('opt-build/scheduling/*.c')
-opt.Library(MIR_ROOT+'src/mir-opt', source = opt_src)
+opt.Library(target = 'mir-opt', source = opt_src)
