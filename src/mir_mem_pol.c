@@ -279,8 +279,7 @@ static void* allocate_coarse(size_t sz)
 {/*{{{*/
     MIR_ASSERT(sz > 0);
 
-    if(runtime->enable_recorder == 1)
-        MIR_RECORDER_STATE_BEGIN(MIR_STATE_TMALLOC);
+    MIR_RECORDER_STATE_BEGIN(MIR_STATE_TMALLOC);
 
     void* addr = NULL;
     size_t new_sz = sz + sizeof(struct mem_header_t);
@@ -323,8 +322,7 @@ static void* allocate_coarse(size_t sz)
     advance_node();
     __sync_fetch_and_add(&mem_pol->total_allocated, new_sz);
 
-    if(runtime->enable_recorder == 1)
-        MIR_RECORDER_STATE_END(NULL, 0);
+    MIR_RECORDER_STATE_END(NULL, 0);
 
     return (void*) ((unsigned char*)addr + sizeof(struct mem_header_t));
 }/*}}}*/
@@ -333,8 +331,7 @@ static void* allocate_fine(size_t sz)
 {/*{{{*/
     MIR_ASSERT(sz > 0);
 
-    if(runtime->enable_recorder == 1)
-        MIR_RECORDER_STATE_BEGIN(MIR_STATE_TMALLOC);
+    MIR_RECORDER_STATE_BEGIN(MIR_STATE_TMALLOC);
 
     void* addr = NULL;
     size_t new_sz = sz + sizeof(struct mem_header_t);
@@ -412,8 +409,7 @@ static void* allocate_fine(size_t sz)
 
     __sync_fetch_and_add(&mem_pol->total_allocated, new_sz);
 
-    if(runtime->enable_recorder == 1)
-        MIR_RECORDER_STATE_END(NULL, 0);
+    MIR_RECORDER_STATE_END(NULL, 0);
 
     return (void*) ((unsigned char*)addr + sizeof(struct mem_header_t));
 }/*}}}*/
@@ -422,8 +418,7 @@ static void* allocate_system(size_t sz)
 {/*{{{*/
     MIR_ASSERT(sz > 0);
 
-    if(runtime->enable_recorder == 1)
-        MIR_RECORDER_STATE_BEGIN(MIR_STATE_TMALLOC);
+    MIR_RECORDER_STATE_BEGIN(MIR_STATE_TMALLOC);
 
     size_t new_sz = sz + sizeof(struct mem_header_t);
     void* addr = malloc(new_sz);
@@ -435,8 +430,7 @@ static void* allocate_system(size_t sz)
     header->nodeid = runtime->arch->num_nodes + 1;
     header->node_cache = NULL;
 
-    if(runtime->enable_recorder == 1)
-        MIR_RECORDER_STATE_END(NULL, 0);
+    MIR_RECORDER_STATE_END(NULL, 0);
 
     return (void*) ((unsigned char*)addr + sizeof(struct mem_header_t));
 }/*}}}*/
@@ -445,8 +439,7 @@ static void* allocate_local(size_t sz)
 {/*{{{*/
     MIR_ASSERT(sz > 0);
 
-    if(runtime->enable_recorder == 1)
-        MIR_RECORDER_STATE_BEGIN(MIR_STATE_TMALLOC);
+    MIR_RECORDER_STATE_BEGIN(MIR_STATE_TMALLOC);
 
     void* addr = NULL;
     size_t new_sz = sz + sizeof(struct mem_header_t);
@@ -491,8 +484,7 @@ static void* allocate_local(size_t sz)
 
     __sync_fetch_and_add(&mem_pol->total_allocated, new_sz);
 
-    if(runtime->enable_recorder == 1)
-        MIR_RECORDER_STATE_END(NULL, 0);
+    MIR_RECORDER_STATE_END(NULL, 0);
 
     return (void*) ((unsigned char*)addr + sizeof(struct mem_header_t));
 }/*}}}*/

@@ -153,7 +153,6 @@ static inline int is_data_dist_significant(struct mir_mem_node_dist_t* dist)
 int push_numa (struct mir_task_t* task)
 {/*{{{*/
     MIR_ASSERT(NULL != task);
-    //if(runtime->enable_recorder == 1)
     //MIR_RECORDER_STATE_BEGIN(MIR_STATE_TSCHED);
 
     struct mir_worker_t* least_cost_worker = NULL;
@@ -247,7 +246,6 @@ int push_numa (struct mir_task_t* task)
             this_worker->statistics->num_tasks_created++;
     }
 
-    //if(runtime->enable_recorder == 1)
     //MIR_RECORDER_STATE_END(NULL, 0);
 
     return pushed;
@@ -264,7 +262,6 @@ int pop_numa (struct mir_task_t** task)
     uint16_t node = runtime->arch->node_of(worker->cpu_id);
 
     // Pop from own node alt queue
-    //if(runtime->enable_recorder == 1)
     //MIR_RECORDER_STATE_BEGIN(MIR_STATE_TPOP);
 
     struct mir_queue_t* queue = sp->alt_queues[node];
@@ -294,14 +291,12 @@ int pop_numa (struct mir_task_t** task)
         }
     }
 
-    //if(runtime->enable_recorder == 1)
     //MIR_RECORDER_STATE_END(NULL, 0);
 
     if (found)
         return found;
 
     // Pop from own node queue
-    //if(runtime->enable_recorder == 1)
     //MIR_RECORDER_STATE_BEGIN(MIR_STATE_TPOP);
 
     queue = sp->queues[node];
@@ -331,7 +326,6 @@ int pop_numa (struct mir_task_t** task)
         }
     }
 
-    //if(runtime->enable_recorder == 1)
     //MIR_RECORDER_STATE_END(NULL, 0);
 
     if (found)
@@ -341,7 +335,6 @@ int pop_numa (struct mir_task_t** task)
     // First check in alt queues
 
 #if 1
-    //if(runtime->enable_recorder == 1)
     //MIR_RECORDER_STATE_BEGIN(MIR_STATE_TSTEAL);
     uint16_t ctr = node + 1;
     if(ctr == num_queues) ctr = 0;
@@ -382,7 +375,6 @@ int pop_numa (struct mir_task_t** task)
         if(ctr == num_queues) ctr = 0;
     }
 
-    //if(runtime->enable_recorder == 1)
     //MIR_RECORDER_STATE_END(NULL, 0);
 #endif
 
@@ -394,7 +386,6 @@ int pop_numa (struct mir_task_t** task)
     // Pop by hop count
     
 #if 1
-    //if(runtime->enable_recorder == 1)
     //MIR_RECORDER_STATE_BEGIN(MIR_STATE_TSTEAL);
     uint16_t neighbors[runtime->arch->num_nodes];
     uint16_t count;
@@ -442,8 +433,7 @@ int pop_numa (struct mir_task_t** task)
         }
     }/*}}}*/
 
-    //if(runtime->enable_recorder == 1)
-    //MIR_RECORDER_STATE_END(NULL, 0);
+    //MIR_RECORDER_STATE_END(NULL, 1);
 #endif
 
     return found;

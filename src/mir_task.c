@@ -237,8 +237,7 @@ void mir_task_create(mir_tfunc_t tfunc, void* data, size_t data_size, unsigned i
     }
 
     // Go on and create the task
-    if(runtime->enable_recorder == 1)
-        MIR_RECORDER_STATE_BEGIN(MIR_STATE_TCREATE);
+    MIR_RECORDER_STATE_BEGIN(MIR_STATE_TCREATE);
 
     // Create task
     struct mir_task_t* task = mir_task_create_common(tfunc, data, data_size, num_data_footprints, data_footprints, name);
@@ -247,15 +246,12 @@ void mir_task_create(mir_tfunc_t tfunc, void* data, size_t data_size, unsigned i
     // Schedule task
     mir_task_schedule(task);
 
-    if(runtime->enable_recorder == 1)
-        MIR_RECORDER_STATE_END(NULL, 0);
+    MIR_RECORDER_STATE_END(NULL, 0);
 }/*}}}*/
 
 void mir_task_create_on_worker(mir_tfunc_t tfunc, void* data, size_t data_size, unsigned int num_data_footprints, struct mir_data_footprint_t* data_footprints, const char* name, unsigned int workerid)
 {/*{{{*/
-    // Create the task
-    if(runtime->enable_recorder == 1)
-        MIR_RECORDER_STATE_BEGIN(MIR_STATE_TCREATE);
+    MIR_RECORDER_STATE_BEGIN(MIR_STATE_TCREATE);
 
     // Create task
     struct mir_task_t* task = mir_task_create_common(tfunc, data, data_size, num_data_footprints, data_footprints, name);
@@ -264,15 +260,13 @@ void mir_task_create_on_worker(mir_tfunc_t tfunc, void* data, size_t data_size, 
     // Schedule task
     mir_task_schedule_on_worker(task, workerid);
 
-    if(runtime->enable_recorder == 1)
-        MIR_RECORDER_STATE_END(NULL, 0);
+    MIR_RECORDER_STATE_END(NULL, 0);
 }/*}}}*/
 
 void mir_loop_task_create(mir_tfunc_t tfunc, void* data, struct mir_loop_des_t* loops, int num_loops, const char* name)
 {/*{{{*/
     // Create the task
-    if(runtime->enable_recorder == 1)
-        MIR_RECORDER_STATE_BEGIN(MIR_STATE_TCREATE);
+    MIR_RECORDER_STATE_BEGIN(MIR_STATE_TCREATE);
 
     if(num_loops == 1)
     {
@@ -309,7 +303,6 @@ void mir_loop_task_create(mir_tfunc_t tfunc, void* data, struct mir_loop_des_t* 
         }
     }
 
-    if(runtime->enable_recorder == 1)
         MIR_RECORDER_STATE_END(NULL, 0);
 }/*}}}*/
 
@@ -506,8 +499,7 @@ struct mir_twc_t* mir_twc_create()
 
 void mir_task_wait()
 {/*{{{*/
-    if(runtime->enable_recorder == 1)
-        MIR_RECORDER_STATE_BEGIN(MIR_STATE_TSYNC);
+    MIR_RECORDER_STATE_BEGIN(MIR_STATE_TSYNC);
 
     struct mir_worker_t* worker = (struct mir_worker_t*) pthread_getspecific (runtime->worker_index);
     struct mir_twc_t* twc = NULL;
@@ -535,8 +527,7 @@ void mir_task_wait()
     for(int i=0; i<runtime->num_workers; i++)
        twc->count_per_worker[i] = 0;
 
-    if(runtime->enable_recorder == 1)
-        MIR_RECORDER_STATE_END(NULL, 0);
+    MIR_RECORDER_STATE_END(NULL, 0);
 
     return;
 }/*}}}*/

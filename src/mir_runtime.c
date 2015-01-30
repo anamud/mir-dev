@@ -353,8 +353,7 @@ void mir_create()
     mir_postconfig_init();
 
     // Set a marking event
-    if(runtime->enable_recorder == 1)
-        MIR_RECORDER_EVENT(NULL,0);
+    MIR_RECORDER_EVENT(NULL,0);
 }/*}}}*/
 
 void mir_destroy()
@@ -370,8 +369,7 @@ void mir_destroy()
         return;
 
     // Set a marking event
-    if(runtime->enable_recorder == 1)
-        MIR_RECORDER_EVENT(NULL,0);
+    MIR_RECORDER_EVENT(NULL,0);
 
     MIR_DEBUG(MIR_DEBUG_STR "Shutting down ...\n");
 

@@ -92,7 +92,6 @@ void destroy_central_stack ()
 int push_central_stack (struct mir_task_t* task)
 {/*{{{*/
     MIR_ASSERT(NULL != task);
-    //if(runtime->enable_recorder == 1)
     //MIR_RECORDER_STATE_BEGIN(MIR_STATE_TSCHED);
     struct mir_worker_t* worker = mir_worker_get_context(); 
     MIR_ASSERT(NULL != worker);
@@ -122,7 +121,6 @@ int push_central_stack (struct mir_task_t* task)
             worker->statistics->num_tasks_created++;
     }
 
-    //if(runtime->enable_recorder == 1)
     //MIR_RECORDER_STATE_END(NULL, 0);
 
     return pushed;
@@ -130,7 +128,6 @@ int push_central_stack (struct mir_task_t* task)
 
 int pop_central_stack (struct mir_task_t** task)
 {/*{{{*/
-    //if(runtime->enable_recorder == 1)
     //MIR_RECORDER_STATE_BEGIN(MIR_STATE_TMOBING);
 
     int found = 0;
@@ -175,7 +172,6 @@ int pop_central_stack (struct mir_task_t** task)
         }
     }
 
-    //if(runtime->enable_recorder == 1)
     //MIR_RECORDER_STATE_END(NULL, 0);
     return found;
 }/*}}}*/
