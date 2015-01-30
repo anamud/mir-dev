@@ -1,6 +1,6 @@
 #!/bin/bash
 
-intf=mir_lib_int.h
+intf=$1/mir_lib_int.h
 echo "Writing library interfaces to $intf"
 
 echo "
