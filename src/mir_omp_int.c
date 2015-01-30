@@ -17,7 +17,6 @@ extern struct mir_runtime_t* runtime;
 
 void GOMP_barrier (void)
 {/*{{{*/
-    mir_task_wait();
     MIR_DEBUG(MIR_DEBUG_STR "Note: GOMP_barrier is dummy.\n");
 }/*}}}*/
 
