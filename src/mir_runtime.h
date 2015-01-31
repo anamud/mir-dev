@@ -34,7 +34,7 @@ struct mir_runtime_t
     unsigned int num_children_tasks;
 
     // Initialization control
-    unsigned int init_count;
+    int init_count;
     int destroyed;
 
     // OpenMP support
