@@ -352,8 +352,21 @@ void mir_create()
     // Initialize 
     mir_postconfig_init();
 
+    atexit(mir_destroy);
+
     // Set a marking event
     MIR_RECORDER_EVENT(NULL,0);
+}/*}}}*/
+
+/**
+    Reduces the nesting level counter but leaves the RTS mostly alive.
+
+    Call @mir_destroy@ for proper destruction.
+*/
+void mir_soft_destroy()
+{/*{{{*/
+    MIR_ASSERT(runtime->init_count > 0);
+    __sync_fetch_and_sub(&(runtime->init_count), 1);
 }/*}}}*/
 
 void mir_destroy()
@@ -363,7 +376,7 @@ void mir_destroy()
 
     // Destory only if corresponding to first call to mir_create
     __sync_fetch_and_sub(&(runtime->init_count), 1);
-    if(runtime->init_count == 0)
+    if(runtime->init_count <= 0)
         runtime->destroyed = 1;
     else
         return;

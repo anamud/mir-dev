@@ -52,6 +52,8 @@ struct mir_runtime_t
 
 /*LIBINT*/ void mir_create();
 
+/*LIBINT*/ void mir_soft_destroy();
+
 /*LIBINT*/ void mir_destroy();
 
 END_C_DECLS 

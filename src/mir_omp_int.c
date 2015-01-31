@@ -358,7 +358,7 @@ void GOMP_parallel_start (void (*fn) (void *), void * data, unsigned num_threads
 void GOMP_parallel_end (void)
 {/*{{{*/
     mir_task_wait();
-    mir_destroy();
+    mir_soft_destroy();
 }/*}}}*/
 
 void GOMP_parallel (void (*fn) (void *), void *data, unsigned num_threads, unsigned flags)
