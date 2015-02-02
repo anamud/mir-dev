@@ -351,7 +351,9 @@ for(attrib in attrib_color_scaled)
     if(attrib %in% colnames(tg.data))
     {
         # Set color in proportion to attrib
-        p_task_color <- task_color_pal[as.numeric(cut(tg.data[,attrib], task_color_bins))]
+        attrib_unique <- unique(tg.data[,attrib])
+        if(length(attrib_unique) == 1) p_task_color <- task_color_pal[1]
+        else p_task_color <- task_color_pal[as.numeric(cut(tg.data[,attrib], task_color_bins))]
         annot_name <- paste(attrib, "_to_color", sep="")
         tg <- set.vertex.attribute(tg, name=annot_name, index=task_index, value=p_task_color)
     }
@@ -420,7 +422,10 @@ if("exec_cycles" %in% colnames(tg.data))
     }
     fork_bal <- as.vector(sapply(V(tg)[fork_nodes_index]$name, get_fork_bal))
     tg <- set.vertex.attribute(tg, name='exec_balance', index=fork_nodes_index, value=fork_bal*fork_size)
-    p_fork_size <- fork_size_mult * as.numeric(cut(fork_bal, fork_size_bins))
+
+    fork_bal_unique <- unique(fork_bal)
+    if(length(fork_bal_unique) == 1) p_fork_size <- fork_size_mult
+    else p_fork_size <- fork_size_mult * as.numeric(cut(fork_bal, fork_size_bins))
     tg <- set.vertex.attribute(tg, name='exec_balance_to_size', index=fork_nodes_index, value=p_fork_size)
 }
 # Set fork balance in terms of work_cycles
@@ -445,7 +450,10 @@ if("work_cycles" %in% colnames(tg.data))
     }
     fork_bal <- as.vector(sapply(V(tg)[fork_nodes_index]$name, get_fork_bal))
     tg <- set.vertex.attribute(tg, name='work_balance', index=fork_nodes_index, value=fork_bal)
-    p_fork_size <- fork_size_mult * as.numeric(cut(fork_bal, fork_size_bins))
+
+    fork_bal_unique <- unique(fork_bal)
+    if(length(fork_bal_unique) == 1) p_fork_size <- fork_size_mult
+    else p_fork_size <- fork_size_mult * as.numeric(cut(fork_bal, fork_size_bins))
     tg <- set.vertex.attribute(tg, name='work_balance_to_size', index=fork_nodes_index, value=p_fork_size)
 }
 # Set fork scatter
@@ -473,9 +481,14 @@ if("cpu_id" %in% colnames(tg.data))
     }
     fork_scatter <- as.vector(sapply(V(tg)[fork_nodes_index]$name, get_fork_scatter))
     tg <- set.vertex.attribute(tg, name='scatter', index=fork_nodes_index, value=fork_scatter)
-    p_fork_size <- fork_size_mult * as.numeric(cut(fork_scatter, fork_size_bins))
+
+    fork_scatter_unique <- unique(fork_scatter)
+    if(length(fork_scatter_unique) == 1) p_fork_size <- fork_size_mult
+    else p_fork_size <- fork_size_mult * as.numeric(cut(fork_scatter, fork_size_bins))
     tg <- set.vertex.attribute(tg, name='scatter_to_size', index=fork_nodes_index, value=p_fork_size)
-    p_fork_color <- fork_color_pal[as.numeric(cut(fork_scatter, fork_color_bins))]
+
+    if(length(fork_scatter_unique) == 1) p_fork_color <- fork_color_pal[1]
+    else p_fork_color <- fork_color_pal[as.numeric(cut(fork_scatter, fork_color_bins))]
     tg <- set.vertex.attribute(tg, name='scatter_to_color', index=fork_nodes_index, value=p_fork_color)
 }
 
