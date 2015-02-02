@@ -19,6 +19,7 @@ if os.path.isfile('HAVE_PAPI'):
     PAPI_ROOT = os.environ.get('PAPI_ROOT')
     if(PAPI_ROOT == None):
         if os.path.isfile('/usr/include/papi.h'):
+            print('PAPI_ROOT not defined. Using /usr as PAPI_ROOT.')
             PAPI_ROOT="/usr"
         else:
             print('PAPI_ROOT is not defined and papi.h can not be found. Aborting!')
