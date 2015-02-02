@@ -433,7 +433,7 @@ int pop_numa (struct mir_task_t** task)
         }
     }/*}}}*/
 
-    //MIR_RECORDER_STATE_END(NULL, 1);
+    //MIR_RECORDER_STATE_END(NULL, 0);
 #endif
 
     return found;
