@@ -508,6 +508,15 @@ void mir_task_wait()
     else
         twc = runtime->ctwc;
 
+    // Prevent empty synchronizations
+    // This upsets finding next forks in the task graph plotter
+    if(!(twc->count > 0))
+    {
+        // TODO: Report this!
+        // MIR_ASSERT(twc->count > 0);
+        return;
+    }
+
     // Wait and do useful work
     while(mir_twc_reduce(twc) != 1)
     {
