@@ -19,6 +19,13 @@ task_size_bins <- 10
 fork_size_mult <- 10
 fork_size_bins <- 10
 
+# Graph element shapes
+task_shape <- "rectangle"
+fork_shape <- "circle"
+join_shape <- fork_shape
+start_shape <- fork_shape
+end_shape <- start_shape
+
 # Timing functions
 tic <- function(gcFirst = TRUE, type=c("elapsed", "user.self", "sys.self"))
 {
@@ -45,6 +52,8 @@ make_option(c("--noCPE"), action="store_true", default=FALSE, help="Skip critica
 make_option(c("-v", "--verbose"), action="store_true", default=TRUE, help="Print output [default]"),
 make_option(c("-q", "--quiet"), action="store_false", dest="verbose", help="Print little output"),
 make_option(c("-t", "--tree"), action="store_true", default=FALSE, help="Plot task graph as tree"),
+make_option(c("-a", "--analyze"), action="store_true", default=FALSE, help="Analyze for problems"),
+make_option(c("-c","--config"), default="task-graph-analysis.cfg", help = "Analysis configuration file [default \"%default\"]", metavar="FILE"),
 make_option(c("-d","--data"), help = "Task performance data file", metavar="FILE"),
 make_option(c("-p","--pal"), default="color", help = "Color palette for graph elements [default \"%default\"]"),
 make_option(c("-o","--out"), default="task-graph", help = "Output file suffix [default \"%default\"]", metavar="STRING"))
@@ -60,6 +69,7 @@ tg.ofilen <- parsed$out
 verbo <- parsed$verbose
 plot_tree <- parsed$tree
 cp_len_only <- parsed$noCPE
+analyze_graph <- parsed$analyze
 
 # Read data
 if(verbo) tic(type="elapsed")
@@ -322,6 +332,7 @@ for (annot in colnames(tg.data))
 tg <- set.vertex.attribute(tg, name='size', index=task_index, value=task_size)
 tg <- set.vertex.attribute(tg, name='width', index=task_index, value=task_size)
 tg <- set.vertex.attribute(tg, name='height', index=task_index, value=task_size)
+tg <- set.vertex.attribute(tg, name='shape', index=task_index, value=task_shape)
 # Attributes scaled to size
 size_scaled <- c("ins_count", "work_cycles", "overhead_cycles", "exec_cycles")
 for(attrib in size_scaled)
@@ -389,18 +400,22 @@ start_index <- V(tg)$name == '0'
 tg <- set.vertex.attribute(tg, name='color', index=start_index, value=other_color)
 tg <- set.vertex.attribute(tg, name='label', index=start_index, value='S')
 tg <- set.vertex.attribute(tg, name='size', index=start_index, value=start_size)
+tg <- set.vertex.attribute(tg, name='shape', index=start_index, value=start_shape)
 
 # Set label and color of 'task E'
 end_index <- V(tg)$name == "E"
 tg <- set.vertex.attribute(tg, name='color', index=end_index, value=other_color)
 tg <- set.vertex.attribute(tg, name='label', index=end_index, value='E')
 tg <- set.vertex.attribute(tg, name='size', index=end_index, value=end_size)
+tg <- set.vertex.attribute(tg, name='shape', index=end_index, value=end_shape)
 
 # Set fork vertex attributes 
 fork_nodes_index <- startsWith(V(tg)$name, 'f')
 tg <- set.vertex.attribute(tg, name='size', index=fork_nodes_index, value=fork_size)
 tg <- set.vertex.attribute(tg, name='color', index=fork_nodes_index, value=fork_color)
 tg <- set.vertex.attribute(tg, name='label', index=fork_nodes_index, value='^')
+tg <- set.vertex.attribute(tg, name='shape', index=fork_nodes_index, value=fork_shape)
+
 # Set fork balance in terms of exec_cycles
 if("exec_cycles" %in% colnames(tg.data))
 {
@@ -428,6 +443,7 @@ if("exec_cycles" %in% colnames(tg.data))
     else p_fork_size <- fork_size_mult * as.numeric(cut(fork_bal, fork_size_bins))
     tg <- set.vertex.attribute(tg, name='exec_balance_to_size', index=fork_nodes_index, value=p_fork_size)
 }
+
 # Set fork balance in terms of work_cycles
 if("work_cycles" %in% colnames(tg.data))
 {
@@ -456,6 +472,7 @@ if("work_cycles" %in% colnames(tg.data))
     else p_fork_size <- fork_size_mult * as.numeric(cut(fork_bal, fork_size_bins))
     tg <- set.vertex.attribute(tg, name='work_balance_to_size', index=fork_nodes_index, value=p_fork_size)
 }
+
 # Set fork scatter
 if("cpu_id" %in% colnames(tg.data))
 {
@@ -499,6 +516,7 @@ join_nodes_index <- startsWith(V(tg)$name, 'j')
 tg <- set.vertex.attribute(tg, name='size', index=join_nodes_index, value=join_size)
 tg <- set.vertex.attribute(tg, name='color', index=join_nodes_index, value=join_color)
 tg <- set.vertex.attribute(tg, name='label', index=join_nodes_index, value='*')
+tg <- set.vertex.attribute(tg, name='shape', index=join_nodes_index, value=join_shape)
 }
 
 # Set edge attributes
@@ -784,6 +802,42 @@ tg.file.out <- paste(gsub(". $", "", tg.ofilen), ".nodeattr", sep="")
 if(verbo) print(paste("Writing file", tg.file.out))
 write.table(get.data.frame(tg, what="vertices"), sep=",", file=tg.file.out)
 if(verbo) toc("Write node attributes")
+
+# Show problems
+if(analyze_graph)
+{
+if(verbo) tic(type="elapsed")
+ptg <- tg
+ptg <- set.vertex.attribute(ptg, name='color', value="#00000000")
+ptg <- set.edge.attribute(ptg, name='color', value="#00000000")
+
+# Memory hierarchy utilization problem
+tg.file.out <- paste(gsub(". $", "", tg.ofilen), "-problem-memory-hierarchy-utilization.graphml", sep="")
+if(verbo) print(paste("Writing file", tg.file.out))
+res <- write.graph(ptg, file=tg.file.out, format="graphml")
+
+# Work inflation problem
+tg.file.out <- paste(gsub(". $", "", tg.ofilen), "-problem-memory-hierarchy-utilization.graphml", sep="")
+if(verbo) print(paste("Writing file", tg.file.out))
+res <- write.graph(ptg, file=tg.file.out, format="graphml")
+
+# Parallelism problem
+tg.file.out <- paste(gsub(". $", "", tg.ofilen), "-problem-parallelism.graphml", sep="")
+if(verbo) print(paste("Writing file", tg.file.out))
+res <- write.graph(ptg, file=tg.file.out, format="graphml")
+
+# Scatter problem
+tg.file.out <- paste(gsub(". $", "", tg.ofilen), "-problem-scatter.graphml", sep="")
+if(verbo) print(paste("Writing file", tg.file.out))
+res <- write.graph(ptg, file=tg.file.out, format="graphml")
+
+# Balance problem
+tg.file.out <- paste(gsub(". $", "", tg.ofilen), "-problem-balance.graphml", sep="")
+if(verbo) print(paste("Writing file", tg.file.out))
+res <- write.graph(ptg, file=tg.file.out, format="graphml")
+
+if(verbo) toc("Analyzing task graph for problems")
+}
 
 # Warn
 wa <- warnings()
