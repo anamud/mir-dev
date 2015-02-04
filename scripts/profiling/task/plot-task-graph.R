@@ -444,12 +444,12 @@ if("exec_cycles" %in% colnames(tg.data))
       
       bal
     }
-    fork_bal <- as.vector(sapply(V(tg)[fork_nodes_index]$name, get_fork_bal))
-    tg <- set.vertex.attribute(tg, name='exec_balance', index=fork_nodes_index, value=fork_bal*fork_size)
+    fork_bal_ec <- as.vector(sapply(V(tg)[fork_nodes_index]$name, get_fork_bal))
+    tg <- set.vertex.attribute(tg, name='exec_balance', index=fork_nodes_index, value=fork_bal_ec*fork_size)
 
-    fork_bal_unique <- unique(fork_bal)
-    if(length(fork_bal_unique) == 1) p_fork_size <- fork_size_mult
-    else p_fork_size <- fork_size_mult * as.numeric(cut(fork_bal, fork_size_bins))
+    fork_bal_ec_unique <- unique(fork_bal_ec)
+    if(length(fork_bal_ec_unique) == 1) p_fork_size <- fork_size_mult
+    else p_fork_size <- fork_size_mult * as.numeric(cut(fork_bal_ec, fork_size_bins))
     tg <- set.vertex.attribute(tg, name='exec_balance_to_size', index=fork_nodes_index, value=p_fork_size)
 }
 
@@ -473,12 +473,12 @@ if("work_cycles" %in% colnames(tg.data))
       
       bal
     }
-    fork_bal <- as.vector(sapply(V(tg)[fork_nodes_index]$name, get_fork_bal))
-    tg <- set.vertex.attribute(tg, name='work_balance', index=fork_nodes_index, value=fork_bal)
+    fork_bal_wc <- as.vector(sapply(V(tg)[fork_nodes_index]$name, get_fork_bal))
+    tg <- set.vertex.attribute(tg, name='work_balance', index=fork_nodes_index, value=fork_bal_wc)
 
-    fork_bal_unique <- unique(fork_bal)
-    if(length(fork_bal_unique) == 1) p_fork_size <- fork_size_mult
-    else p_fork_size <- fork_size_mult * as.numeric(cut(fork_bal, fork_size_bins))
+    fork_bal_wc_unique <- unique(fork_bal_wc)
+    if(length(fork_bal_wc_unique) == 1) p_fork_size <- fork_size_mult
+    else p_fork_size <- fork_size_mult * as.numeric(cut(fork_bal_wc, fork_size_bins))
     tg <- set.vertex.attribute(tg, name='work_balance_to_size', index=fork_nodes_index, value=p_fork_size)
 }
 
@@ -896,7 +896,8 @@ if(!cp_len_only && !plot_tree)
     {
         prob_task <- subset(tgdf, rdist < tg_shape$breaks[r+1] & rdist > tg_shape$breaks[r], select=label)
         prob_task_index <- match(as.character(prob_task$label), V(prob_tg)$name)
-        prob_task_color <- get.vertex.attribute(prob_tg, name='cpu_id_to_color', index=prob_task_index)
+        #prob_task_color <- get.vertex.attribute(prob_tg, name='cpu_id_to_color', index=prob_task_index)
+        prob_task_color <- "red"
         prob_tg <- set.vertex.attribute(prob_tg, name='color', index=prob_task_index, value=prob_task_color)
     }
     tg_file_out <- paste(gsub(". $", "", tg.ofilen), "-problem-parallelism.graphml", sep="")
@@ -926,10 +927,41 @@ if("cpu_id" %in% colnames(tg.data) && !plot_tree)
     res <- write.graph(prob_tg, file=tg_file_out, format="graphml")
 }
 
-# Balance problem
-tg_file_out <- paste(gsub(". $", "", tg.ofilen), "-problem-balance.graphml", sep="")
-if(verbo) print(paste("Writing file", tg_file_out))
-res <- write.graph(base_tg, file=tg_file_out, format="graphml")
+# Balance problem (work cycles)
+if("work_cycles" %in% colnames(tg.data) && !plot_tree)
+{
+    prob_tg <- base_tg
+    prob_fork <- V(prob_tg)[fork_nodes_index]$name[which(fork_bal_wc > 2)]
+    for(f in prob_fork)
+    {
+        f_i <- match(as.character(f), V(prob_tg)$name)
+        prob_task_index <- neighbors(prob_tg, f_i, mode="out") 
+        #prob_task_color <- get.vertex.attribute(prob_tg, name='cpu_id_to_color', index=prob_task_index)
+        prob_task_color <- "red"
+        prob_tg <- set.vertex.attribute(prob_tg, name='color', index=prob_task_index, value=prob_task_color)
+    }
+    tg_file_out <- paste(gsub(". $", "", tg.ofilen), "-problem-balance-work-cycles.graphml", sep="")
+    if(verbo) print(paste("Writing file", tg_file_out))
+    res <- write.graph(prob_tg, file=tg_file_out, format="graphml")
+}
+
+# Balance problem (execution cycles)
+if("work_cycles" %in% colnames(tg.data) && !plot_tree)
+{
+    prob_tg <- base_tg
+    prob_fork <- V(prob_tg)[fork_nodes_index]$name[which(fork_bal_ec > 2)]
+    for(f in prob_fork)
+    {
+        f_i <- match(as.character(f), V(prob_tg)$name)
+        prob_task_index <- neighbors(prob_tg, f_i, mode="out") 
+        #prob_task_color <- get.vertex.attribute(prob_tg, name='cpu_id_to_color', index=prob_task_index)
+        prob_task_color <- "red"
+        prob_tg <- set.vertex.attribute(prob_tg, name='color', index=prob_task_index, value=prob_task_color)
+    }
+    tg_file_out <- paste(gsub(". $", "", tg.ofilen), "-problem-balance-exec-cycles.graphml", sep="")
+    if(verbo) print(paste("Writing file", tg_file_out))
+    res <- write.graph(prob_tg, file=tg_file_out, format="graphml")
+}
 
 if(verbo) toc("Analyzing task graph for problems")
 }
