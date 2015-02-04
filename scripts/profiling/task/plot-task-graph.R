@@ -888,7 +888,7 @@ if("work_inflation" %in% colnames(tg.data))
 }
 
 # Parallelism problem
-if(!cp_len_only) 
+if(!cp_len_only && !plot_tree) 
 {
     prob_tg <- base_tg
     ranges <- which(tg_shape$counts < length(unique(tg.data$cpu_id)))
@@ -905,9 +905,26 @@ if(!cp_len_only)
 }
 
 # Scatter problem
-tg_file_out <- paste(gsub(". $", "", tg.ofilen), "-problem-scatter.graphml", sep="")
-if(verbo) print(paste("Writing file", tg_file_out))
-res <- write.graph(base_tg, file=tg_file_out, format="graphml")
+if("cpu_id" %in% colnames(tg.data) && !plot_tree)
+{
+    prob_tg <- base_tg
+    prob_fork <- V(prob_tg)[fork_nodes_index]$name[which(fork_scatter > (length(unique(tg.data$cpu_id))/4))]
+    for(f in prob_fork)
+    {
+        f_i <- match(as.character(f), V(prob_tg)$name)
+        prob_task_index <- neighbors(prob_tg, f_i, mode="out") 
+        prob_task_color <- get.vertex.attribute(prob_tg, name='cpu_id_to_color', index=prob_task_index)
+        prob_tg <- set.vertex.attribute(prob_tg, name='color', index=prob_task_index, value=prob_task_color)
+        f_s <- unlist(strsplit(f, "\\."))
+        f_p <- as.numeric(f_s[2])
+        f_p_i <- match(as.character(f_p), V(prob_tg)$name)
+        f_p_c <- get.vertex.attribute(prob_tg, name='cpu_id_to_color', index=f_p_i)
+        prob_tg <- set.vertex.attribute(prob_tg, name='color', index=f_i, value=f_p_c)
+    }
+    tg_file_out <- paste(gsub(". $", "", tg.ofilen), "-problem-scatter.graphml", sep="")
+    if(verbo) print(paste("Writing file", tg_file_out))
+    res <- write.graph(prob_tg, file=tg_file_out, format="graphml")
+}
 
 # Balance problem
 tg_file_out <- paste(gsub(". $", "", tg.ofilen), "-problem-balance.graphml", sep="")
