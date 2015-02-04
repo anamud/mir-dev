@@ -382,7 +382,8 @@ void mir_soft_destroy()
 void mir_destroy()
 {
     /*{{{*/
-    // Destroy only once
+    // Destroy only once. Multiple calls happen if the user inserts 
+    // explicit calls to mir_destroy() in the program.
     //MIR_ASSERT(runtime->destroyed == 0);
     if(runtime->destroyed == 1)
         return;
