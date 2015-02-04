@@ -315,6 +315,15 @@ if("work_cycles" %in% colnames(tg.data) & "PAPI_RES_STL_sum" %in% colnames(tg.da
 }
 if(verbo) toc("Calculating memory hierarchy utilization")
 
+# Calc compute intensity
+# TODO: Move this elsewhere. This does not belong here.
+if(verbo) tic(type="elapsed")
+if("ins_count" %in% colnames(tg.data) & "mem_fp" %in% colnames(tg.data))
+{
+    tg.data$compute_int <- tg.data$ins_count/tg.data$mem_fp
+}
+if(verbo) toc("Calculating compute intensity")
+
 # Set attributes
 if(verbo) tic(type="elapsed")
 # Common vertex attributes
@@ -356,7 +365,7 @@ for(attrib in size_scaled)
 # Constants
 tg <- set.vertex.attribute(tg, name='color', index=task_index, value=task_color)
 # Scale attributes to color
-attrib_color_scaled <- c("mem_fp", "PAPI_RES_STL_sum", "mem_hier_util", "work_inflation", "overhead_inflation")
+attrib_color_scaled <- c("mem_fp", "compute_int", "PAPI_RES_STL_sum", "mem_hier_util", "work_inflation", "overhead_inflation")
 for(attrib in attrib_color_scaled)
 {
     if(attrib %in% colnames(tg.data))
@@ -646,13 +655,17 @@ if("ins_count" %in% colnames(tg.data) && !plot_tree)
         # Clear rpath since dot/table writing complains 
         tg <- remove.vertex.attribute(tg,"rpath")
 
+        # Calc shape
+        tgdf <- get.data.frame(tg, what="vertices")
+        tgdf <- tgdf[!is.na(as.numeric(tgdf$label)),]
+        tg_shape <- hist(tgdf$rdist, breaks=sum(as.numeric(tg.data$ins_count))/(length(unique(tg.data$cpu_id))*mean(tg.data$work_cycles)), plot=F)
+
         # Write out shape
         tg.file.out <- paste(gsub(". $", "", tg.ofilen), "-shape.pdf", sep="")
         if(verbo) print(paste("Writing file", tg.file.out))
         pdf(tg.file.out)
-        tgdf <- get.data.frame(tg, what="vertices")
-        tgdf <- tgdf[!is.na(as.numeric(tgdf$label)),]
-        hist(tgdf$rdist, freq=T, main="Histogram of distance from start vertex", xlab="Distance [instructions]", ylab="Tasks")
+        plot(tg_shape, freq=T, xlab="Distance from START in instruction count", ylab="Tasks", main="Instantaneous task parallelism", col="white")
+        abline(h = length(unique(tg.data$cpu_id)), col = "blue", lty=2)
         dev.off()
     }
     if(verbo) toc("Calc and write info")
@@ -737,14 +750,17 @@ if("ins_count" %in% colnames(tg.data) && !plot_tree)
         # Clear rpath since dot/table writing complains 
         tg <- remove.vertex.attribute(tg,"rpath")
 
+        # Calc shape
+        tgdf <- get.data.frame(tg, what="vertices")
+        tgdf <- tgdf[!is.na(as.numeric(tgdf$label)),]
+        tg_shape <- hist(tgdf$rdist, breaks=sum(as.numeric(tg.data$work_cycles))/(length(unique(tg.data$cpu_id))*mean(tg.data$work_cycles)), plot=F)
+
         # Write out shape
         tg.file.out <- paste(gsub(". $", "", tg.ofilen), "-shape.pdf", sep="")
         if(verbo) print(paste("Writing file", tg.file.out))
         pdf(tg.file.out)
-        tgdf <- get.data.frame(tg, what="vertices")
-        tgdf <- tgdf[!is.na(as.numeric(tgdf$label)),]
-        hist(tgdf$rdist, freq=T, main="Histogram of distance from start vertex", xlab="Distance [cycles]", ylab="Tasks")
-        #lines(density(rdist.data, na.rm= TRUE, adjust=2),col="blue", lwd=2)
+        plot(tg_shape, freq=T, xlab="Distance from START in work cycles", ylab="Tasks", main="Instantaneous task parallelism", col="white")
+        abline(h = length(unique(tg.data$cpu_id)), col = "blue", lty=2)
         dev.off()
     }
     if(verbo) toc("Calc and write info")
@@ -807,34 +823,96 @@ if(verbo) toc("Write node attributes")
 if(analyze_graph)
 {
 if(verbo) tic(type="elapsed")
-ptg <- tg
-ptg <- set.vertex.attribute(ptg, name='color', value="#00000000")
-ptg <- set.edge.attribute(ptg, name='color', value="#00000000")
+# add.alpha function from http://www.magesblog.com/2013/04/how-to-change-alpha-value-of-colours-in.html
+add.alpha <- function(col, alpha=1){
+  apply(sapply(col, col2rgb)/255, 2, function(x) rgb(x[1], x[2], x[3], alpha=alpha))  
+}
+
+# Base task graph with transparent elements
+base_tg <- tg
+base_tg_vertex_color <- add.alpha(get.vertex.attribute(base_tg, name='color'), alpha=0.1)
+base_tg <- set.vertex.attribute(base_tg, name='color', value=base_tg_vertex_color)
+base_tg_edge_color <- add.alpha(get.edge.attribute(base_tg, name='color'), alpha=0.1)
+base_tg <- set.edge.attribute(base_tg, name='color', value=base_tg_edge_color)
 
 # Memory hierarchy utilization problem
-tg.file.out <- paste(gsub(". $", "", tg.ofilen), "-problem-memory-hierarchy-utilization.graphml", sep="")
-if(verbo) print(paste("Writing file", tg.file.out))
-res <- write.graph(ptg, file=tg.file.out, format="graphml")
+if("mem_hier_util" %in% colnames(tg.data))
+{
+    prob_tg <- base_tg
+    prob_task <- subset(tg.data, mem_hier_util > 0.5, select=task)
+    prob_task_index <- match(as.character(prob_task$task), V(prob_tg)$name)
+    prob_task_color <- get.vertex.attribute(prob_tg, name='mem_hier_util_to_color', index=prob_task_index)
+    prob_tg <- set.vertex.attribute(prob_tg, name='color', index=prob_task_index, value=prob_task_color)
+    tg_file_out <- paste(gsub(". $", "", tg.ofilen), "-problem-memory-hierarchy-utilization.graphml", sep="")
+    if(verbo) print(paste("Writing file", tg_file_out))
+    res <- write.graph(prob_tg, file=tg_file_out, format="graphml")
+}
 
-# Work inflation problem
-tg.file.out <- paste(gsub(". $", "", tg.ofilen), "-problem-memory-hierarchy-utilization.graphml", sep="")
-if(verbo) print(paste("Writing file", tg.file.out))
-res <- write.graph(ptg, file=tg.file.out, format="graphml")
+# Memory footprint problem
+if("mem_fp" %in% colnames(tg.data))
+{
+    prob_tg <- base_tg
+    prob_task <- subset(tg.data, mem_fp > 512000, select=task)
+    prob_task_index <- match(as.character(prob_task$task), V(prob_tg)$name)
+    prob_task_color <- get.vertex.attribute(prob_tg, name='mem_fp_to_color', index=prob_task_index)
+    prob_tg <- set.vertex.attribute(prob_tg, name='color', index=prob_task_index, value=prob_task_color)
+    tg_file_out <- paste(gsub(". $", "", tg.ofilen), "-problem-memory-footprint.graphml", sep="")
+    if(verbo) print(paste("Writing file", tg_file_out))
+    res <- write.graph(prob_tg, file=tg_file_out, format="graphml")
+}
+
+# Compute intensity problem
+if("compute_int" %in% colnames(tg.data))
+{
+    prob_tg <- base_tg
+    prob_task <- subset(tg.data, compute_int < 2, select=task)
+    prob_task_index <- match(as.character(prob_task$task), V(prob_tg)$name)
+    prob_task_color <- get.vertex.attribute(prob_tg, name='compute_int_to_color', index=prob_task_index)
+    prob_tg <- set.vertex.attribute(prob_tg, name='color', index=prob_task_index, value=prob_task_color)
+    tg_file_out <- paste(gsub(". $", "", tg.ofilen), "-problem-compute-intensity.graphml", sep="")
+    if(verbo) print(paste("Writing file", tg_file_out))
+    res <- write.graph(prob_tg, file=tg_file_out, format="graphml")
+}
+
+# Work deviation problem
+if("work_inflation" %in% colnames(tg.data))
+{
+    prob_tg <- base_tg
+    prob_task <- subset(tg.data, work_inflation > 2, select=task)
+    prob_task_index <- match(as.character(prob_task$task), V(prob_tg)$name)
+    prob_task_color <- get.vertex.attribute(prob_tg, name='work_inflation_to_color', index=prob_task_index)
+    prob_tg <- set.vertex.attribute(prob_tg, name='color', index=prob_task_index, value=prob_task_color)
+    tg_file_out <- paste(gsub(". $", "", tg.ofilen), "-problem-work-deviation.graphml", sep="")
+    if(verbo) print(paste("Writing file", tg_file_out))
+    res <- write.graph(prob_tg, file=tg_file_out, format="graphml")
+}
 
 # Parallelism problem
-tg.file.out <- paste(gsub(". $", "", tg.ofilen), "-problem-parallelism.graphml", sep="")
-if(verbo) print(paste("Writing file", tg.file.out))
-res <- write.graph(ptg, file=tg.file.out, format="graphml")
+if(!cp_len_only) 
+{
+    prob_tg <- base_tg
+    ranges <- which(tg_shape$counts < length(unique(tg.data$cpu_id)))
+    for (r in ranges)
+    {
+        prob_task <- subset(tgdf, rdist < tg_shape$breaks[r+1] & rdist > tg_shape$breaks[r], select=label)
+        prob_task_index <- match(as.character(prob_task$label), V(prob_tg)$name)
+        prob_task_color <- get.vertex.attribute(prob_tg, name='cpu_id_to_color', index=prob_task_index)
+        prob_tg <- set.vertex.attribute(prob_tg, name='color', index=prob_task_index, value=prob_task_color)
+    }
+    tg_file_out <- paste(gsub(". $", "", tg.ofilen), "-problem-parallelism.graphml", sep="")
+    if(verbo) print(paste("Writing file", tg_file_out))
+    res <- write.graph(prob_tg, file=tg_file_out, format="graphml")
+}
 
 # Scatter problem
-tg.file.out <- paste(gsub(". $", "", tg.ofilen), "-problem-scatter.graphml", sep="")
-if(verbo) print(paste("Writing file", tg.file.out))
-res <- write.graph(ptg, file=tg.file.out, format="graphml")
+tg_file_out <- paste(gsub(". $", "", tg.ofilen), "-problem-scatter.graphml", sep="")
+if(verbo) print(paste("Writing file", tg_file_out))
+res <- write.graph(base_tg, file=tg_file_out, format="graphml")
 
 # Balance problem
-tg.file.out <- paste(gsub(". $", "", tg.ofilen), "-problem-balance.graphml", sep="")
-if(verbo) print(paste("Writing file", tg.file.out))
-res <- write.graph(ptg, file=tg.file.out, format="graphml")
+tg_file_out <- paste(gsub(". $", "", tg.ofilen), "-problem-balance.graphml", sep="")
+if(verbo) print(paste("Writing file", tg_file_out))
+res <- write.graph(base_tg, file=tg_file_out, format="graphml")
 
 if(verbo) toc("Analyzing task graph for problems")
 }
