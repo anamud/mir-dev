@@ -54,6 +54,18 @@ for(task in max.exec.end$task)
 # Calc work cycles
 ts.data$work_cycles <- ts.data$exec_cycles - ts.data$overhead_cycles
 
+# Calc parallel benefit
+calc_par_ben <- function(t)
+{
+    t.p <- ts.data$parent[ts.data$task == t]
+    t.p.o <- ts.data$overhead_cycles[ts.data$task == t.p]
+    t.p.nc <- length(ts.data$task[ts.data$parent == t.p])
+    t.p.o.c <- t.p.o/t.p.nc
+    ts.data$work_cycles[ts.data$task == t]/t.p.o.c
+}
+par_ben <- as.numeric(sapply(ts.data$task, calc_par_ben))
+ts.data["parallel_benefit"] <- par_ben
+
 # Write out processed data
 out.file <- paste(gsub(". $", "", ts.file), ".processed", sep="")
 if(verbo) print(paste("Writing file", out.file))
