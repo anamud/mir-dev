@@ -365,7 +365,7 @@ for(attrib in size_scaled)
 # Constants
 tg <- set.vertex.attribute(tg, name='color', index=task_index, value=task_color)
 # Scale attributes to color
-attrib_color_scaled <- c("mem_fp", "compute_int", "PAPI_RES_STL_sum", "mem_hier_util", "work_inflation", "overhead_inflation")
+attrib_color_scaled <- c("mem_fp", "compute_int", "PAPI_RES_STL_sum", "mem_hier_util", "work_inflation", "overhead_inflation", "parallel_benefit")
 for(attrib in attrib_color_scaled)
 {
     if(attrib %in% colnames(tg.data))
@@ -883,6 +883,19 @@ if("work_inflation" %in% colnames(tg.data))
     prob_task_color <- get.vertex.attribute(prob_tg, name='work_inflation_to_color', index=prob_task_index)
     prob_tg <- set.vertex.attribute(prob_tg, name='color', index=prob_task_index, value=prob_task_color)
     tg_file_out <- paste(gsub(". $", "", tg.ofilen), "-problem-work-deviation.graphml", sep="")
+    if(verbo) print(paste("Writing file", tg_file_out))
+    res <- write.graph(prob_tg, file=tg_file_out, format="graphml")
+}
+
+# Parallel benefit problem
+if("parallel_benefit" %in% colnames(tg.data))
+{
+    prob_tg <- base_tg
+    prob_task <- subset(tg.data, parallel_benefit < 1, select=task)
+    prob_task_index <- match(as.character(prob_task$task), V(prob_tg)$name)
+    prob_task_color <- get.vertex.attribute(prob_tg, name='parallel_benefit_to_color', index=prob_task_index)
+    prob_tg <- set.vertex.attribute(prob_tg, name='color', index=prob_task_index, value=prob_task_color)
+    tg_file_out <- paste(gsub(". $", "", tg.ofilen), "-problem-parallel-benefit.graphml", sep="")
     if(verbo) print(paste("Writing file", tg_file_out))
     res <- write.graph(prob_tg, file=tg_file_out, format="graphml")
 }
