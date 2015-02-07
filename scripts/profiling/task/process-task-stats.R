@@ -1,6 +1,6 @@
 # Libary
 suppressMessages(library(dplyr))
-require(optparse, quietly=TRUE)
+library(optparse, quietly=TRUE)
 
 # Include
 mir_root <- Sys.getenv("MIR_ROOT")

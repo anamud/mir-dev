@@ -1,12 +1,13 @@
 # Clean slate
 rm(list=ls())
 
-require(igraph, quietly=TRUE)
-require(RColorBrewer, quietly=TRUE)
-suppressMessages(require(gdata, quietly=TRUE, warn.conflicts=FALSE))
-require(optparse, quietly=TRUE)
-options("scipen"=999) # big number of digits
-#getOption("scipen")
+# Include
+mir_root <- Sys.getenv("MIR_ROOT")
+source(paste(mir_root,"/scripts/profiling/task/common.R",sep=""))
+
+# Library
+library(igraph, quietly=TRUE)
+suppressMessages(library(gdata, quietly=TRUE, warn.conflicts=FALSE))
 
 # Graph element sizes
 join_size <- 10
@@ -26,27 +27,8 @@ join_shape <- fork_shape
 start_shape <- fork_shape
 end_shape <- start_shape
 
-# Timing functions
-tic <- function(gcFirst = TRUE, type=c("elapsed", "user.self", "sys.self"))
-{
-  type <- match.arg(type)
-  assign(".type", type, envir=baseenv())
-  if(gcFirst) gc(FALSE)
-  tic <- proc.time()[type]         
-  assign(".tic", tic, envir=baseenv())
-  invisible(tic)
-}
-
-toc <- function(message)
-{
-  type <- get(".type", envir=baseenv())
-  toc <- proc.time()[type]
-  tic <- get(".tic", envir=baseenv())
-  print(sprintf("%s: %f sec", message, toc - tic))
-  invisible(toc)
-}
-
 # Parse args
+library(optparse, quietly=TRUE)
 option_list <- list(
 make_option(c("--noCPE"), action="store_true", default=FALSE, help="Skip critical path enumeration. Calculate critical path length only."),
 make_option(c("-v", "--verbose"), action="store_true", default=TRUE, help="Print output [default]"),

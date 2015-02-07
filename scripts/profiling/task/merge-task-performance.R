@@ -1,28 +1,12 @@
 # Clear workspace
 rm(list=ls())
 
-# Timing functions
-tic <- function(gcFirst = TRUE, type=c("elapsed", "user.self", "sys.self"))
-{
-  type <- match.arg(type)
-  assign(".type", type, envir=baseenv())
-  if(gcFirst) gc(FALSE)
-  tic <- proc.time()[type]         
-  assign(".tic", tic, envir=baseenv())
-  invisible(tic)
-}
-
-toc <- function(message)
-{
-  type <- get(".type", envir=baseenv())
-  toc <- proc.time()[type]
-  tic <- get(".tic", envir=baseenv())
-  print(sprintf("%s: %f sec", message, toc - tic))
-  invisible(toc)
-}
+# Include
+mir_root <- Sys.getenv("MIR_ROOT")
+source(paste(mir_root,"/scripts/profiling/task/common.R",sep=""))
 
 # Parse args
-require(optparse, quietly=TRUE)
+library(optparse, quietly=TRUE)
 option_list <- list(
 make_option(c("-v", "--verbose"), action="store_true", default=TRUE, help="Print output [default]"),
 make_option(c("-q", "--quiet"), action="store_false", dest="verbose", help="Print little output"),
