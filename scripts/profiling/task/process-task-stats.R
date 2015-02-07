@@ -2,32 +2,19 @@
 suppressMessages(library(dplyr))
 require(optparse, quietly=TRUE)
 
-# Timing functions
-tic <- function(gcFirst = TRUE, type=c("elapsed", "user.self", "sys.self"))
-{
-  type <- match.arg(type)
-  assign(".type", type, envir=baseenv())
-  if(gcFirst) gc(FALSE)
-  tic <- proc.time()[type]         
-  assign(".tic", tic, envir=baseenv())
-  invisible(tic)
-}
-
-toc <- function(message)
-{
-  type <- get(".type", envir=baseenv())
-  toc <- proc.time()[type]
-  tic <- get(".tic", envir=baseenv())
-  print(sprintf("%s: %f sec", message, toc - tic))
-  invisible(toc)
-}
+# Include
+mir_root <- Sys.getenv("MIR_ROOT")
+source(paste(mir_root,"/scripts/profiling/task/common.R",sep=""))
 
 # Read arguments
 option_list <- list(
 make_option(c("--lineage"), action="store_true", default=FALSE, help="Calculate task lineage"),
-make_option(c("-d","--data"), help = "Task stats file", metavar="FILE"),
+make_option(c("-d","--data"), help = "Task stats", metavar="FILE"),
+make_option(c("--compare"), help = "Task stats for comparison", metavar="FILE"),
 make_option(c("-v", "--verbose"), action="store_true", default=TRUE, help="Print output [default]"),
-make_option(c("-q", "--quiet"), action="store_false", dest="verbose", help="Print little output"))
+make_option(c("--quiet"), action="store_false", dest="verbose", help="Print little output"),
+make_option(c("--summary"), action="store_true", default=TRUE, help="Summarize [default]"),
+make_option(c("--no-summary"), action="store_false", dest="summary", help="Do not summarize"))
 parsed <- parse_args(OptionParser(option_list = option_list), args = commandArgs(TRUE))
 if(!exists("data", where=parsed))
 {
@@ -36,14 +23,20 @@ if(!exists("data", where=parsed))
 }
 ts.file <- parsed$data
 verbo <- parsed$verbose
+sumry <- parsed$summary
 calc_lineage <- parsed$lineage
+if(exists("compare", where=parsed)) ts.compare.file <- parsed$compare
 
 # Read data
 if(verbo) print(paste("Reading file", ts.file))
 ts.data <- read.csv(ts.file, header=TRUE)
 
-# Find task executed last per worker
+# Process
 if(verbo) tic(type="elapsed")
+if(verbo) print("Processing ...")
+
+## Find task executed last per worker
+if(verbo) print("Calculating last tasks to finish ...")
 max.exec.end <- ts.data %>% group_by(cpu_id) %>% filter(exec_end == max(exec_end))
 ts.data["last_to_finish"] <- F
 for(task in max.exec.end$task)
@@ -51,11 +44,20 @@ for(task in max.exec.end$task)
     ts.data$last_to_finish[ts.data$task == task] <- T
 }
 
-# Calc work cycles
+## Mark leaf tasks
+if(verbo) print("Marking leaf tasks ...")
+ts.data["leaf"] <- F
+ts.data$leaf[ts.data$num_children == 0] <- T
+
+## Calc work cycles
+### Work is the amount of computation by a task excluding runtime system calls.
+if(verbo) print("Calculating work cycles ...")
 ts.data$work_cycles <- ts.data$exec_cycles - ts.data$overhead_cycles
 
-# Calc parallel benefit
-calc_par_ben <- function(t)
+## Calc parallel benefit
+### Parallel benefit is the ratio of work done by a task to the average overhead incurred by its parent.
+if(verbo) print("Calculating parallel benefit ...")
+calc_parallel_benefit <- function(t)
 {
     t.p <- ts.data$parent[ts.data$task == t]
     t.p.o <- ts.data$overhead_cycles[ts.data$task == t.p]
@@ -63,22 +65,14 @@ calc_par_ben <- function(t)
     t.p.o.c <- t.p.o/t.p.nc
     ts.data$work_cycles[ts.data$task == t]/t.p.o.c
 }
-par_ben <- as.numeric(sapply(ts.data$task, calc_par_ben))
-ts.data["parallel_benefit"] <- par_ben
+parallel_benefit <- as.numeric(sapply(ts.data$task, calc_parallel_benefit))
+ts.data["parallel_benefit"] <- parallel_benefit
 
-# Write out processed data
-out.file <- paste(gsub(". $", "", ts.file), ".processed", sep="")
-if(verbo) print(paste("Writing file", out.file))
-sink(out.file)
-write.csv(ts.data, out.file, row.names=F)
-sink()
-if(verbo) toc("Processing")
-
-# Calculate lineage
+## Calculate lineage
 if(calc_lineage)
 {
-    if(verbo) tic(type="elapsed")
     # Lineage = child number chain
+    if(verbo) print("Calculating lineage ...")
     ts.data.sub <- subset(ts.data, select=c("task", "parent", "child_number"))
     ts.data.sub <- ts.data.sub[order(ts.data.sub$task),]
     ts.data.sub["lineage"] <- "NA"
@@ -99,64 +93,53 @@ if(calc_lineage)
     }
     # Write out
     out.file <- paste(gsub(". $", "", ts.file), ".lineage", sep="")
-    if(verbo) print(paste("Writing file", out.file))
     write.csv(ts.data.sub, out.file, row.names=F)
-    if(verbo) toc("Lineage calculation")
+    if(verbo) print(paste("Wrote file", out.file))
 }
 
-# Summarize
-if(verbo) tic(type="elapsed")
-out.file <- paste(gsub(". $", "", ts.file), ".info", sep="")
-if(verbo) print(paste("Writing file", out.file))
-sink(out.file)
-cat("num_tasks: ")
-cat(max(ts.data$task))
-cat("\n")
-cat("joins_at_summary: ")
-join.freq <- ts.data %>% group_by(parent, joins_at) %>% summarise(count = n())
-cat(summary(join.freq$count))
-cat("\n")
-cat("work_cyles_summary: ")
-cat(summary(ts.data$work_cycles))
-cat("\n")
-cat("work_cyles_leaf_tasks_summary: ")
-cat(summary(ts.data[ts.data$num_children == 0,]$work_cycles))
-cat("\n")
-cat("work_cyles_non_leaf_tasks_summary: ")
-cat(summary(ts.data[ts.data$num_children > 0,]$work_cycles))
-cat("\n")
-cat("overhead_cyles_summary: ")
-cat(summary(ts.data$overhead_cycles))
-cat("\n")
-cat("overhead_cyles_non_leaf_tasks_summary: ")
-cat(summary(ts.data[ts.data$num_children > 0,]$overhead_cycles))
-cat("\n")
-sink()
+if(exists("compare", where=parsed)) 
+{
+    if(verbo) print("Comparing task stats ...")
+    # Read comparison task stats
+    ts.comp.data <- read.csv(ts.compare.file, header=TRUE)
+    # Subset and merge work deviation data
+    ts.comp.data <- subset(ts.comp.data, select=c(lineage,work_cycles,overhead_cycles))
+    ts.data <- merge(ts.data, ts.comp.data, by="lineage", suffixes=c("",".1"))
+    # Calculate deviation
+    tg.data$work_deviation <- tg.data$work_cycles/tg.data$work_cycles.1
+    tg.data$overhead_deviation <- tg.data$overhead_cycles/tg.data$overhead_cycles.1
+}
+if(verbo) toc("Processing")
 
-# Plot useful summaries
-out.file <- "task-execution-load-balance.pdf"
-if(verbo) print(paste("Writing file", out.file))
-pdf(file=out.file)
-barplot(as.table(tapply(ts.data$work_cycles, ts.data$cpu_id, FUN= function(x) {sum(as.numeric(x))} )), log="y", xlab="cpu", ylab="task execution [log-cycles]")
-garbage <- dev.off()
-out.file <- "task-count-load-balance.pdf"
-if(verbo) print(paste("Writing file", out.file))
-pdf(file=out.file)
-barplot(as.table(tapply(ts.data$task, ts.data$cpu_id, FUN=length)), xlab="cpu", ylab="tasks")
-garbage <- dev.off()
-out.file <- "task-execution-by-name.pdf"
-if(verbo) print(paste("Writing file", out.file))
-pdf(file=out.file)
-par(las=2)
-barplot(as.table(tapply(ts.data$work_cycles, ts.data$tag, FUN= function(x) {sum(as.numeric(x))} )), log="y", xlab="", ylab="task execution [log-cycles]")
-garbage <- dev.off()
-out.file <- "task-count-by-name.pdf"
-if(verbo) print(paste("Writing file", out.file))
-pdf(file=out.file)
-par(las=2)
-barplot(as.table(tapply(ts.data$task, ts.data$tag, FUN=length)), xlab="", ylab="tasks")
-garbage <- dev.off()
-if(verbo) toc("Summarizing")
+# Write out processed data
+out.file <- paste(gsub(". $", "", ts.file), ".processed", sep="")
+sink(out.file)
+write.csv(ts.data, out.file, row.names=F)
+sink()
+if(verbo) print(paste("Wrote file", out.file))
+
+# Summarize
+if(sumry)
+{
+    if(verbo) tic(type="elapsed")
+    out.file <- paste(gsub(". $", "", ts.file), ".info", sep="")
+    sink(out.file)
+
+    if(verbo) print("Summarizing all tasks ...")
+    summarize_task_stats(ts.data, "All tasks")
+
+    if(verbo) print("Summarizing leaf tasks ...")
+    ts.data.leaf <- subset(ts.data, leaf == T)
+    summarize_task_stats(ts.data.leaf, "Leaf tasks")
+
+    if(verbo) print("Summarizing non-leaf tasks ...")
+    ts.data.non.leaf <- subset(ts.data, leaf == F)
+    summarize_task_stats(ts.data.non.leaf, "Non-leaf tasks")
+
+    sink()
+    if(verbo) print(paste("Wrote file", out.file))
+    if(verbo) toc("Summarizing")
+}
 
 # Warn
 wa <- warnings()

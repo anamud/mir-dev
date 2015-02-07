@@ -187,7 +187,7 @@ if(!plot_tree)
 {
     # Connect leaf task to join 
     if(verbo) tic(type="elapsed")
-    leaf_tasks <- setdiff(tg.data$task, parent_nodes_unique)
+    leaf_tasks <- tg.data$task[tg.data$leaf == T]
     leaf_join_nodes <- join_nodes[match(leaf_tasks, tg.data$task)]
     tg[from=leaf_tasks, to=leaf_join_nodes, attr='kind'] <- 'sync'
     tg[from=leaf_tasks, to=leaf_join_nodes, attr='color'] <- sync_edge_color
@@ -293,19 +293,6 @@ if(!plot_tree)
     if(verbo) toc("Connect last fork of 0 to node E")
 }
 
-# Calc work inflation
-# TODO: Move this elsewhere. This does not belong here.
-if(verbo) tic(type="elapsed")
-if("work_cycles" %in% colnames(tg.data) & "work_cycles.1" %in% colnames(tg.data))
-{
-    tg.data$work_inflation <- tg.data$work_cycles/tg.data$work_cycles.1
-}
-if("overhead_cycles" %in% colnames(tg.data) & "overhead_cycles.1" %in% colnames(tg.data))
-{
-    tg.data$overhead_inflation <- tg.data$overhead_cycles/tg.data$overhead_cycles.1
-}
-if(verbo) toc("Calculating work inflation")
-
 # Calc memory hierarchy utilization
 # TODO: Move this elsewhere. This does not belong here.
 if(verbo) tic(type="elapsed")
@@ -365,7 +352,7 @@ for(attrib in size_scaled)
 # Constants
 tg <- set.vertex.attribute(tg, name='color', index=task_index, value=task_color)
 # Scale attributes to color
-attrib_color_scaled <- c("mem_fp", "compute_int", "PAPI_RES_STL_sum", "mem_hier_util", "work_inflation", "overhead_inflation", "parallel_benefit")
+attrib_color_scaled <- c("mem_fp", "compute_int", "PAPI_RES_STL_sum", "mem_hier_util", "work_deviation", "overhead_deviation", "parallel_benefit")
 for(attrib in attrib_color_scaled)
 {
     if(attrib %in% colnames(tg.data))
@@ -398,11 +385,6 @@ for(attrib in attrib_color_distinct)
         sink()
     }
 }
-
-# Mark leaf tasks
-leaf_tasks <- setdiff(tg.data$task, parent_nodes_unique)
-leaf_task_index <- match(as.character(leaf_tasks), V(tg)$name)
-tg <- set.vertex.attribute(tg, name='leaf', index=leaf_task_index, value='T')
 
 # Set label and color of 'task 0'
 start_index <- V(tg)$name == '0'
@@ -875,12 +857,12 @@ if("compute_int" %in% colnames(tg.data))
 }
 
 # Work deviation problem
-if("work_inflation" %in% colnames(tg.data))
+if("work_deviation" %in% colnames(tg.data))
 {
     prob_tg <- base_tg
-    prob_task <- subset(tg.data, work_inflation > 2, select=task)
+    prob_task <- subset(tg.data, work_deviation > 2, select=task)
     prob_task_index <- match(as.character(prob_task$task), V(prob_tg)$name)
-    prob_task_color <- get.vertex.attribute(prob_tg, name='work_inflation_to_color', index=prob_task_index)
+    prob_task_color <- get.vertex.attribute(prob_tg, name='work_deviation_to_color', index=prob_task_index)
     prob_tg <- set.vertex.attribute(prob_tg, name='color', index=prob_task_index, value=prob_task_color)
     tg_file_out <- paste(gsub(". $", "", tg.ofilen), "-problem-work-deviation.graphml", sep="")
     if(verbo) print(paste("Writing file", tg_file_out))
