@@ -58,6 +58,11 @@ if(verbo) tic(type="elapsed")
 tg.data <- read.csv(tg.file, header=TRUE)
 if(verbo) toc("Read data")
 
+# Information output
+tg.info.out <- paste(gsub(". $", "", tg.ofilen), ".info", sep="")
+sink(tg.info.out)
+sink()
+
 # Remove non-sense data
 if(verbo) tic(type="elapsed")
 # Remove background task 
@@ -275,24 +280,6 @@ if(!plot_tree)
     if(verbo) toc("Connect last fork of 0 to node E")
 }
 
-# Calc memory hierarchy utilization
-# TODO: Move this elsewhere. This does not belong here.
-if(verbo) tic(type="elapsed")
-if("work_cycles" %in% colnames(tg.data) & "PAPI_RES_STL_sum" %in% colnames(tg.data))
-{
-    tg.data$mem_hier_util <- tg.data$PAPI_RES_STL_sum/tg.data$work_cycles
-}
-if(verbo) toc("Calculating memory hierarchy utilization")
-
-# Calc compute intensity
-# TODO: Move this elsewhere. This does not belong here.
-if(verbo) tic(type="elapsed")
-if("ins_count" %in% colnames(tg.data) & "mem_fp" %in% colnames(tg.data))
-{
-    tg.data$compute_int <- tg.data$ins_count/tg.data$mem_fp
-}
-if(verbo) toc("Calculating compute intensity")
-
 # Set attributes
 if(verbo) tic(type="elapsed")
 # Common vertex attributes
@@ -415,6 +402,12 @@ if("exec_cycles" %in% colnames(tg.data))
     if(length(fork_bal_ec_unique) == 1) p_fork_size <- fork_size_mult
     else p_fork_size <- fork_size_mult * as.numeric(cut(fork_bal_ec, fork_size_bins))
     tg <- set.vertex.attribute(tg, name='exec_balance_to_size', index=fork_nodes_index, value=p_fork_size)
+
+    sink(tg.info.out, append=T)
+    print("Load balance among siblings = max(exec_cycles)/mean(exec_cycles):")
+    print(summary(fork_bal_ec))
+    sink()
+    box_plotter(fork_bal_ec, xt="", yt="Sibling load balance = max(exec_cycles)/mean(exec_cycles)")
 }
 
 # Set fork balance in terms of work_cycles
@@ -444,6 +437,12 @@ if("work_cycles" %in% colnames(tg.data))
     if(length(fork_bal_wc_unique) == 1) p_fork_size <- fork_size_mult
     else p_fork_size <- fork_size_mult * as.numeric(cut(fork_bal_wc, fork_size_bins))
     tg <- set.vertex.attribute(tg, name='work_balance_to_size', index=fork_nodes_index, value=p_fork_size)
+
+    sink(tg.info.out, append=T)
+    print("Load balance among siblings = max(work_cycles)/mean(work_cycles):")
+    print(summary(fork_bal_wc))
+    sink()
+    box_plotter(fork_bal_wc, xt="", yt="Sibling load balance = max(work_cycles)/mean(work_cycles)")
 }
 
 # Set fork scatter
@@ -480,6 +479,12 @@ if("cpu_id" %in% colnames(tg.data))
     if(length(fork_scatter_unique) == 1) p_fork_color <- fork_color_pal[1]
     else p_fork_color <- fork_color_pal[as.numeric(cut(fork_scatter, fork_color_bins))]
     tg <- set.vertex.attribute(tg, name='scatter_to_color', index=fork_nodes_index, value=p_fork_color)
+
+    sink(tg.info.out, append=T)
+    print("Scatter among siblings = mean(scatter):")
+    print(summary(fork_scatter))
+    sink()
+    box_plotter(fork_scatter, xt="", yt="Sibling scatter = mean(scatter)")
 }
 
 # Set join vertex attributes 
@@ -600,10 +605,7 @@ if("ins_count" %in% colnames(tg.data) && !plot_tree)
     if(verbo) toc("Critical path calculation (based on instructions)")
     
     # Calculate and write info
-    if(verbo) tic(type="elapsed")
-    tg.file.out <- paste(gsub(". $", "", tg.ofilen), ".info", sep="")
-    if(verbo) print(paste("Writing file", tg.file.out))
-    sink(tg.file.out)
+    sink(tg.info.out, append=T)
     print("Unit = Instructions")
     print("span (critical path)")
     print(lpl)
@@ -695,10 +697,7 @@ if("ins_count" %in% colnames(tg.data) && !plot_tree)
     if(verbo) toc("Critical path calculation (based on cycles)")
     
     # Calculate and write info
-    if(verbo) tic(type="elapsed")
-    tg.file.out <- paste(gsub(". $", "", tg.ofilen), ".info", sep="")
-    if(verbo) print(paste("Writing file", tg.file.out))
-    sink(tg.file.out)
+    sink(tg.info.out, append=T)
     print("Unit = Cycles")
     print("span (critical path)")
     print(lpl)
@@ -734,12 +733,12 @@ if("ins_count" %in% colnames(tg.data) && !plot_tree)
     if(verbo) toc("Simplify")
 }
 
-# Write dot file
-if(verbo) tic(type="elapsed")
-tg.file.out <- paste(gsub(". $", "", tg.ofilen), ".dot", sep="")
-if(verbo) print(paste("Writing file", tg.file.out))
-res <- write.graph(tg, file=tg.file.out, format="dot")
-if(verbo) toc("Write dot")
+## Write dot file
+#if(verbo) tic(type="elapsed")
+#tg.file.out <- paste(gsub(". $", "", tg.ofilen), ".dot", sep="")
+#if(verbo) print(paste("Writing file", tg.file.out))
+#res <- write.graph(tg, file=tg.file.out, format="dot")
+#if(verbo) toc("Write dot")
 
 # Write gml file
 if(verbo) tic(type="elapsed")
@@ -748,15 +747,15 @@ if(verbo) print(paste("Writing file", tg.file.out))
 res <- write.graph(tg, file=tg.file.out, format="graphml")
 if(verbo) toc("Write graphml")
 
-# # Write pdf file
-# if(verbo) tic(type="elapsed")
-# lyt <- layout.fruchterman.reingold(tg,niter=500,area=vcount(tg)^2,coolexp=3,repulserad=vcount(tg)^3,maxdelta=vcount(tg))
-# tg.file.out <- paste(gsub(". $", "", tg.ofilen), ".pdf", sep="")
-# if(verbo) print(paste("Writing file", tg.file.out))
-# pdf(file=tg.file.out)
-# plot(tg, layout=lyt)
-# dev.off()
-# if(verbo) toc("Write pdf")
+## Write pdf file
+#if(verbo) tic(type="elapsed")
+#lyt <- layout.fruchterman.reingold(tg,niter=500,area=vcount(tg)^2,coolexp=3,repulserad=vcount(tg)^3,maxdelta=vcount(tg))
+#tg.file.out <- paste(gsub(". $", "", tg.ofilen), ".pdf", sep="")
+#if(verbo) print(paste("Writing file", tg.file.out))
+#pdf(file=tg.file.out)
+#plot(tg, layout=lyt)
+#dev.off()
+#if(verbo) toc("Write pdf")
 
 # Write adjacency matrix file
 if(verbo) tic(type="elapsed")

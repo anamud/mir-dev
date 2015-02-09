@@ -149,38 +149,62 @@ summarize_task_stats <- function(df, plot_title=" ")
   if("PAPI_RES_STL_sum" %in% colnames(df))
   {
     df$work.PAPI_RES_STL <- df$work_cycles/df$PAPI_RES_STL_sum
-    df$ovh.PAPI_RES_STL <- df$overhead_cycles/df$PAPI_RES_STL_sum
     
     print("Work to PAPI_RES_STL ratio:")
     print(summary(df$work.PAPI_RES_STL))
     box_plotter(df$work.PAPI_RES_STL, xt="", yt="Work to PAPI_RES_STL ratio", mt=plot_title)
-
-    print("Parallel overhead to PAPI_RES_STL ratio:")
-    print(summary(df$ovh.PAPI_RES_STL))
-    box_plotter(df$ovh.PAPI_RES_STL, xt="", yt="Parallel overhead to PAPI_RES_STL ratio", mt=plot_title)  
 
     # By CPU
     ## Mean work to PAPI_RES_STL ratio
     work.PAPI_RES_STL.cpu <- as.table(tapply(df$work.PAPI_RES_STL, as.numeric(df$cpu_id), FUN= function(x) {mean(as.numeric(x))} ))
     work.PAPI_RES_STL.cpu <- data.frame(work.PAPI_RES_STL.cpu)
     work.PAPI_RES_STL.cpu$Var1 <- as.numeric.factor(work.PAPI_RES_STL.cpu$Var1)
-    bar_plotter(work.PAPI_RES_STL.cpu, xt="Core", yt="Mean work to PAPI_RES_STL ratio", mt=plot_title)
-    
-    ## Mean parallel overhead to PAPI_RES_STL ratio
-    ovh.PAPI_RES_STL.cpu <- as.table(tapply(df$ovh.PAPI_RES_STL, as.numeric(df$cpu_id), FUN= function(x) {mean(as.numeric(x))} ))
-    ovh.PAPI_RES_STL.cpu <- data.frame(ovh.PAPI_RES_STL.cpu)
-    ovh.PAPI_RES_STL.cpu$Var1 <- as.numeric.factor(ovh.PAPI_RES_STL.cpu$Var1)
-    bar_plotter(ovh.PAPI_RES_STL.cpu, xt="Core", yt="Mean parallel overhead to PAPI_RES_STL ratio", mt=plot_title)
+    bar_plotter(work.PAPI_RES_STL.cpu, xt="Core", yt="Work to PAPI_RES_STL mean ratio", mt=plot_title)
     
     # By Tag
     ## Mean work to PAPI_RES_STL ratio
     work.PAPI_RES_STL.tag <- as.table(tapply(df$work.PAPI_RES_STL, df$tag, FUN= function(x) {mean(as.numeric(x))} ))
-    bar_plotter(data.frame(work.PAPI_RES_STL.tag), xt="Tag", yt="Mean work to PAPI_RES_STL ratio",  mt=plot_title, tilt45=T)
-    
-    ## Mean parallel overhead to PAPI_RES_STL ratio
-    ovh.PAPI_RES_STL.tag <- as.table(tapply(df$ovh.PAPI_RES_STL, df$tag, FUN= function(x) {mean(as.numeric(x))} ))
-    bar_plotter(data.frame(ovh.PAPI_RES_STL.tag), xt="Tag", yt="Mean parallel overhead to PAPI_RES_STL ratio", mt=plot_title, tilt45=T)
+    bar_plotter(data.frame(work.PAPI_RES_STL.tag), xt="Tag", yt="Work to PAPI_RES_STL mean ratio",  mt=plot_title, tilt45=T)
   }
-  
+
+  # Memory hierarchy utilization
+  if("mem_hier_util" %in% colnames(df))
+  {
+    print("Memory hierarchy utilization (PAPI_RES_STL to work ratio):")
+    print(summary(df$mem_hier_util))
+    box_plotter(df$mem_hier_util, xt="", yt="Memory hierarchy utilization (PAPI_RES_STL to work ratio)", mt=plot_title)
+
+    # By CPU
+    ## Mean work to PAPI_RES_STL ratio
+    mem_hier_util.cpu <- as.table(tapply(df$mem_hier_util, as.numeric(df$cpu_id), FUN= function(x) {mean(as.numeric(x))} ))
+    mem_hier_util.cpu <- data.frame(mem_hier_util.cpu)
+    mem_hier_util.cpu$Var1 <- as.numeric.factor(mem_hier_util.cpu$Var1)
+    bar_plotter(mem_hier_util.cpu, xt="Core", yt="Mean memory hierarchy utilization (PAPI_RES_STL to work ratio)", mt=plot_title)
+    
+    # By Tag
+    ## Mean work to PAPI_RES_STL ratio
+    mem_hier_util.tag <- as.table(tapply(df$mem_hier_util, df$tag, FUN= function(x) {mean(as.numeric(x))} ))
+    bar_plotter(data.frame(mem_hier_util.tag), xt="Tag", yt="Mean memory hierarchy utilization (PAPI_RES_STL to work ratio)",  mt=plot_title, tilt45=T)
+  }
+
+  # Computation intensity
+  if("compute_int" %in% colnames(df))
+  {
+    print("Compute intensity:")
+    print(summary(df$compute_int))
+    box_plotter(df$compute_int, xt="", yt="Compute intensity (instruction count to memory footprint ratio)", mt=plot_title)
+
+    # By CPU
+    ## Mean work to PAPI_RES_STL ratio
+    compute_int.cpu <- as.table(tapply(df$compute_int, as.numeric(df$cpu_id), FUN= function(x) {mean(as.numeric(x))} ))
+    compute_int.cpu <- data.frame(compute_int.cpu)
+    compute_int.cpu$Var1 <- as.numeric.factor(compute_int.cpu$Var1)
+    bar_plotter(compute_int.cpu, xt="Core", yt="Mean compute intensity (instruction count to memory footprint ratio)", mt=plot_title)
+    
+    # By Tag
+    ## Mean work to PAPI_RES_STL ratio
+    compute_int.tag <- as.table(tapply(df$compute_int, df$tag, FUN= function(x) {mean(as.numeric(x))} ))
+    bar_plotter(data.frame(compute_int.tag), xt="Tag", yt="Mean compute intensity (instruction count to memory footprint ratio)",  mt=plot_title, tilt45=T)
+  }
 }
 

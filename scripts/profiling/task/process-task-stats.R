@@ -68,6 +68,21 @@ calc_parallel_benefit <- function(t)
 parallel_benefit <- as.numeric(sapply(ts.data$task, calc_parallel_benefit))
 ts.data["parallel_benefit"] <- parallel_benefit
 
+## Calc memory hierarchy metrics
+### Memory hierarchy utilization
+if("PAPI_RES_STL_sum" %in% colnames(ts.data))
+{
+    if(verbo) print("Calculating memory hierarchy utilization ...")
+    ts.data$mem_hier_util <- ts.data$PAPI_RES_STL_sum/ts.data$work_cycles
+}
+
+### Compute intensity
+if("ins_count" %in% colnames(ts.data) & "mem_fp" %in% colnames(ts.data))
+{
+    if(verbo) print("Calculating compute intensity ...")
+    ts.data$compute_int <- ts.data$ins_count/ts.data$mem_fp
+}
+
 ## Calculate lineage
 if(calc_lineage)
 {
@@ -106,8 +121,8 @@ if(exists("compare", where=parsed))
     ts.comp.data <- subset(ts.comp.data, select=c(lineage,work_cycles,overhead_cycles))
     ts.data <- merge(ts.data, ts.comp.data, by="lineage", suffixes=c("",".1"))
     # Calculate deviation
-    tg.data$work_deviation <- tg.data$work_cycles/tg.data$work_cycles.1
-    tg.data$overhead_deviation <- tg.data$overhead_cycles/tg.data$overhead_cycles.1
+    ts.data$work_deviation <- ts.data$work_cycles/ts.data$work_cycles.1
+    ts.data$overhead_deviation <- ts.data$overhead_cycles/ts.data$overhead_cycles.1
 }
 if(verbo) toc("Processing")
 
