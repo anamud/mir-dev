@@ -8,17 +8,17 @@ source(paste(mir_root,"/scripts/profiling/task/common.R",sep=""))
 
 # Read arguments
 option_list <- list(
-make_option(c("--lineage"), action="store_true", default=FALSE, help="Calculate task lineage"),
-make_option(c("-d","--data"), help = "Task stats", metavar="FILE"),
-make_option(c("--compare"), help = "Task stats for comparison", metavar="FILE"),
-make_option(c("-v", "--verbose"), action="store_true", default=TRUE, help="Print output [default]"),
-make_option(c("--quiet"), action="store_false", dest="verbose", help="Print little output"),
-make_option(c("--summary"), action="store_true", default=TRUE, help="Summarize [default]"),
-make_option(c("--no-summary"), action="store_false", dest="summary", help="Do not summarize"))
+make_option(c("--lineage"), action="store_true", default=FALSE, help="Calculate task lineage."),
+make_option(c("-d","--data"), help = "Task stats.", metavar="FILE"),
+make_option(c("--compare"), help = "Task stats for comparison.", metavar="FILE"),
+make_option(c("--verbose"), action="store_true", default=TRUE, help="Print output [default]."),
+make_option(c("--quiet"), action="store_false", dest="verbose", help="Print little output."),
+make_option(c("--summary"), action="store_true", default=TRUE, help="Summarize [default]."),
+make_option(c("--no-summary"), action="store_false", dest="summary", help="Do not summarize."))
 parsed <- parse_args(OptionParser(option_list = option_list), args = commandArgs(TRUE))
 if(!exists("data", where=parsed))
 {
-    print("Error: Invalid arguments. Check help (-h)")
+    print("Error: Invalid arguments. Check help (-h).")
     quit("no", 1)
 }
 ts.file <- parsed$data
@@ -109,7 +109,7 @@ if(calc_lineage)
     # Write out
     out.file <- paste(gsub(". $", "", ts.file), ".lineage", sep="")
     write.csv(ts.data.sub, out.file, row.names=F)
-    if(verbo) print(paste("Wrote file", out.file))
+    if(verbo) print(paste("Wrote file:", out.file))
 }
 
 if(exists("compare", where=parsed)) 
@@ -131,7 +131,7 @@ out.file <- paste(gsub(". $", "", ts.file), ".processed", sep="")
 sink(out.file)
 write.csv(ts.data, out.file, row.names=F)
 sink()
-if(verbo) print(paste("Wrote file", out.file))
+if(verbo) print(paste("Wrote file:", out.file))
 
 # Summarize
 if(sumry)
@@ -152,7 +152,7 @@ if(sumry)
     summarize_task_stats(ts.data.non.leaf, "Non-leaf tasks")
 
     sink()
-    if(verbo) print(paste("Wrote file", out.file))
+    if(verbo) print(paste("Wrote file:", out.file))
     if(verbo) toc("Summarizing")
 }
 

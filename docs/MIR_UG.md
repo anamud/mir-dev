@@ -472,7 +472,7 @@ $ Rscript ${MIR_ROOT}/scripts/profiling/task/plot-task-graph.R -d mir-task-stats
 
 > Tip: 
 > The graph plotter will plot in gray scale if `gray` is supplied instead of `color` as the palette (`-p`) argument. 
-> Critical path enumeration usually takes time. To speed up, skip critical path enumeration and calculate only its length using option `--noCPE`.
+> Critical path enumeration usually takes time. To speed up, skip critical path enumeration and calculate only its length using option `--cplengthonly`.
 
 * Huge graphs with 50000+ tasks take a long time to plot. Plot the task graph as a tree to save time.
 ```

@@ -30,15 +30,16 @@ end_shape <- start_shape
 # Parse args
 library(optparse, quietly=TRUE)
 option_list <- list(
-make_option(c("--noCPE"), action="store_true", default=FALSE, help="Skip critical path enumeration. Calculate critical path length only."),
-make_option(c("-v", "--verbose"), action="store_true", default=TRUE, help="Print output [default]"),
-make_option(c("-q", "--quiet"), action="store_false", dest="verbose", help="Print little output"),
-make_option(c("-t", "--tree"), action="store_true", default=FALSE, help="Plot task graph as tree"),
-make_option(c("-a", "--analyze"), action="store_true", default=FALSE, help="Analyze for problems"),
-make_option(c("-c","--config"), default="task-graph-analysis.cfg", help = "Analysis configuration file [default \"%default\"]", metavar="FILE"),
-make_option(c("-d","--data"), help = "Task performance data file", metavar="FILE"),
-make_option(c("-p","--pal"), default="color", help = "Color palette for graph elements [default \"%default\"]"),
-make_option(c("-o","--out"), default="task-graph", help = "Output file suffix [default \"%default\"]", metavar="STRING"))
+make_option(c("--cplengthonly"), action="store_true", default=FALSE, help="Calculate critical path length only. Skip critical path enumeration."),
+make_option(c("--timing"), action="store_true", default=FALSE, help="Print processing time."),
+make_option(c("--verbose"), action="store_true", default=TRUE, help="Print output [default]."),
+make_option(c("--quiet"), action="store_false", dest="verbose", help="Print little output."),
+make_option(c("-t", "--tree"), action="store_true", default=FALSE, help="Plot task graph as tree."),
+make_option(c("--analyze"), action="store_true", default=FALSE, help="Analyze task graph for problems."),
+make_option(c("--config"), default="task-graph-analysis.cfg", help = "Analysis configuration file [default \"%default\"].", metavar="FILE"),
+make_option(c("-d","--data"), help = "Task performance data file.", metavar="FILE"),
+make_option(c("-p","--pal"), default="color", help = "Color palette for graph elements [default \"%default\"]."),
+make_option(c("-o","--out"), default="task-graph", help = "Output file suffix [default \"%default\"].", metavar="STRING"))
 parsed <- parse_args(OptionParser(option_list = option_list), args = commandArgs(TRUE))
 if(!exists("data", where=parsed))
 {
@@ -49,14 +50,16 @@ tg.file <- parsed$data
 tg.color <- parsed$pal
 tg.ofilen <- parsed$out
 verbo <- parsed$verbose
+timed <- parsed$timing
 plot_tree <- parsed$tree
-cp_len_only <- parsed$noCPE
+cp_len_only <- parsed$cplengthonly
 analyze_graph <- parsed$analyze
 
+if(verbo) print("Initializing ...")
 # Read data
-if(verbo) tic(type="elapsed")
+if(timed) tic(type="elapsed")
 tg.data <- read.csv(tg.file, header=TRUE)
-if(verbo) toc("Read data")
+if(timed) toc("Read data")
 
 # Information output
 tg.info.out <- paste(gsub(". $", "", tg.ofilen), ".info", sep="")
@@ -64,13 +67,13 @@ sink(tg.info.out)
 sink()
 
 # Remove non-sense data
-if(verbo) tic(type="elapsed")
+if(timed) tic(type="elapsed")
 # Remove background task 
 tg.data <- tg.data[!is.na(tg.data$parent),]
-if(verbo) toc("Removing non-sense data")
+if(timed) toc("Removing non-sense data")
 
 # Set colors
-if(verbo) tic(type="elapsed")
+if(timed) tic(type="elapsed")
 if(tg.color == "color") {
     join_color <- "#FF7F50"  # coral
     fork_color <- "#2E8B57"  # seagreen
@@ -109,10 +112,11 @@ task_color_bins <- 10
 task_color_pal <- colorf(task_color_bins)
 fork_color_bins <- 10
 fork_color_pal <- colorf(fork_color_bins)
-if(verbo) toc("Setting colors")
+if(timed) toc("Setting colors")
 
+if(verbo) print("Creating graph ...")
 # Create node lists
-if(verbo) tic(type="elapsed")
+if(timed) tic(type="elapsed")
 if(!plot_tree)
 {
     # Create join nodes list
@@ -125,10 +129,10 @@ parent_nodes_unique <- unique(tg.data$parent)
 # Create fork nodes list
 fork_nodes <- mapply(function(x, y, z) {paste('f', x, y, sep='.')}, x=tg.data$parent, y=tg.data$joins_at)
 fork_nodes_unique <- unique(unlist(fork_nodes, use.names=FALSE))
-if(verbo) toc("Node list creation")
+if(timed) toc("Node list creation")
 
 # Create graph
-if(verbo) tic(type="elapsed")
+if(timed) tic(type="elapsed")
 if(!plot_tree)
 {
 tg <- graph.empty(directed=TRUE) + vertices('E', 
@@ -142,16 +146,17 @@ tg <- graph.empty(directed=TRUE) + vertices('E',
                                                      parent_nodes_unique, 
                                                      tg.data$task)))
 }
-if(verbo) toc("Graph creation")
+if(timed) toc("Graph creation")
 
+if(verbo) print("Connecting nodes ...")
 # Connect parent fork to task
-if(verbo) tic(type="elapsed")
+if(timed) tic(type="elapsed")
 tg[from=fork_nodes, to=tg.data$task, attr='kind'] <- 'create'
 tg[from=fork_nodes, to=tg.data$task, attr='color'] <- create_edge_color
-if(verbo) toc("Connect parent fork to task")
+if(timed) toc("Connect parent fork to task")
 
 # Connect parent task to first fork
-if(verbo) tic(type="elapsed")
+if(timed) tic(type="elapsed")
 first_forks_index <- which(grepl("f.[0-9]+.0$", fork_nodes_unique))
 parent_first_forks <- as.vector(sapply(fork_nodes_unique[first_forks_index], function(x) {gsub('f.(.*)\\.+.*','\\1', x)}))
 first_forks <- fork_nodes_unique[first_forks_index]
@@ -168,12 +173,12 @@ if("ins_count" %in% colnames(tg.data))
         tg[to=first_forks, from=parent_first_forks, attr='weight'] <- -as.numeric(tg.data[match(parent_first_forks, tg.data$task),]$work_cycles)
     }
 }
-if(verbo) toc("Connect parent to first fork")
+if(timed) toc("Connect parent to first fork")
 
 if(!plot_tree)
 {
     # Connect leaf task to join 
-    if(verbo) tic(type="elapsed")
+    if(timed) tic(type="elapsed")
     leaf_tasks <- tg.data$task[tg.data$leaf == T]
     leaf_join_nodes <- join_nodes[match(leaf_tasks, tg.data$task)]
     tg[from=leaf_tasks, to=leaf_join_nodes, attr='kind'] <- 'sync'
@@ -189,11 +194,10 @@ if(!plot_tree)
             tg[from=leaf_tasks, to=leaf_join_nodes, attr='weight'] <- -as.numeric(tg.data[match(leaf_tasks, tg.data$task),]$work_cycles)
         }
     }
-
     if(verbo) toc("Connect leaf task to join")
 
     # Connect join to next fork
-    if(verbo) tic(type="elapsed")
+    if(timed) tic(type="elapsed")
     #Rprof("profile-jointonext.out")
     find_next_fork <- function(node)
     {
@@ -231,10 +235,10 @@ if(!plot_tree)
     tg[from=join_nodes_unique, to=next_forks, attr='kind'] <- 'continue'
     tg[from=join_nodes_unique, to=next_forks, attr='color'] <- cont_edge_color
     #Rprof(NULL)
-    if(verbo) toc("Connect join to next fork")
+    if(timed) toc("Connect join to next fork")
 } else {
     # Connect fork to next fork
-    if(verbo) tic(type="elapsed")
+    if(timed) tic(type="elapsed")
     #Rprof("profile-forktonext.out")
     find_next_fork <- function(node)
     {
@@ -261,10 +265,10 @@ if(!plot_tree)
     tg[from=fork_nodes_unique, to=next_forks, attr='kind'] <- 'continue'
     tg[from=fork_nodes_unique, to=next_forks, attr='color'] <- cont_edge_color
     #Rprof(NULL)
-    if(verbo) toc("Connect fork to next fork")
+    if(timed) toc("Connect fork to next fork")
 
     # Connext E to last fork of task 0
-    if(verbo) tic(type="elapsed")
+    if(timed) tic(type="elapsed")
     get_join_count <- function(node)
     {
       # Get node info
@@ -277,11 +281,12 @@ if(!plot_tree)
     largest_join_count_of_zero <- max(as.vector(sapply(fork_nodes_of_zero, get_join_count)))
     tg[from=paste("f.0.",largest_join_count_of_zero,sep=""), to='E', attr='kind'] <- 'continue'
     tg[from=paste("f.0.",largest_join_count_of_zero,sep=""), to='E', attr='color'] <- cont_edge_color
-    if(verbo) toc("Connect last fork of 0 to node E")
+    if(timed) toc("Connect last fork of 0 to node E")
 }
 
 # Set attributes
-if(verbo) tic(type="elapsed")
+if(verbo) print("Setting attributes ...")
+if(timed) tic(type="elapsed")
 # Common vertex attributes
 V(tg)$label <- V(tg)$name
 # Set task vertex attributes
@@ -292,7 +297,10 @@ for (annot in colnames(tg.data))
     values <- as.character(tg.data[,annot])
     tg <- set.vertex.attribute(tg, name=annot, index=task_index, value=values)
 }
+if(timed) toc("Task attribute setting")
+
 # Set size 
+if(timed) tic(type="elapsed")
 # Constants
 tg <- set.vertex.attribute(tg, name='size', index=task_index, value=task_size)
 tg <- set.vertex.attribute(tg, name='width', index=task_index, value=task_size)
@@ -317,7 +325,10 @@ for(attrib in size_scaled)
         tg <- set.vertex.attribute(tg, name=annot_name, index=task_index, value=attrib_val_norm*task_size)
     }
 }
+if(timed) toc("Task size calculation")
+
 # Set color   
+if(timed) tic(type="elapsed")
 # Constants
 tg <- set.vertex.attribute(tg, name='color', index=task_index, value=task_color)
 # Scale attributes to color
@@ -348,13 +359,15 @@ for(attrib in attrib_color_distinct)
         tg <- set.vertex.attribute(tg, name=annot_name, index=task_index, value=attrib_color[match(attrib_val, unique_attrib_val)])
         # Write colors for reference
         tg.file.out <- paste(gsub(". $", "", tg.ofilen), annot_name, sep=".")
-        if(verbo) print(paste("Writing file", tg.file.out))
         sink(tg.file.out)
         print(data.frame(value=unique_attrib_val, color=attrib_color), row.names=F)
         sink()
+        if(verbo) print(paste("Wrote file:", tg.file.out))
     }
 }
+if(timed) toc("Task color calculation")
 
+if(timed) tic(type="elapsed")
 # Set label and color of 'task 0'
 start_index <- V(tg)$name == '0'
 tg <- set.vertex.attribute(tg, name='color', index=start_index, value=other_color)
@@ -375,10 +388,12 @@ tg <- set.vertex.attribute(tg, name='size', index=fork_nodes_index, value=fork_s
 tg <- set.vertex.attribute(tg, name='color', index=fork_nodes_index, value=fork_color)
 tg <- set.vertex.attribute(tg, name='label', index=fork_nodes_index, value='^')
 tg <- set.vertex.attribute(tg, name='shape', index=fork_nodes_index, value=fork_shape)
+if(timed) toc("Misc. attribute calculation")
 
 # Set fork balance in terms of exec_cycles
 if("exec_cycles" %in% colnames(tg.data))
 {
+    if(timed) tic(type="elapsed")
     get_fork_bal <- function(fork)
     {
       # Get fork info
@@ -408,11 +423,13 @@ if("exec_cycles" %in% colnames(tg.data))
     print(summary(fork_bal_ec))
     sink()
     box_plotter(fork_bal_ec, xt="", yt="Sibling load balance = max(exec_cycles)/mean(exec_cycles)")
+    if(timed) toc("Sibling load balance calculation (execution cycles)")
 }
 
 # Set fork balance in terms of work_cycles
 if("work_cycles" %in% colnames(tg.data))
 {
+    if(timed) tic(type="elapsed")
     # Set fork balance
     get_fork_bal <- function(fork)
     {
@@ -443,11 +460,13 @@ if("work_cycles" %in% colnames(tg.data))
     print(summary(fork_bal_wc))
     sink()
     box_plotter(fork_bal_wc, xt="", yt="Sibling load balance = max(work_cycles)/mean(work_cycles)")
+    if(timed) toc("Sibling load balance calculation (work cycles)")
 }
 
 # Set fork scatter
 if("cpu_id" %in% colnames(tg.data))
 {
+    if(timed) tic(type="elapsed")
     # Set fork scatter
     get_fork_scatter <- function(fork)
     {
@@ -485,19 +504,23 @@ if("cpu_id" %in% colnames(tg.data))
     print(summary(fork_scatter))
     sink()
     box_plotter(fork_scatter, xt="", yt="Sibling scatter = mean(scatter)")
+    if(timed) toc("Fork scatter calculation")
 }
 
 # Set join vertex attributes 
 if(!plot_tree)
 {
-join_nodes_index <- startsWith(V(tg)$name, 'j')
-tg <- set.vertex.attribute(tg, name='size', index=join_nodes_index, value=join_size)
-tg <- set.vertex.attribute(tg, name='color', index=join_nodes_index, value=join_color)
-tg <- set.vertex.attribute(tg, name='label', index=join_nodes_index, value='*')
-tg <- set.vertex.attribute(tg, name='shape', index=join_nodes_index, value=join_shape)
+    if(timed) tic(type="elapsed")
+    join_nodes_index <- startsWith(V(tg)$name, 'j')
+    tg <- set.vertex.attribute(tg, name='size', index=join_nodes_index, value=join_size)
+    tg <- set.vertex.attribute(tg, name='color', index=join_nodes_index, value=join_color)
+    tg <- set.vertex.attribute(tg, name='label', index=join_nodes_index, value='*')
+    tg <- set.vertex.attribute(tg, name='shape', index=join_nodes_index, value=join_shape)
+    if(timed) toc("Join attribute setting")
 }
 
 # Set edge attributes
+if(timed) tic(type="elapsed")
 if("ins_count" %in% colnames(tg.data))
 {
     tg <- set.edge.attribute(tg, name="weight", index=which(is.na(E(tg)$weight)), value=0)
@@ -509,10 +532,11 @@ if("ins_count" %in% colnames(tg.data))
         tg <- set.edge.attribute(tg, name="work_cycles", index=which(is.na(E(tg)$work_cycles)), value=0)
     }
 }
-if(verbo) toc("Attribute setting")
+if(timed) toc("Edge attribute setting")
 
-# Check if any fork or join vertices have bad degrees
-if(verbo) tic(type="elapsed")
+# Check if graph has bad structure
+if(verbo) print("Checking for bad structure ...")
+if(timed) tic(type="elapsed")
 if(is.element(0, degree(tg, fork_nodes_index, mode = c("in"))))
 {
   print("Warning! One or more fork nodes have zero degree since one or more tasks in the program performed empty synchronization.")
@@ -540,19 +564,17 @@ if(!plot_tree)
       quit("no", 1)
     }
 }
-if(verbo) toc("Checking for bad structure")
+if(timed) toc("Checking for bad structure")
 
 if("ins_count" %in% colnames(tg.data) && !plot_tree)
 {
+    if(verbo) print("Calculating critical path ...")
+    if(timed) tic(type="elapsed")
     # Simplify - DO NOT USE. Fucks up the critical path analysis.
-    #if(verbo) tic(type="elapsed")
     #tg <- simplify(tg, edge.attr.comb=toString)
-    #if(verbo) toc("Simplify")
 
     # Get critical path
-    if(verbo) tic(type="elapsed")
     #Rprof("profile-critpathcalc.out")
-    if(verbo) print("Calculating critical path ...")
     if(cp_len_only) 
     {
       # Get critical path length
@@ -602,7 +624,6 @@ if("ins_count" %in% colnames(tg.data) && !plot_tree)
       close(pb)
     }
     #Rprof(NULL)
-    if(verbo) toc("Critical path calculation (based on instructions)")
     
     # Calculate and write info
     sink(tg.info.out, append=T)
@@ -628,23 +649,22 @@ if("ins_count" %in% colnames(tg.data) && !plot_tree)
 
         # Write out shape
         tg.file.out <- paste(gsub(". $", "", tg.ofilen), "-shape.pdf", sep="")
-        if(verbo) print(paste("Writing file", tg.file.out))
         pdf(tg.file.out)
         plot(tg_shape, freq=T, xlab="Distance from START in instruction count", ylab="Tasks", main="Instantaneous task parallelism", col="white")
         abline(h = length(unique(tg.data$cpu_id)), col = "blue", lty=2)
         dev.off()
+        if(verbo) print(paste("Wrote file:", tg.file.out))
     }
-    if(verbo) toc("Calc and write info")
+    if(timed) toc("Critical path calculation (based on instructions)")
 } else if("work_cycles" %in% colnames(tg.data) && !plot_tree) {
+    if(verbo) print("Calculating critical path ...")
+    if(timed) tic(type="elapsed")
+
     # Simplify - DO NOT USE. Fucks up the critical path analysis.
-    #if(verbo) tic(type="elapsed")
     #tg <- simplify(tg, edge.attr.comb=toString)
-    #if(verbo) toc("Simplify")
 
     # Get critical path
-    if(verbo) tic(type="elapsed")
     #Rprof("profile-critpathcalc.out")
-    if(verbo) print("Calculating critical path ...")
     if(cp_len_only) 
     {
       # Get critical path length
@@ -679,7 +699,7 @@ if("ins_count" %in% colnames(tg.data) && !plot_tree)
         mwdn <- as.vector(nn)[match(mwd,wd)]
         nrp <- list(c(unlist(vgdf$rpath[mwdn]), node))
         vgdf$rpath[node] <- nrp
-        if(verbo) {ctr <- ctr + 1; setTxtProgressBar(pb, ctr);}
+        if(timed) {ctr <- ctr + 1; setTxtProgressBar(pb, ctr);}
       }
       ## Longest path is the largest root distance
       lpl <- max(vgdf$rdist)
@@ -690,11 +710,10 @@ if("ins_count" %in% colnames(tg.data) && !plot_tree)
       # Set back on graph
       tg <- set.vertex.attribute(tg, name="on_crit_path", index=V(tg), value=vgdf$on_crit_path) 
       tg <- set.vertex.attribute(tg, name="rdist", index=V(tg), value=vgdf$rdist)
-      if(verbo) {ctr <- ctr + 1; setTxtProgressBar(pb, ctr);}
+      if(timed) {ctr <- ctr + 1; setTxtProgressBar(pb, ctr);}
       close(pb)
     }
     #Rprof(NULL)
-    if(verbo) toc("Critical path calculation (based on cycles)")
     
     # Calculate and write info
     sink(tg.info.out, append=T)
@@ -720,226 +739,229 @@ if("ins_count" %in% colnames(tg.data) && !plot_tree)
 
         # Write out shape
         tg.file.out <- paste(gsub(". $", "", tg.ofilen), "-shape.pdf", sep="")
-        if(verbo) print(paste("Writing file", tg.file.out))
         pdf(tg.file.out)
         plot(tg_shape, freq=T, xlab="Distance from START in work cycles", ylab="Tasks", main="Instantaneous task parallelism", col="white")
         abline(h = length(unique(tg.data$cpu_id)), col = "blue", lty=2)
         dev.off()
+        if(verbo) print(paste("Wrote file:", tg.file.out))
     }
-    if(verbo) toc("Calc and write info")
+    if(timed) toc("Critical path calculation (based on cycles)")
 } else {
-    if(verbo) tic(type="elapsed")
+    if(verbo) print("Simplifying graph ...")
+    if(timed) tic(type="elapsed")
     tg <- simplify(tg, remove.multiple=T, remove.loops=T)
-    if(verbo) toc("Simplify")
+    if(timed) toc("Simplify")
 }
 
+if(verbo) print("Writing graph files ...")
 ## Write dot file
-#if(verbo) tic(type="elapsed")
+#if(timed) tic(type="elapsed")
 #tg.file.out <- paste(gsub(". $", "", tg.ofilen), ".dot", sep="")
-#if(verbo) print(paste("Writing file", tg.file.out))
 #res <- write.graph(tg, file=tg.file.out, format="dot")
-#if(verbo) toc("Write dot")
+#if(verbo) print(paste("Wrote file:", tg.file.out))
+#if(timed) toc("Write dot")
 
 # Write gml file
-if(verbo) tic(type="elapsed")
+if(timed) tic(type="elapsed")
 tg.file.out <- paste(gsub(". $", "", tg.ofilen), ".graphml", sep="")
-if(verbo) print(paste("Writing file", tg.file.out))
 res <- write.graph(tg, file=tg.file.out, format="graphml")
-if(verbo) toc("Write graphml")
+if(verbo) print(paste("Wrote file:", tg.file.out))
+if(timed) toc("Write graphml")
 
 ## Write pdf file
-#if(verbo) tic(type="elapsed")
+#if(timed) tic(type="elapsed")
 #lyt <- layout.fruchterman.reingold(tg,niter=500,area=vcount(tg)^2,coolexp=3,repulserad=vcount(tg)^3,maxdelta=vcount(tg))
 #tg.file.out <- paste(gsub(". $", "", tg.ofilen), ".pdf", sep="")
-#if(verbo) print(paste("Writing file", tg.file.out))
 #pdf(file=tg.file.out)
 #plot(tg, layout=lyt)
 #dev.off()
-#if(verbo) toc("Write pdf")
+#if(verbo) print(paste("Wrote file:", tg.file.out))
+#if(timed) toc("Write pdf")
 
 # Write adjacency matrix file
-if(verbo) tic(type="elapsed")
+if(timed) tic(type="elapsed")
 tg.file.out <- paste(gsub(". $", "", tg.ofilen), ".adjmat", sep="")
-if(verbo) print(paste("Writing file", tg.file.out))
 sink(tg.file.out)
 print(get.adjacency(tg,names=T))
 sink()
-if(verbo) toc("Write adjacency matrix")
+if(verbo) print(paste("Wrote file:", tg.file.out))
+if(timed) toc("Write adjacency matrix")
 
 # Write edgelist file
-if(verbo) tic(type="elapsed")
+if(timed) tic(type="elapsed")
 tg.file.out <- paste(gsub(". $", "", tg.ofilen), ".edgelist", sep="")
-if(verbo) print(paste("Writing file", tg.file.out))
 sink(tg.file.out)
 print(get.edgelist(tg, names=T))
 sink()
-if(verbo) toc("Write edgelist")
+if(verbo) print(paste("Wrote file:", tg.file.out))
+if(timed) toc("Write edgelist")
 
 # Write node attributes 
-if(verbo) tic(type="elapsed")
+if(timed) tic(type="elapsed")
 tg.file.out <- paste(gsub(". $", "", tg.ofilen), ".nodeattr", sep="")
-if(verbo) print(paste("Writing file", tg.file.out))
 write.table(get.data.frame(tg, what="vertices"), sep=",", file=tg.file.out)
-if(verbo) toc("Write node attributes")
+if(verbo) print(paste("Wrote file:", tg.file.out))
+if(timed) toc("Write node attributes")
 
 # Show problems
 if(analyze_graph)
 {
-if(verbo) tic(type="elapsed")
-# add.alpha function from http://www.magesblog.com/2013/04/how-to-change-alpha-value-of-colours-in.html
-add.alpha <- function(col, alpha=1){
-  apply(sapply(col, col2rgb)/255, 2, function(x) rgb(x[1], x[2], x[3], alpha=alpha))  
-}
-
-# Base task graph with transparent elements
-base_tg <- tg
-base_tg_vertex_color <- add.alpha(get.vertex.attribute(base_tg, name='color'), alpha=0.1)
-base_tg <- set.vertex.attribute(base_tg, name='color', value=base_tg_vertex_color)
-base_tg_edge_color <- add.alpha(get.edge.attribute(base_tg, name='color'), alpha=0.1)
-base_tg <- set.edge.attribute(base_tg, name='color', value=base_tg_edge_color)
-
-# Memory hierarchy utilization problem
-if("mem_hier_util" %in% colnames(tg.data))
-{
-    prob_tg <- base_tg
-    prob_task <- subset(tg.data, mem_hier_util > 0.5, select=task)
-    prob_task_index <- match(as.character(prob_task$task), V(prob_tg)$name)
-    prob_task_color <- get.vertex.attribute(prob_tg, name='mem_hier_util_to_color', index=prob_task_index)
-    prob_tg <- set.vertex.attribute(prob_tg, name='color', index=prob_task_index, value=prob_task_color)
-    tg_file_out <- paste(gsub(". $", "", tg.ofilen), "-problem-memory-hierarchy-utilization.graphml", sep="")
-    if(verbo) print(paste("Writing file", tg_file_out))
-    res <- write.graph(prob_tg, file=tg_file_out, format="graphml")
-}
-
-# Memory footprint problem
-if("mem_fp" %in% colnames(tg.data))
-{
-    prob_tg <- base_tg
-    prob_task <- subset(tg.data, mem_fp > 512000, select=task)
-    prob_task_index <- match(as.character(prob_task$task), V(prob_tg)$name)
-    prob_task_color <- get.vertex.attribute(prob_tg, name='mem_fp_to_color', index=prob_task_index)
-    prob_tg <- set.vertex.attribute(prob_tg, name='color', index=prob_task_index, value=prob_task_color)
-    tg_file_out <- paste(gsub(". $", "", tg.ofilen), "-problem-memory-footprint.graphml", sep="")
-    if(verbo) print(paste("Writing file", tg_file_out))
-    res <- write.graph(prob_tg, file=tg_file_out, format="graphml")
-}
-
-# Compute intensity problem
-if("compute_int" %in% colnames(tg.data))
-{
-    prob_tg <- base_tg
-    prob_task <- subset(tg.data, compute_int < 2, select=task)
-    prob_task_index <- match(as.character(prob_task$task), V(prob_tg)$name)
-    prob_task_color <- get.vertex.attribute(prob_tg, name='compute_int_to_color', index=prob_task_index)
-    prob_tg <- set.vertex.attribute(prob_tg, name='color', index=prob_task_index, value=prob_task_color)
-    tg_file_out <- paste(gsub(". $", "", tg.ofilen), "-problem-compute-intensity.graphml", sep="")
-    if(verbo) print(paste("Writing file", tg_file_out))
-    res <- write.graph(prob_tg, file=tg_file_out, format="graphml")
-}
-
-# Work deviation problem
-if("work_deviation" %in% colnames(tg.data))
-{
-    prob_tg <- base_tg
-    prob_task <- subset(tg.data, work_deviation > 2, select=task)
-    prob_task_index <- match(as.character(prob_task$task), V(prob_tg)$name)
-    prob_task_color <- get.vertex.attribute(prob_tg, name='work_deviation_to_color', index=prob_task_index)
-    prob_tg <- set.vertex.attribute(prob_tg, name='color', index=prob_task_index, value=prob_task_color)
-    tg_file_out <- paste(gsub(". $", "", tg.ofilen), "-problem-work-deviation.graphml", sep="")
-    if(verbo) print(paste("Writing file", tg_file_out))
-    res <- write.graph(prob_tg, file=tg_file_out, format="graphml")
-}
-
-# Parallel benefit problem
-if("parallel_benefit" %in% colnames(tg.data))
-{
-    prob_tg <- base_tg
-    prob_task <- subset(tg.data, parallel_benefit < 1, select=task)
-    prob_task_index <- match(as.character(prob_task$task), V(prob_tg)$name)
-    prob_task_color <- get.vertex.attribute(prob_tg, name='parallel_benefit_to_color', index=prob_task_index)
-    prob_tg <- set.vertex.attribute(prob_tg, name='color', index=prob_task_index, value=prob_task_color)
-    tg_file_out <- paste(gsub(". $", "", tg.ofilen), "-problem-parallel-benefit.graphml", sep="")
-    if(verbo) print(paste("Writing file", tg_file_out))
-    res <- write.graph(prob_tg, file=tg_file_out, format="graphml")
-}
-
-# Parallelism problem
-if(!cp_len_only && !plot_tree) 
-{
-    prob_tg <- base_tg
-    ranges <- which(tg_shape$counts < length(unique(tg.data$cpu_id)))
-    for (r in ranges)
-    {
-        prob_task <- subset(tgdf, rdist < tg_shape$breaks[r+1] & rdist > tg_shape$breaks[r], select=label)
-        prob_task_index <- match(as.character(prob_task$label), V(prob_tg)$name)
-        #prob_task_color <- get.vertex.attribute(prob_tg, name='cpu_id_to_color', index=prob_task_index)
-        prob_task_color <- "red"
-        prob_tg <- set.vertex.attribute(prob_tg, name='color', index=prob_task_index, value=prob_task_color)
+    if(verbo) print("Analyzing graph for problems ...")
+    if(timed) tic(type="elapsed")
+    # add.alpha function from http://www.magesblog.com/2013/04/how-to-change-alpha-value-of-colours-in.html
+    add.alpha <- function(col, alpha=1){
+      apply(sapply(col, col2rgb)/255, 2, function(x) rgb(x[1], x[2], x[3], alpha=alpha))  
     }
-    tg_file_out <- paste(gsub(". $", "", tg.ofilen), "-problem-parallelism.graphml", sep="")
-    if(verbo) print(paste("Writing file", tg_file_out))
-    res <- write.graph(prob_tg, file=tg_file_out, format="graphml")
-}
 
-# Scatter problem
-if("cpu_id" %in% colnames(tg.data) && !plot_tree)
-{
-    prob_tg <- base_tg
-    prob_fork <- V(prob_tg)[fork_nodes_index]$name[which(fork_scatter > (length(unique(tg.data$cpu_id))/4))]
-    for(f in prob_fork)
+    # Base task graph with transparent elements
+    base_tg <- tg
+    base_tg_vertex_color <- add.alpha(get.vertex.attribute(base_tg, name='color'), alpha=0.1)
+    base_tg <- set.vertex.attribute(base_tg, name='color', value=base_tg_vertex_color)
+    base_tg_edge_color <- add.alpha(get.edge.attribute(base_tg, name='color'), alpha=0.1)
+    base_tg <- set.edge.attribute(base_tg, name='color', value=base_tg_edge_color)
+
+    # Memory hierarchy utilization problem
+    if("mem_hier_util" %in% colnames(tg.data))
     {
-        f_i <- match(as.character(f), V(prob_tg)$name)
-        prob_task_index <- neighbors(prob_tg, f_i, mode="out") 
-        prob_task_color <- get.vertex.attribute(prob_tg, name='cpu_id_to_color', index=prob_task_index)
+        prob_tg <- base_tg
+        prob_task <- subset(tg.data, mem_hier_util > 0.5, select=task)
+        prob_task_index <- match(as.character(prob_task$task), V(prob_tg)$name)
+        prob_task_color <- get.vertex.attribute(prob_tg, name='mem_hier_util_to_color', index=prob_task_index)
         prob_tg <- set.vertex.attribute(prob_tg, name='color', index=prob_task_index, value=prob_task_color)
-        f_s <- unlist(strsplit(f, "\\."))
-        f_p <- as.numeric(f_s[2])
-        f_p_i <- match(as.character(f_p), V(prob_tg)$name)
-        f_p_c <- get.vertex.attribute(prob_tg, name='cpu_id_to_color', index=f_p_i)
-        prob_tg <- set.vertex.attribute(prob_tg, name='color', index=f_i, value=f_p_c)
+        tg_file_out <- paste(gsub(". $", "", tg.ofilen), "-problem-memory-hierarchy-utilization.graphml", sep="")
+        res <- write.graph(prob_tg, file=tg_file_out, format="graphml")
+        if(verbo) print(paste("Wrote file:", tg_file_out))
     }
-    tg_file_out <- paste(gsub(". $", "", tg.ofilen), "-problem-scatter.graphml", sep="")
-    if(verbo) print(paste("Writing file", tg_file_out))
-    res <- write.graph(prob_tg, file=tg_file_out, format="graphml")
-}
 
-# Balance problem (work cycles)
-if("work_cycles" %in% colnames(tg.data) && !plot_tree)
-{
-    prob_tg <- base_tg
-    prob_fork <- V(prob_tg)[fork_nodes_index]$name[which(fork_bal_wc > 2)]
-    for(f in prob_fork)
+    # Memory footprint problem
+    if("mem_fp" %in% colnames(tg.data))
     {
-        f_i <- match(as.character(f), V(prob_tg)$name)
-        prob_task_index <- neighbors(prob_tg, f_i, mode="out") 
-        #prob_task_color <- get.vertex.attribute(prob_tg, name='cpu_id_to_color', index=prob_task_index)
-        prob_task_color <- "red"
+        prob_tg <- base_tg
+        prob_task <- subset(tg.data, mem_fp > 512000, select=task)
+        prob_task_index <- match(as.character(prob_task$task), V(prob_tg)$name)
+        prob_task_color <- get.vertex.attribute(prob_tg, name='mem_fp_to_color', index=prob_task_index)
         prob_tg <- set.vertex.attribute(prob_tg, name='color', index=prob_task_index, value=prob_task_color)
+        tg_file_out <- paste(gsub(". $", "", tg.ofilen), "-problem-memory-footprint.graphml", sep="")
+        res <- write.graph(prob_tg, file=tg_file_out, format="graphml")
+        if(verbo) print(paste("Wrote file:", tg_file_out))
     }
-    tg_file_out <- paste(gsub(". $", "", tg.ofilen), "-problem-balance-work-cycles.graphml", sep="")
-    if(verbo) print(paste("Writing file", tg_file_out))
-    res <- write.graph(prob_tg, file=tg_file_out, format="graphml")
-}
 
-# Balance problem (execution cycles)
-if("work_cycles" %in% colnames(tg.data) && !plot_tree)
-{
-    prob_tg <- base_tg
-    prob_fork <- V(prob_tg)[fork_nodes_index]$name[which(fork_bal_ec > 2)]
-    for(f in prob_fork)
+    # Compute intensity problem
+    if("compute_int" %in% colnames(tg.data))
     {
-        f_i <- match(as.character(f), V(prob_tg)$name)
-        prob_task_index <- neighbors(prob_tg, f_i, mode="out") 
-        #prob_task_color <- get.vertex.attribute(prob_tg, name='cpu_id_to_color', index=prob_task_index)
-        prob_task_color <- "red"
+        prob_tg <- base_tg
+        prob_task <- subset(tg.data, compute_int < 2, select=task)
+        prob_task_index <- match(as.character(prob_task$task), V(prob_tg)$name)
+        prob_task_color <- get.vertex.attribute(prob_tg, name='compute_int_to_color', index=prob_task_index)
         prob_tg <- set.vertex.attribute(prob_tg, name='color', index=prob_task_index, value=prob_task_color)
+        tg_file_out <- paste(gsub(". $", "", tg.ofilen), "-problem-compute-intensity.graphml", sep="")
+        res <- write.graph(prob_tg, file=tg_file_out, format="graphml")
+        if(verbo) print(paste("Wrote file:", tg_file_out))
     }
-    tg_file_out <- paste(gsub(". $", "", tg.ofilen), "-problem-balance-exec-cycles.graphml", sep="")
-    if(verbo) print(paste("Writing file", tg_file_out))
-    res <- write.graph(prob_tg, file=tg_file_out, format="graphml")
-}
 
-if(verbo) toc("Analyzing task graph for problems")
+    # Work deviation problem
+    if("work_deviation" %in% colnames(tg.data))
+    {
+        prob_tg <- base_tg
+        prob_task <- subset(tg.data, work_deviation > 2, select=task)
+        prob_task_index <- match(as.character(prob_task$task), V(prob_tg)$name)
+        prob_task_color <- get.vertex.attribute(prob_tg, name='work_deviation_to_color', index=prob_task_index)
+        prob_tg <- set.vertex.attribute(prob_tg, name='color', index=prob_task_index, value=prob_task_color)
+        tg_file_out <- paste(gsub(". $", "", tg.ofilen), "-problem-work-deviation.graphml", sep="")
+        res <- write.graph(prob_tg, file=tg_file_out, format="graphml")
+        if(verbo) print(paste("Wrote file:", tg_file_out))
+    }
+
+    # Parallel benefit problem
+    if("parallel_benefit" %in% colnames(tg.data))
+    {
+        prob_tg <- base_tg
+        prob_task <- subset(tg.data, parallel_benefit < 1, select=task)
+        prob_task_index <- match(as.character(prob_task$task), V(prob_tg)$name)
+        prob_task_color <- get.vertex.attribute(prob_tg, name='parallel_benefit_to_color', index=prob_task_index)
+        prob_tg <- set.vertex.attribute(prob_tg, name='color', index=prob_task_index, value=prob_task_color)
+        tg_file_out <- paste(gsub(". $", "", tg.ofilen), "-problem-parallel-benefit.graphml", sep="")
+        res <- write.graph(prob_tg, file=tg_file_out, format="graphml")
+        if(verbo) print(paste("Wrote file:", tg_file_out))
+    }
+
+    # Parallelism problem
+    if(!cp_len_only && !plot_tree) 
+    {
+        prob_tg <- base_tg
+        ranges <- which(tg_shape$counts < length(unique(tg.data$cpu_id)))
+        for (r in ranges)
+        {
+            prob_task <- subset(tgdf, rdist < tg_shape$breaks[r+1] & rdist > tg_shape$breaks[r], select=label)
+            prob_task_index <- match(as.character(prob_task$label), V(prob_tg)$name)
+            #prob_task_color <- get.vertex.attribute(prob_tg, name='cpu_id_to_color', index=prob_task_index)
+            prob_task_color <- "red"
+            prob_tg <- set.vertex.attribute(prob_tg, name='color', index=prob_task_index, value=prob_task_color)
+        }
+        tg_file_out <- paste(gsub(". $", "", tg.ofilen), "-problem-parallelism.graphml", sep="")
+        res <- write.graph(prob_tg, file=tg_file_out, format="graphml")
+        if(verbo) print(paste("Wrote file:", tg_file_out))
+    }
+
+    # Scatter problem
+    if("cpu_id" %in% colnames(tg.data) && !plot_tree)
+    {
+        prob_tg <- base_tg
+        prob_fork <- V(prob_tg)[fork_nodes_index]$name[which(fork_scatter > (length(unique(tg.data$cpu_id))/4))]
+        for(f in prob_fork)
+        {
+            f_i <- match(as.character(f), V(prob_tg)$name)
+            prob_task_index <- neighbors(prob_tg, f_i, mode="out") 
+            prob_task_color <- get.vertex.attribute(prob_tg, name='cpu_id_to_color', index=prob_task_index)
+            prob_tg <- set.vertex.attribute(prob_tg, name='color', index=prob_task_index, value=prob_task_color)
+            f_s <- unlist(strsplit(f, "\\."))
+            f_p <- as.numeric(f_s[2])
+            f_p_i <- match(as.character(f_p), V(prob_tg)$name)
+            f_p_c <- get.vertex.attribute(prob_tg, name='cpu_id_to_color', index=f_p_i)
+            prob_tg <- set.vertex.attribute(prob_tg, name='color', index=f_i, value=f_p_c)
+        }
+        tg_file_out <- paste(gsub(". $", "", tg.ofilen), "-problem-scatter.graphml", sep="")
+        res <- write.graph(prob_tg, file=tg_file_out, format="graphml")
+        if(verbo) print(paste("Wrote file:", tg_file_out))
+    }
+
+    # Balance problem (work cycles)
+    if("work_cycles" %in% colnames(tg.data) && !plot_tree)
+    {
+        prob_tg <- base_tg
+        prob_fork <- V(prob_tg)[fork_nodes_index]$name[which(fork_bal_wc > 2)]
+        for(f in prob_fork)
+        {
+            f_i <- match(as.character(f), V(prob_tg)$name)
+            prob_task_index <- neighbors(prob_tg, f_i, mode="out") 
+            #prob_task_color <- get.vertex.attribute(prob_tg, name='cpu_id_to_color', index=prob_task_index)
+            prob_task_color <- "red"
+            prob_tg <- set.vertex.attribute(prob_tg, name='color', index=prob_task_index, value=prob_task_color)
+        }
+        tg_file_out <- paste(gsub(". $", "", tg.ofilen), "-problem-balance-work-cycles.graphml", sep="")
+        res <- write.graph(prob_tg, file=tg_file_out, format="graphml")
+        if(verbo) print(paste("Wrote file:", tg_file_out))
+    }
+
+    # Balance problem (execution cycles)
+    if("work_cycles" %in% colnames(tg.data) && !plot_tree)
+    {
+        prob_tg <- base_tg
+        prob_fork <- V(prob_tg)[fork_nodes_index]$name[which(fork_bal_ec > 2)]
+        for(f in prob_fork)
+        {
+            f_i <- match(as.character(f), V(prob_tg)$name)
+            prob_task_index <- neighbors(prob_tg, f_i, mode="out") 
+            #prob_task_color <- get.vertex.attribute(prob_tg, name='cpu_id_to_color', index=prob_task_index)
+            prob_task_color <- "red"
+            prob_tg <- set.vertex.attribute(prob_tg, name='color', index=prob_task_index, value=prob_task_color)
+        }
+        tg_file_out <- paste(gsub(". $", "", tg.ofilen), "-problem-balance-exec-cycles.graphml", sep="")
+        res <- write.graph(prob_tg, file=tg_file_out, format="graphml")
+        if(verbo) print(paste("Wrote file:", tg_file_out))
+    }
+
+    if(timed) toc("Analyzing graph for problems")
 }
 
 # Warn
