@@ -12,6 +12,7 @@ make_option(c("--lineage"), action="store_true", default=FALSE, help="Calculate 
 make_option(c("-d","--data"), help = "Task stats.", metavar="FILE"),
 make_option(c("--compare"), help = "Task stats for comparison.", metavar="FILE"),
 make_option(c("--verbose"), action="store_true", default=TRUE, help="Print output [default]."),
+make_option(c("--timing"), action="store_true", default=FALSE, help="Print timing information."),
 make_option(c("--quiet"), action="store_false", dest="verbose", help="Print little output."),
 make_option(c("--summary"), action="store_true", default=TRUE, help="Summarize [default]."),
 make_option(c("--no-summary"), action="store_false", dest="summary", help="Do not summarize."))
@@ -24,6 +25,7 @@ if(!exists("data", where=parsed))
 ts.file <- parsed$data
 verbo <- parsed$verbose
 sumry <- parsed$summary
+timed <- parsed$timing
 calc_lineage <- parsed$lineage
 if(exists("compare", where=parsed)) ts.compare.file <- parsed$compare
 
@@ -32,7 +34,7 @@ if(verbo) print(paste("Reading file", ts.file))
 ts.data <- read.csv(ts.file, header=TRUE)
 
 # Process
-if(verbo) tic(type="elapsed")
+if(timed) tic(type="elapsed")
 if(verbo) print("Processing ...")
 
 ## Find task executed last per worker
@@ -124,7 +126,7 @@ if(exists("compare", where=parsed))
     ts.data$work_deviation <- ts.data$work_cycles/ts.data$work_cycles.1
     ts.data$overhead_deviation <- ts.data$overhead_cycles/ts.data$overhead_cycles.1
 }
-if(verbo) toc("Processing")
+if(timed) toc("Processing")
 
 # Write out processed data
 out.file <- paste(gsub(". $", "", ts.file), ".processed", sep="")
@@ -136,24 +138,25 @@ if(verbo) print(paste("Wrote file:", out.file))
 # Summarize
 if(sumry)
 {
-    if(verbo) tic(type="elapsed")
+    if(verbo) print("Summarizing ...")
+    if(timed) tic(type="elapsed")
     out.file <- paste(gsub(". $", "", ts.file), ".info", sep="")
     sink(out.file)
 
-    if(verbo) print("Summarizing all tasks ...")
+    print("Summarizing all tasks ...")
     summarize_task_stats(ts.data, "All tasks")
 
-    if(verbo) print("Summarizing leaf tasks ...")
+    print("Summarizing leaf tasks ...")
     ts.data.leaf <- subset(ts.data, leaf == T)
     summarize_task_stats(ts.data.leaf, "Leaf tasks")
 
-    if(verbo) print("Summarizing non-leaf tasks ...")
+    print("Summarizing non-leaf tasks ...")
     ts.data.non.leaf <- subset(ts.data, leaf == F)
     summarize_task_stats(ts.data.non.leaf, "Non-leaf tasks")
 
     sink()
     if(verbo) print(paste("Wrote file:", out.file))
-    if(verbo) toc("Summarizing")
+    if(timed) toc("Summarizing")
 }
 
 # Warn

@@ -81,18 +81,18 @@ if(tg.color == "color") {
     other_color <- "#DEB887" # burlywood
     create_edge_color <- fork_color
     sync_edge_color <- join_color
-    scope_edge_color <-"black" 
-    cont_edge_color <- "black"
+    scope_edge_color <- "#000000"
+    cont_edge_color <- "#000000"
     colorf <- colorRampPalette(c("blue", "red"))
 } else if(tg.color == "gray") {
     join_color <- "#D3D3D3"  # light gray
     fork_color <- "#D3D3D3"  # light gray
     task_color <- "#6B6B6B"  # gray42
     other_color <- "#D3D3D3" # light gray
-    create_edge_color <- "black"
-    sync_edge_color <- "black"
-    scope_edge_color <-"black" 
-    cont_edge_color <- "black"
+    create_edge_color <- "#000000"
+    sync_edge_color <- "#000000"
+    scope_edge_color <-  "#000000"
+    cont_edge_color <- "#000000"
     colorf <- colorRampPalette(c("gray10", "gray90"))
 } else {
     print("Unsupported color format. Supported formats: color, gray. Defaulting to color.")
@@ -102,8 +102,8 @@ if(tg.color == "color") {
     other_color <- "#DEB887" # burlywood
     create_edge_color <- fork_color
     sync_edge_color <- join_color
-    scope_edge_color <-"black" 
-    cont_edge_color <- "black"
+    scope_edge_color <- "#000000"
+    cont_edge_color <- "#000000"
     colorf <- colorRampPalette(c("blue", "red"))
 }
 
@@ -148,8 +148,8 @@ tg <- graph.empty(directed=TRUE) + vertices('E',
 }
 if(timed) toc("Graph creation")
 
-if(verbo) print("Connecting nodes ...")
 # Connect parent fork to task
+if(verbo) print("Connecting nodes ...")
 if(timed) tic(type="elapsed")
 tg[from=fork_nodes, to=tg.data$task, attr='kind'] <- 'create'
 tg[from=fork_nodes, to=tg.data$task, attr='color'] <- create_edge_color
@@ -194,7 +194,7 @@ if(!plot_tree)
             tg[from=leaf_tasks, to=leaf_join_nodes, attr='weight'] <- -as.numeric(tg.data[match(leaf_tasks, tg.data$task),]$work_cycles)
         }
     }
-    if(verbo) toc("Connect leaf task to join")
+    if(timed) toc("Connect leaf task to join")
 
     # Connect join to next fork
     if(timed) tic(type="elapsed")
@@ -394,6 +394,7 @@ if(timed) toc("Misc. attribute calculation")
 if("exec_cycles" %in% colnames(tg.data))
 {
     if(timed) tic(type="elapsed")
+    #Rprof("profile-fork-bal-ec.out", line.profiling=TRUE)
     get_fork_bal <- function(fork)
     {
       # Get fork info
@@ -410,13 +411,14 @@ if("exec_cycles" %in% colnames(tg.data))
       
       bal
     }
-    fork_bal_ec <- as.vector(sapply(V(tg)[fork_nodes_index]$name, get_fork_bal))
+    fork_bal_ec <- as.vector(sapply(V(tg)$name[fork_nodes_index], get_fork_bal))
     tg <- set.vertex.attribute(tg, name='exec_balance', index=fork_nodes_index, value=fork_bal_ec*fork_size)
 
     fork_bal_ec_unique <- unique(fork_bal_ec)
     if(length(fork_bal_ec_unique) == 1) p_fork_size <- fork_size_mult
     else p_fork_size <- fork_size_mult * as.numeric(cut(fork_bal_ec, fork_size_bins))
     tg <- set.vertex.attribute(tg, name='exec_balance_to_size', index=fork_nodes_index, value=p_fork_size)
+    #Rprof(NULL)
 
     sink(tg.info.out, append=T)
     print("Load balance among siblings = max(exec_cycles)/mean(exec_cycles):")
@@ -817,8 +819,11 @@ if(analyze_graph)
     base_tg <- tg
     base_tg_vertex_color <- add.alpha(get.vertex.attribute(base_tg, name='color'), alpha=0.1)
     base_tg <- set.vertex.attribute(base_tg, name='color', value=base_tg_vertex_color)
-    base_tg_edge_color <- add.alpha(get.edge.attribute(base_tg, name='color'), alpha=0.1)
-    base_tg <- set.edge.attribute(base_tg, name='color', value=base_tg_edge_color)
+    if(!plot_tree)
+    {
+        base_tg_edge_color <- add.alpha(get.edge.attribute(base_tg, name='color'), alpha=0.1)
+        base_tg <- set.edge.attribute(base_tg, name='color', value=base_tg_edge_color)
+    }
 
     # Memory hierarchy utilization problem
     if("mem_hier_util" %in% colnames(tg.data))
@@ -895,7 +900,7 @@ if(analyze_graph)
             prob_task <- subset(tgdf, rdist < tg_shape$breaks[r+1] & rdist > tg_shape$breaks[r], select=label)
             prob_task_index <- match(as.character(prob_task$label), V(prob_tg)$name)
             #prob_task_color <- get.vertex.attribute(prob_tg, name='cpu_id_to_color', index=prob_task_index)
-            prob_task_color <- "red"
+            prob_task_color <- "#FF0000"
             prob_tg <- set.vertex.attribute(prob_tg, name='color', index=prob_task_index, value=prob_task_color)
         }
         tg_file_out <- paste(gsub(". $", "", tg.ofilen), "-problem-parallelism.graphml", sep="")
@@ -935,7 +940,7 @@ if(analyze_graph)
             f_i <- match(as.character(f), V(prob_tg)$name)
             prob_task_index <- neighbors(prob_tg, f_i, mode="out") 
             #prob_task_color <- get.vertex.attribute(prob_tg, name='cpu_id_to_color', index=prob_task_index)
-            prob_task_color <- "red"
+            prob_task_color <- "#FF0000"
             prob_tg <- set.vertex.attribute(prob_tg, name='color', index=prob_task_index, value=prob_task_color)
         }
         tg_file_out <- paste(gsub(". $", "", tg.ofilen), "-problem-balance-work-cycles.graphml", sep="")
@@ -953,7 +958,7 @@ if(analyze_graph)
             f_i <- match(as.character(f), V(prob_tg)$name)
             prob_task_index <- neighbors(prob_tg, f_i, mode="out") 
             #prob_task_color <- get.vertex.attribute(prob_tg, name='cpu_id_to_color', index=prob_task_index)
-            prob_task_color <- "red"
+            prob_task_color <- "#FF0000"
             prob_tg <- set.vertex.attribute(prob_tg, name='color', index=prob_task_index, value=prob_task_color)
         }
         tg_file_out <- paste(gsub(". $", "", tg.ofilen), "-problem-balance-exec-cycles.graphml", sep="")
