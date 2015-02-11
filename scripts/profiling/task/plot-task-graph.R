@@ -416,7 +416,11 @@ if("exec_cycles" %in% colnames(tg.data))
     print("Load balance among siblings = max(exec_cycles)/mean(exec_cycles):")
     print(summary(fork_bal_ec))
     sink()
+    tg.info.plot.out <- paste(gsub(". $", "", parsed$out), ".sibling-balance-(ec)-plot.pdf", sep="")
+    pdf(tg.info.plot.out)
     box_plotter(fork_bal_ec, xt="", yt="Sibling load balance = max(exec_cycles)/mean(exec_cycles)")
+    junk <- dev.off()
+    if(parsed$verbose) print(paste("Wrote file:", tg.info.plot.out)) 
     if(parsed$timing) toc("Sibling load balance calculation (execution cycles)")
 }
 
@@ -453,7 +457,11 @@ if("work_cycles" %in% colnames(tg.data))
     print("Load balance among siblings = max(work_cycles)/mean(work_cycles):")
     print(summary(fork_bal_wc))
     sink()
+    tg.info.plot.out <- paste(gsub(". $", "", parsed$out), ".sibling-balance-(wc)-plot.pdf", sep="")
+    pdf(tg.info.plot.out)
     box_plotter(fork_bal_wc, xt="", yt="Sibling load balance = max(work_cycles)/mean(work_cycles)")
+    junk <- dev.off()
+    if(parsed$verbose) print(paste("Wrote file:", tg.info.plot.out)) 
     if(parsed$timing) toc("Sibling load balance calculation (work cycles)")
 }
 
@@ -497,7 +505,11 @@ if("cpu_id" %in% colnames(tg.data))
     print("Scatter among siblings = mean(scatter):")
     print(summary(fork_scatter))
     sink()
+    tg.info.plot.out <- paste(gsub(". $", "", parsed$out), ".fork-scatter-plot.pdf", sep="")
+    pdf(tg.info.plot.out)
     box_plotter(fork_scatter, xt="", yt="Sibling scatter = mean(scatter)")
+    junk <- dev.off()
+    if(parsed$verbose) print(paste("Wrote file:", tg.info.plot.out)) 
     if(parsed$timing) toc("Fork scatter calculation")
 }
 
@@ -693,7 +705,7 @@ if("ins_count" %in% colnames(tg.data) && !parsed$tree)
         mwdn <- as.vector(nn)[match(mwd,wd)]
         nrp <- list(c(unlist(vgdf$rpath[mwdn]), node))
         vgdf$rpath[node] <- nrp
-        if(parsed$timing) {ctr <- ctr + 1; setTxtProgressBar(pb, ctr);}
+        if(parsed$verbose) {ctr <- ctr + 1; setTxtProgressBar(pb, ctr);}
       }
       ## Longest path is the largest root distance
       lpl <- max(vgdf$rdist)
@@ -704,7 +716,7 @@ if("ins_count" %in% colnames(tg.data) && !parsed$tree)
       # Set back on graph
       tg <- set.vertex.attribute(tg, name="on_crit_path", index=V(tg), value=vgdf$on_crit_path) 
       tg <- set.vertex.attribute(tg, name="rdist", index=V(tg), value=vgdf$rdist)
-      if(parsed$timing) {ctr <- ctr + 1; setTxtProgressBar(pb, ctr);}
+      if(parsed$verbose) {ctr <- ctr + 1; setTxtProgressBar(pb, ctr);}
       close(pb)
     }
     #Rprof(NULL)

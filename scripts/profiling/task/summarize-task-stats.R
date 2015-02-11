@@ -189,7 +189,9 @@ summarize_task_stats <- function(df, plot_title=" ")
 if(parsed$verbose) print("Summarizing ...")
 if(parsed$timing) tic(type="elapsed")
 out.file <- paste(gsub(". $", "", parsed$data), ".info", sep="")
+out.file.plots <- paste(gsub(". $", "", parsed$data), ".plots.pdf", sep="")
 sink(out.file)
+pdf(out.file.plots)
 
 print("Summarizing all tasks ...")
 summarize_task_stats(ts.data, "All tasks")
@@ -205,7 +207,9 @@ if("last_to_finish" %in% colnames(ts.data))
     summarize_task_stats(ts.data.non.leaf, "Non-leaf tasks")
 }
 
+junk <- dev.off()
 sink()
+if(parsed$verbose) print(paste("Wrote file:", out.file.plots))
 if(parsed$verbose) print(paste("Wrote file:", out.file))
 if(parsed$timing) toc("Summarizing")
 
