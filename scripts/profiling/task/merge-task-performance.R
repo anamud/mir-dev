@@ -10,6 +10,7 @@ library(optparse, quietly=TRUE)
 option_list <- list(
 make_option(c("-v", "--verbose"), action="store_true", default=TRUE, help="Print output [default]"),
 make_option(c("-q", "--quiet"), action="store_false", dest="verbose", help="Print little output"),
+make_option(c("--timing"), action="store_true", default=FALSE, help="Print timing"),
 make_option(c("-l","--left"), help = "Table 1", metavar="FILE"),
 make_option(c("-r","--right"), help = "Table 2", metavar="FILE"),
 make_option(c("-o","--out"), default="merged-task-perf", help = "Output file name [default \"%default\"]", metavar="STRING"),
