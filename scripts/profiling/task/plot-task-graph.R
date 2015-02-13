@@ -658,6 +658,7 @@ if("ins_count" %in% colnames(tg.data) && !parsed$tree)
         pdf(tg.file.out)
         plot(tg_shape, freq=T, xlab="Distance from START in instruction count", ylab="Tasks", main="Instantaneous task parallelism", col="white")
         abline(h = length(unique(tg.data$cpu_id)), col = "blue", lty=2)
+        abline(h = work/lpl , col = "red", lty=1)
         dev.off()
         if(parsed$verbose) print(paste("Wrote file:", tg.file.out))
     }
@@ -748,6 +749,7 @@ if("ins_count" %in% colnames(tg.data) && !parsed$tree)
         pdf(tg.file.out)
         plot(tg_shape, freq=T, xlab="Distance from START in work cycles", ylab="Tasks", main="Instantaneous task parallelism", col="white")
         abline(h = length(unique(tg.data$cpu_id)), col = "blue", lty=2)
+        abline(h = work/lpl , col = "red", lty=1)
         dev.off()
         if(parsed$verbose) print(paste("Wrote file:", tg.file.out))
     }
@@ -829,11 +831,26 @@ if(parsed$analyze)
         base_tg <- set.edge.attribute(base_tg, name='color', value=base_tg_edge_color)
     }
 
+    # Analysis text output
+    tg.ana.out <- paste(gsub(". $", "", parsed$out), ".analysis.info", sep="")
+    sink(tg.ana.out)
+    print("Task graph structure:")
+    print(paste("Number of nodes =", length(V(base_tg))))
+    print(paste("Number of edges =", length(E(base_tg))))
+    print(paste("Number of tasks =", length(tg.data$task)))
+    print(paste("Number of forks =", length(fork_nodes_unique)))
+    print("Analysis:")
+    sink()
+
     # Memory hierarchy utilization problem
     if("mem_hier_util" %in% colnames(tg.data))
     {
         prob_tg <- base_tg
-        prob_task <- subset(tg.data, mem_hier_util > 0.5, select=task)
+        mem_hier_util.thresh <- 0.5
+        prob_task <- subset(tg.data, mem_hier_util > mem_hier_util.thresh, select=task)
+        sink(tg.ana.out, append=T)
+        print(paste(length(prob_task$task), "tasks have mem_hier_util >", mem_hier_util.thresh))
+        sink()
         prob_task_index <- match(as.character(prob_task$task), V(prob_tg)$name)
         prob_task_color <- get.vertex.attribute(prob_tg, name='mem_hier_util_to_color', index=prob_task_index)
         prob_tg <- set.vertex.attribute(prob_tg, name='color', index=prob_task_index, value=prob_task_color)
@@ -846,7 +863,11 @@ if(parsed$analyze)
     if("mem_fp" %in% colnames(tg.data))
     {
         prob_tg <- base_tg
-        prob_task <- subset(tg.data, mem_fp > 512000, select=task)
+        mem_fp.thresh <- 512000
+        prob_task <- subset(tg.data, mem_fp > mem_fp.thresh, select=task)
+        sink(tg.ana.out, append=T)
+        print(paste(length(prob_task$task), "tasks have mem_fp >", mem_fp.thresh))
+        sink()
         prob_task_index <- match(as.character(prob_task$task), V(prob_tg)$name)
         prob_task_color <- get.vertex.attribute(prob_tg, name='mem_fp_to_color', index=prob_task_index)
         prob_tg <- set.vertex.attribute(prob_tg, name='color', index=prob_task_index, value=prob_task_color)
@@ -859,7 +880,11 @@ if(parsed$analyze)
     if("compute_int" %in% colnames(tg.data))
     {
         prob_tg <- base_tg
-        prob_task <- subset(tg.data, compute_int < 2, select=task)
+        compute_int.thresh <- 2
+        prob_task <- subset(tg.data, compute_int < compute_int.thresh, select=task)
+        sink(tg.ana.out, append=T)
+        print(paste(length(prob_task$task), "tasks have compute_int <", compute_int.thresh))
+        sink()
         prob_task_index <- match(as.character(prob_task$task), V(prob_tg)$name)
         prob_task_color <- get.vertex.attribute(prob_tg, name='compute_int_to_color', index=prob_task_index)
         prob_tg <- set.vertex.attribute(prob_tg, name='color', index=prob_task_index, value=prob_task_color)
@@ -872,7 +897,11 @@ if(parsed$analyze)
     if("work_deviation" %in% colnames(tg.data))
     {
         prob_tg <- base_tg
-        prob_task <- subset(tg.data, work_deviation > 2, select=task)
+        work_deviation.thresh <- 2
+        prob_task <- subset(tg.data, work_deviation > work_deviation.thresh, select=task)
+        sink(tg.ana.out, append=T)
+        print(paste(length(prob_task$task), "tasks have work_deviation >", work_deviation.thresh))
+        sink()
         prob_task_index <- match(as.character(prob_task$task), V(prob_tg)$name)
         prob_task_color <- get.vertex.attribute(prob_tg, name='work_deviation_to_color', index=prob_task_index)
         prob_tg <- set.vertex.attribute(prob_tg, name='color', index=prob_task_index, value=prob_task_color)
@@ -885,7 +914,11 @@ if(parsed$analyze)
     if("parallel_benefit" %in% colnames(tg.data))
     {
         prob_tg <- base_tg
-        prob_task <- subset(tg.data, parallel_benefit < 1, select=task)
+        parallel_benefit.thresh <- 1
+        prob_task <- subset(tg.data, parallel_benefit < parallel_benefit.thresh, select=task)
+        sink(tg.ana.out, append=T)
+        print(paste(length(prob_task$task), "tasks have parallel_benefit <", parallel_benefit.thresh))
+        sink()
         prob_task_index <- match(as.character(prob_task$task), V(prob_tg)$name)
         prob_task_color <- get.vertex.attribute(prob_tg, name='parallel_benefit_to_color', index=prob_task_index)
         prob_tg <- set.vertex.attribute(prob_tg, name='color', index=prob_task_index, value=prob_task_color)
@@ -898,7 +931,11 @@ if(parsed$analyze)
     if(!parsed$cplengthonly && !parsed$tree) 
     {
         prob_tg <- base_tg
-        ranges <- which(tg_shape$counts < length(unique(tg.data$cpu_id)))
+        parallelism.thresh <- length(unique(tg.data$cpu_id))
+        ranges <- which(tg_shape$counts < parallelism.thresh)
+        sink(tg.ana.out, append=T)
+        print(paste(length(ranges), "shape bins out of", length(tg_shape$counts), "have parallelism <", parallelism.thresh))
+        sink()
         for (r in ranges)
         {
             prob_task <- subset(tgdf, rdist < tg_shape$breaks[r+1] & rdist > tg_shape$breaks[r], select=label)
@@ -916,7 +953,11 @@ if(parsed$analyze)
     if("cpu_id" %in% colnames(tg.data) && !parsed$tree)
     {
         prob_tg <- base_tg
-        prob_fork <- V(prob_tg)[fork_nodes_index]$name[which(fork_scatter > (length(unique(tg.data$cpu_id))/4))]
+        scatter.thresh <- (length(unique(tg.data$cpu_id))/4)
+        prob_fork <- V(prob_tg)[fork_nodes_index]$name[which(fork_scatter > scatter.thresh)]
+        sink(tg.ana.out, append=T)
+        print(paste(length(prob_fork), "forks have scatter >", scatter.thresh))
+        sink()
         for(f in prob_fork)
         {
             f_i <- match(as.character(f), V(prob_tg)$name)
@@ -938,7 +979,11 @@ if(parsed$analyze)
     if("work_cycles" %in% colnames(tg.data) && !parsed$tree)
     {
         prob_tg <- base_tg
-        prob_fork <- V(prob_tg)[fork_nodes_index]$name[which(fork_bal_wc > 2)]
+        fork_bal.thresh <- 2
+        prob_fork <- V(prob_tg)[fork_nodes_index]$name[which(fork_bal_wc > fork_bal.thresh)]
+        sink(tg.ana.out, append=T)
+        print(paste(length(prob_fork), "forks have load balance (work cycles) >", fork_bal.thresh))
+        sink()
         for(f in prob_fork)
         {
             f_i <- match(as.character(f), V(prob_tg)$name)
@@ -953,10 +998,14 @@ if(parsed$analyze)
     }
 
     # Balance problem (execution cycles)
-    if("work_cycles" %in% colnames(tg.data) && !parsed$tree)
+    if("exec_cycles" %in% colnames(tg.data) && !parsed$tree)
     {
         prob_tg <- base_tg
+        fork_bal.thresh <- 2
         prob_fork <- V(prob_tg)[fork_nodes_index]$name[which(fork_bal_ec > 2)]
+        sink(tg.ana.out, append=T)
+        print(paste(length(prob_fork), "forks have load balance (execution cycles) >", fork_bal.thresh))
+        sink()
         for(f in prob_fork)
         {
             f_i <- match(as.character(f), V(prob_tg)$name)
@@ -970,6 +1019,7 @@ if(parsed$analyze)
         if(parsed$verbose) print(paste("Wrote file:", tg_file_out))
     }
 
+    if(parsed$verbose) print(paste("Wrote file:", tg.ana.out))
     if(parsed$timing) toc("Analyzing graph for problems")
 }
 
