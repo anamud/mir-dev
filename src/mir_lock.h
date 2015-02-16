@@ -22,7 +22,7 @@
 
 BEGIN_C_DECLS 
 
-/*LIBINT_DECL_BEGIN*/
+/*LIBINT_BASE_DECL_BEGIN*/
 struct mir_lock_t
 {/*{{{*/
 #ifdef __tile__
@@ -32,7 +32,7 @@ struct mir_lock_t
     pthread_mutex_t m;
 #endif
 };/*}}}*/
-/*LIBINT_DECL_END*/
+/*LIBINT_BASE_DECL_END*/
 
 /*LIBINT_BEGIN*/
 void mir_lock_create(struct mir_lock_t* lock);

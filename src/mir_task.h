@@ -24,7 +24,7 @@ struct mir_task_list_t
     struct mir_task_list_t* next;
 };
 
-/*LIBINT_DECL_BEGIN*/
+/*LIBINT_BASE_DECL_BEGIN*/
 enum mir_data_access_t 
 {
     MIR_DATA_ACCESS_READ = 0,
@@ -32,7 +32,9 @@ enum mir_data_access_t
     MIR_DATA_ACCESS_NUM_TYPES
 };
 typedef enum mir_data_access_t mir_data_access_t;
+/*LIBINT_BASE_DECL_END*/
 
+/*LIBINT_DECL_BEGIN*/
 struct mir_data_footprint_t
 {
     void* base;
