@@ -838,6 +838,8 @@ if(parsed$analyze)
     print(paste("Number of nodes =", length(V(base_tg))))
     print(paste("Number of edges =", length(E(base_tg))))
     print(paste("Number of tasks =", length(tg.data$task)))
+    if(!parsed$cplengthonly)
+        print(paste("Number of critical tasks =", length(tgdf$task[tgdf$on_crit_path == 1])))
     print(paste("Number of forks =", length(fork_nodes_unique)))
     print("Analysis:")
     sink()
@@ -851,6 +853,13 @@ if(parsed$analyze)
         sink(tg.ana.out, append=T)
         print(paste(length(prob_task$task), "tasks have mem_hier_util >", mem_hier_util.thresh))
         sink()
+        if(!parsed$cplengthonly)
+        {
+            prob_task_critical <- subset(tgdf, mem_hier_util > mem_hier_util.thresh & on_crit_path == 1, select=task)
+            sink(tg.ana.out, append=T)
+            print(paste(length(prob_task_critical$task), "critical tasks have mem_hier_util >", mem_hier_util.thresh))
+            sink()
+        }
         prob_task_index <- match(as.character(prob_task$task), V(prob_tg)$name)
         prob_task_color <- get.vertex.attribute(prob_tg, name='mem_hier_util_to_color', index=prob_task_index)
         prob_tg <- set.vertex.attribute(prob_tg, name='color', index=prob_task_index, value=prob_task_color)
@@ -868,6 +877,13 @@ if(parsed$analyze)
         sink(tg.ana.out, append=T)
         print(paste(length(prob_task$task), "tasks have mem_fp >", mem_fp.thresh))
         sink()
+        if(!parsed$cplengthonly)
+        {
+            prob_task_critical <- subset(tgdf, mem_fp > mem_fp.thresh & on_crit_path == 1, select=task)
+            sink(tg.ana.out, append=T)
+            print(paste(length(prob_task_critical$task), "critical tasks have mem_fp >", mem_fp.thresh))
+            sink()
+        }
         prob_task_index <- match(as.character(prob_task$task), V(prob_tg)$name)
         prob_task_color <- get.vertex.attribute(prob_tg, name='mem_fp_to_color', index=prob_task_index)
         prob_tg <- set.vertex.attribute(prob_tg, name='color', index=prob_task_index, value=prob_task_color)
@@ -885,6 +901,13 @@ if(parsed$analyze)
         sink(tg.ana.out, append=T)
         print(paste(length(prob_task$task), "tasks have compute_int <", compute_int.thresh))
         sink()
+        if(!parsed$cplengthonly)
+        {
+            prob_task_critical <- subset(tgdf, compute_int < compute_int.thresh & on_crit_path == 1, select=task)
+            sink(tg.ana.out, append=T)
+            print(paste(length(prob_task_critical$task), "critical tasks have compute_int <", compute_int.thresh))
+            sink()
+        }
         prob_task_index <- match(as.character(prob_task$task), V(prob_tg)$name)
         prob_task_color <- get.vertex.attribute(prob_tg, name='compute_int_to_color', index=prob_task_index)
         prob_tg <- set.vertex.attribute(prob_tg, name='color', index=prob_task_index, value=prob_task_color)
@@ -902,6 +925,13 @@ if(parsed$analyze)
         sink(tg.ana.out, append=T)
         print(paste(length(prob_task$task), "tasks have work_deviation >", work_deviation.thresh))
         sink()
+        if(!parsed$cplengthonly)
+        {
+            prob_task_critical <- subset(tgdf, work_deviation > work_deviation.thresh & on_crit_path == 1, select=task)
+            sink(tg.ana.out, append=T)
+            print(paste(length(prob_task_critical$task), "critical tasks have work_deviation >", work_deviation.thresh))
+            sink()
+        }
         prob_task_index <- match(as.character(prob_task$task), V(prob_tg)$name)
         prob_task_color <- get.vertex.attribute(prob_tg, name='work_deviation_to_color', index=prob_task_index)
         prob_tg <- set.vertex.attribute(prob_tg, name='color', index=prob_task_index, value=prob_task_color)
@@ -919,6 +949,13 @@ if(parsed$analyze)
         sink(tg.ana.out, append=T)
         print(paste(length(prob_task$task), "tasks have parallel_benefit <", parallel_benefit.thresh))
         sink()
+        if(!parsed$cplengthonly)
+        {
+            prob_task_critical <- subset(tgdf, parallel_benefit < parallel_benefit.thresh & on_crit_path == 1, select=task)
+            sink(tg.ana.out, append=T)
+            print(paste(length(prob_task_critical$task), "critical tasks have parallel_benefit <", parallel_benefit.thresh))
+            sink()
+        }
         prob_task_index <- match(as.character(prob_task$task), V(prob_tg)$name)
         prob_task_color <- get.vertex.attribute(prob_tg, name='parallel_benefit_to_color', index=prob_task_index)
         prob_tg <- set.vertex.attribute(prob_tg, name='color', index=prob_task_index, value=prob_task_color)
@@ -958,10 +995,16 @@ if(parsed$analyze)
         sink(tg.ana.out, append=T)
         print(paste(length(prob_fork), "forks have scatter >", scatter.thresh))
         sink()
+        prob_fork_critical <- 0
         for(f in prob_fork)
         {
             f_i <- match(as.character(f), V(prob_tg)$name)
             prob_task_index <- neighbors(prob_tg, f_i, mode="out") 
+            if(!parsed$cplengthonly)
+            {
+                if(any(get.vertex.attribute(prob_tg, name='on_crit_path', index=prob_task_index) == 1))
+                   prob_fork_critical <- prob_fork_critical + 1
+            }
             prob_task_color <- get.vertex.attribute(prob_tg, name='cpu_id_to_color', index=prob_task_index)
             prob_tg <- set.vertex.attribute(prob_tg, name='color', index=prob_task_index, value=prob_task_color)
             f_s <- unlist(strsplit(f, "\\."))
@@ -969,6 +1012,12 @@ if(parsed$analyze)
             f_p_i <- match(as.character(f_p), V(prob_tg)$name)
             f_p_c <- get.vertex.attribute(prob_tg, name='cpu_id_to_color', index=f_p_i)
             prob_tg <- set.vertex.attribute(prob_tg, name='color', index=f_i, value=f_p_c)
+        }
+        if(!parsed$cplengthonly)
+        {
+            sink(tg.ana.out, append=T)
+            print(paste(prob_fork_critical, "critical forks have scatter >", scatter.thresh))
+            sink()
         }
         tg_file_out <- paste(gsub(". $", "", parsed$out), "-problem-scatter.graphml", sep="")
         res <- write.graph(prob_tg, file=tg_file_out, format="graphml")
@@ -984,13 +1033,25 @@ if(parsed$analyze)
         sink(tg.ana.out, append=T)
         print(paste(length(prob_fork), "forks have load balance (work cycles) >", fork_bal.thresh))
         sink()
+        prob_fork_critical <- 0
         for(f in prob_fork)
         {
             f_i <- match(as.character(f), V(prob_tg)$name)
             prob_task_index <- neighbors(prob_tg, f_i, mode="out") 
+            if(!parsed$cplengthonly)
+            {
+                if(any(get.vertex.attribute(prob_tg, name='on_crit_path', index=prob_task_index) == 1))
+                   prob_fork_critical <- prob_fork_critical + 1
+            }
             #prob_task_color <- get.vertex.attribute(prob_tg, name='cpu_id_to_color', index=prob_task_index)
             prob_task_color <- "#FF0000"
             prob_tg <- set.vertex.attribute(prob_tg, name='color', index=prob_task_index, value=prob_task_color)
+        }
+        if(!parsed$cplengthonly)
+        {
+            sink(tg.ana.out, append=T)
+            print(paste(prob_fork_critical, "critical forks have load balance (work cycles) >", fork_bal.thresh))
+            sink()
         }
         tg_file_out <- paste(gsub(". $", "", parsed$out), "-problem-balance-work-cycles.graphml", sep="")
         res <- write.graph(prob_tg, file=tg_file_out, format="graphml")
@@ -1002,17 +1063,29 @@ if(parsed$analyze)
     {
         prob_tg <- base_tg
         fork_bal.thresh <- 2
-        prob_fork <- V(prob_tg)[fork_nodes_index]$name[which(fork_bal_ec > 2)]
+        prob_fork <- V(prob_tg)[fork_nodes_index]$name[which(fork_bal_ec > fork_bal.thresh)]
         sink(tg.ana.out, append=T)
         print(paste(length(prob_fork), "forks have load balance (execution cycles) >", fork_bal.thresh))
         sink()
+        prob_fork_critical <- 0
         for(f in prob_fork)
         {
             f_i <- match(as.character(f), V(prob_tg)$name)
             prob_task_index <- neighbors(prob_tg, f_i, mode="out") 
+            if(!parsed$cplengthonly)
+            {
+                if(any(get.vertex.attribute(prob_tg, name='on_crit_path', index=prob_task_index) == 1))
+                   prob_fork_critical <- prob_fork_critical + 1
+            }
             #prob_task_color <- get.vertex.attribute(prob_tg, name='cpu_id_to_color', index=prob_task_index)
             prob_task_color <- "#FF0000"
             prob_tg <- set.vertex.attribute(prob_tg, name='color', index=prob_task_index, value=prob_task_color)
+        }
+        if(!parsed$cplengthonly)
+        {
+            sink(tg.ana.out, append=T)
+            print(paste(prob_fork_critical, "critical forks have load balance (execution cycles) >", fork_bal.thresh))
+            sink()
         }
         tg_file_out <- paste(gsub(". $", "", parsed$out), "-problem-balance-exec-cycles.graphml", sep="")
         res <- write.graph(prob_tg, file=tg_file_out, format="graphml")
