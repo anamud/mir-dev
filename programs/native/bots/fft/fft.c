@@ -6029,6 +6029,7 @@ void fft_aux(int n, COMPLEX * in, COMPLEX * out, int *factors, int depth, COMPLE
                     imm_args.nW = nW;
                     imm_args.m = m;
                     imm_args.k = k;
+                    imm_args.d = depth+1;
                     mir_task_create((mir_tfunc_t) smp_ol_fft_aux_32, (void*) &imm_args, sizeof(imm_args), 0, NULL, "smp_ol_fft_aux_32");
                 }
             }
