@@ -33,9 +33,17 @@ if(parsed$timing) toc("Removing non-sense data")
 summarize_task_stats <- function(df, plot_title=" ")
 {
   # Basics
+  ## Number of tasks
   print("Number of tasks:")
   print(length(df$task))
 
+  ## Count by tag
+  count.tag <- df %>% group_by(tag) %>% summarise(count = n())
+  print("Count by tag")
+  print(data.frame(count.tag))
+  bar_plotter(data.frame(count.tag), xt="Tag", yt="Count", mt=plot_title, tilt45=T)
+
+  ## Siblings
   print("Number of siblings:")
   join.freq <- df %>% group_by(parent, joins_at) %>% summarise(count = n())
   print(summary(join.freq$count))
@@ -61,6 +69,14 @@ summarize_task_stats <- function(df, plot_title=" ")
       ## By tag
       work.tag <- as.table(tapply(df$work_cycles, df$tag, FUN= function(x) {sum(as.numeric(x))} ))
       bar_plotter(data.frame(work.tag), xt="Tag", yt="Work cycles", mt=plot_title, tilt45=T)
+
+      ## By tag
+      work.tag <- as.table(tapply(df$work_cycles, df$tag, FUN= function(x) {mean(as.numeric(x))} ))
+      work.tag <- data.frame(work.tag)
+      colnames(work.tag) <- c("tag", "work")
+      print("Mean work cycles by tag")
+      print(work.tag)
+      bar_plotter(work.tag, xt="Tag", yt="Mean work cycles", mt=plot_title, tilt45=T)
   }
   
   # Overhead
@@ -89,8 +105,15 @@ summarize_task_stats <- function(df, plot_title=" ")
       ## By tag
       ovh.tag <- as.table(tapply(df$overhead_cycles, df$tag, FUN= function(x) {sum(as.numeric(x))} ))
       bar_plotter(data.frame(ovh.tag), xt="Tag", yt="Parallel overhead cycles", mt=plot_title, tilt45=T)
-  }
 
+      ## By tag
+      ovh.tag <- as.table(tapply(df$overhead_cycles, df$tag, FUN= function(x) {mean(as.numeric(x))} ))
+      ovh.tag <- data.frame(ovh.tag)
+      colnames(ovh.tag) <- c("tag", "overhead")
+      print("Mean overhead cycles by tag")
+      print(ovh.tag)
+      bar_plotter(ovh.tag, xt="Tag", yt="Mean parallel overhead cycles", mt=plot_title, tilt45=T)
+  }
 
   # Parallelization benefit
   if("parallel_benefit" %in% colnames(df))
