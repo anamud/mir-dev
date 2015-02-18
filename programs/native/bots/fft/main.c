@@ -6,6 +6,9 @@
 #include "fft.h"
 #include "helper.h"
 
+int magic_cutoff = 128; // Original 
+int aux_cutoff = 40; // Maximum size of factors array
+
 long get_usecs(void)
 {/*{{{*/
     struct timeval t;
@@ -13,10 +16,21 @@ long get_usecs(void)
     return t.tv_sec * 1000000 + t.tv_usec;
 }/*}}}*/
 
+struct main_task_wrapper_arg_t 
+{/*{{{*/
+    int n; COMPLEX * in; COMPLEX * out;
+};/*}}}*/
+
+void main_task_wrapper(void* arg)
+{/*{{{*/
+    struct main_task_wrapper_arg_t* warg = (struct main_task_wrapper_arg_t*) arg;
+    fft(warg->n, warg->in, warg->out);
+}/*}}}*/
+
 int main(int argc, char *argv[])
 {/*{{{*/
-    if (argc > 2)
-        PABRT("Usage: %s number\n", argv[0]);
+    if (argc > 4)
+        PABRT("Usage: %s number magic_cutoff aux_cutoff\n", argv[0]);
 
     // Init the runtime
     mir_create();
@@ -24,6 +38,10 @@ int main(int argc, char *argv[])
     int arg_size = 8*1024*1024;
     if(argc>1)
         arg_size = atoi(argv[1]);
+    if(argc>2)
+        magic_cutoff = atoi(argv[2]);
+    if(argc>3)
+        aux_cutoff = atoi(argv[3]);
 
     COMPLEX *in = NULL;
     COMPLEX *out1 = NULL;
@@ -38,7 +56,12 @@ int main(int argc, char *argv[])
     }
 
     long par_time_start = get_usecs();
-    fft(arg_size, in, out1);
+    struct main_task_wrapper_arg_t mt_arg;
+    mt_arg.n = arg_size;
+    mt_arg.in = in;
+    mt_arg.out = out1;
+    mir_task_create((mir_tfunc_t) main_task_wrapper, &mt_arg, sizeof(struct main_task_wrapper_arg_t), 0, NULL, "main_task_wrapper");
+    mir_task_wait();
     long par_time_end = get_usecs();
     double par_time = (double)( par_time_end - par_time_start) / 1000000;
 
