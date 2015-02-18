@@ -11,6 +11,7 @@
 #include "mir_defines.h"
 #include "mir_types.h"
 #include "mir_utils.h"
+#include "mir_loop.h"
 
 BEGIN_C_DECLS 
 
@@ -23,7 +24,7 @@ struct mir_task_list_t
     struct mir_task_list_t* next;
 };
 
-/*LIBINT_DECL_BEGIN*/
+/*LIBINT_BASE_DECL_BEGIN*/
 enum mir_data_access_t 
 {
     MIR_DATA_ACCESS_READ = 0,
@@ -31,7 +32,9 @@ enum mir_data_access_t
     MIR_DATA_ACCESS_NUM_TYPES
 };
 typedef enum mir_data_access_t mir_data_access_t;
+/*LIBINT_BASE_DECL_END*/
 
+/*LIBINT_DECL_BEGIN*/
 struct mir_data_footprint_t
 {
     void* base;
@@ -83,10 +86,10 @@ struct mir_twc_t
 struct mir_task_t
 {/*{{{*/
     mir_tfunc_t func;
-#ifdef MIR_TASK_VARIABLE_DATA_SIZE
-    char* data;
-#else
+#ifdef MIR_TASK_FIXED_DATA_SIZE
     char data[MIR_TASK_DATA_MAX_SIZE];
+#else
+    char* data;
 #endif
     size_t data_size;
     mir_id_t id;
@@ -104,6 +107,7 @@ struct mir_task_t
     uint64_t exec_cycles;
     uint64_t overhead_cycles;
     uint32_t queue_size_at_pop;
+    struct mir_loop_des_t* loop;
 
     // Flags
     uint32_t done;
@@ -129,7 +133,9 @@ static void T_DBG(char*msg, struct mir_task_t *t)
 
 /*LIBINT*/ void mir_task_create(mir_tfunc_t tfunc, void* data, size_t data_size, unsigned int num_data_footprints, struct mir_data_footprint_t* data_footprints, const char* name);
 
-/*LIBINT*/ void mir_task_create_on(mir_tfunc_t tfunc, void* data, size_t data_size, unsigned int num_data_footprints, struct mir_data_footprint_t* data_footprints, const char* name, unsigned int target);
+/*LIBINT*/ void mir_task_create_on_worker(mir_tfunc_t tfunc, void* data, size_t data_size, unsigned int num_data_footprints, struct mir_data_footprint_t* data_footprints, const char* name, unsigned int target);
+
+/*LIBINT*/ void mir_loop_task_create(mir_tfunc_t tfunc, void* data, struct mir_loop_des_t* loops, int num_loops, const char* name);
 
 void mir_task_execute(struct mir_task_t* task);
 

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-intf=mir_lib_int.h
+intf=$1/mir_lib_int.h
 echo "Writing library interfaces to $intf"
 
 echo "
@@ -15,7 +15,8 @@ echo "
 find . -type f \( -name "*.h" ! -name "mir_lib_int.h" \) -exec sed -n "/\/\*LIBINT_INC_BEGIN\*\//,/\/\*LIBINT_INC_END\*\//p" {} \; >> $intf
 echo "
 BEGIN_C_DECLS 
-" >> mir_lib_int.h
+" >> $intf
+find . -type f \( -name "*.h" ! -name "mir_lib_int.h" \) -exec sed -n "/\/\*LIBINT_BASE_DECL_BEGIN\*\//,/\/\*LIBINT_BASE_DECL_END\*\//p" {} \; >> $intf
 find . -type f \( -name "*.h" ! -name "mir_lib_int.h" \) -exec sed -n "/\/\*LIBINT_DECL_BEGIN\*\//,/\/\*LIBINT_DECL_END\*\//p" {} \; >> $intf
 find . -type f \( -name "*.h" ! -name "mir_lib_int.h" \) -exec sed -n "/\/\*LIBINT_BEGIN\*\//,/\/\*LIBINT_END\*\//p" {} \; >> $intf
 find . -type f \( -name "*.h" ! -name "mir_lib_int.h" \) -exec sed -n "/\/\*LIBINT\*\//p" {} \; >> $intf

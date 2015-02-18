@@ -1,17 +1,18 @@
-#include "mir_worker.h"
-#include "mir_task.h"
-#include "mir_recorder.h"
-#include "scheduling/mir_sched_pol.h"
-#include "mir_runtime.h"
-#include "mir_memory.h"
-#include "mir_utils.h"
-#include "mir_lock.h"
 #include "mir_defines.h"
+#include "mir_lock.h"
+#include "mir_memory.h"
+#include "mir_recorder.h"
+#include "mir_runtime.h"
+#include "mir_task.h"
+#include "mir_utils.h"
+#include "mir_worker.h"
+#include "scheduling/mir_sched_pol.h"
 
 #ifdef __tile__
 #include <tmc/cpus.h>
 #endif
 #include <string.h>
+
 
 // FIXME: Make these per-worker
 // PJ says kill the thread upon exit
@@ -35,11 +36,8 @@ static void* mir_worker_loop(void* arg)
     MIR_ASSERT(g_sig_worker_alive < runtime->num_workers);
 
     // Record state and event
-    if(runtime->enable_recorder == 1)
-    {
-        MIR_RECORDER_EVENT(NULL,0);
-        MIR_RECORDER_STATE_BEGIN(MIR_STATE_TIDLE);
-    }
+    MIR_RECORDER_EVENT(NULL,0);
+    MIR_RECORDER_STATE_BEGIN(MIR_STATE_TIDLE);
 
     // Now do useful work
     while(1)
@@ -51,12 +49,9 @@ static void* mir_worker_loop(void* arg)
         // __sync_synchronize();
         if(worker->sig_dying == 1)
         {
-            if(runtime->enable_recorder == 1)
-            {
-                // Dump MIR_STATE_TIDLE state
-                MIR_RECORDER_STATE_END(NULL, 0);
-                MIR_RECORDER_EVENT(NULL,0);
-            }
+            // Dump MIR_STATE_TIDLE state
+            MIR_RECORDER_STATE_END(NULL, 0);
+            MIR_RECORDER_EVENT(NULL,0);
 
             // Wait
             mir_lock_set(&worker->sig_die);

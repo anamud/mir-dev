@@ -295,7 +295,7 @@ void mir_recorder_record_state_transition(struct mir_recorder_t* recorder, mir_s
     recorder->this_state_trans_time = this_instant;
 }/*}}}*/
 
-void MIR_RECORDER_STATE_BEGIN(mir_state_name_t name) 
+void mir_recorder_state_begin(mir_state_name_t name) 
 {/*{{{*/
     // Get this worker
     struct mir_worker_t* worker = mir_worker_get_context();
@@ -326,7 +326,7 @@ void MIR_RECORDER_STATE_BEGIN(mir_state_name_t name)
     MIR_ASSERT(r->state_stack_head < MIR_RECORDER_STACK_MAX_SIZE);
 }/*}}}*/
 
-void MIR_RECORDER_STATE_END(const char* meta_data, uint32_t meta_data_length) 
+void mir_recorder_state_end(const char* meta_data, uint32_t meta_data_length) 
 {/*{{{*/
     // Get this worker
     struct mir_worker_t* worker = mir_worker_get_context();
@@ -376,7 +376,7 @@ void MIR_RECORDER_STATE_END(const char* meta_data, uint32_t meta_data_length)
     }
 }/*}}}*/
 
-void MIR_RECORDER_EVENT(const char* meta_data, uint32_t meta_data_length)
+void mir_recorder_event(const char* meta_data, uint32_t meta_data_length)
 {/*{{{*/
     // Get this worker
     struct mir_worker_t* worker = mir_worker_get_context();

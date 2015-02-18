@@ -1,31 +1,16 @@
 # Clear workspace
 rm(list=ls())
 
-# Timing functions
-tic <- function(gcFirst = TRUE, type=c("elapsed", "user.self", "sys.self"))
-{
-  type <- match.arg(type)
-  assign(".type", type, envir=baseenv())
-  if(gcFirst) gc(FALSE)
-  tic <- proc.time()[type]         
-  assign(".tic", tic, envir=baseenv())
-  invisible(tic)
-}
-
-toc <- function(message)
-{
-  type <- get(".type", envir=baseenv())
-  toc <- proc.time()[type]
-  tic <- get(".tic", envir=baseenv())
-  print(sprintf("%s: %f sec", message, toc - tic))
-  invisible(toc)
-}
+# Include
+mir_root <- Sys.getenv("MIR_ROOT")
+source(paste(mir_root,"/scripts/profiling/task/common.R",sep=""))
 
 # Parse args
-require(optparse, quietly=TRUE)
+library(optparse, quietly=TRUE)
 option_list <- list(
 make_option(c("-v", "--verbose"), action="store_true", default=TRUE, help="Print output [default]"),
 make_option(c("-q", "--quiet"), action="store_false", dest="verbose", help="Print little output"),
+make_option(c("--timing"), action="store_true", default=FALSE, help="Print timing"),
 make_option(c("-l","--left"), help = "Table 1", metavar="FILE"),
 make_option(c("-r","--right"), help = "Table 2", metavar="FILE"),
 make_option(c("-o","--out"), default="merged-task-perf", help = "Output file name [default \"%default\"]", metavar="STRING"),
@@ -39,13 +24,15 @@ if(!exists("left", where=parsed) | !exists("right", where=parsed) | !exists("key
 }
 
 # Read data
-if(parsed$verbose) tic(type="elapsed")
+if(parsed$verbose) print("Reading data ...")
+if(parsed$timing) tic(type="elapsed")
 dleft <- read.csv(parsed$left, header=TRUE)
 dright <- read.csv(parsed$right, header=TRUE)
-if(parsed$verbose) toc("Read data ")
+if(parsed$timing) toc("Read data ")
 
 # Sanity check for key
-if(parsed$verbose) tic(type="elapsed")
+if(parsed$verbose) print("Running sanity checks ...")
+if(parsed$timing) tic(type="elapsed")
 if(!(parsed$key %in% colnames(dleft)) | !(parsed$key %in% colnames(dright)))
 {
     print("Error: Key not found in tables. Aborting!")
@@ -53,6 +40,7 @@ if(!(parsed$key %in% colnames(dleft)) | !(parsed$key %in% colnames(dright)))
 }
 
 # Merge while checking for common columns
+if(parsed$verbose) print("Merging ...")
 common <- intersect(colnames(dleft)[colnames(dleft) != parsed$key], colnames(dright)[colnames(dright) != parsed$key])
 if(length(common) > 0)
 {
@@ -116,19 +104,20 @@ if(length(common) > 0)
 }
 
 # Handle NAs
+if(parsed$verbose) print("Checking for NAs ...")
 row.has.na <- apply(dmerge, 1, function(x){any(is.na(x))})
 sum.row.has.na <- sum(row.has.na)
 if(sum.row.has.na > 0)
 {
     print(sprintf("Warning: %d rows contained NAs in the merged table", sum.row.has.na ))
 }
-if(parsed$verbose) toc("Merge")
+if(parsed$timing) toc("Merge")
 
 # Write out csv
-if(parsed$verbose) tic(type="elapsed")
-print(paste("Writing file:", parsed$out))
+if(parsed$timing) tic(type="elapsed")
 write.csv(dmerge, parsed$out, row.names=FALSE)
-if(parsed$verbose) toc("Write output")
+if(parsed$verbose) print(paste("Wrote file:", parsed$out))
+if(parsed$timing) toc("Write output")
 
 # Warn
 wa <- warnings()

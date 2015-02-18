@@ -3,6 +3,8 @@
 
 #include <stdint.h>
 #include <stdlib.h>
+#include <stdio.h>
+
 #include "mir_types.h"
 
 BEGIN_C_DECLS 
@@ -37,6 +39,10 @@ struct mir_state_t
 #define MIR_RECORDER_NUM_PAPI_HWPC 2
 #endif
 #endif
+
+#define MIR_RECORDER_STATE_BEGIN(n) if(runtime->enable_recorder == 1) mir_recorder_state_begin(n);
+#define MIR_RECORDER_STATE_END(d, l) if(runtime->enable_recorder == 1) mir_recorder_state_end(d, l);
+#define MIR_RECORDER_EVENT(d, l) if(runtime->enable_recorder == 1) mir_recorder_event(d, l);
 
 struct mir_event_t
 {/*{{{*/
@@ -94,11 +100,11 @@ void mir_recorder_write_to_file(struct mir_recorder_t* recorder);
 
 void mir_recorder_record_state_transition(struct mir_recorder_t* recorder, mir_state_name_t next_state);
 
-void MIR_RECORDER_STATE_BEGIN(mir_state_name_t name);
+void mir_recorder_state_begin(mir_state_name_t name);
 
-void MIR_RECORDER_STATE_END(const char* meta_data, uint32_t meta_data_length);
+void mir_recorder_state_end(const char* meta_data, uint32_t meta_data_length);
 
-void MIR_RECORDER_EVENT(const char* meta_data, uint32_t meta_data_length);
+void mir_recorder_event(const char* meta_data, uint32_t meta_data_length);
 
 END_C_DECLS 
 #endif 

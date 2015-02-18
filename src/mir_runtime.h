@@ -13,6 +13,7 @@
 #include "scheduling/mir_sched_pol.h"
 #include "mir_task.h"
 #include "mir_types.h"
+#include "mir_omp_int.h"
 
 BEGIN_C_DECLS 
 
@@ -32,6 +33,15 @@ struct mir_runtime_t
     struct mir_twc_t* ctwc;
     unsigned int num_children_tasks;
 
+    // Initialization control
+    int init_count;
+    int destroyed;
+
+    // OpenMP support
+    struct mir_lock_t omp_critsec_lock;
+    enum omp_for_schedule_t omp_for_schedule;
+    long omp_for_chunk_size;
+
     // Flags
     int sig_dying;
     int enable_worker_stats;
@@ -41,6 +51,8 @@ struct mir_runtime_t
 };/*}}}*/
 
 /*LIBINT*/ void mir_create();
+
+/*LIBINT*/ void mir_soft_destroy();
 
 /*LIBINT*/ void mir_destroy();
 

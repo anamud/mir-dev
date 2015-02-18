@@ -25,7 +25,9 @@
  * Copyright (c) 2000 Matteo Frigo
  */
 
-/* Ananya Muddukrishna (ananya@kth.se) ported to MIR */
+/* Ananya Muddukrishna (ananya@kth.se) ported to MIR and added cutoffs to make tasks larger*/
+extern int magic_cutoff;
+extern int aux_cutoff;
 
 #include <stdio.h>
 #include <math.h>
@@ -367,6 +369,7 @@ struct  nanos_args_32_t
   int nW;
   int m;
   int k;
+  int d;
 };/*}}}*/
 
 struct  nanos_args_33_t
@@ -822,16 +825,16 @@ struct  nanos_args_39_t
     smp_ol_fft_aux_31_unpacked(&((*args).in), &((*args).out), &((*args).m));
   }
 }
-/*static*/ void smp_ol_fft_aux_32_unpacked(COMPLEX **const in, COMPLEX **const out, int **const factors, COMPLEX **const W, int *const nW, int *const m, int *const k)
+/*static*/ void smp_ol_fft_aux_32_unpacked(COMPLEX **const in, COMPLEX **const out, int **const factors, int *const d, COMPLEX **const W, int *const nW, int *const m, int *const k)
 {
   {
-    fft_aux((*m), (*out) + (*k), (*in) + (*k), (*factors) + 1, (*W), (*nW));
+    fft_aux((*m), (*out) + (*k), (*in) + (*k), (*factors) + 1, (*d), (*W), (*nW));
   }
 }
 /*static*/ void smp_ol_fft_aux_32(struct nanos_args_32_t *const args)
 {
   {
-    smp_ol_fft_aux_32_unpacked(&((*args).in), &((*args).out), &((*args).factors), &((*args).W), &((*args).nW), &((*args).m), &((*args).k));
+    smp_ol_fft_aux_32_unpacked(&((*args).in), &((*args).out), &((*args).factors), &((*args).d), &((*args).W), &((*args).nW), &((*args).m), &((*args).k));
   }
 }
 /*static*/ void smp_ol_fft_aux_33_unpacked(int *const n, COMPLEX **const in, COMPLEX **const out, COMPLEX **const W, int *const nW, int *const m)
@@ -934,7 +937,7 @@ void compute_w_coefficients(int n, int a, int b, COMPLEX * W)
     register int k;
     register REAL s, c;
 
-    if (b - a < 128) {
+    if (b - a < magic_cutoff) {
         twoPiOverN = 2.0 * 3.1415926535897932384626434 / n;
         for (k = a; k <= b; ++k) {
             c = cos(twoPiOverN * k);
@@ -980,7 +983,7 @@ void compute_w_coefficients_seq(int n, int a, int b, COMPLEX * W)
     register int k;
     register REAL s, c;
 
-    if (b - a < 128) {
+    if (b - a < magic_cutoff) {
         twoPiOverN = 2.0 * 3.1415926535897932384626434 / n;
         for (k = a; k <= b; ++k) {
             c = cos(twoPiOverN * k);
@@ -1237,7 +1240,7 @@ void fft_twiddle_2(int a, int b, COMPLEX * in, COMPLEX * out, COMPLEX * W, int n
     int l1, i;
     COMPLEX *jp, *kp;
     REAL tmpr, tmpi, wr, wi;
-    if ((b - a) < 128) {
+    if ((b - a) < magic_cutoff) {
         for (i = a, l1 = nWdn * i, kp = out + i; i < b;
                 i++, l1 += nWdn, kp++) {
             jp = in + i;
@@ -1302,7 +1305,7 @@ void fft_twiddle_2_seq(int a, int b, COMPLEX * in, COMPLEX * out, COMPLEX * W, i
     int l1, i;
     COMPLEX *jp, *kp;
     REAL tmpr, tmpi, wr, wi;
-    if ((b - a) < 128) {
+    if ((b - a) < magic_cutoff) {
         for (i = a, l1 = nWdn * i, kp = out + i; i < b;
                 i++, l1 += nWdn, kp++) {
             jp = in + i;
@@ -1335,7 +1338,7 @@ void fft_unshuffle_2(int a, int b, COMPLEX * in, COMPLEX * out, int m)
     int i;
     const COMPLEX *ip;
     COMPLEX *jp;
-    if ((b - a) < 128) {
+    if ((b - a) < magic_cutoff) {
         ip = in + a * 2;
         for (i = a; i < b; ++i) {
             jp = out + i;
@@ -1381,7 +1384,7 @@ void fft_unshuffle_2_seq(int a, int b, COMPLEX * in, COMPLEX * out, int m)
     int i;
     const COMPLEX *ip;
     COMPLEX *jp;
-    if ((b - a) < 128) {
+    if ((b - a) < magic_cutoff) {
         ip = in + a * 2;
         for (i = a; i < b; ++i) {
             jp = out + i;
@@ -1441,7 +1444,7 @@ void fft_twiddle_4(int a, int b, COMPLEX * in, COMPLEX * out, COMPLEX * W, int n
     int l1, i;
     COMPLEX *jp, *kp;
     REAL tmpr, tmpi, wr, wi;
-    if ((b - a) < 128) {
+    if ((b - a) < magic_cutoff) {
         for (i = a, l1 = nWdn * i, kp = out + i; i < b;
                 i++, l1 += nWdn, kp++) {
             jp = in + i;
@@ -1540,7 +1543,7 @@ void fft_twiddle_4_seq(int a, int b, COMPLEX * in, COMPLEX * out, COMPLEX * W, i
     int l1, i;
     COMPLEX *jp, *kp;
     REAL tmpr, tmpi, wr, wi;
-    if ((b - a) < 128) {
+    if ((b - a) < magic_cutoff) {
         for (i = a, l1 = nWdn * i, kp = out + i; i < b;
                 i++, l1 += nWdn, kp++) {
             jp = in + i;
@@ -1607,7 +1610,7 @@ void fft_unshuffle_4(int a, int b, COMPLEX * in, COMPLEX * out, int m)
     int i;
     const COMPLEX *ip;
     COMPLEX *jp;
-    if ((b - a) < 128) {
+    if ((b - a) < magic_cutoff) {
         ip = in + a * 4;
         for (i = a; i < b; ++i) {
             jp = out + i;
@@ -1656,7 +1659,7 @@ void fft_unshuffle_4_seq(int a, int b, COMPLEX * in, COMPLEX * out, int m)
     int i;
     const COMPLEX *ip;
     COMPLEX *jp;
-    if ((b - a) < 128) {
+    if ((b - a) < magic_cutoff) {
         ip = in + a * 4;
         for (i = a; i < b; ++i) {
             jp = out + i;
@@ -1791,7 +1794,7 @@ void fft_twiddle_8(int a, int b, COMPLEX * in, COMPLEX * out, COMPLEX * W, int n
     int l1, i;
     COMPLEX *jp, *kp;
     REAL tmpr, tmpi, wr, wi;
-    if ((b - a) < 128) {
+    if ((b - a) < magic_cutoff) {
         for (i = a, l1 = nWdn * i, kp = out + i; i < b;
                 i++, l1 += nWdn, kp++) {
             jp = in + i;
@@ -1974,7 +1977,7 @@ void fft_twiddle_8_seq(int a, int b, COMPLEX * in, COMPLEX * out, COMPLEX * W, i
     int l1, i;
     COMPLEX *jp, *kp;
     REAL tmpr, tmpi, wr, wi;
-    if ((b - a) < 128) {
+    if ((b - a) < magic_cutoff) {
         for (i = a, l1 = nWdn * i, kp = out + i; i < b;
                 i++, l1 += nWdn, kp++) {
             jp = in + i;
@@ -2125,7 +2128,7 @@ void fft_unshuffle_8(int a, int b, COMPLEX * in, COMPLEX * out, int m)
     int i;
     const COMPLEX *ip;
     COMPLEX *jp;
-    if ((b - a) < 128) {
+    if ((b - a) < magic_cutoff) {
         ip = in + a * 8;
         for (i = a; i < b; ++i) {
             jp = out + i;
@@ -2183,7 +2186,7 @@ void fft_unshuffle_8_seq(int a, int b, COMPLEX * in, COMPLEX * out, int m)
     int i;
     const COMPLEX *ip;
     COMPLEX *jp;
-    if ((b - a) < 128) {
+    if ((b - a) < magic_cutoff) {
         ip = in + a * 8;
         for (i = a; i < b; ++i) {
             jp = out + i;
@@ -2494,7 +2497,7 @@ void fft_twiddle_16(int a, int b, COMPLEX * in, COMPLEX * out, COMPLEX * W, int 
     int l1, i;
     COMPLEX *jp, *kp;
     REAL tmpr, tmpi, wr, wi;
-    if ((b - a) < 128) {
+    if ((b - a) < magic_cutoff) {
         for (i = a, l1 = nWdn * i, kp = out + i; i < b;
                 i++, l1 += nWdn, kp++) {
             jp = in + i;
@@ -2877,7 +2880,7 @@ void fft_twiddle_16_seq(int a, int b, COMPLEX * in, COMPLEX * out, COMPLEX * W, 
     int l1, i;
     COMPLEX *jp, *kp;
     REAL tmpr, tmpi, wr, wi;
-    if ((b - a) < 128) {
+    if ((b - a) < magic_cutoff) {
         for (i = a, l1 = nWdn * i, kp = out + i; i < b;
                 i++, l1 += nWdn, kp++) {
             jp = in + i;
@@ -3228,7 +3231,7 @@ void fft_unshuffle_16(int a, int b, COMPLEX * in, COMPLEX * out, int m)
     int i;
     const COMPLEX *ip;
     COMPLEX *jp;
-    if ((b - a) < 128) {
+    if ((b - a) < magic_cutoff) {
         ip = in + a * 16;
         for (i = a; i < b; ++i) {
             jp = out + i;
@@ -3302,7 +3305,7 @@ void fft_unshuffle_16_seq(int a, int b, COMPLEX * in, COMPLEX * out, int m)
     int i;
     const COMPLEX *ip;
     COMPLEX *jp;
-    if ((b - a) < 128) {
+    if ((b - a) < magic_cutoff) {
         ip = in + a * 16;
         for (i = a; i < b; ++i) {
             jp = out + i;
@@ -4029,7 +4032,7 @@ void fft_twiddle_32(int a, int b, COMPLEX * in, COMPLEX * out, COMPLEX * W, int 
     int l1, i;
     COMPLEX *jp, *kp;
     REAL tmpr, tmpi, wr, wi;
-    if ((b - a) < 128) {
+    if ((b - a) < magic_cutoff) {
         for (i = a, l1 = nWdn * i, kp = out + i; i < b;
                 i++, l1 += nWdn, kp++) {
             jp = in + i;
@@ -4876,7 +4879,7 @@ void fft_twiddle_32_seq(int a, int b, COMPLEX * in, COMPLEX * out, COMPLEX * W, 
     int l1, i;
     COMPLEX *jp, *kp;
     REAL tmpr, tmpi, wr, wi;
-    if ((b - a) < 128) {
+    if ((b - a) < magic_cutoff) {
         for (i = a, l1 = nWdn * i, kp = out + i; i < b;
                 i++, l1 += nWdn, kp++) {
             jp = in + i;
@@ -5691,7 +5694,7 @@ void fft_unshuffle_32(int a, int b, COMPLEX * in, COMPLEX * out, int m)
     int i;
     const COMPLEX *ip;
     COMPLEX *jp;
-    if ((b - a) < 128) {
+    if ((b - a) < magic_cutoff) {
         ip = in + a * 32;
         for (i = a; i < b; ++i) {
             jp = out + i;
@@ -5797,7 +5800,7 @@ void fft_unshuffle_32_seq(int a, int b, COMPLEX * in, COMPLEX * out, int m)
     int i;
     const COMPLEX *ip;
     COMPLEX *jp;
-    if ((b - a) < 128) {
+    if ((b - a) < magic_cutoff) {
         ip = in + a * 32;
         for (i = a; i < b; ++i) {
             jp = out + i;
@@ -5888,7 +5891,7 @@ void fft_unshuffle_32_seq(int a, int b, COMPLEX * in, COMPLEX * out, int m)
  * nW: size of W, that is, size of the original transform
  *
  */
-void fft_aux(int n, COMPLEX * in, COMPLEX * out, int *factors, COMPLEX * W, int nW)
+void fft_aux(int n, COMPLEX * in, COMPLEX * out, int *factors, int depth, COMPLEX * W, int nW)
 {/*{{{*/
     int r, m;
     int k;
@@ -5921,96 +5924,117 @@ void fft_aux(int n, COMPLEX * in, COMPLEX * out, int *factors, COMPLEX * W, int 
     r = *factors;
     m = n / r;
 
-    if (r < n) {
-        /* 
-         * split the DFT of length n into r DFTs of length n/r,  and
-         * recurse 
-         */
-        if (r == 32) {
-            // Task28
-            /*#pragma omp task untied*/
-            /*fft_unshuffle_32(0, m, in, out, m);*/
-            {
-                // Task28
-                struct nanos_args_27_t imm_args;
-                imm_args.in = in;
-                imm_args.out = out;
-                imm_args.m = m;
-                mir_task_create((mir_tfunc_t) smp_ol_fft_aux_27, (void*) &imm_args, sizeof(imm_args), 0, NULL, "smp_ol_fft_aux_27");
-            }
-        } else if (r == 16) {
-            // Task29
-            /*#pragma omp task untied*/
-            /*fft_unshuffle_16(0, m, in, out, m);*/
-            {
-                // Task29
-                struct nanos_args_28_t imm_args;
-                imm_args.in = in;
-                imm_args.out = out;
-                imm_args.m = m;
-                mir_task_create((mir_tfunc_t) smp_ol_fft_aux_28, (void*) &imm_args, sizeof(imm_args), 0, NULL, "smp_ol_fft_aux_28");
-            }
-        } else if (r == 8) {
-            // Task30
-            /*#pragma omp task untied*/
-            /*fft_unshuffle_8(0, m, in, out, m);*/
-            {
-                // Task30
-                struct nanos_args_29_t imm_args;
-                imm_args.in = in;
-                imm_args.out = out;
-                imm_args.m = m;
-                mir_task_create((mir_tfunc_t) smp_ol_fft_aux_29, (void*) &imm_args, sizeof(imm_args), 0, NULL, "smp_ol_fft_aux_29");
-            }
-        } else if (r == 4) {
-            // Task31
-            /*#pragma omp task untied*/
-            /*fft_unshuffle_4(0, m, in, out, m);*/
-            {
-                // Task31
-                struct nanos_args_30_t imm_args;
-                imm_args.in = in;
-                imm_args.out = out;
-                imm_args.m = m;
-                mir_task_create((mir_tfunc_t) smp_ol_fft_aux_30, (void*) &imm_args, sizeof(imm_args), 0, NULL, "smp_ol_fft_aux_30");
-            }
-        } else if (r == 2) {
-            // Task32
-            /*#pragma omp task untied*/
-            /*fft_unshuffle_2(0, m, in, out, m);*/
-            {
-                // Task32
-                struct nanos_args_31_t imm_args;
-                imm_args.in = in;
-                imm_args.out = out;
-                imm_args.m = m;
-                mir_task_create((mir_tfunc_t) smp_ol_fft_aux_31, (void*) &imm_args, sizeof(imm_args), 0, NULL, "smp_ol_fft_aux_31");
-            }
-        } else
-            unshuffle(0, m, in, out, r, m);
+    if (r < n) 
+    {
+        if(depth >= aux_cutoff)
+        {
+            /* 
+             * split the DFT of length n into r DFTs of length n/r,  and
+             * recurse 
+             */
+            if      (r == 32) fft_unshuffle_32_seq(0, m, in, out, m);
+            else if (r == 16) fft_unshuffle_16_seq(0, m, in, out, m);
+            else if (r ==  8) fft_unshuffle_8_seq(0, m, in, out, m);
+            else if (r ==  4) fft_unshuffle_4_seq(0, m, in, out, m);
+            else if (r ==  2) fft_unshuffle_2_seq(0, m, in, out, m);
+            else              unshuffle_seq(0, m, in, out, r, m);
 
-        mir_task_wait();
-        //#pragma omp taskwait
-
-        for (k = 0; k < n; k += m) {
-            // Task33
-            /*#pragma omp task untied*/
-            /*fft_aux(m, out + k, in + k, factors + 1, W, nW);*/
-            {
-                // Task33
-                struct nanos_args_32_t imm_args;
-                imm_args.in = in;
-                imm_args.out = out;
-                imm_args.factors = factors;
-                imm_args.W = W;
-                imm_args.nW = nW;
-                imm_args.m = m;
-                imm_args.k = k;
-                mir_task_create((mir_tfunc_t) smp_ol_fft_aux_32, (void*) &imm_args, sizeof(imm_args), 0, NULL, "smp_ol_fft_aux_32");
+            for (k = 0; k < n; k += m) {
+                fft_aux_seq(m, out + k, in + k, factors + 1, W, nW);
             }
         }
-        mir_task_wait();
-        //#pragma omp taskwait
+        else
+        {
+            /* 
+             * split the DFT of length n into r DFTs of length n/r,  and
+             * recurse 
+             */
+            if (r == 32) {
+                // Task28
+                /*#pragma omp task untied*/
+                /*fft_unshuffle_32(0, m, in, out, m);*/
+                {
+                    // Task28
+                    struct nanos_args_27_t imm_args;
+                    imm_args.in = in;
+                    imm_args.out = out;
+                    imm_args.m = m;
+                    mir_task_create((mir_tfunc_t) smp_ol_fft_aux_27, (void*) &imm_args, sizeof(imm_args), 0, NULL, "smp_ol_fft_aux_27");
+                }
+            } else if (r == 16) {
+                // Task29
+                /*#pragma omp task untied*/
+                /*fft_unshuffle_16(0, m, in, out, m);*/
+                {
+                    // Task29
+                    struct nanos_args_28_t imm_args;
+                    imm_args.in = in;
+                    imm_args.out = out;
+                    imm_args.m = m;
+                    mir_task_create((mir_tfunc_t) smp_ol_fft_aux_28, (void*) &imm_args, sizeof(imm_args), 0, NULL, "smp_ol_fft_aux_28");
+                }
+            } else if (r == 8) {
+                // Task30
+                /*#pragma omp task untied*/
+                /*fft_unshuffle_8(0, m, in, out, m);*/
+                {
+                    // Task30
+                    struct nanos_args_29_t imm_args;
+                    imm_args.in = in;
+                    imm_args.out = out;
+                    imm_args.m = m;
+                    mir_task_create((mir_tfunc_t) smp_ol_fft_aux_29, (void*) &imm_args, sizeof(imm_args), 0, NULL, "smp_ol_fft_aux_29");
+                }
+            } else if (r == 4) {
+                // Task31
+                /*#pragma omp task untied*/
+                /*fft_unshuffle_4(0, m, in, out, m);*/
+                {
+                    // Task31
+                    struct nanos_args_30_t imm_args;
+                    imm_args.in = in;
+                    imm_args.out = out;
+                    imm_args.m = m;
+                    mir_task_create((mir_tfunc_t) smp_ol_fft_aux_30, (void*) &imm_args, sizeof(imm_args), 0, NULL, "smp_ol_fft_aux_30");
+                }
+            } else if (r == 2) {
+                // Task32
+                /*#pragma omp task untied*/
+                /*fft_unshuffle_2(0, m, in, out, m);*/
+                {
+                    // Task32
+                    struct nanos_args_31_t imm_args;
+                    imm_args.in = in;
+                    imm_args.out = out;
+                    imm_args.m = m;
+                    mir_task_create((mir_tfunc_t) smp_ol_fft_aux_31, (void*) &imm_args, sizeof(imm_args), 0, NULL, "smp_ol_fft_aux_31");
+                }
+            } else
+                unshuffle(0, m, in, out, r, m);
+
+            mir_task_wait();
+            //#pragma omp taskwait
+
+            for (k = 0; k < n; k += m) {
+                // Task33
+                /*#pragma omp task untied*/
+                /*fft_aux(m, out + k, in + k, factors + 1, W, nW);*/
+                {
+                    // Task33
+                    struct nanos_args_32_t imm_args;
+                    imm_args.in = in;
+                    imm_args.out = out;
+                    imm_args.factors = factors;
+                    imm_args.W = W;
+                    imm_args.nW = nW;
+                    imm_args.m = m;
+                    imm_args.k = k;
+                    mir_task_create((mir_tfunc_t) smp_ol_fft_aux_32, (void*) &imm_args, sizeof(imm_args), 0, NULL, "smp_ol_fft_aux_32");
+                }
+            }
+            mir_task_wait();
+            //#pragma omp taskwait
+        }
     }
     /* 
      * now multiply by the twiddle factors, and perform m FFTs
@@ -6212,7 +6236,7 @@ void fft(int n, COMPLEX * in, COMPLEX * out)
 /*#pragma omp parallel*/
 /*#pragma omp single*/
 /*#pragma omp task untied*/
-    fft_aux(n, in, out, factors, W, n);
+    fft_aux(n, in, out, factors, 0, W, n);
     PMSG(" completed!\n");
 
     mir_mem_pol_release(W, (n + 1) * sizeof(COMPLEX));
