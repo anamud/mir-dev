@@ -626,6 +626,8 @@ if("ins_count" %in% colnames(tg.data) && !parsed$tree)
       # Set back on graph
       tg <- set.vertex.attribute(tg, name="on_crit_path", index=V(tg), value=vgdf$on_crit_path) 
       tg <- set.vertex.attribute(tg, name="rdist", index=V(tg), value=vgdf$rdist)
+      critical_edges <- E(tg)[V(tg)[on_crit_path==1] %--% V(tg)[on_crit_path==1]] 
+      tg <- set.edge.attribute(tg, name="on_crit_path", index=critical_edges, value=1)
       if(parsed$verbose) {ctr <- ctr + 1; setTxtProgressBar(pb, ctr);}
       close(pb)
     }
@@ -717,6 +719,8 @@ if("ins_count" %in% colnames(tg.data) && !parsed$tree)
       # Set back on graph
       tg <- set.vertex.attribute(tg, name="on_crit_path", index=V(tg), value=vgdf$on_crit_path) 
       tg <- set.vertex.attribute(tg, name="rdist", index=V(tg), value=vgdf$rdist)
+      critical_edges <- E(tg)[V(tg)[on_crit_path==1] %--% V(tg)[on_crit_path==1]] 
+      tg <- set.edge.attribute(tg, name="on_crit_path", index=critical_edges, value=1)
       if(parsed$verbose) {ctr <- ctr + 1; setTxtProgressBar(pb, ctr);}
       close(pb)
     }
