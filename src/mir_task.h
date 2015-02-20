@@ -87,10 +87,9 @@ struct mir_task_t
 {/*{{{*/
     mir_tfunc_t func;
 #ifdef MIR_TASK_FIXED_DATA_SIZE
-    char data[MIR_TASK_DATA_MAX_SIZE];
-#else
-    char* data;
+    char data_buf[MIR_TASK_DATA_MAX_SIZE];
 #endif
+    char* data;
     size_t data_size;
     mir_id_t id;
     unsigned int child_number;
