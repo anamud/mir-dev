@@ -1,6 +1,9 @@
 # Clean slate
 rm(list=ls())
 
+## Treat warnings as errors
+#options(warn=2)
+
 # Include
 mir_root <- Sys.getenv("MIR_ROOT")
 source(paste(mir_root,"/scripts/profiling/task/common.R",sep=""))
@@ -593,8 +596,8 @@ if("ins_count" %in% colnames(tg.data) && !parsed$tree)
       # Topological sort
       tsg <- topological.sort(tg)
       # Set root path attributes
-      V(tg)$rdist[tsg[1]] <- 0
-      V(tg)$rpath[tsg[1]] <- tsg[1]
+      V(tg)[tsg[1]]$rdist <- 0
+      V(tg)[tsg[1]]$rpath <- tsg[1]
       # Get data frame of graph object
       vgdf <- get.data.frame(tg, what="vertices")
       # Get longest paths from root
@@ -653,7 +656,7 @@ if("ins_count" %in% colnames(tg.data) && !parsed$tree)
         # Calc shape
         tgdf <- get.data.frame(tg, what="vertices")
         tgdf <- tgdf[!is.na(as.numeric(tgdf$label)),]
-        tg_shape <- hist(tgdf$rdist, breaks=sum(as.numeric(tg.data$ins_count))/(length(unique(tg.data$cpu_id))*mean(tg.data$work_cycles)), plot=F)
+        tg_shape <- hist(tgdf$rdist, breaks=sum(as.numeric(tg.data$ins_count))/(length(unique(tg.data$cpu_id))*mean(tg.data$ins_count)), plot=F)
 
         # Write out shape
         tg.file.out <- paste(gsub(". $", "", parsed$out), "-shape.pdf", sep="")
