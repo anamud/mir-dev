@@ -33,6 +33,14 @@
 #define TRUE 1
 #endif
 
+// For BOTS compatibility
+#define bots_message PMSG
+#define bots_debug PDBG
+#define bots_error PABRT
+#define BOTS_RESULT_SUCCESSFUL TEST_SUCCESSFUL
+#define BOTS_RESULT_UNSUCCESSFUL TEST_UNSUCCESSFUL
+#define BOTS_RESULT_NA TEST_NOT_PERFORMED
+
 //// This is useful for pin-tool profiling
 //#ifdef NOINLINE_TASK
 ////#if defined __INTEL_COMPILER
