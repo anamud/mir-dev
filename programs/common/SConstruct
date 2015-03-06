@@ -51,6 +51,7 @@ env['CCFLAGS'] = Split("""
 -fopenmp
 -fdump-tree-optimized
 -DLINUX
+-DUSE_MIR
 """)
 env['CCFLAGS'] += ['-I' + MIR_ROOT+'/src']
 env['CCFLAGS'] += ['-I' + MIR_ROOT+'/programs/common']

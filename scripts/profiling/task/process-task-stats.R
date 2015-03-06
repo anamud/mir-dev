@@ -57,11 +57,12 @@ ts.data$work_cycles <- ts.data$exec_cycles - ts.data$overhead_cycles
 if(parsed$verbose) print("Calculating parallel benefit ...")
 calc_parallel_benefit <- function(t)
 {
-    t.p <- ts.data$parent[ts.data$task == t]
-    t.p.o <- ts.data$overhead_cycles[ts.data$task == t.p]
-    t.p.nc <- length(ts.data$task[ts.data$parent == t.p])
-    t.p.o.c <- t.p.o/t.p.nc
-    ts.data$work_cycles[ts.data$task == t]/t.p.o.c
+    i <- which(ts.data$task == t)
+    t.p <- ts.data$parent[i]
+    j <- which(ts.data$task == t.p)
+    k <- which(ts.data$parent == t.p)
+    t.p.o.c <- ts.data$overhead_cycles[j] / length(ts.data$task[k])
+    ts.data$work_cycles[i]/t.p.o.c
 }
 parallel_benefit <- as.numeric(sapply(ts.data$task, calc_parallel_benefit))
 ts.data["parallel_benefit"] <- parallel_benefit
@@ -90,12 +91,13 @@ if(parsed$lineage)
     ts.data["lineage"] <- "NA"
     for(task in ts.data$task)
     {
-        parent <- ts.data$parent[ts.data$task == task]
-        child_number <- ts.data$child_number[ts.data$task == task]
+        i <- which(ts.data$task == task)
+        parent <- ts.data$parent[i]
+        child_number <- ts.data$child_number[i]
         if(parent != 0)
-            ts.data$lineage[ts.data$task == task] <- paste(ts.data$lineage[ts.data$task == parent], as.character(child_number), sep="-")
+            ts.data$lineage[i] <- paste(ts.data$lineage[which(ts.data$task == parent)], as.character(child_number), sep="-")
         else
-            ts.data$lineage[ts.data$task == task] <- paste("R", as.character(child_number), sep="-")
+            ts.data$lineage[i] <- paste("R", as.character(child_number), sep="-")
     }
     # Sanity check
     if(anyDuplicated(ts.data$lineage))

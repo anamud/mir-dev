@@ -27,6 +27,7 @@ ts.data <- read.csv(parsed$data, header=TRUE)
 if(parsed$timing) tic(type="elapsed")
 # Remove background task 
 ts.data <- ts.data[!is.na(ts.data$parent),]
+#ts.data <- ts.data[!ts.data$parent==0,]
 if(parsed$timing) toc("Removing non-sense data")
 
 # Summary helper
@@ -71,6 +72,11 @@ summarize_task_stats <- function(df, plot_title=" ")
       bar_plotter(data.frame(work.tag), xt="Tag", yt="Work cycles", mt=plot_title, tilt45=T)
 
       ## By tag
+      if(any(is.na(df$work_cycles)))
+      {
+          stop("Error: Work cycles data contains NAs. Aborting!")
+          quit("no", 1)
+      }
       work.tag <- as.table(tapply(df$work_cycles, df$tag, FUN= function(x) {mean(as.numeric(x))} ))
       work.tag <- data.frame(work.tag)
       colnames(work.tag) <- c("tag", "work")
@@ -107,7 +113,13 @@ summarize_task_stats <- function(df, plot_title=" ")
       bar_plotter(data.frame(ovh.tag), xt="Tag", yt="Parallel overhead cycles", mt=plot_title, tilt45=T)
 
       ## By tag
-      ovh.tag <- as.table(tapply(df$overhead_cycles, df$tag, FUN= function(x) {mean(as.numeric(x))} ))
+      if(any(is.na(df$overhead_cycles)))
+      {
+          warning("Overhead cycles data contains NAs. Ignoring NAs to calculate mean.")
+          ovh.tag <- as.table(tapply(df$overhead_cycles, df$tag, FUN= function(x) {mean(as.numeric(x), na.rm=T)} ))
+      } else {
+          ovh.tag <- as.table(tapply(df$overhead_cycles, df$tag, FUN= function(x) {mean(as.numeric(x))} ))
+      }
       ovh.tag <- data.frame(ovh.tag)
       colnames(ovh.tag) <- c("tag", "overhead")
       print("Mean overhead cycles by tag")
@@ -118,10 +130,26 @@ summarize_task_stats <- function(df, plot_title=" ")
   # Parallelization benefit
   if("parallel_benefit" %in% colnames(df))
   {
+      # Remove wrapper task 
+      df.temp <- df[!df$parent==0,]
+
       print("Parallelization benefit: ")
       print("Note: Parallel benefit is the ratio of work done by a task to the average overhead incurred by its parent.")
-      print(summary(df$parallel_benefit))
-      box_plotter(df$parallel_benefit, xt="", yt="Parallel benefit", mt=plot_title)
+      print(summary(df.temp$parallel_benefit))
+      box_plotter(df.temp$parallel_benefit, xt="", yt="Parallel benefit", mt=plot_title)
+
+      ## By tag
+      if(any(is.na(df.temp$parallel_benefit)))
+      {
+          stop("Error: Parallel benefit data contains NAs. Aborting!")
+          quit("no", 1)
+      }
+      pb.tag <- as.table(tapply(df.temp$parallel_benefit, df.temp$tag, FUN= function(x) {mean(as.numeric(x))} ))
+      pb.tag <- data.frame(pb.tag)
+      colnames(pb.tag) <- c("tag", "parallel_benefit")
+      print("Mean parallel benefit by tag")
+      print(pb.tag)
+      bar_plotter(pb.tag, xt="Tag", yt="Mean parallel benefit", mt=plot_title, tilt45=T)
   }
 
   # Last tasks to finish
@@ -135,9 +163,36 @@ summarize_task_stats <- function(df, plot_title=" ")
       print(summary(df$work_deviation))
       box_plotter(df$work_deviation, xt="", yt="Work deviation", mt=plot_title)
 
+      ## By tag
+      if(any(is.na(df$work_deviation)))
+      {
+          stop("Error: Work deviation data contains NAs. Aborting!")
+          quit("no", 1)
+      }
+      wd.tag <- as.table(tapply(df$work_deviation, df$tag, FUN= function(x) {mean(as.numeric(x))} ))
+      wd.tag <- data.frame(wd.tag)
+      colnames(wd.tag) <- c("tag", "work_deviation")
+      print("Mean work deviation by tag")
+      print(wd.tag)
+      bar_plotter(wd.tag, xt="Tag", yt="Mean work deviation", mt=plot_title, tilt45=T)
+
       print("Overhead deviation:")
       print(summary(df$overhead_deviation))
       box_plotter(df$overhead_deviation, xt="", yt="Parallel overhead deviation", mt=plot_title)
+
+      ## By tag
+      if(any(is.na(df$overhead_deviation)))
+      {
+          warning("Overhead deviation data contains NAs. Ignoring NAs to calculate mean.")
+          od.tag <- as.table(tapply(df$overhead_deviation, df$tag, FUN= function(x) {mean(as.numeric(x), na.rm=T)} ))
+      } else {
+          od.tag <- as.table(tapply(df$overhead_deviation, df$tag, FUN= function(x) {mean(as.numeric(x))} ))
+      }
+      od.tag <- data.frame(od.tag)
+      colnames(od.tag) <- c("tag", "overhead_deviation")
+      print("Mean overhead deviation by tag")
+      print(od.tag)
+      bar_plotter(od.tag, xt="Tag", yt="Mean overhead deviation", mt=plot_title, tilt45=T)
   }
 
   # PAPI_RES_STL related
@@ -148,6 +203,13 @@ summarize_task_stats <- function(df, plot_title=" ")
     print("Work to PAPI_RES_STL ratio:")
     print(summary(df$work.PAPI_RES_STL))
     box_plotter(df$work.PAPI_RES_STL, xt="", yt="Work to PAPI_RES_STL ratio", mt=plot_title)
+
+    # Sanity check
+    if(any(is.na(df$work.PAPI_RES_STL)))
+    {
+      stop("Error: Work per PAPI_RES_STL cycle data contains NAs. Aborting!")
+      quit("no", 1)
+    }
 
     # By CPU
     ## Mean work to PAPI_RES_STL ratio
@@ -169,6 +231,13 @@ summarize_task_stats <- function(df, plot_title=" ")
     print(summary(df$mem_hier_util))
     box_plotter(df$mem_hier_util, xt="", yt="Memory hierarchy utilization (PAPI_RES_STL to work ratio)", mt=plot_title)
 
+    # Sanity check
+    if(any(is.na(df$mem_hier_util)))
+    {
+      stop("Error: Memory hierarchy utilization data contains NAs. Aborting!")
+      quit("no", 1)
+    }
+
     # By CPU
     ## Mean work to PAPI_RES_STL ratio
     mem_hier_util.cpu <- as.table(tapply(df$mem_hier_util, as.numeric(df$cpu_id), FUN= function(x) {mean(as.numeric(x))} ))
@@ -188,6 +257,13 @@ summarize_task_stats <- function(df, plot_title=" ")
     print("Compute intensity:")
     print(summary(df$compute_int))
     box_plotter(df$compute_int, xt="", yt="Compute intensity (instruction count to memory footprint ratio)", mt=plot_title)
+
+    # Sanity check
+    if(any(is.na(df$compute_int)))
+    {
+      stop("Error: Compute intensity data contains NAs. Aborting!")
+      quit("no", 1)
+    }
 
     # By CPU
     ## Mean work to PAPI_RES_STL ratio

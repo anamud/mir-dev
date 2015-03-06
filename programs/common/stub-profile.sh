@@ -26,7 +26,10 @@ then
     Rscript ${MIR_ROOT}/scripts/profiling/task/process-task-stats.R -d mir-task-stats
     # Merge task performance data
     echo "Merging task performance data ..."
-    Rscript ${MIR_ROOT}/scripts/profiling/task/merge-task-performance.R -l mir-task-stats -r mir-ofp-instructions -k "task" -o "merged-task-perf"
+    Rscript ${MIR_ROOT}/scripts/profiling/task/merge-task-performance.R -l mir-task-stats.processed -r mir-ofp-instructions -k task -o merged-task-perf
+    # Summarize task performance data
+    echo "Summarizing task performance data ..."
+    Rscript ${MIR_ROOT}/scripts/profiling/task/summarize-task-stats.R -d merged-task-perf
     # Plot task graph 
     echo "Plotting series-parallel task graph ..."
     Rscript ${MIR_ROOT}/scripts/profiling/task/plot-task-graph.R -d merged-task-perf -p color -o ser-par-task-graph

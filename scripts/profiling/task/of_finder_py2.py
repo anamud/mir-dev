@@ -28,26 +28,26 @@ def process(raw_out):
 def get_outlined(obj_fil):
     # We will use objdump to get a list of function (F) symbols in the .text segment
     # We will then filter that list for known outline function patterns
-    command = 'objdump --syms  --section=.text {} | grep " F " | grep -E "{}"'.format(obj_fil,outline_func_pattern)
+    command = 'objdump --syms  --section=.text {0} | grep " F " | grep -E "{1}"'.format(obj_fil,outline_func_pattern)
     raw_out = subprocess.Popen([command], shell=True, stdout = subprocess.PIPE, stderr = subprocess.STDOUT).communicate()[0]
     return process(raw_out)
 
 def get_callable(obj_fil):
     # We will use objdump to get a list of function (F) symbols in the .text segment
-    command = 'objdump --syms  --section=.text {} | grep " F " | grep -E -v "{}"'.format(obj_fil,outline_func_pattern)
+    command = 'objdump --syms  --section=.text {0} | grep " F " | grep -E -v "{1}"'.format(obj_fil,outline_func_pattern)
     raw_out = subprocess.Popen([command], shell=True, stdout = subprocess.PIPE, stderr = subprocess.STDOUT).communicate()[0]
     return process(raw_out)
 
 def main():
     if(len(sys.argv) == 1):
-        print 'Usage: {} objfiles'.format(sys.argv[0])
+        print 'Usage: {0} objfiles'.format(sys.argv[0])
         sys.exit(1)
-    print 'Using "{}" as outline function name pattern'.format(outline_func_pattern)
+    print 'Using "{0}" as outline function name pattern'.format(outline_func_pattern)
     num_obj = len(sys.argv) - 1
     # For each object file, extract names of outline and callable functions
     for i in range(0, num_obj):
         obj_fil = sys.argv[i+1]
-        print 'Processing file: {}'.format(obj_fil)
+        print 'Processing file: {0}'.format(obj_fil)
         outline_funcs.append(get_outlined(obj_fil))
         callable_funcs.append(get_callable(obj_fil))
     print('OUTLINE_FUNCTIONS='),

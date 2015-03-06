@@ -1,4 +1,5 @@
 #!/bin/bash
+set -x
 
 APP=fib
 OUTLINE_FUNCTIONS=ol_fib_0,ol_fib_1,ol_fib_2
