@@ -597,6 +597,7 @@ if("ins_count" %in% colnames(tg.data) && !parsed$tree)
       tsg <- topological.sort(tg)
       # Set root path attributes
       V(tg)[tsg[1]]$rdist <- 0
+      V(tg)[tsg[1]]$depth <- 0
       V(tg)[tsg[1]]$rpath <- tsg[1]
       # Get data frame of graph object
       vgdf <- get.data.frame(tg, what="vertices")
@@ -618,6 +619,8 @@ if("ins_count" %in% colnames(tg.data) && !parsed$tree)
         mwdn <- as.vector(nn)[match(mwd,wd)]
         nrp <- list(c(unlist(vgdf$rpath[mwdn]), node))
         vgdf$rpath[node] <- nrp
+        # Set node's depth as one greater than the largest depth its predecessors
+        vgdf$depth[node] <- max(vgdf$depth[nn]) + 1
         if(parsed$verbose) {ctr <- ctr + 1; setTxtProgressBar(pb, ctr);}
       }
       ## Longest path is the largest root distance
@@ -629,6 +632,7 @@ if("ins_count" %in% colnames(tg.data) && !parsed$tree)
       # Set back on graph
       tg <- set.vertex.attribute(tg, name="on_crit_path", index=V(tg), value=vgdf$on_crit_path) 
       tg <- set.vertex.attribute(tg, name="rdist", index=V(tg), value=vgdf$rdist)
+      tg <- set.vertex.attribute(tg, name="depth", index=V(tg), value=vgdf$depth)
       critical_edges <- E(tg)[V(tg)[on_crit_path==1] %--% V(tg)[on_crit_path==1]] 
       tg <- set.edge.attribute(tg, name="on_crit_path", index=critical_edges, value=1)
       if(parsed$verbose) {ctr <- ctr + 1; setTxtProgressBar(pb, ctr);}
@@ -666,6 +670,20 @@ if("ins_count" %in% colnames(tg.data) && !parsed$tree)
         abline(h = work/lpl , col = "red", lty=1)
         dev.off()
         if(parsed$verbose) print(paste("Wrote file:", tg.file.out))
+
+        # Calc shape based on depth
+        tg_shape_depth <- tgdf %>% group_by(depth) %>% summarise(count = n()) 
+
+        # Write out shape based on depth
+        tg.file.out <- paste(gsub(". $", "", parsed$out), "-shape-depth.pdf", sep="")
+        pdf(tg.file.out)
+        plot(tg_shape_depth, freq=T, xlab="Distance from START in node count", ylab="Tasks", main="Instantaneous task parallelism", col="white")
+        lines(tg_shape_depth, type="p")
+        lines(tg_shape_depth, type="h")
+        abline(h = length(unique(tg.data$cpu_id)), col = "blue", lty=2)
+        abline(h = work/lpl , col = "red", lty=1)
+        dev.off()
+        if(parsed$verbose) print(paste("Wrote file:", tg.file.out))
     }
     if(parsed$timing) toc("Critical path calculation (based on instructions)")
 } else if("work_cycles" %in% colnames(tg.data) && !parsed$tree) {
@@ -690,6 +708,7 @@ if("ins_count" %in% colnames(tg.data) && !parsed$tree)
       tsg <- topological.sort(tg)
       # Set root path attributes
       V(tg)[tsg[1]]$rdist <- 0
+      V(tg)[tsg[1]]$depth <- 0
       V(tg)[tsg[1]]$rpath <- tsg[1]
       # Get data frame of graph object
       vgdf <- get.data.frame(tg, what="vertices")
@@ -711,6 +730,8 @@ if("ins_count" %in% colnames(tg.data) && !parsed$tree)
         mwdn <- as.vector(nn)[match(mwd,wd)]
         nrp <- list(c(unlist(vgdf$rpath[mwdn]), node))
         vgdf$rpath[node] <- nrp
+        # Set node's depth as one greater than the largest depth its predecessors
+        vgdf$depth[node] <- max(vgdf$depth[nn]) + 1
         if(parsed$verbose) {ctr <- ctr + 1; setTxtProgressBar(pb, ctr);}
       }
       ## Longest path is the largest root distance
@@ -722,6 +743,7 @@ if("ins_count" %in% colnames(tg.data) && !parsed$tree)
       # Set back on graph
       tg <- set.vertex.attribute(tg, name="on_crit_path", index=V(tg), value=vgdf$on_crit_path) 
       tg <- set.vertex.attribute(tg, name="rdist", index=V(tg), value=vgdf$rdist)
+      tg <- set.vertex.attribute(tg, name="depth", index=V(tg), value=vgdf$depth)
       critical_edges <- E(tg)[V(tg)[on_crit_path==1] %--% V(tg)[on_crit_path==1]] 
       tg <- set.edge.attribute(tg, name="on_crit_path", index=critical_edges, value=1)
       if(parsed$verbose) {ctr <- ctr + 1; setTxtProgressBar(pb, ctr);}
@@ -755,6 +777,20 @@ if("ins_count" %in% colnames(tg.data) && !parsed$tree)
         tg.file.out <- paste(gsub(". $", "", parsed$out), "-shape.pdf", sep="")
         pdf(tg.file.out)
         plot(tg_shape, freq=T, xlab="Distance from START in work cycles", ylab="Tasks", main="Instantaneous task parallelism", col="white")
+        abline(h = length(unique(tg.data$cpu_id)), col = "blue", lty=2)
+        abline(h = work/lpl , col = "red", lty=1)
+        dev.off()
+        if(parsed$verbose) print(paste("Wrote file:", tg.file.out))
+
+        # Calc shape based on depth
+        tg_shape_depth <- tgdf %>% group_by(depth) %>% summarise(count = n()) 
+
+        # Write out shape based on depth
+        tg.file.out <- paste(gsub(". $", "", parsed$out), "-shape-depth.pdf", sep="")
+        pdf(tg.file.out)
+        plot(tg_shape_depth, xlab="Distance from START in node count", ylab="Tasks", main="Instantaneous task parallelism", col="white")
+        lines(tg_shape_depth, type="p")
+        lines(tg_shape_depth, type="h")
         abline(h = length(unique(tg.data$cpu_id)), col = "blue", lty=2)
         abline(h = work/lpl , col = "red", lty=1)
         dev.off()
@@ -989,6 +1025,28 @@ if(parsed$analyze)
             prob_tg <- set.vertex.attribute(prob_tg, name='color', index=prob_task_index, value=prob_task_color)
         }
         tg_file_out <- paste(gsub(". $", "", parsed$out), "-problem-parallelism.graphml", sep="")
+        res <- write.graph(prob_tg, file=tg_file_out, format="graphml")
+        if(parsed$verbose) print(paste("Wrote file:", tg_file_out))
+    }
+
+    # Parallelism problem (based on depth)
+    if(!parsed$cplengthonly && !parsed$tree) 
+    {
+        prob_tg <- base_tg
+        parallelism.thresh <- length(unique(tg.data$cpu_id))
+        prob_depths <- tg_shape_depth$depth[which(tg_shape_depth$count < parallelism.thresh)]
+        sink(tg.ana.out, append=T)
+        print(paste(length(prob_depths), "shape (depth) bins out of", length(tg_shape_depth$count), "have parallelism <", parallelism.thresh))
+        sink()
+        for (d in prob_depths)
+        {
+            prob_task <- subset(tgdf, depth==d, select=label)
+            prob_task_index <- match(as.character(prob_task$label), V(prob_tg)$name)
+            #prob_task_color <- get.vertex.attribute(prob_tg, name='cpu_id_to_color', index=prob_task_index)
+            prob_task_color <- "#FF0000"
+            prob_tg <- set.vertex.attribute(prob_tg, name='color', index=prob_task_index, value=prob_task_color)
+        }
+        tg_file_out <- paste(gsub(". $", "", parsed$out), "-problem-parallelism-depth.graphml", sep="")
         res <- write.graph(prob_tg, file=tg_file_out, format="graphml")
         if(parsed$verbose) print(paste("Wrote file:", tg_file_out))
     }
