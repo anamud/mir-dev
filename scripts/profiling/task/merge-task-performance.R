@@ -103,9 +103,12 @@ if(length(common) > 0)
     dmerge <- merge(dleft, dright, by=parsed$key, all=T, suffixes=c(".left", ".right"))
 }
 
+# Remove background task 
+dmerge.mod <- dmerge[!is.na(dmerge$parent),]
+
 # Handle NAs
 if(parsed$verbose) print("Checking for NAs ...")
-row.has.na <- apply(dmerge, 1, function(x){any(is.na(x))})
+row.has.na <- apply(dmerge.mod, 1, function(x){any(is.na(x))})
 sum.row.has.na <- sum(row.has.na)
 if(sum.row.has.na > 0)
 {
