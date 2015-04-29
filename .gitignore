@@ -45,3 +45,6 @@ task-graph.graphml
 task-graph.nodeattr
 task-graph.parallel_benefit_to_color
 task-graph.tag_to_color
+.Rhistory
+.Rdata
+*.swp
