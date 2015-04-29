@@ -11,6 +11,8 @@ option_list <- list(
 make_option(c("-d","--data"), help = "Task stats.", metavar="FILE"),
 make_option(c("--verbose"), action="store_true", default=TRUE, help="Print output [default]."),
 make_option(c("--timing"), action="store_true", default=FALSE, help="Print timing information."),
+make_option(c("--scatter"), action="store_true", default=FALSE, help="Compute scatter."),
+make_option(c("--extend"), action="store_true", default=FALSE, help="Extensive summary."),
 make_option(c("--quiet"), action="store_false", dest="verbose", help="Print little output."))
 parsed <- parse_args(OptionParser(option_list = option_list), args = commandArgs(TRUE))
 if(!exists("data", where=parsed))
@@ -42,7 +44,7 @@ summarize_task_stats <- function(df, plot_title=" ")
   count.tag <- df %>% group_by(tag) %>% summarise(count = n())
   print("Count by tag")
   print(data.frame(count.tag))
-  bar_plotter(data.frame(count.tag), xt="Tag", yt="Count", mt=plot_title, tilt45=T)
+  bar_plotter(data.frame(count.tag), xt="Tag", yt="Count", mt=plot_title, tilt=T, tilt_angle=90)
 
   ## Siblings
   print("Number of siblings:")
@@ -62,14 +64,14 @@ summarize_task_stats <- function(df, plot_title=" ")
       print(paste("Total work = ", total_work))
 
       ## By CPU
-      work.cpu <- as.table(tapply(df$work_cycles, as.numeric(df$cpu), FUN= function(x) {sum(as.numeric(x))} ))
+      work.cpu <- as.table(tapply(df$work_cycles, as.numeric(df$cpu_id), FUN= function(x) {sum(as.numeric(x))} ))
       work.cpu <- data.frame(work.cpu)
       work.cpu$Var1 <- as.numeric.factor(work.cpu$Var1)
       bar_plotter(work.cpu, xt="Core", yt="Work cycles", mt=plot_title)
 
       ## By tag
       work.tag <- as.table(tapply(df$work_cycles, df$tag, FUN= function(x) {sum(as.numeric(x))} ))
-      bar_plotter(data.frame(work.tag), xt="Tag", yt="Work cycles", mt=plot_title, tilt45=T)
+      bar_plotter(data.frame(work.tag), xt="Tag", yt="Work cycles", mt=plot_title, tilt=T, tilt_angle=90)
 
       ## By tag
       if(any(is.na(df$work_cycles)))
@@ -82,7 +84,7 @@ summarize_task_stats <- function(df, plot_title=" ")
       colnames(work.tag) <- c("tag", "work")
       print("Mean work cycles by tag")
       print(work.tag)
-      bar_plotter(work.tag, xt="Tag", yt="Mean work cycles", mt=plot_title, tilt45=T)
+      bar_plotter(work.tag, xt="Tag", yt="Mean work cycles", mt=plot_title, tilt=T, tilt_angle=90)
   }
   
   # Overhead
@@ -99,18 +101,18 @@ summarize_task_stats <- function(df, plot_title=" ")
       if("work_cycles" %in% colnames(df))
       {
           if(total_ovh > 0)
-            print(paste("Total work to total parallel overhead ratio = ", total_work/total_ovh))
+            print(paste("Total work/total parallel overhead = ", total_work/total_ovh))
       }
 
       ## By CPU
-      ovh.cpu <- as.table(tapply(df$overhead_cycles, as.numeric(df$cpu), FUN= function(x) {sum(as.numeric(x))} ))
+      ovh.cpu <- as.table(tapply(df$overhead_cycles, as.numeric(df$cpu_id), FUN= function(x) {sum(as.numeric(x))} ))
       ovh.cpu <- data.frame(ovh.cpu)
       ovh.cpu$Var1 <- as.numeric.factor(ovh.cpu$Var1)
       bar_plotter(ovh.cpu, xt="Core", yt="Parallel overhead cycles", mt=plot_title)
       
       ## By tag
       ovh.tag <- as.table(tapply(df$overhead_cycles, df$tag, FUN= function(x) {sum(as.numeric(x))} ))
-      bar_plotter(data.frame(ovh.tag), xt="Tag", yt="Parallel overhead cycles", mt=plot_title, tilt45=T)
+      bar_plotter(data.frame(ovh.tag), xt="Tag", yt="Parallel overhead cycles", mt=plot_title, tilt=T, tilt_angle=90)
 
       ## By tag
       if(any(is.na(df$overhead_cycles)))
@@ -124,7 +126,7 @@ summarize_task_stats <- function(df, plot_title=" ")
       colnames(ovh.tag) <- c("tag", "overhead")
       print("Mean overhead cycles by tag")
       print(ovh.tag)
-      bar_plotter(ovh.tag, xt="Tag", yt="Mean parallel overhead cycles", mt=plot_title, tilt45=T)
+      bar_plotter(ovh.tag, xt="Tag", yt="Mean parallel overhead cycles", mt=plot_title, tilt=T, tilt_angle=90)
   }
 
   # Parallelization benefit
@@ -136,7 +138,7 @@ summarize_task_stats <- function(df, plot_title=" ")
       print("Parallelization benefit: ")
       print("Note: Parallel benefit is the ratio of work done by a task to the average overhead incurred by its parent.")
       print(summary(df.temp$parallel_benefit))
-      box_plotter(df.temp$parallel_benefit, xt="", yt="Parallel benefit", mt=plot_title)
+      box_plotter(df.temp$parallel_benefit, xt="", yt="Parallel benefit", mt=plot_title, log=T)
 
       ## By tag
       if(any(is.na(df.temp$parallel_benefit)))
@@ -149,12 +151,12 @@ summarize_task_stats <- function(df, plot_title=" ")
       colnames(pb.tag) <- c("tag", "parallel_benefit")
       print("Mean parallel benefit by tag")
       print(pb.tag)
-      bar_plotter(pb.tag, xt="Tag", yt="Mean parallel benefit", mt=plot_title, tilt45=T)
+      bar_plotter(pb.tag, xt="Tag", yt="Mean parallel benefit", mt=plot_title, tilt=T, tilt_angle=90)
   }
 
   # Last tasks to finish
   if("last_to_finish" %in% colnames(df))
-      bar_plotter(subset(df, last_to_finish == T, select=c(cpu_id, exec_end)), xt="Core", yt="Work cycles of last executed task", mt=plot_title)
+      bar_plotter(subset(df, last_to_finish == T, select=c(cpu_id, exec_end)), xt="Core", yt="Instant last executed task ended (cycles)", mt=plot_title)
   
   # Deviation
   if("work_deviation" %in% colnames(df))
@@ -174,25 +176,26 @@ summarize_task_stats <- function(df, plot_title=" ")
       colnames(wd.tag) <- c("tag", "work_deviation")
       print("Mean work deviation by tag")
       print(wd.tag)
-      bar_plotter(wd.tag, xt="Tag", yt="Mean work deviation", mt=plot_title, tilt45=T)
+      bar_plotter(wd.tag, xt="Tag", yt="Mean work deviation", mt=plot_title, tilt=T, tilt_angle=90)
 
-      print("Overhead deviation:")
-      print(summary(df$overhead_deviation))
-      box_plotter(df$overhead_deviation, xt="", yt="Parallel overhead deviation", mt=plot_title)
+      # Overhead deviation summary causes a lot of warnings! Fix them before shipping!
+      #print("Overhead deviation:")
+      #print(summary(df$overhead_deviation))
+      #box_plotter(df$overhead_deviation, xt="", yt="Parallel overhead deviation", mt=plot_title)
 
-      ## By tag
-      if(any(is.na(df$overhead_deviation)))
-      {
-          warning("Overhead deviation data contains NAs. Ignoring NAs to calculate mean.")
-          od.tag <- as.table(tapply(df$overhead_deviation, df$tag, FUN= function(x) {mean(as.numeric(x), na.rm=T)} ))
-      } else {
-          od.tag <- as.table(tapply(df$overhead_deviation, df$tag, FUN= function(x) {mean(as.numeric(x))} ))
-      }
-      od.tag <- data.frame(od.tag)
-      colnames(od.tag) <- c("tag", "overhead_deviation")
-      print("Mean overhead deviation by tag")
-      print(od.tag)
-      bar_plotter(od.tag, xt="Tag", yt="Mean overhead deviation", mt=plot_title, tilt45=T)
+      ### By tag
+      #if(any(is.na(df$overhead_deviation)))
+      #{
+          #warning("Overhead deviation data contains NAs. Ignoring NAs to calculate mean.")
+          #od.tag <- as.table(tapply(df$overhead_deviation, df$tag, FUN= function(x) {mean(as.numeric(x), na.rm=T)} ))
+      #} else {
+          #od.tag <- as.table(tapply(df$overhead_deviation, df$tag, FUN= function(x) {mean(as.numeric(x))} ))
+      #}
+      #od.tag <- data.frame(od.tag)
+      #colnames(od.tag) <- c("tag", "overhead_deviation")
+      #print("Mean overhead deviation by tag")
+      #print(od.tag)
+      #bar_plotter(od.tag, xt="Tag", yt="Mean overhead deviation", mt=plot_title, tilt=T, tilt_angle=90)
   }
 
   # PAPI_RES_STL related
@@ -202,7 +205,7 @@ summarize_task_stats <- function(df, plot_title=" ")
     
     print("Work to PAPI_RES_STL ratio:")
     print(summary(df$work.PAPI_RES_STL))
-    box_plotter(df$work.PAPI_RES_STL, xt="", yt="Work to PAPI_RES_STL ratio", mt=plot_title)
+    box_plotter(df$work.PAPI_RES_STL, xt="", yt="Work/PAPI_RES_STL", mt=plot_title)
 
     # Sanity check
     if(any(is.na(df$work.PAPI_RES_STL)))
@@ -216,12 +219,12 @@ summarize_task_stats <- function(df, plot_title=" ")
     work.PAPI_RES_STL.cpu <- as.table(tapply(df$work.PAPI_RES_STL, as.numeric(df$cpu_id), FUN= function(x) {mean(as.numeric(x))} ))
     work.PAPI_RES_STL.cpu <- data.frame(work.PAPI_RES_STL.cpu)
     work.PAPI_RES_STL.cpu$Var1 <- as.numeric.factor(work.PAPI_RES_STL.cpu$Var1)
-    bar_plotter(work.PAPI_RES_STL.cpu, xt="Core", yt="Work to PAPI_RES_STL mean ratio", mt=plot_title)
+    bar_plotter(work.PAPI_RES_STL.cpu, xt="Core", yt="Work/PAPI_RES_STL mean", mt=plot_title)
     
     # By Tag
     ## Mean work to PAPI_RES_STL ratio
     work.PAPI_RES_STL.tag <- as.table(tapply(df$work.PAPI_RES_STL, df$tag, FUN= function(x) {mean(as.numeric(x))} ))
-    bar_plotter(data.frame(work.PAPI_RES_STL.tag), xt="Tag", yt="Work to PAPI_RES_STL mean ratio",  mt=plot_title, tilt45=T)
+    bar_plotter(data.frame(work.PAPI_RES_STL.tag), xt="Tag", yt="Work/PAPI_RES_STL mean",  mt=plot_title, tilt=T, tilt_angle=90)
   }
 
   # Memory hierarchy utilization
@@ -229,7 +232,7 @@ summarize_task_stats <- function(df, plot_title=" ")
   {
     print("Memory hierarchy utilization (PAPI_RES_STL to work ratio):")
     print(summary(df$mem_hier_util))
-    box_plotter(df$mem_hier_util, xt="", yt="Memory hierarchy utilization (PAPI_RES_STL to work ratio)", mt=plot_title)
+    box_plotter(df$mem_hier_util, xt="", yt=paste("Memory hierarchy utilization","(PAPI_RES_STL/work)",sep="\n"), mt=plot_title)
 
     # Sanity check
     if(any(is.na(df$mem_hier_util)))
@@ -243,12 +246,12 @@ summarize_task_stats <- function(df, plot_title=" ")
     mem_hier_util.cpu <- as.table(tapply(df$mem_hier_util, as.numeric(df$cpu_id), FUN= function(x) {mean(as.numeric(x))} ))
     mem_hier_util.cpu <- data.frame(mem_hier_util.cpu)
     mem_hier_util.cpu$Var1 <- as.numeric.factor(mem_hier_util.cpu$Var1)
-    bar_plotter(mem_hier_util.cpu, xt="Core", yt="Mean memory hierarchy utilization (PAPI_RES_STL to work ratio)", mt=plot_title)
+    bar_plotter(mem_hier_util.cpu, xt="Core", yt=paste("Mean memory hierarchy utilization","(PAPI_RES_STL/work)",sep="\n"), mt=plot_title)
     
     # By Tag
     ## Mean work to PAPI_RES_STL ratio
     mem_hier_util.tag <- as.table(tapply(df$mem_hier_util, df$tag, FUN= function(x) {mean(as.numeric(x))} ))
-    bar_plotter(data.frame(mem_hier_util.tag), xt="Tag", yt="Mean memory hierarchy utilization (PAPI_RES_STL to work ratio)",  mt=plot_title, tilt45=T)
+    bar_plotter(data.frame(mem_hier_util.tag), xt="Tag", yt=paste("Mean memory hierarchy utilization","(PAPI_RES_STL/work)",sep="\n"),  mt=plot_title, tilt=T, tilt_angle=90)
   }
 
   # Computation intensity
@@ -256,7 +259,7 @@ summarize_task_stats <- function(df, plot_title=" ")
   {
     print("Compute intensity:")
     print(summary(df$compute_int))
-    box_plotter(df$compute_int, xt="", yt="Compute intensity (instruction count to memory footprint ratio)", mt=plot_title)
+    box_plotter(df$compute_int, xt="", yt=paste("Compute intensity", "(instruction count/memory footprint)", sep="\n"), mt=plot_title)
 
     # Sanity check
     if(any(is.na(df$compute_int)))
@@ -270,12 +273,45 @@ summarize_task_stats <- function(df, plot_title=" ")
     compute_int.cpu <- as.table(tapply(df$compute_int, as.numeric(df$cpu_id), FUN= function(x) {mean(as.numeric(x))} ))
     compute_int.cpu <- data.frame(compute_int.cpu)
     compute_int.cpu$Var1 <- as.numeric.factor(compute_int.cpu$Var1)
-    bar_plotter(compute_int.cpu, xt="Core", yt="Mean compute intensity (instruction count to memory footprint ratio)", mt=plot_title)
+    bar_plotter(compute_int.cpu, xt="Core", yt=paste("Mean compute intensity", "(instruction count/memory footprint)", sep="\n"), mt=plot_title)
     
     # By Tag
     ## Mean work to PAPI_RES_STL ratio
     compute_int.tag <- as.table(tapply(df$compute_int, df$tag, FUN= function(x) {mean(as.numeric(x))} ))
-    bar_plotter(data.frame(compute_int.tag), xt="Tag", yt="Mean compute intensity (instruction count to memory footprint ratio)",  mt=plot_title, tilt45=T)
+    bar_plotter(data.frame(compute_int.tag), xt="Tag", yt=paste("Mean compute intensity", "(instruction count/memory footprint)", sep="\n"),  mt=plot_title, tilt=T, tilt_angle=90)
+  }
+
+  if(parsed$scatter)
+  {
+      if("cpu_id" %in% colnames(df))
+      {
+        print("Computing scatter ...")
+        fork_nodes <- mapply(function(x, y, z) {paste('f', x, y, sep='.')}, x=df$parent, y=df$joins_at)
+        fork_nodes <- unique(unlist(fork_nodes, use.names=FALSE))
+        get_fork_scatter <- function(fork)
+        {
+            # Get fork info
+            fork_split <- unlist(strsplit(fork, "\\."))
+            parent <- as.numeric(fork_split[2])
+            join_count <- as.numeric(fork_split[3])
+
+            # Get cpu_id
+            cpu_id <- df[df$parent == parent & df$joins_at == join_count, ]$cpu_id
+            cpu_id <- cpu_id[!is.na(cpu_id)]
+
+            # Compute scatter
+            if(length(cpu_id) > 1)
+                scatter <- c(dist(cpu_id))
+            else 
+                scatter <- 0
+
+            median(scatter)
+        }
+        fork_scatter <- as.vector(sapply(fork_nodes, get_fork_scatter))
+        print("Scatter among siblings = median(scatter):")
+        print(summary(fork_scatter))
+        box_plotter(fork_scatter, xt="", yt="Sibling scatter = median(scatter)", mt=plot_title, )
+      }
   }
 
   ## TODO: Summarize lineage depth
@@ -288,22 +324,25 @@ summarize_task_stats <- function(df, plot_title=" ")
 if(parsed$verbose) print("Summarizing ...")
 if(parsed$timing) tic(type="elapsed")
 out.file <- paste(gsub(". $", "", parsed$data), ".info", sep="")
-out.file.plots <- paste(gsub(". $", "", parsed$data), ".plots.pdf", sep="")
+out.file.plots <- paste(gsub(". $", "", parsed$data), "-plots.pdf", sep="")
 sink(out.file)
-pdf(out.file.plots)
+pdf(out.file.plots, width=10, height=7.5)
 
 print("Summarizing all tasks ...")
 summarize_task_stats(ts.data, "All tasks")
 
-if("last_to_finish" %in% colnames(ts.data))
+if(parsed$extend)
 {
-    print("Summarizing leaf tasks ...")
-    ts.data.leaf <- subset(ts.data, leaf == T)
-    summarize_task_stats(ts.data.leaf, "Leaf tasks")
+    if("last_to_finish" %in% colnames(ts.data))
+    {
+        print("Summarizing leaf tasks ...")
+        ts.data.leaf <- subset(ts.data, leaf == T)
+        summarize_task_stats(ts.data.leaf, "Leaf tasks")
 
-    print("Summarizing non-leaf tasks ...")
-    ts.data.non.leaf <- subset(ts.data, leaf == F)
-    summarize_task_stats(ts.data.non.leaf, "Non-leaf tasks")
+        print("Summarizing non-leaf tasks ...")
+        ts.data.non.leaf <- subset(ts.data, leaf == F)
+        summarize_task_stats(ts.data.non.leaf, "Non-leaf tasks")
+    }
 }
 
 junk <- dev.off()

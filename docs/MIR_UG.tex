@@ -108,7 +108,7 @@ and data distribution requires:
   \item optparse (for parsing data)
   \item igraph (for task graph processing)
   \item RColorBrewer (for colors)
-  \item gdata, plyr, dplyr, data.table (for data structure transformations)
+  \item gdata, plyr, dplyr (for data structure transformations)
   \end{itemize}
 \item yEd (for task graph viewing, preferred)
 \item Graphviz (for task graph viewing)
@@ -117,7 +117,7 @@ and data distribution requires:
 
 \subsection{Source Structure}\label{source-structure}
 
-The source repository is structured intuitively. Files and directories have purpose-oriented names.
+The source repository is easy to navigate. Files and directories have purpose-oriented names.
 
 \begin{lstlisting}[style=MyInputStyle]
 . : MIR_ROOT
@@ -214,8 +214,6 @@ Note: A dedicated test suite will be added soon, so watch out for that!
 
 A restricted subset of OpenMP 3.0 tasks --- the \texttt{task} and \texttt{taskwait} constructs --- is supported. Although minimal, the subset is sufficient for writing most task-based programs.  
 
-The \texttt{parallel} construct is deprecated. A team of threads is created when \texttt{mir\_create} is called. The team is disbanded when \texttt{mir\_destroy} is called.
-
 \begin{framed}
 \begin{quote}
 Note: OpenMP tasks are supported by intercepting GCC translated calls to GNU libgomp. OpenMP 3.0 task interface support is therefore restricted to programs compiled using GCC.
@@ -225,19 +223,18 @@ Note: OpenMP tasks are supported by intercepting GCC translated calls to GNU lib
 \subsubsection{Tips for writing MIR-supported OpenMP programs}\label{tips-for-writing-mir-supported-openmp-programs}
 
 \begin{itemize}
-	\item Initialize and release the runtime system explicitly by calling \texttt{mir\_create} and \texttt{mir\_destroy}.
 	\item Do not think in terms of threads.
     \begin{itemize}
         \item Do not use the \texttt{parallel} construct to share work.
-        \item Do not use barriers to synchronize threads.
+        \item Do not use barriers to synchronize threads. Do not expect implicit barriers.
     \end{itemize}
 	\item Think solely in terms of tasks.
     \begin{itemize}
         \item Use the \texttt{task} construct to parallelize work.
         \item Use clauses \texttt{shared}, \texttt{firstprivate} and \texttt{private} to indicate the data environment.
         \item Use \texttt{taskwait} to synchronize tasks.
+        \item Do not expect implicit taskwaits. Use taskwait explicitly.
     \end{itemize}
-	\item Use \texttt{mir\_lock} instead of the \texttt{critical} construct or use OS locks such as \texttt{pthread\_lock}.
 	\item Use GCC atomic builtins for flushing and atomic operations.
 	\item Study example programs in MIR\_ROOT/programs/omp.
 \end{itemize}
@@ -250,7 +247,8 @@ A simple set of steps for producing MIR-supported OpenMP programs is given below
 \item Synchronize tasks using the \texttt{taskwait} construct explicitly. Do not rely on implicit barriers and taskwaits.
 \item Parallelizing work inside a master task context is helpful while interpreting profiling results.
 \item Compile and link with the native OpenMP implementation (preferably libgomp) and check if the program runs correctly.
-\item Include \texttt{mir\_public\_int.h}. Call \texttt{mir\_create} in the beginning of main and call \texttt{mir\_destroy} at the end of main. Delete \texttt{parallel} and \texttt{single} blocks.
+\item Include \texttt{mir\_public\_int.h}.
+\item Ensure there is only a single parallel block and all tasks are synchronized explicitly.
 \item Compile and link with the appropriate MIR library (opt/debug). The program is now ready.
 \end{enumerate}
 
@@ -259,9 +257,11 @@ The native interface example rewritten using above steps is shown below.
 \begin{lstlisting}[style=MyCStyle]
 int main(int argc, char *argv[])
 {
-    // Initialize the runtime system
-    mir_create();
-
+#pragma omp parallel
+{
+#pragma omp single
+{
+// Create master task
 #pragma omp task
 {
     // Now parallelize the work involved
@@ -279,8 +279,8 @@ int main(int argc, char *argv[])
 }
 // Wait for master task to finish
 #pragma omp taskwait
-    // Release runtime system resources
-    mir_destroy();
+} // omp single end
+} // omp parallel end
 
     return 0;
 }

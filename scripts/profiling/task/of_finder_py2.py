@@ -7,7 +7,7 @@ import os
 import subprocess
 
 # Seperate pattern with a "|"
-outline_func_pattern = '._omp_fn.|ol_'
+outline_func_pattern = '._omp_fn.|omp_fn.|^ol_'
 
 # Outline functions
 outline_funcs = []

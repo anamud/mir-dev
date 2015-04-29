@@ -371,15 +371,18 @@ void GOMP_parallel (void (*fn) (void *), void *data, unsigned num_threads, unsig
 
 void GOMP_task (void (*fn) (void *), void *data, void (*copyfn) (void *, void *), long arg_size, long arg_align, bool if_clause, unsigned flags, void **depend)
 {  /*{{{*/
+    char task_name[MIR_SHORT_NAME_LEN];
+    sprintf(task_name, "%p", &fn);
+
     if(copyfn)
     {
         char* buf = mir_malloc_int(sizeof(char) * arg_size);
         MIR_ASSERT(buf != NULL);
         copyfn(buf, data); 
-        mir_task_create((mir_tfunc_t) fn, (void*) buf, (size_t)(arg_size), 0, NULL, NULL);
+        mir_task_create((mir_tfunc_t) fn, (void*) buf, (size_t)(arg_size), 0, NULL, task_name);
     }
     else
-        mir_task_create((mir_tfunc_t) fn, (void*) data, (size_t)(arg_size), 0, NULL, NULL);
+        mir_task_create((mir_tfunc_t) fn, (void*) data, (size_t)(arg_size), 0, NULL, task_name);
 }/*}}}*/
 
 void GOMP_taskwait (void)
