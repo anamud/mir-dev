@@ -17,9 +17,9 @@
 //#define MIR_TASK_ALLOCATE_ON_STACK 
 #define MIR_TASK_ID_START 0
 #define MIR_TASKWAIT_ID_START 0
-//#define MIR_TASK_FIXED_DATA_SIZE
-// Uncomment below define statement only if MIR_TASK_FIXED_DATA_SIZE is also enabled
-//#define MIR_TASK_DATA_MAX_SIZE 256 
+#define MIR_TASK_FIXED_DATA_SIZE
+// Uncomment below define statement only if MIR_TASK_FIXED_DATA_SIZE is also defined
+#define MIR_TASK_DATA_MAX_SIZE 256 
 
 // Queue
 //#define MIR_QUEUE_DEBUG 

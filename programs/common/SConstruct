@@ -99,6 +99,7 @@ Clean('.','debug-build')
 #-opt-report3
 #-opt-report-phase hlo
 #-O3
+#-flto
 opt = env.Clone();
 opt['CCFLAGS'] += Split("""
 -O3

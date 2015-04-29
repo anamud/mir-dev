@@ -15,6 +15,7 @@ Add better parsing for MIR_CONF.
 Support Cilk-like task graph generation.
 Add dependence graph generation support.
 Profile omp for loops.
+Improve output of of_finder
 
 === PROGRAMS ===
 Work on UTS scaling.

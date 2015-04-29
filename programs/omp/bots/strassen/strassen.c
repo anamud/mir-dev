@@ -912,10 +912,17 @@ int main(int argc, char **argv)
     if ((arg_size & (arg_size - 1)) != 0 || (arg_size % 16) != 0)
         PABRT("Error: matrix size (%d) must be a power of 2 and a multiple of %d\n", arg_size, 16);
 
+#ifdef USE_MIR
     A = (double *) mir_mem_pol_allocate (arg_size * arg_size * sizeof(double));
     B = (double *) mir_mem_pol_allocate (arg_size * arg_size * sizeof(double));
     C = (double *) mir_mem_pol_allocate (arg_size * arg_size * sizeof(double));
     D = (double *) mir_mem_pol_allocate (arg_size * arg_size * sizeof(double));
+#else
+    A = (double *) malloc (arg_size * arg_size * sizeof(double));
+    B = (double *) malloc (arg_size * arg_size * sizeof(double));
+    C = (double *) malloc (arg_size * arg_size * sizeof(double));
+    D = (double *) malloc (arg_size * arg_size * sizeof(double));
+#endif
 
     init_matrix(arg_size, A, arg_size);
     init_matrix(arg_size, B, arg_size);

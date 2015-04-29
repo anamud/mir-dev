@@ -12,6 +12,7 @@ extern struct mir_sched_pol_t policy_numa;
 #endif
 extern struct mir_sched_pol_t policy_central_stack;
 extern struct mir_sched_pol_t policy_ws_de;
+extern struct mir_sched_pol_t policy_ws_de_node;
 
 struct mir_sched_pol_t* mir_sched_pol_get_by_name(const char* name)
 {/*{{{*/
@@ -27,6 +28,8 @@ struct mir_sched_pol_t* mir_sched_pol_get_by_name(const char* name)
         return &policy_central_stack;
     else if(0 == strcmp(name, "ws-de"))
         return &policy_ws_de;
+    else if(0 == strcmp(name, "ws-de-node"))
+        return &policy_ws_de_node;
     else
         return NULL;
 }/*}}}*/

@@ -191,16 +191,16 @@ void bmod(float *row, float *col, float *inner)
 {/*{{{*/
     int i, j, k;
     for (i=0; i<BS; i++)
-        for (j=0; j<BS; j++)
-            for (k=0; k<BS; k++)
+        for (k=0; k<BS; k++)
+            for (j=0; j<BS; j++)
                 inner[i*BS+j] = inner[i*BS+j] - row[i*BS+k]*col[k*BS+j];
 }/*}}}*/
 
 void fwd(float *diag, float *col)
 {/*{{{*/
     int i, j, k;
-    for (j=0; j<BS; j++)
-        for (k=0; k<BS; k++)
+    for (k=0; k<BS; k++)
+        for (j=0; j<BS; j++)
             for (i=k+1; i<BS; i++)
                 col[i*BS+j] = col[i*BS+j] - diag[i*BS+k]*col[k*BS+j];
 }/*}}}*/

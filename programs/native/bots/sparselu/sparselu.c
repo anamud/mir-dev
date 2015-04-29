@@ -31,6 +31,89 @@
 
 extern int NB, BS;
 
+#ifdef ENABLE_SPECOMP12_MOD
+int checkmat (float *M, float *N)
+{/*{{{*/
+    int i, j;
+    float r_err;
+
+    for (i = 0; i < BS; i++)
+    {
+        for (j = 0; j < BS; j++)
+        {
+            r_err = M[i*BS+j] - N[i*BS+j];
+            if (r_err < 0.0 ) r_err = -r_err;
+            r_err = r_err / M[i*BS+j];
+            if(r_err > EPSILON)
+            {
+                bots_message("Checking failure: A[%d][%d]=%f  B[%d][%d]=%f; Relative Error=%f\n",
+                        i,j, M[i*BS+j], i,j, N[i*BS+j], r_err);
+                return FALSE;
+            }
+        }
+    }
+    return TRUE;
+}/*}}}*/
+
+void genmat (float *M[])
+{/*{{{*/
+    int null_entry, init_val, i, j, ii, jj;
+    float *p;
+    float *prow;
+    float rowsum;
+
+    init_val = 1325;
+
+    /* generating the structure */
+    for (ii=0; ii < NB; ii++)
+    {
+        for (jj=0; jj < NB; jj++)
+        {
+            /* computing null entries */
+            null_entry=FALSE;
+            if ((ii<jj) && (ii%3 !=0)) null_entry = TRUE;
+            if ((ii>jj) && (jj%3 !=0)) null_entry = TRUE;
+            if (ii%2==1) null_entry = TRUE;
+            if (jj%2==1) null_entry = TRUE;
+            if (ii==jj) null_entry = FALSE;
+            if (ii==jj-1) null_entry = FALSE;
+            if (ii-1 == jj) null_entry = FALSE; 
+            /* allocating matrix */
+            if (null_entry == FALSE){
+                M[ii*NB+jj] = (float *) malloc(BS*BS*sizeof(float));
+                if ((M[ii*NB+jj] == NULL))
+                {
+                    bots_message("Error: Out of memory\n");
+                    exit(101);
+                }
+                /* initializing matrix */
+                /* Modify diagonal element of each row in order */
+                /* to ensure matrix is diagonally dominant and  */
+                /* well conditioned. */
+                prow = p = M[ii*NB+jj];
+                for (i = 0; i < BS; i++) 
+                {
+                    rowsum = 0.0;
+                    for (j = 0; j < BS; j++)
+                    {
+                        init_val = (3125 * init_val) % 65536;
+                        (*p) = (float)((init_val - 32768.0) / 16384.0);
+                        rowsum += abs(*p);
+                        p++;
+                    }
+                    if (ii == jj) 
+                        *(prow+i) = rowsum * (float) NB + abs(*(prow+i));
+                    prow += BS;
+                }
+            }
+            else
+            {
+                M[ii*NB+jj] = NULL;
+            }
+        }
+    }
+}/*}}}*/
+#else
 int checkmat (float *M, float *N)
 {/*{{{*/
     int i, j;
@@ -111,6 +194,7 @@ void genmat (float *M[])
         }
     }
 }/*}}}*/
+#endif
 
 void print_structure(char *name, float *M[])
 {/*{{{*/
@@ -176,16 +260,26 @@ void bmod(float *row, float *col, float *inner)
 {/*{{{*/
     int i, j, k;
     for (i=0; i<BS; i++)
+#ifdef TG_GUIDED_OPT
+        for (k=0; k<BS; k++)
+            for (j=0; j<BS; j++)
+#else
         for (j=0; j<BS; j++)
             for (k=0; k<BS; k++)
+#endif
                 inner[i*BS+j] = inner[i*BS+j] - row[i*BS+k]*col[k*BS+j];
 }/*}}}*/
 
 void fwd(float *diag, float *col)
 {/*{{{*/
     int i, j, k;
+#ifdef TG_GUIDED_OPT
+    for (k=0; k<BS; k++) 
+        for (j=0; j<BS; j++)
+#else
     for (j=0; j<BS; j++)
         for (k=0; k<BS; k++) 
+#endif
             for (i=k+1; i<BS; i++)
                 col[i*BS+j] = col[i*BS+j] - diag[i*BS+k]*col[k*BS+j];
 }/*}}}*/
@@ -310,13 +404,15 @@ typedef struct _nx_data_env_3_t_tag
                 for ((_args->jj_0) = (_args->kk_0) + 1; (_args->jj_0) < (*NB_0); (_args->jj_0)++)
                     if ((_args->bench_0)[(_args->kk_0) * (*NB_0) + (_args->jj_0)] != ((void *) 0))
                     {
+                        /*if((_args->bench_0)[(_args->ii_0) * (*NB_0) + (_args->jj_0)] == ((void *) 0))*/
+                            /*(_args->bench_0)[(_args->ii_0) * (*NB_0) + (_args->jj_0)] = allocate_clean_block();*/
+
                         _nx_data_env_2_t imm_args_2;
                         imm_args_2.NB_0 = &((*NB_0));
                         imm_args_2.bench_0 = &((_args->bench_0));
                         imm_args_2.ii_0 = (_args->ii_0);
                         imm_args_2.jj_0 = (_args->jj_0);
                         imm_args_2.kk_0 = (_args->kk_0);
-
 
                         mir_task_create((mir_tfunc_t) _smp__ol_sparselu_par_call_2, (void*) &imm_args_2, sizeof(_nx_data_env_2_t), 0, NULL, "_smp__ol_sparselu_par_call_2");
                         atleast_one_task_created = true;

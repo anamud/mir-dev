@@ -25,906 +25,29 @@
  * Copyright (c) 2000 Matteo Frigo
  */
 
-/* Ananya Muddukrishna (ananya@kth.se) ported to MIR and added cutoffs to make tasks larger*/
-extern int magic_cutoff;
-extern int magic_cutoff_2;
-extern int aux_cutoff;
-
 #include <stdio.h>
 #include <math.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/time.h>
+#include <omp.h>
+#include "fft-cutoff.h"
 
-#include "helper.h"
-#include "fft.h"
+#ifdef USE_MIR
 #include "mir_public_int.h"
+#endif
+#include "helper.h"
 
-/* Begin task definitions */
-
-/*{{{*/
-struct  nanos_args_0_t
+long get_usecs(void)
 {/*{{{*/
-  int n;
-  int a;
-  COMPLEX *W;
-  int ab;
-};/*}}}*/
+    struct timeval t;
+    gettimeofday(&t, ((void *) 0));
+    return t.tv_sec * 1000000 + t.tv_usec;
+}/*}}}*/
 
-struct  nanos_args_1_t
-{/*{{{*/
-  int n;
-  int b;
-  COMPLEX *W;
-  int ab;
-};/*}}}*/
-
-struct  nanos_args_2_t
-{/*{{{*/
-  int a;
-  COMPLEX *in;
-  COMPLEX *out;
-  int r;
-  int m;
-  int ab;
-};/*}}}*/
-
-struct  nanos_args_3_t
-{/*{{{*/
-  int b;
-  COMPLEX *in;
-  COMPLEX *out;
-  int r;
-  int m;
-  int ab;
-};/*}}}*/
-
-struct  nanos_args_4_t
-{/*{{{*/
-  int i;
-  COMPLEX *in;
-  COMPLEX *out;
-  COMPLEX *W;
-  int nW;
-  int nWdn;
-  int r;
-  int m;
-};/*}}}*/
-
-struct  nanos_args_5_t
-{/*{{{*/
-  int i;
-  COMPLEX *in;
-  COMPLEX *out;
-  COMPLEX *W;
-  int nW;
-  int nWdn;
-  int r;
-  int m;
-  int i2;
-};/*}}}*/
-
-struct  nanos_args_6_t
-{/*{{{*/
-  int i1;
-  COMPLEX *in;
-  COMPLEX *out;
-  COMPLEX *W;
-  int nW;
-  int nWdn;
-  int r;
-  int m;
-  int i2;
-};/*}}}*/
-
-struct  nanos_args_7_t
-{/*{{{*/
-  int a;
-  COMPLEX *in;
-  COMPLEX *out;
-  COMPLEX *W;
-  int nW;
-  int nWdn;
-  int m;
-  int ab;
-};/*}}}*/
-
-struct  nanos_args_8_t
-{/*{{{*/
-  int b;
-  COMPLEX *in;
-  COMPLEX *out;
-  COMPLEX *W;
-  int nW;
-  int nWdn;
-  int m;
-  int ab;
-};/*}}}*/
-
-struct  nanos_args_9_t
-{/*{{{*/
-  int a;
-  COMPLEX *in;
-  COMPLEX *out;
-  int m;
-  int ab;
-};/*}}}*/
-
-struct  nanos_args_10_t
-{/*{{{*/
-  int b;
-  COMPLEX *in;
-  COMPLEX *out;
-  int m;
-  int ab;
-};/*}}}*/
-
-struct  nanos_args_11_t
-{/*{{{*/
-  int a;
-  COMPLEX *in;
-  COMPLEX *out;
-  COMPLEX *W;
-  int nW;
-  int nWdn;
-  int m;
-  int ab;
-};/*}}}*/
-
-struct  nanos_args_12_t
-{/*{{{*/
-  int b;
-  COMPLEX *in;
-  COMPLEX *out;
-  COMPLEX *W;
-  int nW;
-  int nWdn;
-  int m;
-  int ab;
-};/*}}}*/
-
-struct  nanos_args_13_t
-{/*{{{*/
-  int a;
-  COMPLEX *in;
-  COMPLEX *out;
-  int m;
-  int ab;
-};/*}}}*/
-
-struct  nanos_args_14_t
-{/*{{{*/
-  int b;
-  COMPLEX *in;
-  COMPLEX *out;
-  int m;
-  int ab;
-};/*}}}*/
-
-struct  nanos_args_15_t
-{/*{{{*/
-  int a;
-  COMPLEX *in;
-  COMPLEX *out;
-  COMPLEX *W;
-  int nW;
-  int nWdn;
-  int m;
-  int ab;
-};/*}}}*/
-
-struct  nanos_args_16_t
-{/*{{{*/
-  int b;
-  COMPLEX *in;
-  COMPLEX *out;
-  COMPLEX *W;
-  int nW;
-  int nWdn;
-  int m;
-  int ab;
-};/*}}}*/
-
-struct  nanos_args_17_t
-{/*{{{*/
-  int a;
-  COMPLEX *in;
-  COMPLEX *out;
-  int m;
-  int ab;
-};/*}}}*/
-
-struct  nanos_args_18_t
-{/*{{{*/
-  int b;
-  COMPLEX *in;
-  COMPLEX *out;
-  int m;
-  int ab;
-};/*}}}*/
-
-struct  nanos_args_19_t
-{/*{{{*/
-  int a;
-  COMPLEX *in;
-  COMPLEX *out;
-  COMPLEX *W;
-  int nW;
-  int nWdn;
-  int m;
-  int ab;
-};/*}}}*/
-
-struct  nanos_args_20_t
-{/*{{{*/
-  int b;
-  COMPLEX *in;
-  COMPLEX *out;
-  COMPLEX *W;
-  int nW;
-  int nWdn;
-  int m;
-  int ab;
-};/*}}}*/
-
-struct  nanos_args_21_t
-{/*{{{*/
-  int a;
-  COMPLEX *in;
-  COMPLEX *out;
-  int m;
-  int ab;
-};/*}}}*/
-
-struct  nanos_args_22_t
-{/*{{{*/
-  int b;
-  COMPLEX *in;
-  COMPLEX *out;
-  int m;
-  int ab;
-};/*}}}*/
-
-struct  nanos_args_23_t
-{/*{{{*/
-  int a;
-  COMPLEX *in;
-  COMPLEX *out;
-  COMPLEX *W;
-  int nW;
-  int nWdn;
-  int m;
-  int ab;
-};/*}}}*/
-
-struct  nanos_args_24_t
-{/*{{{*/
-  int b;
-  COMPLEX *in;
-  COMPLEX *out;
-  COMPLEX *W;
-  int nW;
-  int nWdn;
-  int m;
-  int ab;
-};/*}}}*/
-
-struct  nanos_args_25_t
-{/*{{{*/
-  int a;
-  COMPLEX *in;
-  COMPLEX *out;
-  int m;
-  int ab;
-};/*}}}*/
-
-struct  nanos_args_26_t
-{/*{{{*/
-  int b;
-  COMPLEX *in;
-  COMPLEX *out;
-  int m;
-  int ab;
-};/*}}}*/
-
-struct  nanos_args_27_t
-{/*{{{*/
-  COMPLEX *in;
-  COMPLEX *out;
-  int m;
-};/*}}}*/
-
-struct  nanos_args_28_t
-{/*{{{*/
-  COMPLEX *in;
-  COMPLEX *out;
-  int m;
-};/*}}}*/
-
-struct  nanos_args_29_t
-{/*{{{*/
-  COMPLEX *in;
-  COMPLEX *out;
-  int m;
-};/*}}}*/
-
-struct  nanos_args_30_t
-{/*{{{*/
-  COMPLEX *in;
-  COMPLEX *out;
-  int m;
-};/*}}}*/
-
-struct  nanos_args_31_t
-{/*{{{*/
-  COMPLEX *in;
-  COMPLEX *out;
-  int m;
-};/*}}}*/
-
-struct  nanos_args_32_t
-{/*{{{*/
-  COMPLEX *in;
-  COMPLEX *out;
-  int *factors;
-  COMPLEX *W;
-  int nW;
-  int m;
-  int k;
-  int d;
-};/*}}}*/
-
-struct  nanos_args_33_t
-{/*{{{*/
-  int n;
-  COMPLEX *in;
-  COMPLEX *out;
-  COMPLEX *W;
-  int nW;
-  int m;
-};/*}}}*/
-
-struct  nanos_args_34_t
-{/*{{{*/
-  int n;
-  COMPLEX *in;
-  COMPLEX *out;
-  COMPLEX *W;
-  int nW;
-  int m;
-};/*}}}*/
-
-struct  nanos_args_35_t
-{/*{{{*/
-  int n;
-  COMPLEX *in;
-  COMPLEX *out;
-  COMPLEX *W;
-  int nW;
-  int m;
-};/*}}}*/
-
-struct  nanos_args_36_t
-{/*{{{*/
-  int n;
-  COMPLEX *in;
-  COMPLEX *out;
-  COMPLEX *W;
-  int nW;
-  int m;
-};/*}}}*/
-
-struct  nanos_args_37_t
-{/*{{{*/
-  int n;
-  COMPLEX *in;
-  COMPLEX *out;
-  COMPLEX *W;
-  int nW;
-  int m;
-};/*}}}*/
-
-struct  nanos_args_38_t
-{/*{{{*/
-  int n;
-  COMPLEX *in;
-  COMPLEX *out;
-  COMPLEX *W;
-  int nW;
-  int r;
-  int m;
-};/*}}}*/
-
-struct  nanos_args_39_t
-{/*{{{*/
-  int *n;
-  COMPLEX **W;
-};/*}}}*/
-/*}}}*/
-
-/*{{{*/
-/*static*/ void smp_ol_compute_w_coefficients_0_unpacked(int *const n, int *const a, COMPLEX **const W, int *const ab)
-{
-  {
-    compute_w_coefficients((*n), (*a), (*ab), (*W));
-  }
-}
-/*static*/ void smp_ol_compute_w_coefficients_0(struct nanos_args_0_t *const args)
-{
-  {
-    smp_ol_compute_w_coefficients_0_unpacked(&((*args).n), &((*args).a), &((*args).W), &((*args).ab));
-  }
-}
-/*static*/ void smp_ol_compute_w_coefficients_1_unpacked(int *const n, int *const b, COMPLEX **const W, int *const ab)
-{
-  {
-    compute_w_coefficients((*n), (*ab) + 1, (*b), (*W));
-  }
-}
-/*static*/ void smp_ol_compute_w_coefficients_1(struct nanos_args_1_t *const args)
-{
-  {
-    smp_ol_compute_w_coefficients_1_unpacked(&((*args).n), &((*args).b), &((*args).W), &((*args).ab));
-  }
-}
-/*static*/ void smp_ol_unshuffle_2_unpacked(int *const a, COMPLEX **const in, COMPLEX **const out, int *const r, int *const m, int *const ab)
-{
-  {
-    unshuffle((*a), (*ab), (*in), (*out), (*r), (*m));
-  }
-}
-/*static*/ void smp_ol_unshuffle_2(struct nanos_args_2_t *const args)
-{
-  {
-    smp_ol_unshuffle_2_unpacked(&((*args).a), &((*args).in), &((*args).out), &((*args).r), &((*args).m), &((*args).ab));
-  }
-}
-/*static*/ void smp_ol_unshuffle_3_unpacked(int *const b, COMPLEX **const in, COMPLEX **const out, int *const r, int *const m, int *const ab)
-{
-  {
-    unshuffle((*ab), (*b), (*in), (*out), (*r), (*m));
-  }
-}
-/*static*/ void smp_ol_unshuffle_3(struct nanos_args_3_t *const args)
-{
-  {
-    smp_ol_unshuffle_3_unpacked(&((*args).b), &((*args).in), &((*args).out), &((*args).r), &((*args).m), &((*args).ab));
-  }
-}
-/*static*/ void smp_ol_fft_twiddle_gen_4_unpacked(int *const i, COMPLEX **const in, COMPLEX **const out, COMPLEX **const W, int *const nW, int *const nWdn, int *const r, int *const m)
-{
-  {
-    fft_twiddle_gen1((*in) + (*i), (*out) + (*i), (*W), (*r), (*m), (*nW), (*nWdn) * (*i), (*nWdn) * (*m));
-  }
-}
-/*static*/ void smp_ol_fft_twiddle_gen_4(struct nanos_args_4_t *const args)
-{
-  {
-    smp_ol_fft_twiddle_gen_4_unpacked(&((*args).i), &((*args).in), &((*args).out), &((*args).W), &((*args).nW), &((*args).nWdn), &((*args).r), &((*args).m));
-  }
-}
-/*static*/ void smp_ol_fft_twiddle_gen_5_unpacked(int *const i, COMPLEX **const in, COMPLEX **const out, COMPLEX **const W, int *const nW, int *const nWdn, int *const r, int *const m, int *const i2)
-{
-  {
-    fft_twiddle_gen((*i), (*i2), (*in), (*out), (*W), (*nW), (*nWdn), (*r), (*m));
-  }
-}
-/*static*/ void smp_ol_fft_twiddle_gen_5(struct nanos_args_5_t *const args)
-{
-  {
-    smp_ol_fft_twiddle_gen_5_unpacked(&((*args).i), &((*args).in), &((*args).out), &((*args).W), &((*args).nW), &((*args).nWdn), &((*args).r), &((*args).m), &((*args).i2));
-  }
-}
-/*static*/ void smp_ol_fft_twiddle_gen_6_unpacked(int *const i1, COMPLEX **const in, COMPLEX **const out, COMPLEX **const W, int *const nW, int *const nWdn, int *const r, int *const m, int *const i2)
-{
-  {
-    fft_twiddle_gen((*i2), (*i1), (*in), (*out), (*W), (*nW), (*nWdn), (*r), (*m));
-  }
-}
-/*static*/ void smp_ol_fft_twiddle_gen_6(struct nanos_args_6_t *const args)
-{
-  {
-    smp_ol_fft_twiddle_gen_6_unpacked(&((*args).i1), &((*args).in), &((*args).out), &((*args).W), &((*args).nW), &((*args).nWdn), &((*args).r), &((*args).m), &((*args).i2));
-  }
-}
-/*static*/ void smp_ol_fft_twiddle_2_7_unpacked(int *const a, COMPLEX **const in, COMPLEX **const out, COMPLEX **const W, int *const nW, int *const nWdn, int *const m, int *const ab)
-{
-  {
-    fft_twiddle_2((*a), (*ab), (*in), (*out), (*W), (*nW), (*nWdn), (*m));
-  }
-}
-/*static*/ void smp_ol_fft_twiddle_2_7(struct nanos_args_7_t *const args)
-{
-  {
-    smp_ol_fft_twiddle_2_7_unpacked(&((*args).a), &((*args).in), &((*args).out), &((*args).W), &((*args).nW), &((*args).nWdn), &((*args).m), &((*args).ab));
-  }
-}
-/*static*/ void smp_ol_fft_twiddle_2_8_unpacked(int *const b, COMPLEX **const in, COMPLEX **const out, COMPLEX **const W, int *const nW, int *const nWdn, int *const m, int *const ab)
-{
-  {
-    fft_twiddle_2((*ab), (*b), (*in), (*out), (*W), (*nW), (*nWdn), (*m));
-  }
-}
-/*static*/ void smp_ol_fft_twiddle_2_8(struct nanos_args_8_t *const args)
-{
-  {
-    smp_ol_fft_twiddle_2_8_unpacked(&((*args).b), &((*args).in), &((*args).out), &((*args).W), &((*args).nW), &((*args).nWdn), &((*args).m), &((*args).ab));
-  }
-}
-/*static*/ void smp_ol_fft_unshuffle_2_9_unpacked(int *const a, COMPLEX **const in, COMPLEX **const out, int *const m, int *const ab)
-{
-  {
-    fft_unshuffle_2((*a), (*ab), (*in), (*out), (*m));
-  }
-}
-/*static*/ void smp_ol_fft_unshuffle_2_9(struct nanos_args_9_t *const args)
-{
-  {
-    smp_ol_fft_unshuffle_2_9_unpacked(&((*args).a), &((*args).in), &((*args).out), &((*args).m), &((*args).ab));
-  }
-}
-/*static*/ void smp_ol_fft_unshuffle_2_10_unpacked(int *const b, COMPLEX **const in, COMPLEX **const out, int *const m, int *const ab)
-{
-  {
-    fft_unshuffle_2((*ab), (*b), (*in), (*out), (*m));
-  }
-}
-/*static*/ void smp_ol_fft_unshuffle_2_10(struct nanos_args_10_t *const args)
-{
-  {
-    smp_ol_fft_unshuffle_2_10_unpacked(&((*args).b), &((*args).in), &((*args).out), &((*args).m), &((*args).ab));
-  }
-}
-/*static*/ void smp_ol_fft_twiddle_4_11_unpacked(int *const a, COMPLEX **const in, COMPLEX **const out, COMPLEX **const W, int *const nW, int *const nWdn, int *const m, int *const ab)
-{
-  {
-    fft_twiddle_4((*a), (*ab), (*in), (*out), (*W), (*nW), (*nWdn), (*m));
-  }
-}
-/*static*/ void smp_ol_fft_twiddle_4_11(struct nanos_args_11_t *const args)
-{
-  {
-    smp_ol_fft_twiddle_4_11_unpacked(&((*args).a), &((*args).in), &((*args).out), &((*args).W), &((*args).nW), &((*args).nWdn), &((*args).m), &((*args).ab));
-  }
-}
-/*static*/ void smp_ol_fft_twiddle_4_12_unpacked(int *const b, COMPLEX **const in, COMPLEX **const out, COMPLEX **const W, int *const nW, int *const nWdn, int *const m, int *const ab)
-{
-  {
-    fft_twiddle_4((*ab), (*b), (*in), (*out), (*W), (*nW), (*nWdn), (*m));
-  }
-}
-/*static*/ void smp_ol_fft_twiddle_4_12(struct nanos_args_12_t *const args)
-{
-  {
-    smp_ol_fft_twiddle_4_12_unpacked(&((*args).b), &((*args).in), &((*args).out), &((*args).W), &((*args).nW), &((*args).nWdn), &((*args).m), &((*args).ab));
-  }
-}
-/*static*/ void smp_ol_fft_unshuffle_4_13_unpacked(int *const a, COMPLEX **const in, COMPLEX **const out, int *const m, int *const ab)
-{
-  {
-    fft_unshuffle_4((*a), (*ab), (*in), (*out), (*m));
-  }
-}
-/*static*/ void smp_ol_fft_unshuffle_4_13(struct nanos_args_13_t *const args)
-{
-  {
-    smp_ol_fft_unshuffle_4_13_unpacked(&((*args).a), &((*args).in), &((*args).out), &((*args).m), &((*args).ab));
-  }
-}
-/*static*/ void smp_ol_fft_unshuffle_4_14_unpacked(int *const b, COMPLEX **const in, COMPLEX **const out, int *const m, int *const ab)
-{
-  {
-    fft_unshuffle_4((*ab), (*b), (*in), (*out), (*m));
-  }
-}
-/*static*/ void smp_ol_fft_unshuffle_4_14(struct nanos_args_14_t *const args)
-{
-  {
-    smp_ol_fft_unshuffle_4_14_unpacked(&((*args).b), &((*args).in), &((*args).out), &((*args).m), &((*args).ab));
-  }
-}
-/*static*/ void smp_ol_fft_twiddle_8_15_unpacked(int *const a, COMPLEX **const in, COMPLEX **const out, COMPLEX **const W, int *const nW, int *const nWdn, int *const m, int *const ab)
-{
-  {
-    fft_twiddle_8((*a), (*ab), (*in), (*out), (*W), (*nW), (*nWdn), (*m));
-  }
-}
-/*static*/ void smp_ol_fft_twiddle_8_15(struct nanos_args_15_t *const args)
-{
-  {
-    smp_ol_fft_twiddle_8_15_unpacked(&((*args).a), &((*args).in), &((*args).out), &((*args).W), &((*args).nW), &((*args).nWdn), &((*args).m), &((*args).ab));
-  }
-}
-/*static*/ void smp_ol_fft_twiddle_8_16_unpacked(int *const b, COMPLEX **const in, COMPLEX **const out, COMPLEX **const W, int *const nW, int *const nWdn, int *const m, int *const ab)
-{
-  {
-    fft_twiddle_8((*ab), (*b), (*in), (*out), (*W), (*nW), (*nWdn), (*m));
-  }
-}
-/*static*/ void smp_ol_fft_twiddle_8_16(struct nanos_args_16_t *const args)
-{
-  {
-    smp_ol_fft_twiddle_8_16_unpacked(&((*args).b), &((*args).in), &((*args).out), &((*args).W), &((*args).nW), &((*args).nWdn), &((*args).m), &((*args).ab));
-  }
-}
-/*static*/ void smp_ol_fft_unshuffle_8_17_unpacked(int *const a, COMPLEX **const in, COMPLEX **const out, int *const m, int *const ab)
-{
-  {
-    fft_unshuffle_8((*a), (*ab), (*in), (*out), (*m));
-  }
-}
-/*static*/ void smp_ol_fft_unshuffle_8_17(struct nanos_args_17_t *const args)
-{
-  {
-    smp_ol_fft_unshuffle_8_17_unpacked(&((*args).a), &((*args).in), &((*args).out), &((*args).m), &((*args).ab));
-  }
-}
-/*static*/ void smp_ol_fft_unshuffle_8_18_unpacked(int *const b, COMPLEX **const in, COMPLEX **const out, int *const m, int *const ab)
-{
-  {
-    fft_unshuffle_8((*ab), (*b), (*in), (*out), (*m));
-  }
-}
-/*static*/ void smp_ol_fft_unshuffle_8_18(struct nanos_args_18_t *const args)
-{
-  {
-    smp_ol_fft_unshuffle_8_18_unpacked(&((*args).b), &((*args).in), &((*args).out), &((*args).m), &((*args).ab));
-  }
-}
-/*static*/ void smp_ol_fft_twiddle_16_19_unpacked(int *const a, COMPLEX **const in, COMPLEX **const out, COMPLEX **const W, int *const nW, int *const nWdn, int *const m, int *const ab)
-{
-  {
-    fft_twiddle_16((*a), (*ab), (*in), (*out), (*W), (*nW), (*nWdn), (*m));
-  }
-}
-/*static*/ void smp_ol_fft_twiddle_16_19(struct nanos_args_19_t *const args)
-{
-  {
-    smp_ol_fft_twiddle_16_19_unpacked(&((*args).a), &((*args).in), &((*args).out), &((*args).W), &((*args).nW), &((*args).nWdn), &((*args).m), &((*args).ab));
-  }
-}
-/*static*/ void smp_ol_fft_twiddle_16_20_unpacked(int *const b, COMPLEX **const in, COMPLEX **const out, COMPLEX **const W, int *const nW, int *const nWdn, int *const m, int *const ab)
-{
-  {
-    fft_twiddle_16((*ab), (*b), (*in), (*out), (*W), (*nW), (*nWdn), (*m));
-  }
-}
-/*static*/ void smp_ol_fft_twiddle_16_20(struct nanos_args_20_t *const args)
-{
-  {
-    smp_ol_fft_twiddle_16_20_unpacked(&((*args).b), &((*args).in), &((*args).out), &((*args).W), &((*args).nW), &((*args).nWdn), &((*args).m), &((*args).ab));
-  }
-}
-/*static*/ void smp_ol_fft_unshuffle_16_21_unpacked(int *const a, COMPLEX **const in, COMPLEX **const out, int *const m, int *const ab)
-{
-  {
-    fft_unshuffle_16((*a), (*ab), (*in), (*out), (*m));
-  }
-}
-/*static*/ void smp_ol_fft_unshuffle_16_21(struct nanos_args_21_t *const args)
-{
-  {
-    smp_ol_fft_unshuffle_16_21_unpacked(&((*args).a), &((*args).in), &((*args).out), &((*args).m), &((*args).ab));
-  }
-}
-/*static*/ void smp_ol_fft_unshuffle_16_22_unpacked(int *const b, COMPLEX **const in, COMPLEX **const out, int *const m, int *const ab)
-{
-  {
-    fft_unshuffle_16((*ab), (*b), (*in), (*out), (*m));
-  }
-}
-/*static*/ void smp_ol_fft_unshuffle_16_22(struct nanos_args_22_t *const args)
-{
-  {
-    smp_ol_fft_unshuffle_16_22_unpacked(&((*args).b), &((*args).in), &((*args).out), &((*args).m), &((*args).ab));
-  }
-}
-/*static*/ void smp_ol_fft_twiddle_32_23_unpacked(int *const a, COMPLEX **const in, COMPLEX **const out, COMPLEX **const W, int *const nW, int *const nWdn, int *const m, int *const ab)
-{
-  {
-    fft_twiddle_32((*a), (*ab), (*in), (*out), (*W), (*nW), (*nWdn), (*m));
-  }
-}
-/*static*/ void smp_ol_fft_twiddle_32_23(struct nanos_args_23_t *const args)
-{
-  {
-    smp_ol_fft_twiddle_32_23_unpacked(&((*args).a), &((*args).in), &((*args).out), &((*args).W), &((*args).nW), &((*args).nWdn), &((*args).m), &((*args).ab));
-  }
-}
-/*static*/ void smp_ol_fft_twiddle_32_24_unpacked(int *const b, COMPLEX **const in, COMPLEX **const out, COMPLEX **const W, int *const nW, int *const nWdn, int *const m, int *const ab)
-{
-  {
-    fft_twiddle_32((*ab), (*b), (*in), (*out), (*W), (*nW), (*nWdn), (*m));
-  }
-}
-/*static*/ void smp_ol_fft_twiddle_32_24(struct nanos_args_24_t *const args)
-{
-  {
-    smp_ol_fft_twiddle_32_24_unpacked(&((*args).b), &((*args).in), &((*args).out), &((*args).W), &((*args).nW), &((*args).nWdn), &((*args).m), &((*args).ab));
-  }
-}
-/*static*/ void smp_ol_fft_unshuffle_32_25_unpacked(int *const a, COMPLEX **const in, COMPLEX **const out, int *const m, int *const ab)
-{
-  {
-    fft_unshuffle_32((*a), (*ab), (*in), (*out), (*m));
-  }
-}
-/*static*/ void smp_ol_fft_unshuffle_32_25(struct nanos_args_25_t *const args)
-{
-  {
-    smp_ol_fft_unshuffle_32_25_unpacked(&((*args).a), &((*args).in), &((*args).out), &((*args).m), &((*args).ab));
-  }
-}
-/*static*/ void smp_ol_fft_unshuffle_32_26_unpacked(int *const b, COMPLEX **const in, COMPLEX **const out, int *const m, int *const ab)
-{
-  {
-    fft_unshuffle_32((*ab), (*b), (*in), (*out), (*m));
-  }
-}
-/*static*/ void smp_ol_fft_unshuffle_32_26(struct nanos_args_26_t *const args)
-{
-  {
-    smp_ol_fft_unshuffle_32_26_unpacked(&((*args).b), &((*args).in), &((*args).out), &((*args).m), &((*args).ab));
-  }
-}
-/*static*/ void smp_ol_fft_aux_27_unpacked(COMPLEX **const in, COMPLEX **const out, int *const m)
-{
-  {
-    fft_unshuffle_32(0, (*m), (*in), (*out), (*m));
-  }
-}
-/*static*/ void smp_ol_fft_aux_27(struct nanos_args_27_t *const args)
-{
-  {
-    smp_ol_fft_aux_27_unpacked(&((*args).in), &((*args).out), &((*args).m));
-  }
-}
-/*static*/ void smp_ol_fft_aux_28_unpacked(COMPLEX **const in, COMPLEX **const out, int *const m)
-{
-  {
-    fft_unshuffle_16(0, (*m), (*in), (*out), (*m));
-  }
-}
-/*static*/ void smp_ol_fft_aux_28(struct nanos_args_28_t *const args)
-{
-  {
-    smp_ol_fft_aux_28_unpacked(&((*args).in), &((*args).out), &((*args).m));
-  }
-}
-/*static*/ void smp_ol_fft_aux_29_unpacked(COMPLEX **const in, COMPLEX **const out, int *const m)
-{
-  {
-    fft_unshuffle_8(0, (*m), (*in), (*out), (*m));
-  }
-}
-/*static*/ void smp_ol_fft_aux_29(struct nanos_args_29_t *const args)
-{
-  {
-    smp_ol_fft_aux_29_unpacked(&((*args).in), &((*args).out), &((*args).m));
-  }
-}
-/*static*/ void smp_ol_fft_aux_30_unpacked(COMPLEX **const in, COMPLEX **const out, int *const m)
-{
-  {
-    fft_unshuffle_4(0, (*m), (*in), (*out), (*m));
-  }
-}
-/*static*/ void smp_ol_fft_aux_30(struct nanos_args_30_t *const args)
-{
-  {
-    smp_ol_fft_aux_30_unpacked(&((*args).in), &((*args).out), &((*args).m));
-  }
-}
-/*static*/ void smp_ol_fft_aux_31_unpacked(COMPLEX **const in, COMPLEX **const out, int *const m)
-{
-  {
-    fft_unshuffle_2(0, (*m), (*in), (*out), (*m));
-  }
-}
-/*static*/ void smp_ol_fft_aux_31(struct nanos_args_31_t *const args)
-{
-  {
-    smp_ol_fft_aux_31_unpacked(&((*args).in), &((*args).out), &((*args).m));
-  }
-}
-/*static*/ void smp_ol_fft_aux_32_unpacked(COMPLEX **const in, COMPLEX **const out, int **const factors, int *const d, COMPLEX **const W, int *const nW, int *const m, int *const k)
-{
-  {
-    fft_aux((*m), (*out) + (*k), (*in) + (*k), (*factors) + 1, (*d), (*W), (*nW));
-  }
-}
-/*static*/ void smp_ol_fft_aux_32(struct nanos_args_32_t *const args)
-{
-  {
-    smp_ol_fft_aux_32_unpacked(&((*args).in), &((*args).out), &((*args).factors), &((*args).d), &((*args).W), &((*args).nW), &((*args).m), &((*args).k));
-  }
-}
-/*static*/ void smp_ol_fft_aux_33_unpacked(int *const n, COMPLEX **const in, COMPLEX **const out, COMPLEX **const W, int *const nW, int *const m)
-{
-  {
-    fft_twiddle_2(0, (*m), (*in), (*out), (*W), (*nW), (*nW) / (*n), (*m));
-  }
-}
-/*static*/ void smp_ol_fft_aux_33(struct nanos_args_33_t *const args)
-{
-  {
-    smp_ol_fft_aux_33_unpacked(&((*args).n), &((*args).in), &((*args).out), &((*args).W), &((*args).nW), &((*args).m));
-  }
-}
-/*static*/ void smp_ol_fft_aux_34_unpacked(int *const n, COMPLEX **const in, COMPLEX **const out, COMPLEX **const W, int *const nW, int *const m)
-{
-  {
-    fft_twiddle_4(0, (*m), (*in), (*out), (*W), (*nW), (*nW) / (*n), (*m));
-  }
-}
-/*static*/ void smp_ol_fft_aux_34(struct nanos_args_34_t *const args)
-{
-  {
-    smp_ol_fft_aux_34_unpacked(&((*args).n), &((*args).in), &((*args).out), &((*args).W), &((*args).nW), &((*args).m));
-  }
-}
-/*static*/ void smp_ol_fft_aux_35_unpacked(int *const n, COMPLEX **const in, COMPLEX **const out, COMPLEX **const W, int *const nW, int *const m)
-{
-  {
-    fft_twiddle_8(0, (*m), (*in), (*out), (*W), (*nW), (*nW) / (*n), (*m));
-  }
-}
-/*static*/ void smp_ol_fft_aux_35(struct nanos_args_35_t *const args)
-{
-  {
-    smp_ol_fft_aux_35_unpacked(&((*args).n), &((*args).in), &((*args).out), &((*args).W), &((*args).nW), &((*args).m));
-  }
-}
-/*static*/ void smp_ol_fft_aux_36_unpacked(int *const n, COMPLEX **const in, COMPLEX **const out, COMPLEX **const W, int *const nW, int *const m)
-{
-  {
-    fft_twiddle_16(0, (*m), (*in), (*out), (*W), (*nW), (*nW) / (*n), (*m));
-  }
-}
-/*static*/ void smp_ol_fft_aux_36(struct nanos_args_36_t *const args)
-{
-  {
-    smp_ol_fft_aux_36_unpacked(&((*args).n), &((*args).in), &((*args).out), &((*args).W), &((*args).nW), &((*args).m));
-  }
-}
-/*static*/ void smp_ol_fft_aux_37_unpacked(int *const n, COMPLEX **const in, COMPLEX **const out, COMPLEX **const W, int *const nW, int *const m)
-{
-  {
-    fft_twiddle_32(0, (*m), (*in), (*out), (*W), (*nW), (*nW) / (*n), (*m));
-  }
-}
-/*static*/ void smp_ol_fft_aux_37(struct nanos_args_37_t *const args)
-{
-  {
-    smp_ol_fft_aux_37_unpacked(&((*args).n), &((*args).in), &((*args).out), &((*args).W), &((*args).nW), &((*args).m));
-  }
-}
-/*static*/ void smp_ol_fft_aux_38_unpacked(int *const n, COMPLEX **const in, COMPLEX **const out, COMPLEX **const W, int *const nW, int *const r, int *const m)
-{
-  {
-    fft_twiddle_gen(0, (*m), (*in), (*out), (*W), (*nW), (*nW) / (*n), (*r), (*m));
-  }
-}
-/*static*/ void smp_ol_fft_aux_38(struct nanos_args_38_t *const args)
-{
-  {
-    smp_ol_fft_aux_38_unpacked(&((*args).n), &((*args).in), &((*args).out), &((*args).W), &((*args).nW), &((*args).r), &((*args).m));
-  }
-}
-/*static*/ void smp_ol_fft_39_unpacked(int *const n, COMPLEX **const W)
-{
-  {
-    compute_w_coefficients((*n), 0, (*n) / 2, (*W));
-  }
-}
-/*static*/ void smp_ol_fft_39(struct nanos_args_39_t *const args)
-{
-  {
-    smp_ol_fft_39_unpacked((*args).n, (*args).W);
-  }
-}
-/*}}}*/
-
-/* End task definitions */
+int bots_arg_size;
+int bots_app_cutoff_value_1 = 128;
+int bots_app_cutoff_value_2 = 40;
 
 /* Definitions and operations for complex numbers */
 
@@ -933,12 +56,12 @@ struct  nanos_args_39_t
  * and store them into an array.
  */
 void compute_w_coefficients(int n, int a, int b, COMPLEX * W)
-{/*{{{*/
+{
     register double twoPiOverN;
     register int k;
     register REAL s, c;
 
-    if ((b - a) < magic_cutoff_2) {
+    if (b - a < bots_app_cutoff_value_1) {
         twoPiOverN = 2.0 * 3.1415926535897932384626434 / n;
         for (k = a; k <= b; ++k) {
             c = cos(twoPiOverN * k);
@@ -949,42 +72,20 @@ void compute_w_coefficients(int n, int a, int b, COMPLEX * W)
         }
     } else {
         int ab = (a + b) / 2;
-        // Task1
-        /*#pragma omp task untied*/
-        /*compute_w_coefficients(n, a, ab, W);*/
-        {
-            // Task1
-            struct nanos_args_0_t imm_args;
-            imm_args.n = n;
-            imm_args.a = a;
-            imm_args.W = W;
-            imm_args.ab = ab;
-            mir_task_create((mir_tfunc_t) smp_ol_compute_w_coefficients_0, (void*) &imm_args, sizeof(imm_args), 0, NULL, "smp_ol_compute_w_coefficients_0");
-        }
-        // Task2
-        /*#pragma omp task untied*/
-        /*compute_w_coefficients(n, ab + 1, b, W);*/
-        {
-            // Task2
-            struct nanos_args_1_t imm_args;
-            imm_args.n = n;
-            imm_args.b = b;
-            imm_args.W = W;
-            imm_args.ab = ab;
-            mir_task_create((mir_tfunc_t) smp_ol_compute_w_coefficients_1, (void*) &imm_args, sizeof(imm_args), 0, NULL, "smp_ol_compute_w_coefficients_1");
-        }
-        mir_task_wait();
-        //#pragma omp taskwait
+#pragma omp task
+        compute_w_coefficients(n, a, ab, W);
+#pragma omp task
+        compute_w_coefficients(n, ab + 1, b, W);
+#pragma omp taskwait
     }
-}/*}}}*/
-
+}
 void compute_w_coefficients_seq(int n, int a, int b, COMPLEX * W)
-{/*{{{*/
+{
     register double twoPiOverN;
     register int k;
     register REAL s, c;
 
-    if ((b - a) < magic_cutoff_2) {
+    if (b - a < bots_app_cutoff_value_1) {
         twoPiOverN = 2.0 * 3.1415926535897932384626434 / n;
         for (k = a; k <= b; ++k) {
             c = cos(twoPiOverN * k);
@@ -998,14 +99,13 @@ void compute_w_coefficients_seq(int n, int a, int b, COMPLEX * W)
         compute_w_coefficients_seq(n, a, ab, W);
         compute_w_coefficients_seq(n, ab + 1, b, W);
     }
-}/*}}}*/
-
+}
 /*
  * Determine (in a stupid way) if n is divisible by eight, then by four, else
  * find the smallest prime factor of n.
  */
 int factor(int n)
-{/*{{{*/
+{
     int r;
 
     if (n < 2) return 1;
@@ -1020,10 +120,10 @@ int factor(int n)
 
     /* n is prime */
     return n;
-}/*}}}*/
+}
 
 void unshuffle(int a, int b, COMPLEX * in, COMPLEX * out, int r, int m)
-{/*{{{*/
+{
     int i, j;
     int r4 = r & (~0x3);
     const COMPLEX *ip;
@@ -1049,41 +149,15 @@ void unshuffle(int a, int b, COMPLEX * in, COMPLEX * out, int r, int m)
         }
     } else {
         int ab = (a + b) / 2;
-        // Task3
-        /*#pragma omp task untied*/
-        /*unshuffle(a, ab, in, out, r, m);*/
-        {
-            // Task3
-            struct nanos_args_2_t imm_args;
-            imm_args.a = a;
-            imm_args.in = in;
-            imm_args.out = out;
-            imm_args.r = r;
-            imm_args.m = m;
-            imm_args.ab = ab;
-            mir_task_create((mir_tfunc_t) smp_ol_unshuffle_2, (void*) &imm_args, sizeof(imm_args), 0, NULL, "smp_ol_unshuffle_2");
-        }
-        // Task4
-        /*#pragma omp task untied*/
-        /*unshuffle(ab, b, in, out, r, m);*/
-        {
-            // Task4
-            struct nanos_args_3_t imm_args;
-            imm_args.b = b;
-            imm_args.in = in;
-            imm_args.out = out;
-            imm_args.r = r;
-            imm_args.m = m;
-            imm_args.ab = ab;
-            mir_task_create((mir_tfunc_t) smp_ol_unshuffle_3, (void*) &imm_args, sizeof(imm_args), 0, NULL, "smp_ol_unshuffle_3");
-        }
-        mir_task_wait();
-        //#pragma omp taskwait
+#pragma omp task
+        unshuffle(a, ab, in, out, r, m);
+#pragma omp task
+        unshuffle(ab, b, in, out, r, m);
+#pragma omp taskwait
     }
-}/*}}}*/
-
+}
 void unshuffle_seq(int a, int b, COMPLEX * in, COMPLEX * out, int r, int m)
-{/*{{{*/
+{
     int i, j;
     int r4 = r & (~0x3);
     const COMPLEX *ip;
@@ -1112,12 +186,11 @@ void unshuffle_seq(int a, int b, COMPLEX * in, COMPLEX * out, int r, int m)
         unshuffle_seq(a, ab, in, out, r, m);
         unshuffle_seq(ab, b, in, out, r, m);
     }
-}/*}}}*/
-
+}
 void fft_twiddle_gen1(COMPLEX * in, COMPLEX * out,
         COMPLEX * W, int r, int m,
         int nW, int nWdnti, int nWdntm)
-{/*{{{*/
+{
     int j, k;
     COMPLEX *jp, *kp;
 
@@ -1141,74 +214,28 @@ void fft_twiddle_gen1(COMPLEX * in, COMPLEX * out,
         c_re(*kp) = r0;
         c_im(*kp) = i0;
     }
-}/*}}}*/
+}
 
 void fft_twiddle_gen(int i, int i1, COMPLEX * in, COMPLEX * out, COMPLEX * W, int nW, int nWdn, int r, int m)
-{/*{{{*/
+{
     if (i == i1 - 1) {
-        // Task5
-        /*#pragma omp task untied*/
-        /*fft_twiddle_gen1(in + i, out + i, W,*/
-        /*r, m, nW, nWdn * i, nWdn * m);*/
-        {
-            // Task5
-            struct nanos_args_4_t imm_args;
-            imm_args.i = i;
-            imm_args.in = in;
-            imm_args.out = out;
-            imm_args.W = W;
-            imm_args.nW = nW;
-            imm_args.nWdn = nWdn;
-            imm_args.r = r;
-            imm_args.m = m;
-            mir_task_create((mir_tfunc_t) smp_ol_fft_twiddle_gen_4, (void*) &imm_args, sizeof(imm_args), 0, NULL, "smp_ol_fft_twiddle_gen_4");
-        }
+#pragma omp task
+        fft_twiddle_gen1(in + i, out + i, W,
+                r, m, nW, nWdn * i, nWdn * m);
     } else {
         int i2 = (i + i1) / 2;
-        // Task6
-        /*#pragma omp task untied*/
-        /*fft_twiddle_gen(i, i2, in, out, W, nW,*/
-        /*nWdn, r, m);*/
-        {
-            // Task6
-            struct nanos_args_5_t imm_args;
-            imm_args.i = i;
-            imm_args.in = in;
-            imm_args.out = out;
-            imm_args.W = W;
-            imm_args.nW = nW;
-            imm_args.nWdn = nWdn;
-            imm_args.r = r;
-            imm_args.m = m;
-            imm_args.i2 = i2;
-            mir_task_create((mir_tfunc_t) smp_ol_fft_twiddle_gen_5, (void*) &imm_args, sizeof(imm_args), 0, NULL, "smp_ol_fft_twiddle_gen_5");
-        }
-        // Task7
-        /*#pragma omp task untied*/
-        /*fft_twiddle_gen(i2, i1, in, out, W, nW,*/
-        /*nWdn, r, m);*/
-        {
-            // Task7
-            struct nanos_args_6_t imm_args;
-            imm_args.i1 = i1;
-            imm_args.in = in;
-            imm_args.out = out;
-            imm_args.W = W;
-            imm_args.nW = nW;
-            imm_args.nWdn = nWdn;
-            imm_args.r = r;
-            imm_args.m = m;
-            imm_args.i2 = i2;
-            mir_task_create((mir_tfunc_t) smp_ol_fft_twiddle_gen_6, (void*) &imm_args, sizeof(imm_args), 0, NULL, "smp_ol_fft_twiddle_gen_6");
-        }
+#pragma omp task
+        fft_twiddle_gen(i, i2, in, out, W, nW,
+                nWdn, r, m);
+#pragma omp task
+        fft_twiddle_gen(i2, i1, in, out, W, nW,
+                nWdn, r, m);
     }
-    mir_task_wait();
-    //#pragma omp taskwait
-}/*}}}*/
-
+#pragma omp taskwait
+}
 void fft_twiddle_gen_seq(int i, int i1, COMPLEX * in, COMPLEX * out, COMPLEX * W,
         int nW, int nWdn, int r, int m)
-{/*{{{*/
+{
     if (i == i1 - 1) {
         fft_twiddle_gen1(in + i, out + i, W,
                 r, m, nW, nWdn * i, nWdn * m);
@@ -1219,11 +246,10 @@ void fft_twiddle_gen_seq(int i, int i1, COMPLEX * in, COMPLEX * out, COMPLEX * W
         fft_twiddle_gen_seq(i2, i1, in, out, W, nW,
                 nWdn, r, m);
     }
-}/*}}}*/
-
+}
 /* machine-generated code begins here */
 void fft_base_2(COMPLEX * in, COMPLEX * out)
-{/*{{{*/
+{
     REAL r1_0, i1_0;
     REAL r1_1, i1_1;
     r1_0 = c_re(in[0]);
@@ -1234,14 +260,13 @@ void fft_base_2(COMPLEX * in, COMPLEX * out)
     c_im(out[0]) = (i1_0 + i1_1);
     c_re(out[1]) = (r1_0 - r1_1);
     c_im(out[1]) = (i1_0 - i1_1);
-}/*}}}*/
-
+}
 void fft_twiddle_2(int a, int b, COMPLEX * in, COMPLEX * out, COMPLEX * W, int nW, int nWdn, int m)
-{/*{{{*/
+{
     int l1, i;
     COMPLEX *jp, *kp;
     REAL tmpr, tmpi, wr, wi;
-    if ((b - a) < magic_cutoff) {
+    if ((b - a) < bots_app_cutoff_value_1) {
         for (i = a, l1 = nWdn * i, kp = out + i; i < b;
                 i++, l1 += nWdn, kp++) {
             jp = in + i;
@@ -1264,49 +289,19 @@ void fft_twiddle_2(int a, int b, COMPLEX * in, COMPLEX * out, COMPLEX * W, int n
         }
     } else {
         int ab = (a + b) / 2;
-        // Task8
-        /*#pragma omp task untied*/
-        /*fft_twiddle_2(a, ab, in, out, W, nW, nWdn, m);*/
-        {
-            // Task8
-            struct nanos_args_7_t imm_args;
-            imm_args.a = a;
-            imm_args.in = in;
-            imm_args.out = out;
-            imm_args.W = W;
-            imm_args.nW = nW;
-            imm_args.nWdn = nWdn;
-            imm_args.m = m;
-            imm_args.ab = ab;
-            mir_task_create((mir_tfunc_t) smp_ol_fft_twiddle_2_7, (void*) &imm_args, sizeof(imm_args), 0, NULL, "smp_ol_fft_twiddle_2_7");
-        }
-        // Task9
-        /*#pragma omp task untied*/
-        /*fft_twiddle_2(ab, b, in, out, W, nW, nWdn, m);*/
-        {
-            // Task9
-            struct nanos_args_8_t imm_args;
-            imm_args.b = b;
-            imm_args.in = in;
-            imm_args.out = out;
-            imm_args.W = W;
-            imm_args.nW = nW;
-            imm_args.nWdn = nWdn;
-            imm_args.m = m;
-            imm_args.ab = ab;
-            mir_task_create((mir_tfunc_t) smp_ol_fft_twiddle_2_8, (void*) &imm_args, sizeof(imm_args), 0, NULL, "smp_ol_fft_twiddle_2_8");
-        }
-        mir_task_wait();
-        //#pragma omp taskwait
+#pragma omp task 
+        fft_twiddle_2(a, ab, in, out, W, nW, nWdn, m);
+#pragma omp task 
+        fft_twiddle_2(ab, b, in, out, W, nW, nWdn, m);
+#pragma omp taskwait
     }
-}/*}}}*/
-
+}
 void fft_twiddle_2_seq(int a, int b, COMPLEX * in, COMPLEX * out, COMPLEX * W, int nW, int nWdn, int m)
-{/*{{{*/
+{
     int l1, i;
     COMPLEX *jp, *kp;
     REAL tmpr, tmpi, wr, wi;
-    if ((b - a) < magic_cutoff) {
+    if ((b - a) < bots_app_cutoff_value_1) {
         for (i = a, l1 = nWdn * i, kp = out + i; i < b;
                 i++, l1 += nWdn, kp++) {
             jp = in + i;
@@ -1332,14 +327,13 @@ void fft_twiddle_2_seq(int a, int b, COMPLEX * in, COMPLEX * out, COMPLEX * W, i
         fft_twiddle_2_seq(a, ab, in, out, W, nW, nWdn, m);
         fft_twiddle_2_seq(ab, b, in, out, W, nW, nWdn, m);
     }
-}/*}}}*/
-
+}
 void fft_unshuffle_2(int a, int b, COMPLEX * in, COMPLEX * out, int m)
-{/*{{{*/
+{
     int i;
     const COMPLEX *ip;
     COMPLEX *jp;
-    if ((b - a) < magic_cutoff) {
+    if ((b - a) < bots_app_cutoff_value_1) {
         ip = in + a * 2;
         for (i = a; i < b; ++i) {
             jp = out + i;
@@ -1349,43 +343,19 @@ void fft_unshuffle_2(int a, int b, COMPLEX * in, COMPLEX * out, int m)
         }
     } else {
         int ab = (a + b) / 2;
-        // Task10
-        /*#pragma omp task untied*/
-        /*fft_unshuffle_2(a, ab, in, out, m);*/
-        {
-            // Task10
-            struct nanos_args_9_t imm_args;
-            imm_args.a = a;
-            imm_args.in = in;
-            imm_args.out = out;
-            imm_args.m = m;
-            imm_args.ab = ab;
-            mir_task_create((mir_tfunc_t) smp_ol_fft_unshuffle_2_9, (void*) &imm_args, sizeof(imm_args), 0, NULL, "smp_ol_fft_unshuffle_2_9");
-        }
-        // Task11
-        /*#pragma omp task untied*/
-        /*fft_unshuffle_2(ab, b, in, out, m);*/
-        {
-            // Task11
-            struct nanos_args_10_t imm_args;
-            imm_args.b = b;
-            imm_args.in = in;
-            imm_args.out = out;
-            imm_args.m = m;
-            imm_args.ab = ab;
-            mir_task_create((mir_tfunc_t) smp_ol_fft_unshuffle_2_10, (void*) &imm_args, sizeof(imm_args), 0, NULL, "smp_ol_fft_unshuffle_2_10");
-        }
-        mir_task_wait();
-        //#pragma omp taskwait
+#pragma omp task 
+        fft_unshuffle_2(a, ab, in, out, m);
+#pragma omp task 
+        fft_unshuffle_2(ab, b, in, out, m);
+#pragma omp taskwait
     }
-}/*}}}*/
-
+}
 void fft_unshuffle_2_seq(int a, int b, COMPLEX * in, COMPLEX * out, int m)
-{/*{{{*/
+{
     int i;
     const COMPLEX *ip;
     COMPLEX *jp;
-    if ((b - a) < magic_cutoff) {
+    if ((b - a) < bots_app_cutoff_value_1) {
         ip = in + a * 2;
         for (i = a; i < b; ++i) {
             jp = out + i;
@@ -1398,10 +368,9 @@ void fft_unshuffle_2_seq(int a, int b, COMPLEX * in, COMPLEX * out, int m)
         fft_unshuffle_2_seq(a, ab, in, out, m);
         fft_unshuffle_2_seq(ab, b, in, out, m);
     }
-}/*}}}*/
-
+}
 void fft_base_4(COMPLEX * in, COMPLEX * out)
-{/*{{{*/
+{
     REAL r1_0, i1_0;
     REAL r1_1, i1_1;
     REAL r1_2, i1_2;
@@ -1438,14 +407,13 @@ void fft_base_4(COMPLEX * in, COMPLEX * out)
     c_im(out[1]) = (i1_2 - r1_3);
     c_re(out[3]) = (r1_2 - i1_3);
     c_im(out[3]) = (i1_2 + r1_3);
-}/*}}}*/
-
+}
 void fft_twiddle_4(int a, int b, COMPLEX * in, COMPLEX * out, COMPLEX * W, int nW, int nWdn, int m)
-{/*{{{*/
+{
     int l1, i;
     COMPLEX *jp, *kp;
     REAL tmpr, tmpi, wr, wi;
-    if ((b - a) < magic_cutoff) {
+    if ((b - a) < bots_app_cutoff_value_1) {
         for (i = a, l1 = nWdn * i, kp = out + i; i < b;
                 i++, l1 += nWdn, kp++) {
             jp = in + i;
@@ -1502,49 +470,19 @@ void fft_twiddle_4(int a, int b, COMPLEX * in, COMPLEX * out, COMPLEX * W, int n
         }
     } else {
         int ab = (a + b) / 2;
-        // Task12
-        /*#pragma omp task untied*/
-        /*fft_twiddle_4(a, ab, in, out, W, nW, nWdn, m);*/
-        {
-            // Task12
-            struct nanos_args_11_t imm_args;
-            imm_args.a = a;
-            imm_args.in = in;
-            imm_args.out = out;
-            imm_args.W = W;
-            imm_args.nW = nW;
-            imm_args.nWdn = nWdn;
-            imm_args.m = m;
-            imm_args.ab = ab;
-            mir_task_create((mir_tfunc_t) smp_ol_fft_twiddle_4_11, (void*) &imm_args, sizeof(imm_args), 0, NULL, "smp_ol_fft_twiddle_4_11");
-        }
-        // Task13
-        /*#pragma omp task untied*/
-        /*fft_twiddle_4(ab, b, in, out, W, nW, nWdn, m);*/
-        {
-            // Task13
-            struct nanos_args_12_t imm_args;
-            imm_args.b = b;
-            imm_args.in = in;
-            imm_args.out = out;
-            imm_args.W = W;
-            imm_args.nW = nW;
-            imm_args.nWdn = nWdn;
-            imm_args.m = m;
-            imm_args.ab = ab;
-            mir_task_create((mir_tfunc_t) smp_ol_fft_twiddle_4_12, (void*) &imm_args, sizeof(imm_args), 0, NULL, "smp_ol_fft_twiddle_4_12");
-        }
-        mir_task_wait();
-        //#pragma omp taskwait
+#pragma omp task 
+        fft_twiddle_4(a, ab, in, out, W, nW, nWdn, m);
+#pragma omp task 
+        fft_twiddle_4(ab, b, in, out, W, nW, nWdn, m);
+#pragma omp taskwait
     }
-}/*}}}*/
-
+}
 void fft_twiddle_4_seq(int a, int b, COMPLEX * in, COMPLEX * out, COMPLEX * W, int nW, int nWdn, int m)
-{/*{{{*/
+{
     int l1, i;
     COMPLEX *jp, *kp;
     REAL tmpr, tmpi, wr, wi;
-    if ((b - a) < magic_cutoff) {
+    if ((b - a) < bots_app_cutoff_value_1) {
         for (i = a, l1 = nWdn * i, kp = out + i; i < b;
                 i++, l1 += nWdn, kp++) {
             jp = in + i;
@@ -1604,14 +542,13 @@ void fft_twiddle_4_seq(int a, int b, COMPLEX * in, COMPLEX * out, COMPLEX * W, i
         fft_twiddle_4_seq(a, ab, in, out, W, nW, nWdn, m);
         fft_twiddle_4_seq(ab, b, in, out, W, nW, nWdn, m);
     }
-}/*}}}*/
-
+}
 void fft_unshuffle_4(int a, int b, COMPLEX * in, COMPLEX * out, int m)
-{/*{{{*/
+{
     int i;
     const COMPLEX *ip;
     COMPLEX *jp;
-    if ((b - a) < magic_cutoff) {
+    if ((b - a) < bots_app_cutoff_value_1) {
         ip = in + a * 4;
         for (i = a; i < b; ++i) {
             jp = out + i;
@@ -1625,42 +562,19 @@ void fft_unshuffle_4(int a, int b, COMPLEX * in, COMPLEX * out, int m)
         }
     } else {
         int ab = (a + b) / 2;
-        // Task14
-        /*#pragma omp task untied*/
-        /*fft_unshuffle_4(a, ab, in, out, m);*/
-        {
-            // Task14
-            struct nanos_args_13_t imm_args;
-            imm_args.a = a;
-            imm_args.in = in;
-            imm_args.out = out;
-            imm_args.m = m;
-            imm_args.ab = ab;
-            mir_task_create((mir_tfunc_t) smp_ol_fft_unshuffle_4_13, (void*) &imm_args, sizeof(imm_args), 0, NULL, "smp_ol_fft_unshuffle_4_13");
-        }
-        // Task15
-        /*#pragma omp task untied*/
-        /*fft_unshuffle_4(ab, b, in, out, m);*/
-        {
-            // Task15
-            struct nanos_args_14_t imm_args;
-            imm_args.b = b;
-            imm_args.in = in;
-            imm_args.out = out;
-            imm_args.m = m;
-            imm_args.ab = ab;
-            mir_task_create((mir_tfunc_t) smp_ol_fft_unshuffle_4_14, (void*) &imm_args, sizeof(imm_args), 0, NULL, "smp_ol_fft_unshuffle_4_14");
-        }
-        //#pragma omp taskwait
+#pragma omp task 
+        fft_unshuffle_4(a, ab, in, out, m);
+#pragma omp task 
+        fft_unshuffle_4(ab, b, in, out, m);
+#pragma omp taskwait
     }
-}/*}}}*/
-
+}
 void fft_unshuffle_4_seq(int a, int b, COMPLEX * in, COMPLEX * out, int m)
-{/*{{{*/
+{
     int i;
     const COMPLEX *ip;
     COMPLEX *jp;
-    if ((b - a) < magic_cutoff) {
+    if ((b - a) < bots_app_cutoff_value_1) {
         ip = in + a * 4;
         for (i = a; i < b; ++i) {
             jp = out + i;
@@ -1677,10 +591,9 @@ void fft_unshuffle_4_seq(int a, int b, COMPLEX * in, COMPLEX * out, int m)
         fft_unshuffle_4_seq(a, ab, in, out, m);
         fft_unshuffle_4_seq(ab, b, in, out, m);
     }
-}/*}}}*/
-
+}
 void fft_base_8(COMPLEX * in, COMPLEX * out)
-{/*{{{*/
+{
     REAL tmpr, tmpi;
     {
         REAL r1_0, i1_0;
@@ -1788,14 +701,13 @@ void fft_base_8(COMPLEX * in, COMPLEX * out)
         c_re(out[7]) = (r1_6 - tmpr);
         c_im(out[7]) = (i1_6 + tmpi);
     }
-}/*}}}*/
-
+}
 void fft_twiddle_8(int a, int b, COMPLEX * in, COMPLEX * out, COMPLEX * W, int nW, int nWdn, int m)
-{/*{{{*/
+{
     int l1, i;
     COMPLEX *jp, *kp;
     REAL tmpr, tmpi, wr, wi;
-    if ((b - a) < magic_cutoff) {
+    if ((b - a) < bots_app_cutoff_value_1) {
         for (i = a, l1 = nWdn * i, kp = out + i; i < b;
                 i++, l1 += nWdn, kp++) {
             jp = in + i;
@@ -1936,49 +848,19 @@ void fft_twiddle_8(int a, int b, COMPLEX * in, COMPLEX * out, COMPLEX * W, int n
         }
     } else {
         int ab = (a + b) / 2;
-        // Task16
-        /*#pragma omp task untied*/
-        /*fft_twiddle_8(a, ab, in, out, W, nW, nWdn, m);*/
-        {
-            // Task16
-            struct nanos_args_15_t imm_args;
-            imm_args.a = a;
-            imm_args.in = in;
-            imm_args.out = out;
-            imm_args.W = W;
-            imm_args.nW = nW;
-            imm_args.nWdn = nWdn;
-            imm_args.m = m;
-            imm_args.ab = ab;
-            mir_task_create((mir_tfunc_t) smp_ol_fft_twiddle_8_15, (void*) &imm_args, sizeof(imm_args), 0, NULL, "smp_ol_fft_twiddle_8_15");
-        }
-        // Task17
-        /*#pragma omp task untied*/
-        /*fft_twiddle_8(ab, b, in, out, W, nW, nWdn, m);*/
-        {
-            // Task17
-            struct nanos_args_16_t imm_args;
-            imm_args.b = b;
-            imm_args.in = in;
-            imm_args.out = out;
-            imm_args.W = W;
-            imm_args.nW = nW;
-            imm_args.nWdn = nWdn;
-            imm_args.m = m;
-            imm_args.ab = ab;
-            mir_task_create((mir_tfunc_t) smp_ol_fft_twiddle_8_16, (void*) &imm_args, sizeof(imm_args), 0, NULL, "smp_ol_fft_twiddle_8_16");
-        }
-        mir_task_wait();
-        //#pragma omp taskwait
+#pragma omp task 
+        fft_twiddle_8(a, ab, in, out, W, nW, nWdn, m);
+#pragma omp task 
+        fft_twiddle_8(ab, b, in, out, W, nW, nWdn, m);
+#pragma omp taskwait
     }
-}/*}}}*/
-
+}
 void fft_twiddle_8_seq(int a, int b, COMPLEX * in, COMPLEX * out, COMPLEX * W, int nW, int nWdn, int m)
-{/*{{{*/
+{
     int l1, i;
     COMPLEX *jp, *kp;
     REAL tmpr, tmpi, wr, wi;
-    if ((b - a) < magic_cutoff) {
+    if ((b - a) < bots_app_cutoff_value_1) {
         for (i = a, l1 = nWdn * i, kp = out + i; i < b;
                 i++, l1 += nWdn, kp++) {
             jp = in + i;
@@ -2122,14 +1004,13 @@ void fft_twiddle_8_seq(int a, int b, COMPLEX * in, COMPLEX * out, COMPLEX * W, i
         fft_twiddle_8_seq(a, ab, in, out, W, nW, nWdn, m);
         fft_twiddle_8_seq(ab, b, in, out, W, nW, nWdn, m);
     }
-}/*}}}*/
-
+}
 void fft_unshuffle_8(int a, int b, COMPLEX * in, COMPLEX * out, int m)
-{/*{{{*/
+{
     int i;
     const COMPLEX *ip;
     COMPLEX *jp;
-    if ((b - a) < magic_cutoff) {
+    if ((b - a) < bots_app_cutoff_value_1) {
         ip = in + a * 8;
         for (i = a; i < b; ++i) {
             jp = out + i;
@@ -2151,43 +1032,19 @@ void fft_unshuffle_8(int a, int b, COMPLEX * in, COMPLEX * out, int m)
         }
     } else {
         int ab = (a + b) / 2;
-        // Task18
-        /*#pragma omp task untied*/
-        /*fft_unshuffle_8(a, ab, in, out, m);*/
-        {
-            // Task18
-            struct nanos_args_17_t imm_args;
-            imm_args.a = a;
-            imm_args.in = in;
-            imm_args.out = out;
-            imm_args.m = m;
-            imm_args.ab = ab;
-            mir_task_create((mir_tfunc_t) smp_ol_fft_unshuffle_8_17, (void*) &imm_args, sizeof(imm_args), 0, NULL, "smp_ol_fft_unshuffle_8_17");
-        }
-        // Task19
-        /*#pragma omp task untied*/
-        /*fft_unshuffle_8(ab, b, in, out, m);*/
-        {
-            // Task19
-            struct nanos_args_18_t imm_args;
-            imm_args.b = b;
-            imm_args.in = in;
-            imm_args.out = out;
-            imm_args.m = m;
-            imm_args.ab = ab;
-            mir_task_create((mir_tfunc_t) smp_ol_fft_unshuffle_8_18, (void*) &imm_args, sizeof(imm_args), 0, NULL, "smp_ol_fft_unshuffle_8_18");
-        }
-        mir_task_wait();
-        //#pragma omp taskwait
+#pragma omp task 
+        fft_unshuffle_8(a, ab, in, out, m);
+#pragma omp task 
+        fft_unshuffle_8(ab, b, in, out, m);
+#pragma omp taskwait
     }
-}/*}}}*/
-
+}
 void fft_unshuffle_8_seq(int a, int b, COMPLEX * in, COMPLEX * out, int m)
-{/*{{{*/
+{
     int i;
     const COMPLEX *ip;
     COMPLEX *jp;
-    if ((b - a) < magic_cutoff) {
+    if ((b - a) < bots_app_cutoff_value_1) {
         ip = in + a * 8;
         for (i = a; i < b; ++i) {
             jp = out + i;
@@ -2212,10 +1069,9 @@ void fft_unshuffle_8_seq(int a, int b, COMPLEX * in, COMPLEX * out, int m)
         fft_unshuffle_8_seq(a, ab, in, out, m);
         fft_unshuffle_8_seq(ab, b, in, out, m);
     }
-}/*}}}*/
-
+}
 void fft_base_16(COMPLEX * in, COMPLEX * out)
-{/*{{{*/
+{
     REAL tmpr, tmpi;
     {
         REAL r1_0, i1_0;
@@ -2491,14 +1347,13 @@ void fft_base_16(COMPLEX * in, COMPLEX * out)
         c_re(out[15]) = (r1_14 - tmpr);
         c_im(out[15]) = (i1_14 + tmpi);
     }
-}/*}}}*/
-
+}
 void fft_twiddle_16(int a, int b, COMPLEX * in, COMPLEX * out, COMPLEX * W, int nW, int nWdn, int m)
-{/*{{{*/
+{
     int l1, i;
     COMPLEX *jp, *kp;
     REAL tmpr, tmpi, wr, wi;
-    if ((b - a) < magic_cutoff) {
+    if ((b - a) < bots_app_cutoff_value_1) {
         for (i = a, l1 = nWdn * i, kp = out + i; i < b;
                 i++, l1 += nWdn, kp++) {
             jp = in + i;
@@ -2839,49 +1694,19 @@ void fft_twiddle_16(int a, int b, COMPLEX * in, COMPLEX * out, COMPLEX * W, int 
         }
     } else {
         int ab = (a + b) / 2;
-        // Task20
-        /*#pragma omp task untied*/
-        /*fft_twiddle_16(a, ab, in, out, W, nW, nWdn, m);*/
-        {
-            // Task20
-            struct nanos_args_19_t imm_args;
-            imm_args.a = a;
-            imm_args.in = in;
-            imm_args.out = out;
-            imm_args.W = W;
-            imm_args.nW = nW;
-            imm_args.nWdn = nWdn;
-            imm_args.m = m;
-            imm_args.ab = ab;
-            mir_task_create((mir_tfunc_t) smp_ol_fft_twiddle_16_19, (void*) &imm_args, sizeof(imm_args), 0, NULL, "smp_ol_fft_twiddle_16_19");
-        }
-        // Task21
-        /*#pragma omp task untied*/
-        /*fft_twiddle_16(ab, b, in, out, W, nW, nWdn, m);*/
-        {
-            // Task21
-            struct nanos_args_20_t imm_args;
-            imm_args.b = b;
-            imm_args.in = in;
-            imm_args.out = out;
-            imm_args.W = W;
-            imm_args.nW = nW;
-            imm_args.nWdn = nWdn;
-            imm_args.m = m;
-            imm_args.ab = ab;
-            mir_task_create((mir_tfunc_t) smp_ol_fft_twiddle_16_20, (void*) &imm_args, sizeof(imm_args), 0, NULL, "smp_ol_fft_twiddle_16_20");
-        }
-        mir_task_wait();
-        //#pragma omp taskwait
+#pragma omp task 
+        fft_twiddle_16(a, ab, in, out, W, nW, nWdn, m);
+#pragma omp task 
+        fft_twiddle_16(ab, b, in, out, W, nW, nWdn, m);
+#pragma omp taskwait
     }
-}/*}}}*/
-
+}
 void fft_twiddle_16_seq(int a, int b, COMPLEX * in, COMPLEX * out, COMPLEX * W, int nW, int nWdn, int m)
-{/*{{{*/
+{
     int l1, i;
     COMPLEX *jp, *kp;
     REAL tmpr, tmpi, wr, wi;
-    if ((b - a) < magic_cutoff) {
+    if ((b - a) < bots_app_cutoff_value_1) {
         for (i = a, l1 = nWdn * i, kp = out + i; i < b;
                 i++, l1 += nWdn, kp++) {
             jp = in + i;
@@ -3225,14 +2050,13 @@ void fft_twiddle_16_seq(int a, int b, COMPLEX * in, COMPLEX * out, COMPLEX * W, 
         fft_twiddle_16_seq(a, ab, in, out, W, nW, nWdn, m);
         fft_twiddle_16_seq(ab, b, in, out, W, nW, nWdn, m);
     }
-}/*}}}*/
-
+}
 void fft_unshuffle_16(int a, int b, COMPLEX * in, COMPLEX * out, int m)
-{/*{{{*/
+{
     int i;
     const COMPLEX *ip;
     COMPLEX *jp;
-    if ((b - a) < magic_cutoff) {
+    if ((b - a) < bots_app_cutoff_value_1) {
         ip = in + a * 16;
         for (i = a; i < b; ++i) {
             jp = out + i;
@@ -3270,43 +2094,19 @@ void fft_unshuffle_16(int a, int b, COMPLEX * in, COMPLEX * out, int m)
         }
     } else {
         int ab = (a + b) / 2;
-        // Task22
-        /*#pragma omp task untied*/
-        /*fft_unshuffle_16(a, ab, in, out, m);*/
-        {
-            // Task22
-            struct nanos_args_21_t imm_args;
-            imm_args.a = a;
-            imm_args.in = in;
-            imm_args.out = out;
-            imm_args.m = m;
-            imm_args.ab = ab;
-            mir_task_create((mir_tfunc_t) smp_ol_fft_unshuffle_16_21, (void*) &imm_args, sizeof(imm_args), 0, NULL, "smp_ol_fft_unshuffle_16_21");
-        }
-        // Task23
-        /*#pragma omp task untied*/
-        /*fft_unshuffle_16(ab, b, in, out, m);*/
-        {
-            // Task23
-            struct nanos_args_22_t imm_args;
-            imm_args.b = b;
-            imm_args.in = in;
-            imm_args.out = out;
-            imm_args.m = m;
-            imm_args.ab = ab;
-            mir_task_create((mir_tfunc_t) smp_ol_fft_unshuffle_16_22, (void*) &imm_args, sizeof(imm_args), 0, NULL, "smp_ol_fft_unshuffle_16_22");
-        }
-        mir_task_wait();
-        //#pragma omp taskwait
+#pragma omp task 
+        fft_unshuffle_16(a, ab, in, out, m);
+#pragma omp task 
+        fft_unshuffle_16(ab, b, in, out, m);
+#pragma omp taskwait
     }
-}/*}}}*/
-
+}
 void fft_unshuffle_16_seq(int a, int b, COMPLEX * in, COMPLEX * out, int m)
-{/*{{{*/
+{
     int i;
     const COMPLEX *ip;
     COMPLEX *jp;
-    if ((b - a) < magic_cutoff) {
+    if ((b - a) < bots_app_cutoff_value_1) {
         ip = in + a * 16;
         for (i = a; i < b; ++i) {
             jp = out + i;
@@ -3347,10 +2147,9 @@ void fft_unshuffle_16_seq(int a, int b, COMPLEX * in, COMPLEX * out, int m)
         fft_unshuffle_16_seq(a, ab, in, out, m);
         fft_unshuffle_16_seq(ab, b, in, out, m);
     }
-}/*}}}*/
-
+}
 void fft_base_32(COMPLEX * in, COMPLEX * out)
-{/*{{{*/
+{
     REAL tmpr, tmpi;
     {
         REAL r1_0, i1_0;
@@ -4026,14 +2825,13 @@ void fft_base_32(COMPLEX * in, COMPLEX * out)
         c_re(out[31]) = (r1_30 - tmpr);
         c_im(out[31]) = (i1_30 + tmpi);
     }
-}/*}}}*/
-
+}
 void fft_twiddle_32(int a, int b, COMPLEX * in, COMPLEX * out, COMPLEX * W, int nW, int nWdn, int m)
-{/*{{{*/
+{
     int l1, i;
     COMPLEX *jp, *kp;
     REAL tmpr, tmpi, wr, wi;
-    if ((b - a) < magic_cutoff) {
+    if ((b - a) < bots_app_cutoff_value_1) {
         for (i = a, l1 = nWdn * i, kp = out + i; i < b;
                 i++, l1 += nWdn, kp++) {
             jp = in + i;
@@ -4838,49 +3636,19 @@ void fft_twiddle_32(int a, int b, COMPLEX * in, COMPLEX * out, COMPLEX * W, int 
         }
     } else {
         int ab = (a + b) / 2;
-        // Task24
-        /*#pragma omp task untied*/
-        /*fft_twiddle_32(a, ab, in, out, W, nW, nWdn, m);*/
-        {
-            // Task24
-            struct nanos_args_23_t imm_args;
-            imm_args.a = a;
-            imm_args.in = in;
-            imm_args.out = out;
-            imm_args.W = W;
-            imm_args.nW = nW;
-            imm_args.nWdn = nWdn;
-            imm_args.m = m;
-            imm_args.ab = ab;
-            mir_task_create((mir_tfunc_t) smp_ol_fft_twiddle_32_23, (void*) &imm_args, sizeof(imm_args), 0, NULL, "smp_ol_fft_twiddle_32_23");
-        }
-        // Task25
-        /*#pragma omp task untied*/
-        /*fft_twiddle_32(ab, b, in, out, W, nW, nWdn, m);*/
-        {
-            // Task25
-            struct nanos_args_24_t imm_args;
-            imm_args.b = b;
-            imm_args.in = in;
-            imm_args.out = out;
-            imm_args.W = W;
-            imm_args.nW = nW;
-            imm_args.nWdn = nWdn;
-            imm_args.m = m;
-            imm_args.ab = ab;
-            mir_task_create((mir_tfunc_t) smp_ol_fft_twiddle_32_24, (void*) &imm_args, sizeof(imm_args), 0, NULL, "smp_ol_fft_twiddle_32_24");
-        }
-        mir_task_wait();
-        //#pragma omp taskwait
+#pragma omp task 
+        fft_twiddle_32(a, ab, in, out, W, nW, nWdn, m);
+#pragma omp task 
+        fft_twiddle_32(ab, b, in, out, W, nW, nWdn, m);
+#pragma omp taskwait
     }
-}/*}}}*/
-
+}
 void fft_twiddle_32_seq(int a, int b, COMPLEX * in, COMPLEX * out, COMPLEX * W, int nW, int nWdn, int m)
-{/*{{{*/
+{
     int l1, i;
     COMPLEX *jp, *kp;
     REAL tmpr, tmpi, wr, wi;
-    if ((b - a) < magic_cutoff) {
+    if ((b - a) < bots_app_cutoff_value_1) {
         for (i = a, l1 = nWdn * i, kp = out + i; i < b;
                 i++, l1 += nWdn, kp++) {
             jp = in + i;
@@ -5688,14 +4456,13 @@ void fft_twiddle_32_seq(int a, int b, COMPLEX * in, COMPLEX * out, COMPLEX * W, 
         fft_twiddle_32_seq(a, ab, in, out, W, nW, nWdn, m);
         fft_twiddle_32_seq(ab, b, in, out, W, nW, nWdn, m);
     }
-}/*}}}*/
-
+}
 void fft_unshuffle_32(int a, int b, COMPLEX * in, COMPLEX * out, int m)
-{/*{{{*/
+{
     int i;
     const COMPLEX *ip;
     COMPLEX *jp;
-    if ((b - a) < magic_cutoff) {
+    if ((b - a) < bots_app_cutoff_value_1) {
         ip = in + a * 32;
         for (i = a; i < b; ++i) {
             jp = out + i;
@@ -5765,43 +4532,19 @@ void fft_unshuffle_32(int a, int b, COMPLEX * in, COMPLEX * out, int m)
         }
     } else {
         int ab = (a + b) / 2;
-        // Task26
-        /*#pragma omp task untied*/
-        /*fft_unshuffle_32(a, ab, in, out, m);*/
-        {
-            // Task26
-            struct nanos_args_25_t imm_args;
-            imm_args.a = a;
-            imm_args.in = in;
-            imm_args.out = out;
-            imm_args.m = m;
-            imm_args.ab = ab;
-            mir_task_create((mir_tfunc_t) smp_ol_fft_unshuffle_32_25, (void*) &imm_args, sizeof(imm_args), 0, NULL, "smp_ol_fft_unshuffle_32_25");
-        }
-        // Task27
-        /*#pragma omp task untied*/
-        /*fft_unshuffle_32(ab, b, in, out, m);*/
-        {
-            // Task27
-            struct nanos_args_26_t imm_args;
-            imm_args.b = b;
-            imm_args.in = in;
-            imm_args.out = out;
-            imm_args.m = m;
-            imm_args.ab = ab;
-            mir_task_create((mir_tfunc_t) smp_ol_fft_unshuffle_32_26, (void*) &imm_args, sizeof(imm_args), 0, NULL, "smp_ol_fft_unshuffle_32_26");
-        }
-        mir_task_wait();
-        //#pragma omp taskwait
+#pragma omp task 
+        fft_unshuffle_32(a, ab, in, out, m);
+#pragma omp task 
+        fft_unshuffle_32(ab, b, in, out, m);
+#pragma omp taskwait
     }
-}/*}}}*/
-
+}
 void fft_unshuffle_32_seq(int a, int b, COMPLEX * in, COMPLEX * out, int m)
-{/*{{{*/
+{
     int i;
     const COMPLEX *ip;
     COMPLEX *jp;
-    if ((b - a) < magic_cutoff) {
+    if ((b - a) < bots_app_cutoff_value_1) {
         ip = in + a * 32;
         for (i = a; i < b; ++i) {
             jp = out + i;
@@ -5874,7 +4617,7 @@ void fft_unshuffle_32_seq(int a, int b, COMPLEX * in, COMPLEX * out, int m)
         fft_unshuffle_32_seq(a, ab, in, out, m);
         fft_unshuffle_32_seq(ab, b, in, out, m);
     }
-}/*}}}*/
+}
 /* end of machine-generated code */
 
 /*
@@ -5893,7 +4636,7 @@ void fft_unshuffle_32_seq(int a, int b, COMPLEX * in, COMPLEX * out, int m)
  *
  */
 void fft_aux(int n, COMPLEX * in, COMPLEX * out, int *factors, int depth, COMPLEX * W, int nW)
-{/*{{{*/
+{
     int r, m;
     int k;
 
@@ -5927,7 +4670,7 @@ void fft_aux(int n, COMPLEX * in, COMPLEX * out, int *factors, int depth, COMPLE
 
     if (r < n) 
     {
-        if(depth >= aux_cutoff)
+        if(depth >= bots_app_cutoff_value_2)
         {
             /* 
              * split the DFT of length n into r DFTs of length n/r,  and
@@ -5951,91 +4694,30 @@ void fft_aux(int n, COMPLEX * in, COMPLEX * out, int *factors, int depth, COMPLE
              * recurse 
              */
             if (r == 32) {
-                // Task28
-                /*#pragma omp task untied*/
-                /*fft_unshuffle_32(0, m, in, out, m);*/
-                {
-                    // Task28
-                    struct nanos_args_27_t imm_args;
-                    imm_args.in = in;
-                    imm_args.out = out;
-                    imm_args.m = m;
-                    mir_task_create((mir_tfunc_t) smp_ol_fft_aux_27, (void*) &imm_args, sizeof(imm_args), 0, NULL, "smp_ol_fft_aux_27");
-                }
+#pragma omp task 
+                fft_unshuffle_32(0, m, in, out, m);
             } else if (r == 16) {
-                // Task29
-                /*#pragma omp task untied*/
-                /*fft_unshuffle_16(0, m, in, out, m);*/
-                {
-                    // Task29
-                    struct nanos_args_28_t imm_args;
-                    imm_args.in = in;
-                    imm_args.out = out;
-                    imm_args.m = m;
-                    mir_task_create((mir_tfunc_t) smp_ol_fft_aux_28, (void*) &imm_args, sizeof(imm_args), 0, NULL, "smp_ol_fft_aux_28");
-                }
+#pragma omp task 
+                fft_unshuffle_16(0, m, in, out, m);
             } else if (r == 8) {
-                // Task30
-                /*#pragma omp task untied*/
-                /*fft_unshuffle_8(0, m, in, out, m);*/
-                {
-                    // Task30
-                    struct nanos_args_29_t imm_args;
-                    imm_args.in = in;
-                    imm_args.out = out;
-                    imm_args.m = m;
-                    mir_task_create((mir_tfunc_t) smp_ol_fft_aux_29, (void*) &imm_args, sizeof(imm_args), 0, NULL, "smp_ol_fft_aux_29");
-                }
+#pragma omp task 
+                fft_unshuffle_8(0, m, in, out, m);
             } else if (r == 4) {
-                // Task31
-                /*#pragma omp task untied*/
-                /*fft_unshuffle_4(0, m, in, out, m);*/
-                {
-                    // Task31
-                    struct nanos_args_30_t imm_args;
-                    imm_args.in = in;
-                    imm_args.out = out;
-                    imm_args.m = m;
-                    mir_task_create((mir_tfunc_t) smp_ol_fft_aux_30, (void*) &imm_args, sizeof(imm_args), 0, NULL, "smp_ol_fft_aux_30");
-                }
+#pragma omp task 
+                fft_unshuffle_4(0, m, in, out, m);
             } else if (r == 2) {
-                // Task32
-                /*#pragma omp task untied*/
-                /*fft_unshuffle_2(0, m, in, out, m);*/
-                {
-                    // Task32
-                    struct nanos_args_31_t imm_args;
-                    imm_args.in = in;
-                    imm_args.out = out;
-                    imm_args.m = m;
-                    mir_task_create((mir_tfunc_t) smp_ol_fft_aux_31, (void*) &imm_args, sizeof(imm_args), 0, NULL, "smp_ol_fft_aux_31");
-                }
+#pragma omp task 
+                fft_unshuffle_2(0, m, in, out, m);
             } else
                 unshuffle(0, m, in, out, r, m);
 
-            mir_task_wait();
-            //#pragma omp taskwait
+#pragma omp taskwait
 
             for (k = 0; k < n; k += m) {
-                // Task33
-                /*#pragma omp task untied*/
-                /*fft_aux(m, out + k, in + k, factors + 1, W, nW);*/
-                {
-                    // Task33
-                    struct nanos_args_32_t imm_args;
-                    imm_args.in = in;
-                    imm_args.out = out;
-                    imm_args.factors = factors;
-                    imm_args.W = W;
-                    imm_args.nW = nW;
-                    imm_args.m = m;
-                    imm_args.k = k;
-                    imm_args.d = depth+1;
-                    mir_task_create((mir_tfunc_t) smp_ol_fft_aux_32, (void*) &imm_args, sizeof(imm_args), 0, NULL, "smp_ol_fft_aux_32");
-                }
+#pragma omp task 
+                fft_aux(m, out + k, in + k, factors + 1, depth + 1, W, nW);
             }
-            mir_task_wait();
-            //#pragma omp taskwait
+#pragma omp taskwait
         }
     }
     /* 
@@ -6043,106 +4725,32 @@ void fft_aux(int n, COMPLEX * in, COMPLEX * out, int *factors, int depth, COMPLE
      * of length r
      */
     if (r == 2) {
-        // Task34
-        /*#pragma omp task untied*/
-        /*fft_twiddle_2(0, m, in, out, W, nW, nW / n, m);*/
-        {
-            // Task34
-            struct nanos_args_33_t imm_args;
-            imm_args.n = n;
-            imm_args.in = in;
-            imm_args.out = out;
-            imm_args.W = W;
-            imm_args.nW = nW;
-            imm_args.m = m;
-            mir_task_create((mir_tfunc_t) smp_ol_fft_aux_33, (void*) &imm_args, sizeof(imm_args), 0, NULL, "smp_ol_fft_aux_33");
-        }
+#pragma omp task 
+        fft_twiddle_2(0, m, in, out, W, nW, nW / n, m);
     } else if (r == 4) {
-        // Task35
-        /*#pragma omp task untied*/
-        /*fft_twiddle_4(0, m, in, out, W, nW, nW / n, m);*/
-        {
-            // Task35
-            struct nanos_args_34_t imm_args;
-            imm_args.n = n;
-            imm_args.in = in;
-            imm_args.out = out;
-            imm_args.W = W;
-            imm_args.nW = nW;
-            imm_args.m = m;
-            mir_task_create((mir_tfunc_t) smp_ol_fft_aux_34, (void*) &imm_args, sizeof(imm_args), 0, NULL, "smp_ol_fft_aux_34");
-        }
+#pragma omp task 
+        fft_twiddle_4(0, m, in, out, W, nW, nW / n, m);
     } else if (r == 8) {
-        // Task36
-        /*#pragma omp task untied*/
-        /*fft_twiddle_8(0, m, in, out, W, nW, nW / n, m);*/
-        {
-            // Task36
-            struct nanos_args_35_t imm_args;
-            imm_args.n = n;
-            imm_args.in = in;
-            imm_args.out = out;
-            imm_args.W = W;
-            imm_args.nW = nW;
-            imm_args.m = m;
-            mir_task_create((mir_tfunc_t) smp_ol_fft_aux_35, (void*) &imm_args, sizeof(imm_args), 0, NULL, "smp_ol_fft_aux_35");
-        }
+#pragma omp task 
+        fft_twiddle_8(0, m, in, out, W, nW, nW / n, m);
     } else if (r == 16) {
-        // Task37
-        /*#pragma omp task untied*/
-        /*fft_twiddle_16(0, m, in, out, W, nW, nW / n, m);*/
-        {
-            // Task37
-            struct nanos_args_36_t imm_args;
-            imm_args.n = n;
-            imm_args.in = in;
-            imm_args.out = out;
-            imm_args.W = W;
-            imm_args.nW = nW;
-            imm_args.m = m;
-            mir_task_create((mir_tfunc_t) smp_ol_fft_aux_36, (void*) &imm_args, sizeof(imm_args), 0, NULL, "smp_ol_fft_aux_36");
-        }
+#pragma omp task 
+        fft_twiddle_16(0, m, in, out, W, nW, nW / n, m);
     } else if (r == 32) {
-        // Task38
-        /*#pragma omp task untied*/
-        /*fft_twiddle_32(0, m, in, out, W, nW, nW / n, m);*/
-        {
-            // Task38
-            struct nanos_args_37_t imm_args;
-            imm_args.n = n;
-            imm_args.in = in;
-            imm_args.out = out;
-            imm_args.W = W;
-            imm_args.nW = nW;
-            imm_args.m = m;
-            mir_task_create((mir_tfunc_t) smp_ol_fft_aux_37, (void*) &imm_args, sizeof(imm_args), 0, NULL, "smp_ol_fft_aux_37");
-        }
+#pragma omp task 
+        fft_twiddle_32(0, m, in, out, W, nW, nW / n, m);
     } else {
-        // Task39
-        /*#pragma omp task untied*/
-        /*fft_twiddle_gen(0, m, in, out, W, nW, nW / n, r, m);*/
-        {
-            // Task39
-            struct nanos_args_38_t imm_args;
-            imm_args.n = n;
-            imm_args.in = in;
-            imm_args.out = out;
-            imm_args.W = W;
-            imm_args.nW = nW;
-            imm_args.r = r;
-            imm_args.m = m;
-            mir_task_create((mir_tfunc_t) smp_ol_fft_aux_38, (void*) &imm_args, sizeof(imm_args), 0, NULL, "smp_ol_fft_aux_38");
-        }
+#pragma omp task 
+        fft_twiddle_gen(0, m, in, out, W, nW, nW / n, r, m);
     }
 
-    mir_task_wait();
-    //#pragma omp taskwait
+#pragma omp taskwait
 
     return;
-}/*}}}*/
+}
 
 void fft_aux_seq(int n, COMPLEX * in, COMPLEX * out, int *factors, COMPLEX * W, int nW)
-{/*{{{*/
+{
     int r, m;
     int k;
 
@@ -6202,27 +4810,26 @@ void fft_aux_seq(int n, COMPLEX * in, COMPLEX * out, int *factors, COMPLEX * W, 
     else              fft_twiddle_gen_seq(0, m, in, out, W, nW, nW / n, r, m);
 
     return;
-}/*}}}*/
-
+}
 /*
  * user interface for fft_aux
  */
 void fft(int n, COMPLEX * in, COMPLEX * out)
-{/*{{{*/
+{
     int factors[40];		/* allows FFTs up to at least 3^40 */
     int *p = factors;
     int l = n;
     int r;
     COMPLEX *W;
 
-    PMSG("Computing coefficients ");
+    bots_message("Computing coefficients ");
+#ifdef USE_MIR
     W = (COMPLEX *) mir_mem_pol_allocate ((n + 1) * sizeof(COMPLEX));
-/*#pragma omp parallel*/
-/*#pragma omp single*/
-    // Task41
-/*#pragma omp task untied*/
+#else
+    W = (COMPLEX *) malloc ((n + 1) * sizeof(COMPLEX));
+#endif
     compute_w_coefficients(n, 0, n / 2, W);
-    PMSG(" completed!\n");
+    bots_message(" completed!\n");
 
     /* 
      * find factors of n, first 8, then 4 and then primes in ascending
@@ -6234,26 +4841,30 @@ void fft(int n, COMPLEX * in, COMPLEX * out)
         l /= r;
     } while (l > 1);
 
-    PMSG("Computing FFT ");
-/*#pragma omp parallel*/
-/*#pragma omp single*/
-/*#pragma omp task untied*/
+    bots_message("Computing FFT ");
     fft_aux(n, in, out, factors, 0, W, n);
-    PMSG(" completed!\n");
+    bots_message(" completed!\n");
 
+#ifdef USE_MIR
     mir_mem_pol_release(W, (n + 1) * sizeof(COMPLEX));
+#else
+    free(W);
+#endif
     return;
-}/*}}}*/
-
+}
 void fft_seq(int n, COMPLEX * in, COMPLEX * out)
-{/*{{{*/
+{
     int factors[40];		/* allows FFTs up to at least 3^40 */
     int *p = factors;
     int l = n;
     int r;
     COMPLEX *W;
 
-    W = (COMPLEX *) mir_mem_pol_allocate ((n + 1) * sizeof(COMPLEX));
+#ifdef USE_MIR
+    W = (COMPLEX *) mir_mem_pol_allocate((n + 1) * sizeof(COMPLEX));
+#else
+    W = (COMPLEX *) malloc ((n + 1) * sizeof(COMPLEX));
+#endif
     compute_w_coefficients_seq(n, 0, n / 2, W);
 
     /* 
@@ -6268,12 +4879,15 @@ void fft_seq(int n, COMPLEX * in, COMPLEX * out)
 
     fft_aux_seq(n, in, out, factors, W, n);
 
+#ifdef USE_MIR
     mir_mem_pol_release(W, (n + 1) * sizeof(COMPLEX));
+#else
+    free(W);
+#endif
     return;
-}/*}}}*/
-
+}
 int test_correctness(int n, COMPLEX *out1, COMPLEX *out2)
-{/*{{{*/
+{
     int i;
     double a,d,error = 0.0;
 
@@ -6287,8 +4901,104 @@ int test_correctness(int n, COMPLEX *out1, COMPLEX *out2)
         if (d < -1.0e-10 || d > 1.0e-10) a /= d;
         if (a > error) error = a;
     }
-    PMSG("relative error=%e\n", error);
-    if (error > 1e-3) return TEST_UNSUCCESSFUL;
-    else return TEST_SUCCESSFUL;
-}/*}}}*/
+    bots_message("relative error=%e\n", error);
+    if (error > 1e-3) return BOTS_RESULT_UNSUCCESSFUL;
+    else return BOTS_RESULT_SUCCESSFUL;
+}
 
+int main(int argc, char *argv[])
+{/*{{{*/
+    if (argc > 4)
+        PABRT("Usage: %s number cutoff_value_1 cutoff_value_2\n", argv[0]);
+
+#ifdef USE_MIR
+    // Init the runtime
+    mir_create();
+#endif
+
+    int bots_arg_size = 8*1024*1024;
+    if(argc>1)
+        bots_arg_size = atoi(argv[1]);
+    if(argc>2)
+        bots_app_cutoff_value_1 = atoi(argv[2]);
+    if(argc>3)
+        bots_app_cutoff_value_2 = atoi(argv[3]);
+
+    COMPLEX *in = NULL;
+    COMPLEX *out1 = NULL;
+    COMPLEX *out2 = NULL;
+
+#ifdef USE_MIR
+    in = mir_mem_pol_allocate (bots_arg_size * sizeof(COMPLEX));
+    out1 = mir_mem_pol_allocate (bots_arg_size * sizeof(COMPLEX));
+#else
+    in = malloc (bots_arg_size * sizeof(COMPLEX));
+    out1 = malloc (bots_arg_size * sizeof(COMPLEX));
+#endif
+    for (int i = 0; i < bots_arg_size; ++i)
+    {
+        in[i].re = 1.00000000000000000000000000000000000000000000000000000e+00;
+        in[i].im = 1.00000000000000000000000000000000000000000000000000000e+00;
+    }
+
+    long par_time_start = get_usecs();
+#ifndef USE_MIR
+#pragma omp parallel
+    {
+#pragma omp single
+        {
+#endif
+#pragma omp task
+            fft(bots_arg_size,in,out1);
+#pragma omp taskwait
+#ifndef USE_MIR
+        }
+    }
+#endif
+    long par_time_end = get_usecs();
+    double par_time = (double)( par_time_end - par_time_start) / 1000000;
+
+    int check = TEST_NOT_PERFORMED;
+#ifdef CHECK_RESULT
+#ifdef USE_MIR
+    out2 = mir_mem_pol_allocate (bots_arg_size * sizeof(COMPLEX));
+#else
+    out2 = malloc (bots_arg_size * sizeof(COMPLEX));
+#endif
+    for (int i = 0; i < bots_arg_size; ++i)
+    {
+        in[i].re = 1.00000000000000000000000000000000000000000000000000000e+00;
+        in[i].im = 1.00000000000000000000000000000000000000000000000000000e+00;
+    }
+    long seq_time_start = get_usecs();
+    fft_seq(bots_arg_size, in, out2);
+    long seq_time_end = get_usecs();
+    double seq_time = (double)(seq_time_end - seq_time_start) / 1000000;
+    check = test_correctness(bots_arg_size, out1, out2);
+#ifdef USE_MIR
+    mir_mem_pol_release (out2, bots_arg_size * sizeof(COMPLEX));
+#else
+    free (out2);
+#endif
+    PMSG("Seq. time=%f secs\n", seq_time);
+#endif
+
+    PMSG("%s(%d),check=%d in %s,time=%f secs\n", argv[0], bots_arg_size, check, TEST_ENUM_STRING, par_time);
+    PALWAYS("%fs\n", par_time);
+
+    // Release memory 
+#ifdef USE_MIR
+    mir_mem_pol_release (in, bots_arg_size * sizeof(COMPLEX));
+    mir_mem_pol_release (out1, bots_arg_size * sizeof(COMPLEX));
+#else
+    free (in);
+    free (out1);
+#endif
+
+#ifdef USE_MIR
+    // Pull down the runtime
+    mir_destroy();
+#endif
+
+    return 0;
+}/*}}}*/

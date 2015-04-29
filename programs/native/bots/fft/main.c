@@ -7,6 +7,7 @@
 #include "helper.h"
 
 int magic_cutoff = 128; // Original 
+int magic_cutoff_2 = 1; // Original 
 int aux_cutoff = 40; // Maximum size of factors array
 
 long get_usecs(void)
@@ -29,8 +30,8 @@ void main_task_wrapper(void* arg)
 
 int main(int argc, char *argv[])
 {/*{{{*/
-    if (argc > 4)
-        PABRT("Usage: %s number magic_cutoff aux_cutoff\n", argv[0]);
+    if (argc > 5)
+        PABRT("Usage: %s number magic_cutoff aux_cutoff magic_cutoff_2\n", argv[0]);
 
     // Init the runtime
     mir_create();
@@ -42,6 +43,8 @@ int main(int argc, char *argv[])
         magic_cutoff = atoi(argv[2]);
     if(argc>3)
         aux_cutoff = atoi(argv[3]);
+    if(argc>4)
+        magic_cutoff_2 = atoi(argv[4]);
 
     COMPLEX *in = NULL;
     COMPLEX *out1 = NULL;

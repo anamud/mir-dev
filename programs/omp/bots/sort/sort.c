@@ -69,7 +69,9 @@
 #include <sys/time.h>
 #include <omp.h>
 
+#ifdef USE_MIR
 #include "mir_public_int.h"
+#endif
 #include "helper.h"
 
 long get_usecs(void)
@@ -396,16 +398,26 @@ void sort_init(void)
         arg_size = 4;
     }
 
+#ifdef USE_MIR
     array = (ELM *) mir_mem_pol_allocate (arg_size * sizeof(ELM));
     tmp = (ELM *) mir_mem_pol_allocate (arg_size * sizeof(ELM));
+#else
+    array = (ELM *) malloc (arg_size * sizeof(ELM));
+    tmp = (ELM *) malloc (arg_size * sizeof(ELM));
+#endif
     fill_array(array);
     scramble_array(array);
 }/*}}}*/
 
 void sort_deinit(void)
 {/*{{{*/
+#ifdef USE_MIR
     mir_mem_pol_release(array, arg_size * sizeof(ELM));
     mir_mem_pol_release(tmp, arg_size * sizeof(ELM));
+#else
+    free(array);
+    free(tmp);
+#endif
 }/*}}}*/
 
 void sort_par(void)
@@ -429,11 +441,13 @@ int sort_verify(void)
 int main(int argc, char **argv)
 {/*{{{*/
     arg_size = 33554432;
-    if (argc > 4)
-        PABRT("Usage: %s [num_elements=%lu] [merge_cutoff_size=%d] [quicksort_cutoff_size=%d]\n", argv[0], arg_size, cutoff_value, cutoff_value_1);
+    if (argc > 5)
+        PABRT("Usage: %s [num_elements=%lu] [merge_cutoff_size=%d] [quicksort_cutoff_size=%d] [insertion_cutoff_size=%d]\n", argv[0], arg_size, cutoff_value, cutoff_value_1, cutoff_value_2);
 
+#ifdef USE_MIR
     // Init the runtime
     mir_create();
+#endif
 
     if(argc > 1)
         arg_size = atoi(argv[1]);
@@ -441,18 +455,24 @@ int main(int argc, char **argv)
         cutoff_value = atoi(argv[2]);
     if(argc > 3)
         cutoff_value_1 = atoi(argv[3]);
+    if(argc > 4)
+        cutoff_value_2 = atoi(argv[4]);
 
     sort_init();
     long par_time_start = get_usecs();
+#ifndef USE_MIR
 #pragma omp parallel
 {
 #pragma omp single
 {
+#endif
 #pragma omp task
     sort_par();
 #pragma omp taskwait
+#ifndef USE_MIR
 }
 }
+#endif
     long par_time_end = get_usecs();
     double par_time = (double)( par_time_end - par_time_start) / 1000000;
 

@@ -830,11 +830,11 @@ if(parsed$analyze)
 
     # Base task graph with transparent elements
     base_tg <- tg
-    base_tg_vertex_color <- add.alpha(get.vertex.attribute(base_tg, name='color'), alpha=0.1)
+    base_tg_vertex_color <- add.alpha(get.vertex.attribute(base_tg, name='color'), alpha=0.3)
     base_tg <- set.vertex.attribute(base_tg, name='color', value=base_tg_vertex_color)
     if(!parsed$tree)
     {
-        base_tg_edge_color <- add.alpha(get.edge.attribute(base_tg, name='color'), alpha=0.1)
+        base_tg_edge_color <- add.alpha(get.edge.attribute(base_tg, name='color'), alpha=0.3)
         base_tg <- set.edge.attribute(base_tg, name='color', value=base_tg_edge_color)
     }
 

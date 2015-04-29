@@ -55,7 +55,6 @@ env['CCFLAGS'] = Split("""
 -DUSE_MIR
 -DENABLE_SPECOMP12_MOD
 """)
-#-DTG_GUIDED_OPT
 env['CCFLAGS'] += ['-I' + MIR_ROOT+'/src']
 env['CCFLAGS'] += ['-I' + MIR_ROOT+'/programs/common']
 env['LINKFLAGS'] = ['-pthread']
