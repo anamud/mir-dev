@@ -41,38 +41,47 @@ def get_callable(obj_fil):
 
 def main():
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "hv", ["help", "verbose"])
+        opts, args = getopt.getopt(sys.argv[1:], "hve", ["help", "verbose", "export"])
     except getopt.GetoptError as err:
         # print help information and exit:
         print(err) # will print something like "option -a not recognized"
         #usage()
-        print 'Usage: {0} -hv objfiles'.format(sys.argv[0])
+        print 'Usage: {0} -hve objfiles'.format(sys.argv[0])
         sys.exit(2)
     verbose = False
+    export = False
     for o, a in opts:
         if o == "-v":
             verbose = True
+        elif o == "-e":
+            export = True
         elif o in ("-h", "--help"):
             #usage()
-            print 'Usage: {0} -hv objfiles'.format(sys.argv[0])
+            print 'Usage: {0} -hve objfiles'.format(sys.argv[0])
             sys.exit()
         #elif o in ("-o", "--output"):
             #output = a
         else:
             assert False, "unhandled option"
-    if verbose:
+    if verbose and export != True:
         print 'Using "{0}" as outline function name pattern'.format(outline_func_pattern)
     num_obj = len(args)
     # For each object file, extract names of outline and callable functions
     for i in range(0, num_obj):
         obj_fil = args[i]
-        if verbose:
+        if verbose and export != True:
             print 'Processing file: {0}'.format(obj_fil)
         outline_funcs.append(get_outlined(obj_fil))
         callable_funcs.append(get_callable(obj_fil))
-    sys.stdout.write('CHECKME_OUTLINE_FUNCTIONS=')
+    if export:
+        sys.stdout.write('export CHECKME_OUTLINE_FUNCTIONS=')
+    else:
+        sys.stdout.write('CHECKME_OUTLINE_FUNCTIONS=')
     print ", ".join(outline_funcs).strip().replace(',,',',').replace(' ','').strip(',')
-    sys.stdout.write('CHECKME_CALLED_FUNCTIONS=')
+    if export:
+        sys.stdout.write('export CHECKME_CALLED_FUNCTIONS=')
+    else:
+        sys.stdout.write('CHECKME_CALLED_FUNCTIONS=')
     print ", ".join(callable_funcs).strip().replace(',,',',').replace(' ','').strip(',')
 
 if __name__ == '__main__':
