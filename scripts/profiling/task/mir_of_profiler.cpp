@@ -10,6 +10,7 @@
 #include <sstream>
 #include <algorithm>
 #include <omp.h>
+#include <assert.h>
 #include <sys/shm.h>
 
 KNOB<string> KnobOutputFileSuffix(KNOB_MODE_WRITEONCE, "pintool",
@@ -235,13 +236,14 @@ VOID Image(IMG img, VOID *v)
     std::string delims = ",";
     std::vector<string>::iterator it;
 
-    // The traced functions
-    std::string traced_functions_csv = KnobFunctionNames.Value();
-    std::vector<std::string> traced_functions;
-    tokenize(traced_functions_csv, delims, traced_functions);
-    for(it = traced_functions.begin(); it != traced_functions.end(); it++)
+    // The outline functions
+    std::string outline_functions_csv = KnobFunctionNames.Value();
+    std::vector<std::string> outline_functions;
+    tokenize(outline_functions_csv, delims, outline_functions);
+    assert(outline_functions.size() != 0);
+    for(it = outline_functions.begin(); it != outline_functions.end(); it++)
     {
-        //std::cout << "Analyzing traced function: " << *it << std::endl;
+        //std::cout << "Analyzing outline function: " << *it << std::endl;
         RTN mirRtn = RTN_FindByName(img, (*it).c_str());
         if (RTN_Valid(mirRtn))
         {/*{{{*/
@@ -307,10 +309,11 @@ VOID Image(IMG img, VOID *v)
         }/*}}}*/
     }
 
-    // The functions called by the traced functions
+    // The functions called by the outline functions
     std::string called_functions_csv = KnobCalledFunctionNames.Value();
     std::vector<std::string> called_functions;
     tokenize(called_functions_csv, delims, called_functions);
+    assert(called_functions.size() != 0);
     for(it = called_functions.begin(); it != called_functions.end(); it++)
     {
         //std::cout << "Analyzing called function: " << *it << std::endl;
