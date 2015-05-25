@@ -53,9 +53,9 @@ def main():
         print('Processing file: {}'.format(obj_fil))
         outline_funcs.append(get_outlined(obj_fil))
         callable_funcs.append(get_callable(obj_fil))
-    print('OUTLINE_FUNCTIONS=',end='')
+    print('CHECKME_OUTLINE_FUNCTIONS=',end='')
     print(", ".join(outline_funcs).strip().replace(',,',',').replace(' ','').strip(','))
-    print('CALLABLE_FUNCTIONS=',end='')
+    print('CHECKME_CALLED_FUNCTIONS=',end='')
     print(", ".join(callable_funcs).strip().replace(',,',',').replace(' ','').strip(','))
 
 if __name__ == '__main__':
