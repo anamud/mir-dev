@@ -313,7 +313,8 @@ VOID Image(IMG img, VOID *v)
     std::string called_functions_csv = KnobCalledFunctionNames.Value();
     std::vector<std::string> called_functions;
     tokenize(called_functions_csv, delims, called_functions);
-    assert(called_functions.size() != 0);
+    if(called_functions.size() != 0);
+        std::cout << "Note: Called function list is empty." << std::endl;
     for(it = called_functions.begin(); it != called_functions.end(); it++)
     {
         //std::cout << "Analyzing called function: " << *it << std::endl;
