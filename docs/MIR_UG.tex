@@ -223,20 +223,21 @@ Note: OpenMP tasks are supported by intercepting GCC translated calls to GNU lib
 \subsubsection{Tips for writing MIR-supported OpenMP programs}\label{tips-for-writing-mir-supported-openmp-programs}
 
 \begin{itemize}
-	\item Do not think in terms of threads.
-    \begin{itemize}
-        \item Do not use the \texttt{parallel} construct to share work.
-        \item Do not use barriers to synchronize threads. Do not expect implicit barriers.
-    \end{itemize}
-	\item Think solely in terms of tasks.
+    \item Think solely in terms of tasks.
     \begin{itemize}
         \item Use the \texttt{task} construct to parallelize work.
         \item Use clauses \texttt{shared}, \texttt{firstprivate} and \texttt{private} to indicate the data environment.
         \item Use \texttt{taskwait} to synchronize tasks.
-        \item Do not expect implicit taskwaits. Use taskwait explicitly.
+        \item Use taskwait explicitly. Do not expect implicit taskwaits at the end of task blocks. 
     \end{itemize}
-	\item Use GCC atomic builtins for flushing and atomic operations.
-	\item Study example programs in MIR\_ROOT/programs/omp.
+    \item Do not think in terms of threads.
+    \begin{itemize}
+        \item Use the \texttt{parallel} construct only to create a team of threads.
+        \item Do not use the \texttt{parallel} construct to share work.
+        \item Do not use barriers to synchronize threads. Do not expect implicit barriers at the end parallel blocks.
+    \end{itemize}
+    \item Use GCC atomic builtins for flushing and atomic operations.
+    \item Study example programs in MIR\_ROOT/programs/omp.
 \end{itemize}
 
 A simple set of steps for producing MIR-supported OpenMP programs is given below:
@@ -245,10 +246,10 @@ A simple set of steps for producing MIR-supported OpenMP programs is given below
 \item When parallel execution is required, create a \texttt{parallel}  block with \texttt{default(none)} followed immediately by a \texttt{single} block. The \texttt{default(none)} clause avoids incorrect execution due to assumed sharing rules.
 \item Use the \texttt{task} construct within the \texttt{single} block to parallelize work.
 \item Synchronize tasks using the \texttt{taskwait} construct explicitly. Do not rely on implicit barriers and taskwaits.
-\item Parallelizing work inside a master task context is helpful while interpreting profiling results.
+\item It is strongly recommended to parallelize work inside a master task context. This simplifies interpreting MIR profiling results.
 \item Compile and link with the native OpenMP implementation (preferably libgomp) and check if the program runs correctly.
 \item Include \texttt{mir\_public\_int.h}.
-\item Ensure there is only a single parallel block and all tasks are synchronized explicitly.
+\item Ensure that parallel block do not share work and that all tasks are synchronized explicitly.
 \item Compile and link with the appropriate MIR library (opt/debug). The program is now ready.
 \end{enumerate}
 
@@ -366,7 +367,7 @@ MIR_INFO: Valid options in MIR_CONF environment variable ...
 
 \subsubsection{Binding workers to cores}\label{binding-workers-to-cores}
 
-MIR creates and binds one worker thread per core (including hardware threads) by default. Binding is based on worker identifiers --- worker thread 0 is bound to core 0, worker thread 1 to core 1 and so on. The binding scheme can be changed to a specific mapping using the environment variable \texttt{MIR\_WORKER\_CORE\_MAP}. Ensure \texttt{MIR\_WORKER\_EXPLICIT\_BIND} is defined in \texttt{mir\_defines.h} to enable explicit binding support. An example is shown below.
+MIR creates and binds one worker thread per core by default. Hardware threads are excluded while binding. Binding is based on worker identifiers --- worker thread 0 is bound to core 0, worker thread 1 to core 1 and so on. The binding scheme can be changed to a specific mapping using the environment variable \texttt{MIR\_WORKER\_CORE\_MAP}. Ensure \texttt{MIR\_WORKER\_EXPLICIT\_BIND} is defined in \texttt{mir\_defines.h} to enable explicit binding support. An example is shown below.
 
 \begin{lstlisting}[style=MyInputStyle]
 $ cd $MIR_ROOT/src
@@ -482,18 +483,19 @@ Enable the \texttt{-g} flag to collect task statistics in a CSV file called \tex
 
 \begin{lstlisting}[style=MyInputStyle]
 $ MIR_CONF="-g" ./fib-opt
-$ Rscript ${MIR_ROOT}/scripts/profiling/task/plot-task-graph.R -d mir-task-stats -c color
+$ Rscript ${MIR_ROOT}/scripts/profiling/task/plot-task-graph.R -d mir-task-stats
 \end{lstlisting}
 
 TODO: Explain file contents.
 
-The \texttt{mir-task-stats} file can be further processed for additional information such as number of tasks and task lineage (UID for tasks).
+The \texttt{mir-task-stats} file can be further processed for additional information such as number of tasks and task lineage (UID for tasks). Processed information can also be used to visualize the fork-join task graph.
 
 \begin{lstlisting}[style=MyInputStyle]
 $ Rscript ${MIR_ROOT}/scripts/profiling/task/process-task-stats.R -d mir-task-stats --lineage
 $ cat mir-task-stats.info
 $ head mir-task-stats.lineage
 $ head mir-task-stats.processed
+$ Rscript ${MIR_ROOT}/scripts/profiling/task/plot-task-graph.R -d mir-task-stats.processed
 \end{lstlisting}
 
 TODO: Explain file contents.
@@ -624,28 +626,28 @@ Tip: Look at the \texttt{SConstruct} file in MIR\_ROOT/test/fib and build output
 \end{quote}
 \end{framed}
 
-Identify outline functions and functions called within tasks of the \texttt{fib-prof} program using the script \texttt{of\_finder.py}. The script searches for known outline function name patterns within the object files of \texttt{fib-prof}. The script lists outline functions as \texttt{OUTLINE\_FUNCTIONS} and all function symbols within the object files as \texttt{CALLED\_FUNCTIONS}.
+Identify outline functions and functions called within tasks of the \texttt{fib-prof} program using the script \texttt{of\_finder.py}. The script searches for known outline function name patterns within the object files of \texttt{fib-prof}. The script lists outline functions as \texttt{CHECKME\_OUTLINE\_FUNCTIONS} and all function symbols within the object files as \texttt{CHECKME\_CALLED\_FUNCTIONS}.
 
 \begin{lstlisting}[style=MyInputStyle]
 $ cd $MIR_ROOT/programs/native/fib
-$ $MIR_ROOT/scripts/profiling/task/of_finder.py prof-build/*.o
+$ $MIR_ROOT/scripts/profiling/task/of_finder.py -v prof-build/*.o
 Using "._omp_fn.|ol_" as outline function name pattern
 Processing file: prof-build/fib.o
-OUTLINE_FUNCTIONS=ol_fib_0,ol_fib_1,ol_fib_2
-CALLED_FUNCTIONS=fib_seq,fib,get_usecs,main
+CHECKME_OUTLINE_FUNCTIONS=ol_fib_0,ol_fib_1,ol_fib_2
+CHECKME_CALLED_FUNCTIONS=fib_seq,fib,get_usecs,main
 \end{lstlisting}
 
 \begin{framed}
 \begin{quote}
-Expert Tip: Ensure that OUTLINE\_FUNCTIONS listed are those generated by GCC. Inspect the abstract syntax tree (use compilation option \texttt{-fdump-tree-optimized}) and source files.
+Expert Tip: Ensure that functions listed by CHECKME\_OUTLINE\_FUNCTIONS are those generated by GCC. Inspect the abstract syntax tree (use compilation option \texttt{-fdump-tree-optimized}) and source files.
 \end{quote}
 \end{framed}
 
-The functions in the \texttt{CALLED\_FUNCTIONS} list should be treated as functions potentially called within task contexts.  Inspect program sources and exclude those which are not called within tasks.  By looking at Fibonacci program sources, we can exclude \texttt{main} and \texttt{get\_usecs} from \texttt{CALLED\_FUNCTIONS}. 
+The functions in the \texttt{CHECKME\_CALLED\_FUNCTIONS} list should be treated as functions potentially called within task contexts.  Inspect program sources and exclude those which are not called within tasks.  By looking at Fibonacci program sources, we can exclude \texttt{main} and \texttt{get\_usecs} from \texttt{CHECKME\_CALLED\_FUNCTIONS}. 
     
 \begin{framed}
 \begin{quote}
-Tip: If in doubt or when sources are not available, use the entire \texttt{CALLED\_FUNCTIONS} list. 
+Tip: If in doubt or when sources are not available, use the entire \texttt{CHECKME\_CALLED\_FUNCTIONS} list. 
 
 Expert Tip: Identifying functions called by tasks is necessary because the instruction count of these functions are added to the calling task's instruction count. 
 \end{quote}
@@ -659,6 +661,22 @@ $ mir-inst-prof \
     -c fib,fib_seq \
     -- ./fib-prof 10 4
 \end{lstlisting}
+
+\begin{framed}
+\begin{quote}
+    Tip: If you plan to use the entire \texttt{CHECKME\_CALLED\_FUNCTIONS} and \texttt{CHECKME\_OUTLINE\_FUNCTIONS} lists, then you can use them as arguments to \texttt{mir-inst-prof} in the following manner: 
+
+\begin{lstlisting}[style=MyInputStyle]
+$ `$MIR_ROOT/scripts/profiling/task/of_finder.py -e prof-build/*.o`
+$ mir-inst-prof \
+    -s $CHECKME_OUTLINE_FUNCTIONS
+    -c $CHECKME_CALLED_FUNCTIONS
+    -- ./fib-prof 10 4
+\end{lstlisting}
+
+The \texttt{-e} option of \texttt{of\_finder.py} outputs outline and called function lists in the BASH export format. The backticks evaluate the output as commands.
+\end{quote}
+\end{framed}
 
 Inspect instruction profiler output. 
 
