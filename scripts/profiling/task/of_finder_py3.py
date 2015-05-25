@@ -5,6 +5,7 @@
 import sys
 import os
 import subprocess
+import getopt
 
 # Seperate pattern with a "|"
 outline_func_pattern = '._omp_fn.|omp_fn.|^ol_'
@@ -42,15 +43,34 @@ def main():
     if sys.version_info < (3,0):
         print("Python version < 3. Aborting!")
         sys.exit(1)
-    if(len(sys.argv) == 1):
-        print('Usage: {} objfiles'.format(sys.argv[0]))
-        sys.exit(1)
-    print('Using "{}" as outline function name pattern'.format(outline_func_pattern))
-    num_obj = len(sys.argv) - 1
+    try:
+        opts, args = getopt.getopt(sys.argv[1:], "hv", ["help", "verbose"])
+    except getopt.GetoptError as err:
+        # print help information and exit:
+        print(err) # will print something like "option -a not recognized"
+        #usage()
+        print('Usage: {} -hv objfiles'.format(sys.argv[0]))
+        sys.exit(2)
+    verbose = False
+    for o, a in opts:
+        if o == "-v":
+            verbose = True
+        elif o in ("-h", "--help"):
+            #usage()
+            print('Usage: {} -hv objfiles'.format(sys.argv[0]))
+            sys.exit()
+        #elif o in ("-o", "--output"):
+            #output = a
+        else:
+            assert False, "unhandled option"
+    if verbose:
+        print('Using "{}" as outline function name pattern'.format(outline_func_pattern))
+    num_obj = len(args)
     # For each object file, extract names of outline and callable functions
     for i in range(0, num_obj):
-        obj_fil = sys.argv[i+1]
-        print('Processing file: {}'.format(obj_fil))
+        obj_fil = args[i]
+        if verbose:
+            print('Processing file: {}'.format(obj_fil))
         outline_funcs.append(get_outlined(obj_fil))
         callable_funcs.append(get_callable(obj_fil))
     print('CHECKME_OUTLINE_FUNCTIONS=',end='')
