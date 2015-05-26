@@ -351,7 +351,7 @@ void GOMP_loop_end_nowait (void)
 void GOMP_parallel_start (void (*fn) (void *), void * data, unsigned num_threads)
 {/*{{{*/
     MIR_DEBUG(MIR_DEBUG_STR "Note: GOMP_parallel_start implementation ignores num_threads argument. Use MIR_CONF to set number of threads.\n");
-    MIR_DEBUG(MIR_DEBUG_STR "Note: GOMP_parallel_start executes the parallel block only on worker 0.\n");
+    MIR_DEBUG(MIR_DEBUG_STR "Note: GOMP_parallel_start executes the parallel block only on current worker.\n");
 
     // Create thread team.
     mir_create();
