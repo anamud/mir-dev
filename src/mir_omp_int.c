@@ -351,8 +351,14 @@ void GOMP_parallel_start (void (*fn) (void *), void * data, unsigned num_threads
 {/*{{{*/
     MIR_DEBUG(MIR_DEBUG_STR "Note: GOMP_parallel_start implementation ignores num_threads argument. Use MIR_CONF to set number of threads.\n");
     MIR_DEBUG(MIR_DEBUG_STR "Note: GOMP_parallel_start executes the parallel block only on worker 0.\n");
+
+    // Create thread team.
     mir_create();
-    mir_task_create_on_worker((mir_tfunc_t) fn, (void*) data, (size_t)(0), 0, NULL, "GOMP_parallel_task", 0);
+
+    // Schedule on this worker.
+    struct mir_worker_t* worker = mir_worker_get_context(); 
+    MIR_ASSERT(worker != NULL);
+    mir_task_create_on_worker((mir_tfunc_t) fn, (void*) data, (size_t)(0), 0, NULL, "GOMP_parallel_task", worker->id);
 }/*}}}*/
 
 void GOMP_parallel_end (void)
