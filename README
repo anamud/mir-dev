@@ -1,5 +1,5 @@
- Description: This is the source repository of the MIR task-based runtime system library. The name MIR is inspired by Mir publishers whose books I enjoyed during my childhood. I learned later on in life that "mir" means peace in Russian. To get started with using MIR, please see docs/MIR_UG.pdf.
- Alternative names: mir, Mir 
- Author:  Ananya Muddukrishna
- E-mail: ananya@kth.se
+Description: This is the source repository of the MIR task-based runtime system library. To get started with using MIR, please read docs/MIR_UG.pdf. The name MIR is inspired by Mir Publishers from Moscow. I enjoyed Mir books on electronics and geometry during my childhood. 
+Alternative names of the MIR runtime system: mir, Mir.
+Author:  Ananya Muddukrishna.
+E-mail: ananya@kth.se.
 
