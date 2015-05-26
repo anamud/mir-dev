@@ -360,7 +360,7 @@ void GOMP_parallel_start (void (*fn) (void *), void * data, unsigned num_threads
     MIR_RECORDER_STATE_BEGIN(MIR_STATE_TCREATE);
 
     // Create task
-    struct mir_task_t* task = mir_task_create_common(tfunc, data, data_size, num_data_footprints, data_footprints, name);
+    struct mir_task_t* task = mir_task_create_common((mir_tfunc_t) fn, (void*) data, (size_t)(0), 0, NULL, "GOMP_parallel_task");
     MIR_ASSERT(task != NULL);
 
     MIR_RECORDER_STATE_END(NULL, 0);

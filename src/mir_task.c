@@ -60,7 +60,7 @@ static inline int inline_necessary()
     return 0;
 }/*}}}*/
 
-static inline struct mir_task_t* mir_task_create_common(mir_tfunc_t tfunc, void* data, size_t data_size, unsigned int num_data_footprints, const struct mir_data_footprint_t* data_footprints, const char* name)
+struct mir_task_t* mir_task_create_common(mir_tfunc_t tfunc, void* data, size_t data_size, unsigned int num_data_footprints, const struct mir_data_footprint_t* data_footprints, const char* name)
 {/*{{{*/
     MIR_ASSERT(tfunc != NULL);
 

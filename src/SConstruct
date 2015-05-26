@@ -65,8 +65,8 @@ if os.path.isfile('HAVE_PAPI'):
 # Enable specialized support for OpenMP on Valarauko with GCC 4.4.7
 import platform, commands
 machine = platform.node()
-compiler_version = commands.getoutput(str(env['CC']) + ' -dumpversion')
-if compiler_version == "4.4.7" and compiler[0] == "gcc" and machine == "valarauko.sics.se":
+compiler_version = commands.getoutput(str(env['CC']).strip('[]') + ' -dumpversion')
+if compiler_version == "4.4.7" and compiler[0] == "/usr/bin/gcc" and machine == "valarauko.sics.se":
     print('Enabling special support for OpenMP on Valarauko with OpenGCC 4.4.7')
     env['CCFLAGS'] += ['-DVALARAUKO_GCC_4_4_7']
 
