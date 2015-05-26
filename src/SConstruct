@@ -26,6 +26,7 @@ if os.path.isfile('HAVE_PAPI'):
             Exit(2)
 
 # Choose compiler
+# Note: OpenMP support only enabled for GCC. 
 compilers = ['gcc']
 compiler = ''
 for item in compilers:
@@ -60,6 +61,14 @@ if os.path.isfile('HAVE_LIBNUMA'):
 if os.path.isfile('HAVE_PAPI'):
     env['CCFLAGS'] += ['-I' + PAPI_ROOT+'/include']
     env['CCFLAGS'] += ['-DMIR_RECORDER_USE_HW_PERF_COUNTERS']
+
+# Enable specialized support for OpenMP on Valarauko with GCC 4.4.7
+import platform, commands
+machine = platform.node()
+compiler_version = commands.getoutput(str(env['CC']) + ' -dumpversion')
+if compiler_version == "4.4.7" and compiler[0] == "gcc" and machine == "valarauko.sics.se":
+    print('Enabling special support for OpenMP on Valarauko with OpenGCC 4.4.7')
+    env['CCFLAGS'] += ['-DVALARAUKO_GCC_4_4_7']
 
 # Detect topology
 # FIXME: This runs every time rather than only when sources have changed.
