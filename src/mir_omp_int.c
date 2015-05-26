@@ -10,6 +10,7 @@
 #include "mir_utils.h"
 #include "mir_worker.h"
 #include "mir_lock.h"
+#include "mir_recorder.h"
 
 extern struct mir_runtime_t* runtime;
 
@@ -355,15 +356,36 @@ void GOMP_parallel_start (void (*fn) (void *), void * data, unsigned num_threads
     // Create thread team.
     mir_create();
 
+#ifdef VALARAUKO_GCC_4_4_7
+    MIR_RECORDER_STATE_BEGIN(MIR_STATE_TCREATE);
+
+    // Create task
+    struct mir_task_t* task = mir_task_create_common(tfunc, data, data_size, num_data_footprints, data_footprints, name);
+    MIR_ASSERT(task != NULL);
+
+    MIR_RECORDER_STATE_END(NULL, 0);
+
+    // Start profiling and book-keeping for parallel task
+    mir_task_execute_prolog(task);
+#else
     // Schedule on this worker.
     struct mir_worker_t* worker = mir_worker_get_context(); 
     MIR_ASSERT(worker != NULL);
     mir_task_create_on_worker((mir_tfunc_t) fn, (void*) data, (size_t)(0), 0, NULL, "GOMP_parallel_task", worker->id);
+#endif
 }/*}}}*/
 
 void GOMP_parallel_end (void)
 {/*{{{*/
     mir_task_wait();
+
+#ifdef VALARAUKO_GCC_4_4_7
+    // Stop profiling and book-keeping for parallel task
+    struct mir_worker_t* worker = (struct mir_worker_t*) pthread_getspecific (runtime->worker_index);
+    MIR_ASSERT(worker->current_task != NULL);
+    mir_task_execute_epilog(worker->current_task);
+#endif
+
     mir_soft_destroy();
 }/*}}}*/
 
