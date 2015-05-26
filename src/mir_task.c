@@ -313,7 +313,7 @@ static void mir_task_destroy(struct mir_task_t* task)
     MIR_ASSERT(task != NULL);
 }/*}}}*/
 
-void mir_task_execute(struct mir_task_t* task)
+void mir_task_execute_prolog(struct mir_task_t* task)
 {/*{{{*/
     MIR_ASSERT(task != NULL);
 
@@ -345,7 +345,7 @@ void mir_task_execute(struct mir_task_t* task)
         worker->current_task->exec_cycles += (mir_get_cycles() - worker->current_task->exec_resume_instant);
 
     // Save task context of worker
-    struct mir_task_t* temp = worker->current_task;
+    task->predecessor = worker->current_task;
 
     // Update task context of worker
     worker->current_task = task;
@@ -363,12 +363,15 @@ void mir_task_execute(struct mir_task_t* task)
         for(int i=0; i<MIR_OFP_SHM_SIZE; i++)
             runtime->ofp_shm[i] = buf[i];
     }
+}/*}}}*/
 
-    // Execute task function
-    task->func(task->data);
+void mir_task_execute_epilog(struct mir_task_t* task)
+{/*{{{*/
+    MIR_ASSERT(task != NULL);
 
-    // Debugging
-    //MIR_INFORM(MIR_INFORM_STR "Task %" MIR_FORMSPEC_UL " executed on worker %d\n", task->id.uid, worker->id);
+    // Get this worker
+    struct mir_worker_t* worker = mir_worker_get_context();
+    MIR_ASSERT(worker != NULL);
 
     // Record where executed
     task->cpu_id = worker->cpu_id;
@@ -388,7 +391,7 @@ void mir_task_execute(struct mir_task_t* task)
         mir_worker_update_task_list(worker, task);
 
     // Restore task context of worker
-    worker->current_task = temp;
+    worker->current_task = task->predecessor;
 
     // Current task timing
     if(worker->current_task)
@@ -419,6 +422,23 @@ void mir_task_execute(struct mir_task_t* task)
 
     // FIXME Destroy task !
     // NOTE: Destroying task upsets task list structure
+}/*}}}*/
+
+void mir_task_execute(struct mir_task_t* task)
+{/*{{{*/
+    MIR_ASSERT(task != NULL);
+
+    // Start profiling and book-keeping for task
+    mir_task_execute_prolog(task);
+
+    // Execute task function
+    task->func(task->data);
+
+    // Stop profiling and book-keeping for task
+    mir_task_execute_epilog(task);
+
+    // Debugging
+    //MIR_INFORM(MIR_INFORM_STR "Task %" MIR_FORMSPEC_UL " executed on worker %d\n", task->id.uid, worker->id);
 }/*}}}*/
 
 #ifdef MIR_MEM_POL_ENABLE

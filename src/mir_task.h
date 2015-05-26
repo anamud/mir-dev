@@ -100,6 +100,7 @@ struct mir_task_t
     unsigned long comm_cost;
     char name[MIR_SHORT_NAME_LEN];
     struct mir_task_t* parent;
+    struct mir_task_t* predecessor;
     uint16_t cpu_id; 
     uint64_t exec_resume_instant;
     uint64_t exec_end_instant;
@@ -135,6 +136,10 @@ static void T_DBG(char*msg, struct mir_task_t *t)
 /*LIBINT*/ void mir_task_create_on_worker(mir_tfunc_t tfunc, void* data, size_t data_size, unsigned int num_data_footprints, struct mir_data_footprint_t* data_footprints, const char* name, unsigned int target);
 
 /*LIBINT*/ void mir_loop_task_create(mir_tfunc_t tfunc, void* data, struct mir_loop_des_t* loops, int num_loops, const char* name);
+
+void mir_task_execute_prolog(struct mir_task_t* task);
+
+void mir_task_execute_epilog(struct mir_task_t* task);
 
 void mir_task_execute(struct mir_task_t* task);
 
