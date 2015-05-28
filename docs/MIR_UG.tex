@@ -502,7 +502,9 @@ TODO: Explain file contents.
 
 \subsubsection{Instruction-level task profiling}\label{instruction-level-task-profiling}
 
-MIR provides a Pin-based instruction profiler that traces instructions executed by tasks. Technically, the profiler traces instructions executed within outline functions of tasks in programs compiled using GCC. Follow below steps to build and use the profiler.
+MIR provides a Pin-based instruction profiler that traces instructions executed by tasks. Technically, the profiler traces instructions executed within outline functions of tasks in programs compiled using GCC. Instructions of dynamically linked functions and system calls called within the outline function are not traced. Read paper \textit{Characterizing task-based OpenMP programs} (DOI: 10.1371/journal.pone.0123545) for more details.
+
+Follow below steps to build and use the profiler.
 
 \begin{itemize}
 \item Get Intel Pin sources and set environment variables.
