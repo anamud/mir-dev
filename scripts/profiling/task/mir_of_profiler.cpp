@@ -10,7 +10,6 @@
 #include <sstream>
 #include <algorithm>
 #include <omp.h>
-#include <assert.h>
 #include <sys/shm.h>
 
 KNOB<string> KnobOutputFileSuffix(KNOB_MODE_WRITEONCE, "pintool",
@@ -240,7 +239,11 @@ VOID Image(IMG img, VOID *v)
     std::string outline_functions_csv = KnobFunctionNames.Value();
     std::vector<std::string> outline_functions;
     tokenize(outline_functions_csv, delims, outline_functions);
-    assert(outline_functions.size() != 0);
+    if(outline_functions.size() == 0)
+    {
+        std::cout << "Error: Outline function list is empty." << std::endl;
+        exit(1);
+    }
     for(it = outline_functions.begin(); it != outline_functions.end(); it++)
     {
         //std::cout << "Analyzing outline function: " << *it << std::endl;
@@ -248,6 +251,7 @@ VOID Image(IMG img, VOID *v)
         if (RTN_Valid(mirRtn))
         {/*{{{*/
             //std::cout << "Function " << *it << " is valid" << std::endl;
+            std::cout << "Adding profiling hooks to outline function: " << *it << std::endl;
             RTN_Open(mirRtn);
 
             // Create new stats counter for each entry and exit of mir_execute_task
@@ -313,7 +317,7 @@ VOID Image(IMG img, VOID *v)
     std::string called_functions_csv = KnobCalledFunctionNames.Value();
     std::vector<std::string> called_functions;
     tokenize(called_functions_csv, delims, called_functions);
-    if(called_functions.size() != 0);
+    if(called_functions.size() == 0)
         std::cout << "Note: Called function list is empty." << std::endl;
     for(it = called_functions.begin(); it != called_functions.end(); it++)
     {
@@ -322,6 +326,7 @@ VOID Image(IMG img, VOID *v)
         if (RTN_Valid(mirRtn))
         {/*{{{*/
             //std::cout << "Function " << *it << " is valid" << std::endl;
+            std::cout << "Adding profiling hooks to called function: " << *it << std::endl;
             RTN_Open(mirRtn);
 
             // For each instruction of the function, update entries in the stats counter
@@ -383,6 +388,7 @@ VOID Image(IMG img, VOID *v)
     RTN mirTaskCreateRtn = RTN_FindByName(img, "mir_task_create");
     if (RTN_Valid(mirTaskCreateRtn))
     {
+        std::cout << "Adding profiling hooks to runtime system function: mir_task_create" << std::endl;
         RTN_Open(mirTaskCreateRtn);
         RTN_InsertCall(mirTaskCreateRtn, IPOINT_BEFORE, (AFUNPTR)MIRTaskCreateBefore, IARG_END);
         RTN_Close(mirTaskCreateRtn);
@@ -392,6 +398,7 @@ VOID Image(IMG img, VOID *v)
     RTN mirTaskWaitRtn = RTN_FindByName(img, "mir_task_wait");
     if (RTN_Valid(mirTaskWaitRtn))
     {
+        std::cout << "Adding profiling hooks to runtime system function: mir_task_wait" << std::endl;
         RTN_Open(mirTaskWaitRtn);
         RTN_InsertCall(mirTaskWaitRtn, IPOINT_AFTER, (AFUNPTR)MIRTaskWaitAfter, IARG_END);
         RTN_Close(mirTaskWaitRtn);
