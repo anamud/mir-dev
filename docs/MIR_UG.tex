@@ -431,7 +431,7 @@ TODO: Explain file contents.
 
 \subsubsection{Enabling hardware performance counters}\label{enabling-hardware-performance-counters}
 
-MIR can read hardware performance counters through PAPI during thread events.
+MIR can read hardware performance counters through PAPI during task execution events i.e., at the beginning and end of task execution.
 
 \begin{itemize}
 \item Install PAPI.
@@ -500,6 +500,16 @@ $ Rscript ${MIR_ROOT}/scripts/profiling/task/plot-task-graph.R -d mir-task-stats
 
 TODO: Explain file contents.
 
+Hardware performance counter readings obtained during thread-based profiling can be summarized on a per-task basis. Note that performance counter readings will include the effects of all actions that occured during task execution such as runtime system activity, system calls, interrupts etc.
+
+\begin{lstlisting}[style=MyInputStyle]
+$ $MIR_ROOT/scripts/profiling/thread/get-events-per-task.sh mir-recorder-trace-*.rec
+$ cat accumulated-events.summary
+$ cat accumulated-events.table
+\end{lstlisting}
+
+TODO: Explain file contents.
+
 \subsubsection{Instruction-level task profiling}\label{instruction-level-task-profiling}
 
 MIR provides a Pin-based instruction profiler that traces instructions executed by tasks. Technically, the profiler traces instructions executed within outline functions of tasks in programs compiled using GCC. Instructions of dynamically linked functions and system calls called within the outline function are not traced. Read paper \textit{Characterizing task-based OpenMP programs} (DOI: 10.1371/journal.pone.0123545) for more details.
@@ -547,7 +557,7 @@ The profiler requires outline function names under the argument \texttt{-s}. The
 \begin{lstlisting}[style=MyInputStyle]
 function mir-inst-prof()
 {
-"MIR_CONF='-w=1 -p -g' ${PIN_ROOT}/intel64/bin/pinbin -t ${MIR_ROOT}/scripts/profiling/task/obj-intel64/mir_of_profiler.so"
+    MIR_CONF='-w=1 -p -g' ${PIN_ROOT}/intel64/bin/pinbin -t ${MIR_ROOT}/scripts/profiling/task/obj-intel64/mir_of_profiler.so "$@"
 }
 \end{lstlisting}
 \end{itemize}
@@ -557,7 +567,7 @@ The profiler produces following outputs:
     \item Per-task instructions in a CSV file called \texttt{mir-ofp-instructions}. Example contents of the file are shown below.  TODO: Add file contents.  Each line shows instruction and code properties of a distinct task executed by the program. Properties are described below.
         \begin{itemize}
             \item task: Identifier of the task.       
-            \item ins\_count: Total number of instructions executed by the task. 
+            \item ins\_count: Total number of instructions executed by the task excluding instructions of system calls, dynamically linked functions and runtime system functions.
             \item stack\_read: Number of read accesses to the stack while executing instructions.
             \item stack\_write: Number of write accesses to the stack while executing instructions.
             \item ccr: Computation to Communication Ratio. Indicates number of instructions executed per read or write access to memory.
