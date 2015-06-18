@@ -576,7 +576,7 @@ void mir_task_wait()
 
 void mir_task_stats_write_header_to_file(FILE* file)
 {/*{{{*/
-    fprintf(file, "task,parent,joins_at,cpu_id,child_number,num_children,exec_cycles,overhead_cycles,queue_size,exec_end,tag\n");
+    fprintf(file, "task,parent,joins_at,cpu_id,child_number,num_children,exec_cycles,overhead_cycles,queue_size,create_instant,exec_start_instant,exec_end_instant,tag,[wait]\n");
 }/*}}}*/
 
 void mir_task_stats_write_to_file(struct mir_task_list_t* list, FILE* file)
@@ -589,7 +589,7 @@ void mir_task_stats_write_to_file(struct mir_task_list_t* list, FILE* file)
         if(temp->task->parent)
             task_parent.uid = temp->task->parent->id.uid;
 
-        fprintf(file, "%" MIR_FORMSPEC_UL ",%" MIR_FORMSPEC_UL ",%lu,%u,%u,%u,%" MIR_FORMSPEC_UL ",%" MIR_FORMSPEC_UL ",%u,%" MIR_FORMSPEC_UL ",%s\n", 
+        fprintf(file, "%" MIR_FORMSPEC_UL ",%" MIR_FORMSPEC_UL ",%lu,%u,%u,%u,%" MIR_FORMSPEC_UL ",%" MIR_FORMSPEC_UL ",%u,%" MIR_FORMSPEC_UL ",%" MIR_FORMSPEC_UL ",%" MIR_FORMSPEC_UL ",%s,[", 
                 temp->task->id.uid, 
                 task_parent.uid,
                 temp->task->sync_pass,
@@ -599,43 +599,17 @@ void mir_task_stats_write_to_file(struct mir_task_list_t* list, FILE* file)
                 temp->task->exec_cycles,
                 temp->task->overhead_cycles,
                 temp->task->queue_size_at_pop,
-                temp->task->exec_end_instant,
-                temp->task->name);
-
-        temp = temp->next;
-    }
-}/*}}}*/
-
-void mir_task_events_write_header_to_file(FILE* file)
-{/*{{{*/
-    fprintf(file, "task,parent,exec_cycles,overhead_cycles,create_instant,exec_start_instant,exec_end_instant,[wait]\n");
-}/*}}}*/
-
-void mir_task_events_write_to_file(struct mir_task_list_t* list, FILE* file)
-{/*{{{*/
-    struct mir_task_list_t* temp = list;
-    while(temp != NULL)
-    {
-        mir_id_t task_parent;
-        task_parent.uid = 0;
-        if(temp->task->parent)
-            task_parent.uid = temp->task->parent->id.uid;
-
-        fprintf(file, "%" MIR_FORMSPEC_UL ",%" MIR_FORMSPEC_UL ",%" MIR_FORMSPEC_UL ",%" MIR_FORMSPEC_UL ",%" MIR_FORMSPEC_UL ",%" MIR_FORMSPEC_UL ",%" MIR_FORMSPEC_UL ",[", 
-                temp->task->id.uid, 
-                task_parent.uid,
-                temp->task->exec_cycles,
-                temp->task->overhead_cycles,
                 temp->task->create_instant,
                 temp->task->exec_start_instant,
-                temp->task->exec_end_instant);
+                temp->task->exec_end_instant,
+                temp->task->name);
 
         struct mir_time_list_t* tl = temp->task->ctwc->pass_time;
         fprintf(file, "%" MIR_FORMSPEC_UL, tl->time);
         tl = tl->next;
         while (tl != NULL) 
         {
-            fprintf(file, ",%" MIR_FORMSPEC_UL, tl->time);
+            fprintf(file, ";%" MIR_FORMSPEC_UL, tl->time);
             tl = tl->next;
         };
 

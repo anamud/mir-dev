@@ -160,10 +160,6 @@ void mir_task_stats_write_header_to_file(FILE* file);
 
 void mir_task_stats_write_to_file(struct mir_task_list_t* list, FILE* file);
 
-void mir_task_events_write_header_to_file(FILE* file);
-
-void mir_task_events_write_to_file(struct mir_task_list_t* list, FILE* file);
-
 void mir_task_list_destroy(struct mir_task_list_t* list);
 
 END_C_DECLS
