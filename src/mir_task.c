@@ -511,6 +511,9 @@ struct mir_twc_t* mir_twc_create()
 
     // Reset num times passed
     twc->num_passes = 0;
+    twc->pass_time = (struct mir_time_list_t*) mir_malloc_int (sizeof(struct mir_time_list_t));
+    MIR_ASSERT(twc->pass_time != NULL);
+    twc->pass_time->next = NULL;
 
     // Set parent context
     twc->parent = mir_worker_get_context()->current_task;
