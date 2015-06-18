@@ -103,6 +103,8 @@ struct mir_task_t
     struct mir_task_t* parent;
     struct mir_task_t* predecessor;
     uint16_t cpu_id; 
+    uint64_t create_instant;
+    uint64_t exec_start_instant;
     uint64_t exec_resume_instant;
     uint64_t exec_end_instant;
     uint64_t exec_cycles;
@@ -154,9 +156,13 @@ struct mir_twc_t* mir_twc_create();
 
 /*LIBINT*/ void mir_task_wait();
 
-void mir_task_list_write_header_to_file(FILE* file);
+void mir_task_stats_write_header_to_file(FILE* file);
 
-void mir_task_list_write_to_file(struct mir_task_list_t* list, FILE* file);
+void mir_task_stats_write_to_file(struct mir_task_list_t* list, FILE* file);
+
+void mir_task_events_write_header_to_file(FILE* file);
+
+void mir_task_events_write_to_file(struct mir_task_list_t* list, FILE* file);
 
 void mir_task_list_destroy(struct mir_task_list_t* list);
 

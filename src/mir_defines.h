@@ -40,6 +40,7 @@
 // Statistics
 #define MIR_WORKER_STATS_FILE_NAME "mir-worker-stats"
 #define MIR_TASK_STATS_FILE_NAME "mir-task-stats"
+#define MIR_TASK_EVENTS_FILE_NAME "mir-task-events"
 
 // Memory allocator
 #define MIR_MEMORY_ALLOCATOR_DEBUG 
