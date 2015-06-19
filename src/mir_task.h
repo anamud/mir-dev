@@ -104,7 +104,6 @@ struct mir_task_t
     struct mir_task_t* predecessor;
     uint16_t cpu_id; 
     uint64_t create_instant;
-    uint64_t exec_start_instant;
     uint64_t exec_resume_instant;
     uint64_t exec_end_instant;
     uint64_t exec_cycles;

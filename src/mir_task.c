@@ -174,7 +174,9 @@ struct mir_task_t* mir_task_create_common(mir_tfunc_t tfunc, void* data, size_t 
     if(worker->current_task) worker->current_task->overhead_cycles += (mir_get_cycles() - start_instant);
 
     // Record creation instant
-    task->create_instant = mir_get_cycles() - runtime->init_time;
+    task->create_instant = 0;
+    if(worker->current_task)
+        task->create_instant = worker->current_task->exec_cycles;
 
     // Task is now created
     T_DBG("Cr", task);
@@ -356,7 +358,6 @@ void mir_task_execute_prolog(struct mir_task_t* task)
     // Current task timing
     task->exec_cycles = 0;
     task->exec_resume_instant = mir_get_cycles();
-    task->exec_start_instant = mir_get_cycles() - runtime->init_time;
     task->overhead_cycles = 0;
 
     // Write task id to shared memory.
@@ -556,7 +557,8 @@ void mir_task_wait()
 
     // Record when passed and update num times passed
     // TODO: Should time update be locked?
-    twc->pass_time->time = mir_get_cycles() - runtime->init_time; 
+    if(worker->current_task)
+        twc->pass_time->time = worker->current_task->exec_cycles;
     struct mir_time_list_t* tl = (struct mir_time_list_t*) mir_malloc_int (sizeof(struct mir_time_list_t));
     MIR_ASSERT(tl != NULL);
     tl->time = 0; // 0 => Not passed.
@@ -576,7 +578,7 @@ void mir_task_wait()
 
 void mir_task_stats_write_header_to_file(FILE* file)
 {/*{{{*/
-    fprintf(file, "task,parent,joins_at,cpu_id,child_number,num_children,exec_cycles,overhead_cycles,queue_size,create_instant,exec_start_instant,exec_end_instant,tag,[wait]\n");
+    fprintf(file, "task,parent,joins_at,cpu_id,child_number,num_children,exec_cycles,overhead_cycles,queue_size,create,exec_end,tag,[wait]\n");
 }/*}}}*/
 
 void mir_task_stats_write_to_file(struct mir_task_list_t* list, FILE* file)
@@ -600,7 +602,6 @@ void mir_task_stats_write_to_file(struct mir_task_list_t* list, FILE* file)
                 temp->task->overhead_cycles,
                 temp->task->queue_size_at_pop,
                 temp->task->create_instant,
-                temp->task->exec_start_instant,
                 temp->task->exec_end_instant,
                 temp->task->name);
 
