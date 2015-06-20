@@ -24,7 +24,7 @@ tic(type="elapsed")
 join_freq <- tg_data %>% group_by(parent,joins_at) %>% summarise(count = n())
 toc("Compute join frequency")
 
-# Funciton returns fragment chain for input task
+# Funciton returns edges of fragment chain for input task
 fragmentize <- function (task, num_children, parent, child_number, joins_at)
 {
     num_fragments <- 1
@@ -104,14 +104,23 @@ toc("Assign other weights")
 ## Assign exec cycles
 compute_fragment_duration <- function(task, wait, exec_cycles, choice)
 {
+    ## Each task has breaks at these instants: (execution start, child creation, child wait, execution end)
+    ## A fragments executes upto the next break.
     wait_instants <- as.numeric(unlist(strsplit(substring(wait, 2, nchar(wait)-1), ";", fixed = TRUE)))
     create_instants <- as.numeric(tg_data$create[tg_data$parent == task])
     instants <- c(wait_instants, create_instants, 1, 1 + exec_cycles)
+    ## Sort to line up breaks.
     instants <- sort(instants)
+    ## Remove placeholder breaks.
     instants <- instants[instants != 0]
+    ## Assert if last break is not execution end
+    stopifnot(instants[length(instants)] == 1 + exec_cycles)
     durations <- diff(instants)
+    # Assert if there are no durations!
     stopifnot(length(durations) > 0)
+    # Get fragment identifiers
     fragments <- paste(as.character(task),paste(".",as.character(seq(1:length(durations))),sep=""),sep="")
+    # This is an ugly hack because mapply and do.call(rbind) are not working together. 
     if(choice == 1)
       return(fragments)
     else 
@@ -130,6 +139,91 @@ tg <- set.vertex.attribute(tg, name="exec_cycles", index=V(tg), value=tg_vertice
 scale_fn <- function(x) { node_min_size + (x * 100/max(x, na.rm = TRUE)) }
 tg <- set.vertex.attribute(tg, name="scaled_exec_cycles", index=V(tg), value=scale_fn(tg_vertices$exec_cycles))
 toc("Assign execution cycles [step 3]")
+
+# Calculate critical path
+print("Calculating critical path ...")
+tic(type="elapsed")
+##Rprof("profile-critpathcalc.out")
+## Progress bar 
+lntg <- length(V(tg))
+pb <- txtProgressBar(min = 0, max = lntg, style = 3)
+ctr <- 0
+## Topological sort
+tsg <- topological.sort(tg)
+## Set root path attributes
+V(tg)[tsg[1]]$rdist <- 0
+V(tg)[tsg[1]]$depth <- 0
+V(tg)[tsg[1]]$rpath <- tsg[1]
+## Get data frame of task graph.
+## It is much faster to work on data frame than the task graph.
+## TODO: Convert to data.table.
+tg_vertices_df <- get.data.frame(tg, what="vertices")
+## Get longest paths from root
+for(node in tsg[-1])
+{
+  ## Get distance from node's predecessors
+  ni <- incident(tg, node, mode="in")
+  w <- V(tg)[get.edges(tg, ni)[,1]]$exec_cycles
+  ## Get distance from root to node's predecessors
+  nn <- neighbors(tg, node, mode="in") 
+  d <- tg_vertices_df$rdist[nn]
+  ## Add distances (assuming one-one corr.)
+  wd <- w+d
+  ## Set node's distance from root to max of added distances 
+  mwd <- max(wd)
+  tg_vertices_df$rdist[node] <- mwd
+  ## Set node's path from root to path of max of added distances
+  mwdn <- as.vector(nn)[match(mwd,wd)]
+  nrp <- list(c(unlist(tg_vertices_df$rpath[mwdn]), node))
+  tg_vertices_df$rpath[node] <- nrp
+  ## Set node's depth as one greater than the largest depth its predecessors
+  tg_vertices_df$depth[node] <- max(tg_vertices_df$depth[nn]) + 1
+  ## Progress report 
+  ctr <- ctr + 1; setTxtProgressBar(pb, ctr);
+}
+## Longest path is the largest root distance
+lpl <- max(tg_vertices_df$rdist)
+## Enumerate longest path
+lpm <- unlist(tg_vertices_df$rpath[match(lpl,tg_vertices_df$rdist)])    
+tg_vertices_df$on_crit_path <- 0
+tg_vertices_df$on_crit_path[lpm] <- 1
+# Assign to task graph
+tg <- set.vertex.attribute(tg, name="on_crit_path", index=V(tg), value=tg_vertices_df$on_crit_path) 
+tg <- set.vertex.attribute(tg, name="rdist", index=V(tg), value=tg_vertices_df$rdist)
+tg <- set.vertex.attribute(tg, name="depth", index=V(tg), value=tg_vertices_df$depth)
+critical_edges <- E(tg)[V(tg)[on_crit_path==1] %--% V(tg)[on_crit_path==1]] 
+tg <- set.edge.attribute(tg, name="on_crit_path", index=critical_edges, value=1)
+## Progress report 
+ctr <- ctr + 1; setTxtProgressBar(pb, ctr);
+close(pb)
+##Rprof(NULL)
+## Print critical path info
+print("Cilk Theory Parallelism (Unit = Cycles)")
+print("Span (critical path)")
+print(lpl)
+print("Work")
+total_work <- sum(as.numeric(tg_data$exec_cycles))
+print(total_work)
+print("Parallelism")
+parallelism <- total_work/lpl 
+print(parallelism)
+## Clear rpath since dot/table writing complains 
+tg <- remove.vertex.attribute(tg,"rpath")
+toc("Critical path calculation")
+
+# Calc shape
+tic(type="elapsed")
+tg_vertices_df <- get.data.frame(tg, what="vertices")
+tg_shape <- hist(tg_vertices_df$rdist, breaks=100, plot=F)
+## Write shape
+tg_file_out <- paste(gsub(". $", "", tg_file_in), "-shape.pdf", sep="")
+pdf(tg_file_out)
+plot(tg_shape, freq=T, xlab="Distance from START in execution cycles", ylab="Fragments", main="Instantaneous task parallelism", col="white")
+abline(h = length(unique(tg_data$cpu_id)), col = "blue", lty=2)
+abline(h = parallelism , col = "red", lty=1)
+dev.off()
+print(paste("Wrote file:", tg_file_out))
+toc("Shape calculation")
 
 # Write graph as gml file
 tg_file_out <- paste(gsub(". $", "", tg_file_in), ".graphml", sep="")
