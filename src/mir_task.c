@@ -40,6 +40,12 @@ static inline unsigned int mir_twc_reduce(struct mir_twc_t* twc)
         return 1; // sum == twc->count
 }/*}}}*/
 
+static inline uint64_t elapsed_execution_time(struct mir_task_t* task)
+{/*{{{*/
+    MIR_ASSERT(task != NULL);
+    return task->exec_cycles + (mir_get_cycles() - task->exec_resume_instant);
+}/*}}}*/
+
 static inline int inline_necessary()
 {/*{{{*/
     if(runtime->task_inlining_limit == 0)
@@ -176,7 +182,7 @@ struct mir_task_t* mir_task_create_common(mir_tfunc_t tfunc, void* data, size_t 
     // Record creation instant
     task->create_instant = 0;
     if(worker->current_task)
-        task->create_instant = worker->current_task->exec_cycles;
+        task->create_instant = elapsed_execution_time(worker->current_task);
 
     // Task is now created
     T_DBG("Cr", task);
@@ -558,7 +564,7 @@ void mir_task_wait()
     // Record when passed and update num times passed
     // TODO: Should time update be locked?
     if(worker->current_task)
-        twc->pass_time->time = worker->current_task->exec_cycles;
+        twc->pass_time->time = elapsed_execution_time(worker->current_task);
     struct mir_time_list_t* tl = (struct mir_time_list_t*) mir_malloc_int (sizeof(struct mir_time_list_t));
     MIR_ASSERT(tl != NULL);
     tl->time = 0; // 0 => Not passed.
