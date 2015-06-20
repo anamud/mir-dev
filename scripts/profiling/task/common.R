@@ -1,3 +1,4 @@
+suppressMessages(library(plyr, quietly=TRUE))
 suppressMessages(library(dplyr, quietly=TRUE))
 library(ggplot2, quietly=TRUE)
 library(reshape2, quietly=TRUE)
