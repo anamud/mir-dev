@@ -63,14 +63,14 @@ fragmentize <- function (task, num_children, parent, child_number, joins_at)
     # Connect to parent join
     parent_join <- paste('j', parent, joins_at, sep='.')
     edg <- c(edg, last_fragment, parent_join)
-    return(edg) 
+    return(edg)
 }
 
 # Apply fragmentize on all tasks
 tic(type="elapsed")
-tg_edges <- unlist(mapply(fragmentize, 
-                          task=tg_data$task, num_children=tg_data$num_children, 
-                          parent=tg_data$parent, child_number=tg_data$child_number, 
+tg_edges <- unlist(mapply(fragmentize,
+                          task=tg_data$task, num_children=tg_data$num_children,
+                          parent=tg_data$parent, child_number=tg_data$child_number,
                           joins_at=tg_data$joins_at))
 tg_edges <- matrix(tg_edges, nc=2, byrow=TRUE)
 toc("Fragmentize")
@@ -83,7 +83,7 @@ toc("Construct graph")
 # Visual attributes
 node_min_size <- 10
 node_max_size <- 50
-  
+
 # Assign weights to nodes
 ## Read graph as table
 tic(type="elapsed")
@@ -120,10 +120,10 @@ compute_fragment_duration <- function(task, wait, exec_cycles, choice)
     stopifnot(length(durations) > 0)
     # Get fragment identifiers
     fragments <- paste(as.character(task),paste(".",as.character(seq(1:length(durations))),sep=""),sep="")
-    # This is an ugly hack because mapply and do.call(rbind) are not working together. 
+    # This is an ugly hack because mapply and do.call(rbind) are not working together.
     if(choice == 1)
       return(fragments)
-    else 
+    else
       return(durations)
 }
 tic(type="elapsed")
@@ -144,7 +144,7 @@ toc("Assign execution cycles [step 3]")
 print("Calculating critical path ...")
 tic(type="elapsed")
 ##Rprof("profile-critpathcalc.out")
-## Progress bar 
+## Progress bar
 lntg <- length(V(tg))
 pb <- txtProgressBar(min = 0, max = lntg, style = 3)
 ctr <- 0
@@ -165,11 +165,11 @@ for(node in tsg[-1])
   ni <- incident(tg, node, mode="in")
   w <- V(tg)[get.edges(tg, ni)[,1]]$exec_cycles
   ## Get distance from root to node's predecessors
-  nn <- neighbors(tg, node, mode="in") 
+  nn <- neighbors(tg, node, mode="in")
   d <- tg_vertices_df$rdist[nn]
   ## Add distances (assuming one-one corr.)
   wd <- w+d
-  ## Set node's distance from root to max of added distances 
+  ## Set node's distance from root to max of added distances
   mwd <- max(wd)
   tg_vertices_df$rdist[node] <- mwd
   ## Set node's path from root to path of max of added distances
@@ -178,22 +178,22 @@ for(node in tsg[-1])
   tg_vertices_df$rpath[node] <- nrp
   ## Set node's depth as one greater than the largest depth its predecessors
   tg_vertices_df$depth[node] <- max(tg_vertices_df$depth[nn]) + 1
-  ## Progress report 
+  ## Progress report
   ctr <- ctr + 1; setTxtProgressBar(pb, ctr);
 }
 ## Longest path is the largest root distance
 lpl <- max(tg_vertices_df$rdist)
 ## Enumerate longest path
-lpm <- unlist(tg_vertices_df$rpath[match(lpl,tg_vertices_df$rdist)])    
+lpm <- unlist(tg_vertices_df$rpath[match(lpl,tg_vertices_df$rdist)])
 tg_vertices_df$on_crit_path <- 0
 tg_vertices_df$on_crit_path[lpm] <- 1
 # Assign to task graph
-tg <- set.vertex.attribute(tg, name="on_crit_path", index=V(tg), value=tg_vertices_df$on_crit_path) 
+tg <- set.vertex.attribute(tg, name="on_crit_path", index=V(tg), value=tg_vertices_df$on_crit_path)
 tg <- set.vertex.attribute(tg, name="rdist", index=V(tg), value=tg_vertices_df$rdist)
 tg <- set.vertex.attribute(tg, name="depth", index=V(tg), value=tg_vertices_df$depth)
-critical_edges <- E(tg)[V(tg)[on_crit_path==1] %--% V(tg)[on_crit_path==1]] 
+critical_edges <- E(tg)[V(tg)[on_crit_path==1] %--% V(tg)[on_crit_path==1]]
 tg <- set.edge.attribute(tg, name="on_crit_path", index=critical_edges, value=1)
-## Progress report 
+## Progress report
 ctr <- ctr + 1; setTxtProgressBar(pb, ctr);
 close(pb)
 ##Rprof(NULL)
@@ -205,9 +205,9 @@ print("Work")
 total_work <- sum(as.numeric(tg_data$exec_cycles))
 print(total_work)
 print("Parallelism")
-parallelism <- total_work/lpl 
+parallelism <- total_work/lpl
 print(parallelism)
-## Clear rpath since dot/table writing complains 
+## Clear rpath since dot/table writing complains
 tg <- remove.vertex.attribute(tg,"rpath")
 toc("Critical path calculation")
 
