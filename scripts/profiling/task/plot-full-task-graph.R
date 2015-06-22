@@ -262,18 +262,19 @@ toc("Critical path calculation")
 # Calc shape
 tic(type="elapsed")
 tg_vertices_df <- get.data.frame(tg, what="vertices")
-tg_shape <- hist(tg_vertices_df$rdist, breaks=100, plot=F)
+shape_breaks <- total_work/(length(unique(tg_data$cpu_id))*mean(tg_vertices_df$exec_cycles))
+tg_shape <- hist(tg_vertices_df$rdist, breaks=shape_breaks, plot=F)
 ## Write shape
-tg_file_out <- paste(gsub(". $", "", tg_file_in), "-shape.pdf", sep="")
+tg_file_out <- paste(gsub(". $", "", arg_outfileprefix), "-shape.pdf", sep="")
 pdf(tg_file_out)
 plot(tg_shape, freq=T, xlab="Distance from START in execution cycles", ylab="Fragments", main="Instantaneous task parallelism", col="white")
 abline(h = length(unique(tg_data$cpu_id)), col = "blue", lty=2)
 abline(h = parallelism , col = "red", lty=1)
-dev.off()
+write_res <- dev.off()
 print(paste("Wrote file:", tg_file_out))
 toc("Shape calculation")
 
 # Write graph as gml file
 tg_file_out <- paste(gsub(". $", "", arg_outfileprefix), ".graphml", sep="")
-res <- write.graph(tg, file=tg_file_out, format="graphml")
+write_res <- write.graph(tg, file=tg_file_out, format="graphml")
 print(paste("Wrote file:", tg_file_out, sep=" "))
