@@ -42,7 +42,7 @@ if(running_outside_rstudio)
     arg_quiet <- parsed$quiet
     arg_timing <- parsed$timing
 } else {
-    arg_data <- "/home/ananya/mir-dev/programs/omp/fib/mir-task-stats"
+    arg_data <- "/home/ananya/mir-dev/programs/omp/generic/mir-task-stats"
     arg_palette <- "color"
     arg_outfileprefix <- "task-graph"
     arg_verbose <- 1
@@ -59,7 +59,7 @@ toc("Read data")
 
 # Join frequeny
 tic(type="elapsed")
-join_freq <- tg_data %>% group_by(parent,joins_at) %>% summarise(count = n())
+join_freq <- tg_data %>% group_by(parent, joins_at) %>% summarise(count = n())
 toc("Compute join frequency")
 
 # Funciton returns edges of fragment chain for input task
@@ -76,26 +76,31 @@ fragmentize <- function (task, num_children, parent, child_number, joins_at)
     {
         joins <- join_freq[parent == task]$count
         joins_ind <- 1
-        num_forks <- 0
+        num_forks <- 1
         num_joins <- 0
-        for(i in seq(1,num_children))
+        while(1)
         {
-            num_fragments <- num_fragments + 1
-            new_fragment <- paste(task, num_fragments, sep='.')
-            fork <- paste('f', task, i, sep=".")
-            edg <- c(edg, last_fragment, fork, fork, new_fragment)
-            num_forks <- num_forks + 1
-            last_fragment <- new_fragment
-            if(num_forks == joins[joins_ind])
+            stopifnot(joins[joins_ind] > 0)
+            for(i in 1:joins[joins_ind])
             {
                 num_fragments <- num_fragments + 1
                 new_fragment <- paste(task, num_fragments, sep='.')
-                join <- paste('j', task, num_joins, sep=".")
-                edg <- c(edg, last_fragment, join, join, new_fragment)
-                num_joins <- num_joins + 1
-                joins_ind <- joins_ind + 1
+                fork <- paste('f', task, num_forks, sep=".")
+                edg <- c(edg, last_fragment, fork, fork, new_fragment)
+                num_forks <- num_forks + 1
                 last_fragment <- new_fragment
+                if(i == joins[joins_ind])
+                {
+                    num_fragments <- num_fragments + 1
+                    new_fragment <- paste(task, num_fragments, sep='.')
+                    join <- paste('j', task, num_joins, sep=".")
+                    edg <- c(edg, last_fragment, join, join, new_fragment)
+                    num_joins <- num_joins + 1
+                    last_fragment <- new_fragment
+                }
             }
+            joins_ind <- joins_ind + 1
+            if(joins_ind > length(joins)) break
         }
     }
     # Connect to parent join
@@ -262,17 +267,36 @@ toc("Critical path calculation")
 # Calc shape
 tic(type="elapsed")
 tg_vertices_df <- get.data.frame(tg, what="vertices")
-shape_breaks <- total_work/(length(unique(tg_data$cpu_id))*mean(tg_vertices_df$exec_cycles))
-tg_shape <- hist(tg_vertices_df$rdist, breaks=shape_breaks, plot=F)
+## Select only fragments
+tg_vertices_df <- tg_vertices_df[with(tg_vertices_df, grepl("^[0-9]+.[0-9]+$", name)),]
+## Shape is found by counting overlapping ranges.
+## See question http://stackoverflow.com/questions/30978837/histogram-like-summary-for-interval-data
+## Each fragment has exection range [rdist, rdist + exec_cycles], based on the premise of earliest possible execution.
+tg_vertices_df$rdist_exec_cycles <- tg_vertices_df$rdist + tg_vertices_df$exec_cycles
+## Calculate breaks based on average length of fragment
+shape_breaks <- total_work/(length(unique(tg_data$cpu_id))*median(tg_vertices_df$exec_cycles))
+shape_ranges <- unlist(levels(cut(seq(0,lpl), breaks=shape_breaks)))
+shape_ranges <- unlist(lapply(shape_ranges, function(x) substring(x, 2, nchar(x)-1)))
+shape_ranges <-  unlist(lapply(shape_ranges, function(x) strsplit(x, split=',')))
+shape_ranges_lower <- as.numeric(shape_ranges[seq(1, length(shape_ranges), 2)])
+shape_ranges_upper <- as.numeric(shape_ranges[seq(2, length(shape_ranges), 2)]) - 1
+## Use IRanges package to countOverlaps using the fast NCList data structure.
+suppressMessages(library(IRanges, quietly=TRUE, warn.conflicts=FALSE))
+subject <- IRanges(tg_vertices_df$rdist, tg_vertices_df$rdist_exec_cycles)
+print(subject)
+query <- IRanges(shape_ranges_lower, shape_ranges_upper)
+print(query)
+tg_shape <- data.frame(low=shape_ranges_lower, count=countOverlaps(query, subject))
+#tg_shape <- tg_shape[tg_shape$count > 100,]
+toc("Shape calculation")
 ## Write shape
 tg_file_out <- paste(gsub(". $", "", arg_outfileprefix), "-shape.pdf", sep="")
 pdf(tg_file_out)
-plot(tg_shape, freq=T, xlab="Distance from START in execution cycles", ylab="Fragments", main="Instantaneous task parallelism", col="white")
+plot(tg_shape, xlab="Distance from START in execution cycles", ylab="Fragments", main="Instantaneous task parallelism", col="black", type='h', yaxs='i')
 abline(h = length(unique(tg_data$cpu_id)), col = "blue", lty=2)
 abline(h = parallelism , col = "red", lty=1)
 write_res <- dev.off()
 print(paste("Wrote file:", tg_file_out))
-toc("Shape calculation")
 
 # Write graph as gml file
 tg_file_out <- paste(gsub(". $", "", arg_outfileprefix), ".graphml", sep="")
