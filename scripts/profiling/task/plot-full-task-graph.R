@@ -69,8 +69,10 @@ fragmentize <- function (task, num_children, parent, child_number, joins_at)
 # Apply fragmentize on all tasks
 tic(type="elapsed")
 tg_edges <- unlist(mapply(fragmentize,
-                          task=tg_data$task, num_children=tg_data$num_children,
-                          parent=tg_data$parent, child_number=tg_data$child_number,
+                          task=tg_data$task,
+                          num_children=tg_data$num_children,
+                          parent=tg_data$parent,
+                          child_number=tg_data$child_number,
                           joins_at=tg_data$joins_at))
 tg_edges <- matrix(tg_edges, nc=2, byrow=TRUE)
 toc("Fragmentize")
@@ -127,8 +129,16 @@ compute_fragment_duration <- function(task, wait, exec_cycles, choice)
       return(durations)
 }
 tic(type="elapsed")
-fd <- data.table(fragment=unlist(mapply(compute_fragment_duration, task=tg_data$task, wait=tg_data$"[wait]", exec_cycles=tg_data$exec_cycles, choice=1)),
-                   duration=unlist(mapply(compute_fragment_duration, task=tg_data$task, wait=tg_data$"[wait]", exec_cycles=tg_data$exec_cycles, choice=2))
+fd <- data.table(fragment=unlist(mapply(compute_fragment_duration,
+                                        task=tg_data$task,
+                                        wait=tg_data$"[wait]",
+                                        exec_cycles=tg_data$exec_cycles,
+                                        choice=1)),
+                   duration=unlist(mapply(compute_fragment_duration,
+                                          task=tg_data$task,
+                                          wait=tg_data$"[wait]",
+                                          exec_cycles=tg_data$exec_cycles,
+                                          choice=2))
                    )
 toc("Assign execution cycles [step 1]")
 tic(type="elapsed")
