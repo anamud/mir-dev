@@ -19,12 +19,12 @@ if(running_outside_rstudio)
 {
     library(optparse, quietly=TRUE)
     option_list <- list(
-    make_option(c("-d","--data"), help = "Task performance data file.", metavar="FILE"),
-    make_option(c("-p","--palette"), default="color", help = "Color palette for graph elements [default \"%default\"]."),
-    make_option(c("-o","--out"), default="task-graph", help = "Output file prefix [default \"%default\"].", metavar="STRING"),
-    make_option(c("--verbose"), action="store_true", default=TRUE, help="Print output [default]."),
-    make_option(c("--quiet"), action="store_false", dest="verbose", help="Print little output."),
-    make_option(c("--timing"), action="store_true", default=FALSE, help="Print processing time."))
+                        make_option(c("-d","--data"), help = "Task performance data file.", metavar="FILE"),
+                        make_option(c("-p","--palette"), default="color", help = "Color palette for graph elements [default \"%default\"]."),
+                        make_option(c("-o","--out"), default="task-graph", help = "Output file prefix [default \"%default\"].", metavar="STRING"),
+                        make_option(c("--verbose"), action="store_true", default=TRUE, help="Print output [default]."),
+                        make_option(c("--quiet"), action="store_false", dest="verbose", help="Print little output."),
+                        make_option(c("--timing"), action="store_true", default=FALSE, help="Print processing time."))
     parsed <- parse_args(OptionParser(option_list = option_list), args = commandArgs(TRUE))
     if(!exists("data", where=parsed))
     {
@@ -162,9 +162,9 @@ compute_fragment_duration <- function(task, wait, exec_cycles, choice)
     fragments <- paste(as.character(task),paste(".",as.character(seq(1:length(durations))),sep=""),sep="")
     # This is an ugly hack because mapply and do.call(rbind) are not working together.
     if(choice == 1)
-      return(fragments)
+        return(fragments)
     else
-      return(durations)
+        return(durations)
 }
 tic(type="elapsed")
 fd <- data.table(fragment=unlist(mapply(compute_fragment_duration,
@@ -172,12 +172,12 @@ fd <- data.table(fragment=unlist(mapply(compute_fragment_duration,
                                         wait=tg_data$"[wait]",
                                         exec_cycles=tg_data$exec_cycles,
                                         choice=1)),
-                   duration=unlist(mapply(compute_fragment_duration,
-                                          task=tg_data$task,
-                                          wait=tg_data$"[wait]",
-                                          exec_cycles=tg_data$exec_cycles,
-                                          choice=2))
-                   )
+                 duration=unlist(mapply(compute_fragment_duration,
+                                        task=tg_data$task,
+                                        wait=tg_data$"[wait]",
+                                        exec_cycles=tg_data$exec_cycles,
+                                        choice=2))
+                 )
 toc("Assign execution cycles [step 1]")
 tic(type="elapsed")
 tg_vertices[match(fd$fragment, tg_vertices$node)]$exec_cycles <- fd$duration
@@ -209,25 +209,25 @@ tg_vertices_df <- get.data.frame(tg, what="vertices")
 ## Get longest paths from root
 for(node in tsg[-1])
 {
-  ## Get distance from node's predecessors
-  ni <- incident(tg, node, mode="in")
-  w <- V(tg)[get.edges(tg, ni)[,1]]$exec_cycles
-  ## Get distance from root to node's predecessors
-  nn <- neighbors(tg, node, mode="in")
-  d <- tg_vertices_df$rdist[nn]
-  ## Add distances (assuming one-one corr.)
-  wd <- w+d
-  ## Set node's distance from root to max of added distances
-  mwd <- max(wd)
-  tg_vertices_df$rdist[node] <- mwd
-  ## Set node's path from root to path of max of added distances
-  mwdn <- as.vector(nn)[match(mwd,wd)]
-  nrp <- list(c(unlist(tg_vertices_df$rpath[mwdn]), node))
-  tg_vertices_df$rpath[node] <- nrp
-  ## Set node's depth as one greater than the largest depth its predecessors
-  tg_vertices_df$depth[node] <- max(tg_vertices_df$depth[nn]) + 1
-  ## Progress report
-  ctr <- ctr + 1; setTxtProgressBar(pb, ctr);
+    ## Get distance from node's predecessors
+    ni <- incident(tg, node, mode="in")
+    w <- V(tg)[get.edges(tg, ni)[,1]]$exec_cycles
+    ## Get distance from root to node's predecessors
+    nn <- neighbors(tg, node, mode="in")
+    d <- tg_vertices_df$rdist[nn]
+    ## Add distances (assuming one-one corr.)
+    wd <- w+d
+    ## Set node's distance from root to max of added distances
+    mwd <- max(wd)
+    tg_vertices_df$rdist[node] <- mwd
+    ## Set node's path from root to path of max of added distances
+    mwdn <- as.vector(nn)[match(mwd,wd)]
+    nrp <- list(c(unlist(tg_vertices_df$rpath[mwdn]), node))
+    tg_vertices_df$rpath[node] <- nrp
+    ## Set node's depth as one greater than the largest depth its predecessors
+    tg_vertices_df$depth[node] <- max(tg_vertices_df$depth[nn]) + 1
+    ## Progress report
+    ctr <- ctr + 1; setTxtProgressBar(pb, ctr);
 }
 ## Longest path is the largest root distance
 lpl <- max(tg_vertices_df$rdist)
