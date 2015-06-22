@@ -12,9 +12,47 @@ source(paste(mir_root,"/scripts/profiling/task/common.R",sep=""))
 suppressMessages(library(data.table, quietly=TRUE, warn.conflicts=FALSE))
 library(igraph, quietly=TRUE)
 
+# Parse arguments
+## TODO: Understand how to capture if not running inside RStudio.
+running_outside_rstudio <- 0
+if(running_outside_rstudio)
+{
+    library(optparse, quietly=TRUE)
+    option_list <- list(
+    make_option(c("-d","--data"), help = "Task performance data file.", metavar="FILE"),
+    make_option(c("-p","--palette"), default="color", help = "Color palette for graph elements [default \"%default\"]."),
+    make_option(c("-o","--out"), default="task-graph", help = "Output file prefix [default \"%default\"].", metavar="STRING"),
+    make_option(c("--verbose"), action="store_true", default=TRUE, help="Print output [default]."),
+    make_option(c("--quiet"), action="store_false", dest="verbose", help="Print little output."),
+    make_option(c("--timing"), action="store_true", default=FALSE, help="Print processing time."))
+    parsed <- parse_args(OptionParser(option_list = option_list), args = commandArgs(TRUE))
+    if(!exists("data", where=parsed))
+    {
+        print("Error: Invalid arguments. Check help (-h)")
+        quit("no", 1)
+    }
+
+    ## Set argments into placeholders
+    ## Placeholders help while testing in RStudio where command line arguments are difficult to pass.
+
+    arg_data <- parsed$data
+    arg_palette <- parsed$pal
+    arg_outfileprefix <- parsed$out
+    arg_verbose <- parsed$verbose
+    arg_quiet <- parsed$quiet
+    arg_timing <- parsed$timing
+} else {
+    arg_data <- "/home/ananya/mir-dev/programs/omp/fib/mir-task-stats"
+    arg_palette <- "color"
+    arg_outfileprefix <- "task-graph"
+    arg_verbose <- 1
+    arg_quiet <- 0
+    arg_timing <- 1
+}
+
 # Read data
 tic(type="elapsed")
-tg_file_in <- "/home/ananya/mir-dev/programs/omp/generic/mir-task-stats"
+tg_file_in <- arg_data
 print(paste("Reading file:", tg_file_in, sep=" "))
 tg_data <- fread(tg_file_in, header=TRUE)
 toc("Read data")
@@ -236,6 +274,6 @@ print(paste("Wrote file:", tg_file_out))
 toc("Shape calculation")
 
 # Write graph as gml file
-tg_file_out <- paste(gsub(". $", "", tg_file_in), ".graphml", sep="")
+tg_file_out <- paste(gsub(". $", "", arg_outfileprefix), ".graphml", sep="")
 res <- write.graph(tg, file=tg_file_out, format="graphml")
 print(paste("Wrote file:", tg_file_out, sep=" "))
