@@ -181,8 +181,7 @@ fd <- data.table(fragment=unlist(mapply(compute_fragment_duration,
                                         task=tg_data$task,
                                         wait=tg_data$"[wait]",
                                         exec_cycles=tg_data$exec_cycles,
-                                        choice=2))
-                 )
+                                        choice=2)))
 if(arg_timing) toc("Assign execution cycles [step 1]")
 if(arg_timing) tic(type="elapsed")
 tg_vertices[match(fd$fragment, tg_vertices$node)]$exec_cycles <- fd$duration
@@ -299,8 +298,8 @@ query <- data.table(start = shape_bins_lower,
 setkey(subject, start, end)
 overlaps <- foverlaps(query, subject, type="any")
 overlaps <- overlaps[, .(count = sum(!is.na(start)),
-        which = paste(interval, collapse=", ")),
-     by = .(i.start, i.end)]
+                         which = paste(interval, collapse=", ")),
+by = .(i.start, i.end)]
 #print(overlaps)
 if(arg_timing) toc("Shape calculation [Step 3]")
 if(arg_timing) tic(type="elapsed")
