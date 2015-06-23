@@ -11,6 +11,7 @@ source(paste(mir_root,"/scripts/profiling/task/common.R",sep=""))
 # Library
 suppressMessages(library(data.table, quietly=TRUE, warn.conflicts=FALSE))
 library(igraph, quietly=TRUE)
+#library(bit64)
 
 # Parse arguments
 ## TODO: Understand how to capture if not running inside RStudio.
@@ -42,7 +43,7 @@ if(running_outside_rstudio)
     arg_quiet <- parsed$quiet
     arg_timing <- parsed$timing
 } else {
-    arg_data <- "/home/ananya/mir-dev/programs/omp/generic/mir-task-stats"
+    arg_data <- "/home/ananya/mir-dev/programs/omp/bots/sort/mir-task-stats"
     arg_palette <- "color"
     arg_outfileprefix <- "task-graph"
     arg_verbose <- 1
@@ -59,7 +60,7 @@ toc("Read data")
 
 # Join frequeny
 tic(type="elapsed")
-join_freq <- tg_data %>% group_by(parent, joins_at) %>% summarise(count = n())
+join_freq <- tg_data %>% arrange(parent,joins_at) %>% group_by(parent, joins_at) %>% summarise(count = n())
 toc("Compute join frequency")
 
 # Funciton returns edges of fragment chain for input task
@@ -273,22 +274,25 @@ tg_vertices_df <- tg_vertices_df[with(tg_vertices_df, grepl("^[0-9]+.[0-9]+$", n
 ## See question http://stackoverflow.com/questions/30978837/histogram-like-summary-for-interval-data
 ## Each fragment has exection range [rdist, rdist + exec_cycles], based on the premise of earliest possible execution.
 tg_vertices_df$rdist_exec_cycles <- tg_vertices_df$rdist + tg_vertices_df$exec_cycles
+toc("Shape calculation [Step 1]")
+tic(type="elapsed")
 ## Calculate breaks based on average length of fragment
 shape_breaks <- total_work/(length(unique(tg_data$cpu_id))*median(tg_vertices_df$exec_cycles))
-shape_ranges <- unlist(levels(cut(seq(0,lpl), breaks=shape_breaks)))
-shape_ranges <- unlist(lapply(shape_ranges, function(x) substring(x, 2, nchar(x)-1)))
-shape_ranges <-  unlist(lapply(shape_ranges, function(x) strsplit(x, split=',')))
-shape_ranges_lower <- as.numeric(shape_ranges[seq(1, length(shape_ranges), 2)])
-shape_ranges_upper <- as.numeric(shape_ranges[seq(2, length(shape_ranges), 2)]) - 1
+toc("Shape calculation [Step 2.1]")
+tic(type="elapsed")
+shape_bins_lower <- hist(seq(0,lpl), breaks=shape_breaks, plot=F)$breaks
+stopifnot(length(shape_bins_lower) > 1)
+shape_bins_upper <- shape_bins_lower + (shape_bins_lower[2] - shape_bins_lower[1] - 1)
+toc("Shape calculation [Step 2.2]")
+tic(type="elapsed")
 ## Use IRanges package to countOverlaps using the fast NCList data structure.
 suppressMessages(library(IRanges, quietly=TRUE, warn.conflicts=FALSE))
 subject <- IRanges(tg_vertices_df$rdist, tg_vertices_df$rdist_exec_cycles)
-print(subject)
-query <- IRanges(shape_ranges_lower, shape_ranges_upper)
-print(query)
-tg_shape <- data.frame(low=shape_ranges_lower, count=countOverlaps(query, subject))
-#tg_shape <- tg_shape[tg_shape$count > 100,]
-toc("Shape calculation")
+query <- IRanges(shape_bins_lower, shape_bins_upper)
+toc("Shape calculation [Step 3]")
+tic(type="elapsed")
+tg_shape <- data.frame(low=shape_bins_lower, count=countOverlaps(query, subject))
+toc("Shape calculation [Step 4]")
 ## Write shape
 tg_file_out <- paste(gsub(". $", "", arg_outfileprefix), "-shape.pdf", sep="")
 pdf(tg_file_out)
