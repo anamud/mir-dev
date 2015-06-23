@@ -40,28 +40,26 @@ if(running_outside_rstudio)
     arg_palette <- parsed$pal
     arg_outfileprefix <- parsed$out
     arg_verbose <- parsed$verbose
-    arg_quiet <- parsed$quiet
     arg_timing <- parsed$timing
 } else {
     arg_data <- "/home/ananya/mir-dev/programs/omp/bots/sort/mir-task-stats"
     arg_palette <- "color"
     arg_outfileprefix <- "task-graph"
     arg_verbose <- 1
-    arg_quiet <- 0
     arg_timing <- 1
 }
 
 # Read data
-tic(type="elapsed")
+if(arg_timing) tic(type="elapsed")
 tg_file_in <- arg_data
 print(paste("Reading file:", tg_file_in, sep=" "))
 tg_data <- fread(tg_file_in, header=TRUE)
-toc("Read data")
+if(arg_timing) toc("Read data")
 
 # Join frequeny
-tic(type="elapsed")
+if(arg_timing) tic(type="elapsed")
 join_freq <- tg_data %>% arrange(parent,joins_at) %>% group_by(parent, joins_at) %>% summarise(count = n())
-toc("Compute join frequency")
+if(arg_timing) toc("Compute join frequency")
 
 # Funciton returns edges of fragment chain for input task
 fragmentize <- function (task, num_children, parent, child_number, joins_at)
@@ -111,7 +109,7 @@ fragmentize <- function (task, num_children, parent, child_number, joins_at)
 }
 
 # Apply fragmentize on all tasks
-tic(type="elapsed")
+if(arg_timing) tic(type="elapsed")
 tg_edges <- unlist(mapply(fragmentize,
                           task=tg_data$task,
                           num_children=tg_data$num_children,
@@ -119,12 +117,12 @@ tg_edges <- unlist(mapply(fragmentize,
                           child_number=tg_data$child_number,
                           joins_at=tg_data$joins_at))
 tg_edges <- matrix(tg_edges, nc=2, byrow=TRUE)
-toc("Fragmentize")
+if(arg_timing) toc("Fragmentize")
 
 # Construct graph
-tic(type="elapsed")
+if(arg_timing) tic(type="elapsed")
 tg <- graph.edgelist(tg_edges, directed = TRUE)
-toc("Construct graph")
+if(arg_timing) toc("Construct graph")
 
 # Visual attributes
 node_min_size <- 10
@@ -132,7 +130,7 @@ node_max_size <- 50
 
 # Assign weights to nodes
 ## Read graph as table
-tic(type="elapsed")
+if(arg_timing) tic(type="elapsed")
 tg_vertices <- data.table(node=get.data.frame(tg, what="vertices")$name, exec_cycles=0, kind="fragment")
 pesky_factors <- sapply(tg_vertices, is.factor)
 tg_vertices[pesky_factors] <- lapply(tg_vertices[pesky_factors], as.character)
@@ -146,7 +144,7 @@ end_ind <- with(tg_vertices, grepl("^j.0.0$", node))
 tg_vertices[fork_ind]$kind <- "fork"
 tg_vertices[join_ind]$kind <- "join"
 tg <- set.vertex.attribute(tg, name="kind", index=V(tg), value=tg_vertices$kind)
-toc("Assign other weights")
+if(arg_timing) toc("Assign other weights")
 ## Assign exec cycles
 compute_fragment_duration <- function(task, wait, exec_cycles, choice)
 {
@@ -172,7 +170,7 @@ compute_fragment_duration <- function(task, wait, exec_cycles, choice)
     else
         return(durations)
 }
-tic(type="elapsed")
+if(arg_timing) tic(type="elapsed")
 fd <- data.table(fragment=unlist(mapply(compute_fragment_duration,
                                         task=tg_data$task,
                                         wait=tg_data$"[wait]",
@@ -184,19 +182,19 @@ fd <- data.table(fragment=unlist(mapply(compute_fragment_duration,
                                         exec_cycles=tg_data$exec_cycles,
                                         choice=2))
                  )
-toc("Assign execution cycles [step 1]")
-tic(type="elapsed")
+if(arg_timing) toc("Assign execution cycles [step 1]")
+if(arg_timing) tic(type="elapsed")
 tg_vertices[match(fd$fragment, tg_vertices$node)]$exec_cycles <- fd$duration
-toc("Assign execution cycles [step 2]")
-tic(type="elapsed")
+if(arg_timing) toc("Assign execution cycles [step 2]")
+if(arg_timing) tic(type="elapsed")
 tg <- set.vertex.attribute(tg, name="exec_cycles", index=V(tg), value=tg_vertices$exec_cycles)
 scale_fn <- function(x) { node_min_size + (x * 100/max(x, na.rm = TRUE)) }
 tg <- set.vertex.attribute(tg, name="scaled_exec_cycles", index=V(tg), value=scale_fn(tg_vertices$exec_cycles))
-toc("Assign execution cycles [step 3]")
+if(arg_timing) toc("Assign execution cycles [step 3]")
 
 # Calculate critical path
 print("Calculating critical path ...")
-tic(type="elapsed")
+if(arg_timing) tic(type="elapsed")
 ##Rprof("profile-critpathcalc.out")
 ## Progress bar
 lntg <- length(V(tg))
@@ -263,10 +261,10 @@ parallelism <- total_work/lpl
 print(parallelism)
 ## Clear rpath since dot/table writing complains
 tg <- remove.vertex.attribute(tg,"rpath")
-toc("Critical path calculation")
+if(arg_timing) toc("Critical path calculation")
 
 # Calc shape
-tic(type="elapsed")
+if(arg_timing) tic(type="elapsed")
 tg_vertices_df <- get.data.frame(tg, what="vertices")
 ## Select only fragments
 tg_vertices_df <- tg_vertices_df[with(tg_vertices_df, grepl("^[0-9]+.[0-9]+$", name)),]
@@ -274,25 +272,25 @@ tg_vertices_df <- tg_vertices_df[with(tg_vertices_df, grepl("^[0-9]+.[0-9]+$", n
 ## See question http://stackoverflow.com/questions/30978837/histogram-like-summary-for-interval-data
 ## Each fragment has exection range [rdist, rdist + exec_cycles], based on the premise of earliest possible execution.
 tg_vertices_df$rdist_exec_cycles <- tg_vertices_df$rdist + tg_vertices_df$exec_cycles
-toc("Shape calculation [Step 1]")
-tic(type="elapsed")
+if(arg_timing) toc("Shape calculation [Step 1]")
+if(arg_timing) tic(type="elapsed")
 ## Calculate breaks based on average length of fragment
 shape_breaks <- total_work/(length(unique(tg_data$cpu_id))*median(tg_vertices_df$exec_cycles))
-toc("Shape calculation [Step 2.1]")
-tic(type="elapsed")
+if(arg_timing) toc("Shape calculation [Step 2.1]")
+if(arg_timing) tic(type="elapsed")
 shape_bins_lower <- hist(seq(0,lpl), breaks=shape_breaks, plot=F)$breaks
 stopifnot(length(shape_bins_lower) > 1)
 shape_bins_upper <- shape_bins_lower + (shape_bins_lower[2] - shape_bins_lower[1] - 1)
-toc("Shape calculation [Step 2.2]")
-tic(type="elapsed")
+if(arg_timing) toc("Shape calculation [Step 2.2]")
+if(arg_timing) tic(type="elapsed")
 ## Use IRanges package to countOverlaps using the fast NCList data structure.
 suppressMessages(library(IRanges, quietly=TRUE, warn.conflicts=FALSE))
 subject <- IRanges(tg_vertices_df$rdist, tg_vertices_df$rdist_exec_cycles)
 query <- IRanges(shape_bins_lower, shape_bins_upper)
-toc("Shape calculation [Step 3]")
-tic(type="elapsed")
+if(arg_timing) toc("Shape calculation [Step 3]")
+if(arg_timing) tic(type="elapsed")
 tg_shape <- data.frame(low=shape_bins_lower, count=countOverlaps(query, subject))
-toc("Shape calculation [Step 4]")
+if(arg_timing) toc("Shape calculation [Step 4]")
 ## Write shape
 tg_file_out <- paste(gsub(". $", "", arg_outfileprefix), "-shape.pdf", sep="")
 pdf(tg_file_out)
