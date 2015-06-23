@@ -52,7 +52,7 @@ if(running_outside_rstudio)
 # Read data
 if(arg_timing) tic(type="elapsed")
 tg_file_in <- arg_data
-print(paste("Reading file:", tg_file_in, sep=" "))
+if(arg_verbose) print(paste("Reading file:", tg_file_in, sep=" "))
 tg_data <- fread(tg_file_in, header=TRUE)
 if(arg_timing) toc("Read data")
 
@@ -193,7 +193,7 @@ tg <- set.vertex.attribute(tg, name="scaled_exec_cycles", index=V(tg), value=sca
 if(arg_timing) toc("Assign execution cycles [step 3]")
 
 # Calculate critical path
-print("Calculating critical path ...")
+if(arg_verbose) print("Calculating critical path ...")
 if(arg_timing) tic(type="elapsed")
 ##Rprof("profile-critpathcalc.out")
 ## Progress bar
@@ -298,9 +298,9 @@ plot(tg_shape, xlab="Distance from START in execution cycles", ylab="Fragments",
 abline(h = length(unique(tg_data$cpu_id)), col = "blue", lty=2)
 abline(h = parallelism , col = "red", lty=1)
 write_res <- dev.off()
-print(paste("Wrote file:", tg_file_out))
+if(arg_verbose) print(paste("Wrote file:", tg_file_out))
 
 # Write graph as gml file
 tg_file_out <- paste(gsub(". $", "", arg_outfileprefix), ".graphml", sep="")
 write_res <- write.graph(tg, file=tg_file_out, format="graphml")
-print(paste("Wrote file:", tg_file_out, sep=" "))
+if(arg_verbose) print(paste("Wrote file:", tg_file_out, sep=" "))
