@@ -1,7 +1,7 @@
 # Clean slate
 rm(list=ls())
 
-## Treat warnings as errors
+# Treat warnings as errors
 #options(warn=2)
 
 # Include
@@ -14,7 +14,7 @@ library(igraph, quietly=TRUE)
 #library(bit64)
 
 # Parse arguments
-## TODO: Understand how to capture if not running inside RStudio.
+# TODO: Understand how to capture if not running inside RStudio.
 running_outside_rstudio <- 0
 if(running_outside_rstudio)
 {
@@ -33,8 +33,8 @@ if(running_outside_rstudio)
         quit("no", 1)
     }
 
-    ## Set argments into placeholders
-    ## Placeholders help while testing in RStudio where command line arguments are difficult to pass.
+    # Set argments into placeholders
+    # Placeholders help while testing in RStudio where command line arguments are difficult to pass.
 
     arg_data <- parsed$data
     arg_palette <- parsed$pal
@@ -130,35 +130,35 @@ node_min_size <- 10
 node_max_size <- 50
 
 # Assign weights to nodes
-## Read graph as table
+# Read graph as table
 if(arg_timing) tic(type="elapsed")
 tg_vertices <- data.table(node=get.data.frame(tg, what="vertices")$name, exec_cycles=0, kind="fragment")
 pesky_factors <- sapply(tg_vertices, is.factor)
 tg_vertices[pesky_factors] <- lapply(tg_vertices[pesky_factors], as.character)
-## Get helpful indexes
+# Get helpful indexes
 fork_ind <- with(tg_vertices, grepl("^f.[0-9]+.[0-9]+$", node))
 join_ind <- with(tg_vertices, grepl("^j.[0-9]+.[0-9]+$", node))
 fragment_ind <- with(tg_vertices, grepl("^[0-9]+.[0-9]+$", node))
 start_ind <- with(tg_vertices, grepl("^f.0.1$", node))
 end_ind <- with(tg_vertices, grepl("^j.0.0$", node))
-## Assign kind
+# Assign kind
 tg_vertices[fork_ind]$kind <- "fork"
 tg_vertices[join_ind]$kind <- "join"
 tg <- set.vertex.attribute(tg, name="kind", index=V(tg), value=tg_vertices$kind)
 if(arg_timing) toc("Assign other weights")
-## Assign exec cycles
+# Assign exec cycles
 compute_fragment_duration <- function(task, wait, exec_cycles, choice)
 {
-    ## Each task has breaks at these instants: (execution start, child creation, child wait, execution end)
-    ## A fragments executes upto the next break.
+    # Each task has breaks at these instants: (execution start, child creation, child wait, execution end)
+    # A fragments executes upto the next break.
     wait_instants <- as.numeric(unlist(strsplit(substring(wait, 2, nchar(wait)-1), ";", fixed = TRUE)))
     create_instants <- as.numeric(tg_data$create[tg_data$parent == task])
     instants <- c(wait_instants, create_instants, 1, 1 + exec_cycles)
-    ## Sort to line up breaks.
+    # Sort to line up breaks.
     instants <- sort(instants)
-    ## Remove placeholder breaks.
+    # Remove placeholder breaks.
     instants <- instants[instants != 0]
-    ## Assert if last break is not execution end
+    # Assert if last break is not execution end
     stopifnot(instants[length(instants)] == 1 + exec_cycles)
     durations <- diff(instants)
     # Assert if there are no durations!
@@ -196,47 +196,48 @@ if(arg_timing) toc("Assign execution cycles [step 3]")
 # Calculate critical path
 if(arg_verbose) print("Calculating critical path ...")
 if(arg_timing) tic(type="elapsed")
-##Rprof("profile-critpathcalc.out")
-## Progress bar
+#Rprof("profile-critpathcalc.out")
+# Progress bar
 lntg <- length(V(tg))
 pb <- txtProgressBar(min = 0, max = lntg, style = 3)
 ctr <- 0
-## Topological sort
+# Topological sort
 tsg <- topological.sort(tg)
-## Set root path attributes
+# Set root path attributes
 V(tg)[tsg[1]]$rdist <- 0
 V(tg)[tsg[1]]$depth <- 0
 V(tg)[tsg[1]]$rpath <- tsg[1]
-## Get data frame of task graph.
-## It is much faster to work on data frame than the task graph.
-## TODO: Convert to data.table.
+# Get data frame of task graph.
+# It is much faster to work on data frame than the task graph.
+# TODO: Convert to data.table for speed.
+# TODO: Write loop in C for speed.
 tg_vertices_df <- get.data.frame(tg, what="vertices")
-## Get longest paths from root
+# Get longest paths from root
 for(node in tsg[-1])
 {
-    ## Get distance from node's predecessors
+    # Get distance from node's predecessors
     ni <- incident(tg, node, mode="in")
     w <- V(tg)[get.edges(tg, ni)[,1]]$exec_cycles
-    ## Get distance from root to node's predecessors
+    # Get distance from root to node's predecessors
     nn <- neighbors(tg, node, mode="in")
     d <- tg_vertices_df$rdist[nn]
-    ## Add distances (assuming one-one corr.)
+    # Add distances (assuming one-one corr.)
     wd <- w+d
-    ## Set node's distance from root to max of added distances
+    # Set node's distance from root to max of added distances
     mwd <- max(wd)
     tg_vertices_df$rdist[node] <- mwd
-    ## Set node's path from root to path of max of added distances
+    # Set node's path from root to path of max of added distances
     mwdn <- as.vector(nn)[match(mwd,wd)]
     nrp <- list(c(unlist(tg_vertices_df$rpath[mwdn]), node))
     tg_vertices_df$rpath[node] <- nrp
-    ## Set node's depth as one greater than the largest depth its predecessors
+    # Set node's depth as one greater than the largest depth its predecessors
     tg_vertices_df$depth[node] <- max(tg_vertices_df$depth[nn]) + 1
-    ## Progress report
+    # Progress report
     ctr <- ctr + 1; setTxtProgressBar(pb, ctr);
 }
-## Longest path is the largest root distance
+# Longest path is the largest root distance
 lpl <- max(tg_vertices_df$rdist)
-## Enumerate longest path
+# Enumerate longest path
 lpm <- unlist(tg_vertices_df$rpath[match(lpl,tg_vertices_df$rdist)])
 tg_vertices_df$on_crit_path <- 0
 tg_vertices_df$on_crit_path[lpm] <- 1
@@ -246,11 +247,11 @@ tg <- set.vertex.attribute(tg, name="rdist", index=V(tg), value=tg_vertices_df$r
 tg <- set.vertex.attribute(tg, name="depth", index=V(tg), value=tg_vertices_df$depth)
 critical_edges <- E(tg)[V(tg)[on_crit_path==1] %--% V(tg)[on_crit_path==1]]
 tg <- set.edge.attribute(tg, name="on_crit_path", index=critical_edges, value=1)
-## Progress report
+# Progress report
 ctr <- ctr + 1; setTxtProgressBar(pb, ctr);
 close(pb)
-##Rprof(NULL)
-## Print critical path info
+#Rprof(NULL)
+# Print critical path info
 print("Cilk Theory Parallelism (Unit = Cycles)")
 print("Span (critical path)")
 print(lpl)
@@ -260,22 +261,22 @@ print(total_work)
 print("Parallelism")
 parallelism <- total_work/lpl
 print(parallelism)
-## Clear rpath since dot/table writing complains
+# Clear rpath since dot/table writing complains
 tg <- remove.vertex.attribute(tg,"rpath")
 if(arg_timing) toc("Critical path calculation")
 
 # Calc shape
 if(arg_timing) tic(type="elapsed")
 tg_vertices_df <- get.data.frame(tg, what="vertices")
-## Select only fragments
+# Select only fragments
 tg_vertices_df <- tg_vertices_df[with(tg_vertices_df, grepl("^[0-9]+.[0-9]+$", name)),]
-## Shape is found by counting overlapping ranges.
-## See question http://stackoverflow.com/questions/30978837/histogram-like-summary-for-interval-data
-## Each fragment has exection range [rdist, rdist + exec_cycles], based on the premise of earliest possible execution.
+# Shape is found by counting overlapping ranges.
+# See question http://stackoverflow.com/questions/30978837/histogram-like-summary-for-interval-data
+# Each fragment has exection range [rdist, rdist + exec_cycles], based on the premise of earliest possible execution.
 tg_vertices_df$rdist_exec_cycles <- tg_vertices_df$rdist + tg_vertices_df$exec_cycles
 if(arg_timing) toc("Shape calculation [Step 1]")
 if(arg_timing) tic(type="elapsed")
-## Calculate breaks based on average length of fragment
+# Calculate breaks based on average length of fragment
 shape_breaks <- total_work/(length(unique(tg_data$cpu_id))*median(tg_vertices_df$exec_cycles))
 if(arg_timing) toc("Shape calculation [Step 2.1]")
 if(arg_timing) tic(type="elapsed")
@@ -284,12 +285,12 @@ stopifnot(length(shape_bins_lower) > 1)
 shape_bins_upper <- shape_bins_lower + (shape_bins_lower[2] - shape_bins_lower[1] - 1)
 if(arg_timing) toc("Shape calculation [Step 2.2]")
 if(arg_timing) tic(type="elapsed")
-## Use IRanges package to countOverlaps using the fast NCList data structure.
+# Use IRanges package to countOverlaps using the fast NCList data structure.
 #suppressMessages(library(IRanges, quietly=TRUE, warn.conflicts=FALSE))
 #subject <- IRanges(tg_vertices_df$rdist, tg_vertices_df$rdist_exec_cycles)
 #query <- IRanges(shape_bins_lower, shape_bins_upper)
-## Use foverlaps from data.table.
-## See Arun's answer here:  http://stackoverflow.com/questions/30978837/histogram-like-summary-for-interval-data
+# Use foverlaps from data.table.
+# See Arun's answer here:  http://stackoverflow.com/questions/30978837/histogram-like-summary-for-interval-data
 subject <- data.table(interval =  tg_vertices_df$name,
                       start = tg_vertices_df$rdist,
                       end = tg_vertices_df$rdist_exec_cycles)
@@ -306,7 +307,7 @@ if(arg_timing) tic(type="elapsed")
 #tg_shape <- data.frame(low=shape_bins_lower, count=countOverlaps(query, subject))
 tg_shape <- data.frame(low=shape_bins_lower, count=overlaps$count)
 if(arg_timing) toc("Shape calculation [Step 4]")
-## Write shape
+# Write shape
 tg_file_out <- paste(gsub(". $", "", arg_outfileprefix), "-shape.pdf", sep="")
 pdf(tg_file_out)
 plot(tg_shape, xlab="Distance from START in execution cycles", ylab="Fragments", main="Instantaneous task parallelism", col="black", type='h', yaxs='i')
