@@ -58,7 +58,7 @@ if(arg_timing) toc("Read data")
 
 # Join frequeny
 if(arg_timing) tic(type="elapsed")
-join_freq <- tg_data %>% arrange(parent,joins_at) %>% group_by(parent, joins_at) %>% summarise(count = n())
+join_freq <- tg_data %>% arrange(parent, joins_at) %>% group_by(parent, joins_at) %>% summarise(count = n())
 if(arg_timing) toc("Compute join frequency")
 
 # Funciton returns edges of fragment chain for input task
@@ -99,7 +99,8 @@ fragmentize <- function (task, num_children, parent, child_number, joins_at)
                 }
             }
             joins_ind <- joins_ind + 1
-            if(joins_ind > length(joins)) break
+            if(joins_ind > length(joins))
+                break
         }
     }
     # Connect to parent join
@@ -284,12 +285,26 @@ shape_bins_upper <- shape_bins_lower + (shape_bins_lower[2] - shape_bins_lower[1
 if(arg_timing) toc("Shape calculation [Step 2.2]")
 if(arg_timing) tic(type="elapsed")
 ## Use IRanges package to countOverlaps using the fast NCList data structure.
-suppressMessages(library(IRanges, quietly=TRUE, warn.conflicts=FALSE))
-subject <- IRanges(tg_vertices_df$rdist, tg_vertices_df$rdist_exec_cycles)
-query <- IRanges(shape_bins_lower, shape_bins_upper)
+#suppressMessages(library(IRanges, quietly=TRUE, warn.conflicts=FALSE))
+#subject <- IRanges(tg_vertices_df$rdist, tg_vertices_df$rdist_exec_cycles)
+#query <- IRanges(shape_bins_lower, shape_bins_upper)
+## Use foverlaps from data.table.
+## See Arun's answer here:  http://stackoverflow.com/questions/30978837/histogram-like-summary-for-interval-data
+subject <- data.table(interval =  tg_vertices_df$name,
+                      start = tg_vertices_df$rdist,
+                      end = tg_vertices_df$rdist_exec_cycles)
+query <- data.table(start = shape_bins_lower,
+                    end = shape_bins_upper)
+setkey(subject, start, end)
+overlaps <- foverlaps(query, subject, type="any")
+overlaps <- overlaps[, .(count = sum(!is.na(start)),
+        which = paste(interval, collapse=", ")),
+     by = .(i.start, i.end)]
+#print(overlaps)
 if(arg_timing) toc("Shape calculation [Step 3]")
 if(arg_timing) tic(type="elapsed")
-tg_shape <- data.frame(low=shape_bins_lower, count=countOverlaps(query, subject))
+#tg_shape <- data.frame(low=shape_bins_lower, count=countOverlaps(query, subject))
+tg_shape <- data.frame(low=shape_bins_lower, count=overlaps$count)
 if(arg_timing) toc("Shape calculation [Step 4]")
 ## Write shape
 tg_file_out <- paste(gsub(". $", "", arg_outfileprefix), "-shape.pdf", sep="")
