@@ -484,7 +484,6 @@ dead:
     //MIR_INFORM(MIR_INFORM_STR "Workers are dead.\n");
 
     // Deinit memory allocation policy
-    MIR_DEBUG(MIR_DEBUG_STR "Stopping memory distributer ...\n");
     mir_mem_pol_destroy();
 
     // Deinit scheduling policy

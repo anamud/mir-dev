@@ -638,6 +638,7 @@ void mir_mem_pol_init ()
 
 void mir_mem_pol_destroy ()
 {/*{{{*/
+    MIR_DEBUG(MIR_DEBUG_STR "Stopping memory distributer ...\n");
     MIR_DEBUG(MIR_DEBUG_STR "Total unfreed mem_pol memory=%" MIR_FORMSPEC_UL " bytes\n", mem_pol->total_allocated);
     mir_lock_destroy(&mem_pol->lock);
     mir_free_int(mem_pol, sizeof(struct mir_mem_pol_t));
