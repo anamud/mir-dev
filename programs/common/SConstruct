@@ -49,7 +49,6 @@ env['CCFLAGS'] = Split("""
 -Wno-unused-but-set-variable
 -Wno-maybe-uninitialized
 -fopenmp
--fdump-tree-optimized
 -DLINUX
 -DUSE_MIR
 """)
@@ -117,13 +116,14 @@ Clean('.','opt-build')
 prof = env.Clone();
 prof['CC'] = 'gcc'
 prof['CCFLAGS'] += Split("""
--O1
+-O0
 -DNDEBUG
 -fno-inline-functions
 -fno-inline-functions-called-once
 -fno-optimize-sibling-calls
 -fno-omit-frame-pointer
 -g
+-fdump-tree-optimized
 """)
 prof.Prepend(LIBS = ['mir-opt'])
 prof.VariantDir('prof-build', '.', duplicate=0)
