@@ -77,7 +77,7 @@ create_edge_color <- fork_color
 sync_edge_color <- join_color
 scope_edge_color <- "#000000"
 cont_edge_color <- "#000000"
-colorf <- colorRampPalette(c("blue", "red"))
+color_fun <- colorRampPalette(c("blue", "red"))
 if(parsed$palette == "color") {
 } else if(parsed$palette == "gray") {
     join_color <- "#D3D3D3"  # light gray
@@ -88,16 +88,16 @@ if(parsed$palette == "color") {
     sync_edge_color <- "#000000"
     scope_edge_color <-  "#000000"
     cont_edge_color <- "#000000"
-    colorf <- colorRampPalette(c("gray10", "gray90"))
+    color_fun <- colorRampPalette(c("gray10", "gray90"))
 } else {
     print("Unsupported color format. Supported formats: color, gray. Defaulting to color.")
 }
 
 # Task color binning
 task_color_bins <- 10
-task_color_pal <- colorf(task_color_bins)
+task_color_pal <- color_fun(task_color_bins)
 fork_color_bins <- 10
-fork_color_pal <- colorf(fork_color_bins)
+fork_color_pal <- color_fun(fork_color_bins)
 if(parsed$timing) toc("Setting colors")
 
 if(parsed$verbose) print("Creating graph ...")
