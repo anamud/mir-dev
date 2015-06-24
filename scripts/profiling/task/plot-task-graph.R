@@ -53,7 +53,7 @@ if(!exists("data", where=parsed))
 if(parsed$verbose) print("Initializing ...")
 # Read data
 if(parsed$timing) tic(type="elapsed")
-tg.data <- read.csv(parsed$data, header=TRUE)
+tg_data <- read.csv(parsed$data, header=TRUE)
 if(parsed$timing) toc("Read data")
 
 # Information output
@@ -64,7 +64,7 @@ sink()
 # Remove non-sense data
 if(parsed$timing) tic(type="elapsed")
 # Remove background task
-tg.data <- tg.data[!is.na(tg.data$parent),]
+tg_data <- tg_data[!is.na(tg_data$parent),]
 if(parsed$timing) toc("Removing non-sense data")
 
 # Set colors
@@ -106,14 +106,14 @@ if(parsed$timing) tic(type="elapsed")
 if(!parsed$tree)
 {
     # Create join nodes list
-    join_nodes <- mapply(function(x, y, z) {paste('j', x, y, sep='.')}, x=tg.data$parent, y=tg.data$joins_at)
+    join_nodes <- mapply(function(x, y, z) {paste('j', x, y, sep='.')}, x=tg_data$parent, y=tg_data$joins_at)
     join_nodes_unique <- unique(unlist(join_nodes, use.names=FALSE))
 }
 # Create parent nodes list
-parent_nodes_unique <- unique(tg.data$parent)
+parent_nodes_unique <- unique(tg_data$parent)
 
 # Create fork nodes list
-fork_nodes <- mapply(function(x, y, z) {paste('f', x, y, sep='.')}, x=tg.data$parent, y=tg.data$joins_at)
+fork_nodes <- mapply(function(x, y, z) {paste('f', x, y, sep='.')}, x=tg_data$parent, y=tg_data$joins_at)
 fork_nodes_unique <- unique(unlist(fork_nodes, use.names=FALSE))
 if(parsed$timing) toc("Node list creation")
 
@@ -125,20 +125,20 @@ tg <- graph.empty(directed=TRUE) + vertices('E',
                                             unique(c(join_nodes_unique,
                                                      fork_nodes_unique,
                                                      parent_nodes_unique,
-                                                     tg.data$task)))
+                                                     tg_data$task)))
 } else {
 tg <- graph.empty(directed=TRUE) + vertices('E',
                                             unique(c(fork_nodes_unique,
                                                      parent_nodes_unique,
-                                                     tg.data$task)))
+                                                     tg_data$task)))
 }
 if(parsed$timing) toc("Graph creation")
 
 # Connect parent fork to task
 if(parsed$verbose) print("Connecting nodes ...")
 if(parsed$timing) tic(type="elapsed")
-tg[from=fork_nodes, to=tg.data$task, attr='kind'] <- 'create'
-tg[from=fork_nodes, to=tg.data$task, attr='color'] <- create_edge_color
+tg[from=fork_nodes, to=tg_data$task, attr='kind'] <- 'create'
+tg[from=fork_nodes, to=tg_data$task, attr='color'] <- create_edge_color
 if(parsed$timing) toc("Connect parent fork to task")
 
 # Connect parent task to first fork
@@ -148,15 +148,15 @@ parent_first_forks <- as.vector(sapply(fork_nodes_unique[first_forks_index], fun
 first_forks <- fork_nodes_unique[first_forks_index]
 tg[to=first_forks, from=parent_first_forks, attr='kind'] <- 'scope'
 tg[to=first_forks, from=parent_first_forks, attr='color'] <- scope_edge_color
-if("ins_count" %in% colnames(tg.data))
+if("ins_count" %in% colnames(tg_data))
 {
-    tg[to=first_forks, from=parent_first_forks, attr='ins_count'] <- as.numeric(tg.data[match(parent_first_forks, tg.data$task),]$ins_count)
-    tg[to=first_forks, from=parent_first_forks, attr='weight'] <- -as.numeric(tg.data[match(parent_first_forks, tg.data$task),]$ins_count)
+    tg[to=first_forks, from=parent_first_forks, attr='ins_count'] <- as.numeric(tg_data[match(parent_first_forks, tg_data$task),]$ins_count)
+    tg[to=first_forks, from=parent_first_forks, attr='weight'] <- -as.numeric(tg_data[match(parent_first_forks, tg_data$task),]$ins_count)
 } else {
-    if("work_cycles" %in% colnames(tg.data))
+    if("work_cycles" %in% colnames(tg_data))
     {
-        tg[to=first_forks, from=parent_first_forks, attr='work_cycles'] <- as.numeric(tg.data[match(parent_first_forks, tg.data$task),]$work_cycles)
-        tg[to=first_forks, from=parent_first_forks, attr='weight'] <- -as.numeric(tg.data[match(parent_first_forks, tg.data$task),]$work_cycles)
+        tg[to=first_forks, from=parent_first_forks, attr='work_cycles'] <- as.numeric(tg_data[match(parent_first_forks, tg_data$task),]$work_cycles)
+        tg[to=first_forks, from=parent_first_forks, attr='weight'] <- -as.numeric(tg_data[match(parent_first_forks, tg_data$task),]$work_cycles)
     }
 }
 if(parsed$timing) toc("Connect parent to first fork")
@@ -165,19 +165,19 @@ if(!parsed$tree)
 {
     # Connect leaf task to join
     if(parsed$timing) tic(type="elapsed")
-    leaf_tasks <- tg.data$task[tg.data$leaf == T]
-    leaf_join_nodes <- join_nodes[match(leaf_tasks, tg.data$task)]
+    leaf_tasks <- tg_data$task[tg_data$leaf == T]
+    leaf_join_nodes <- join_nodes[match(leaf_tasks, tg_data$task)]
     tg[from=leaf_tasks, to=leaf_join_nodes, attr='kind'] <- 'sync'
     tg[from=leaf_tasks, to=leaf_join_nodes, attr='color'] <- sync_edge_color
-    if("ins_count" %in% colnames(tg.data))
+    if("ins_count" %in% colnames(tg_data))
     {
-        tg[from=leaf_tasks, to=leaf_join_nodes, attr='ins_count'] <- as.numeric(tg.data[match(leaf_tasks, tg.data$task),]$ins_count)
-        tg[from=leaf_tasks, to=leaf_join_nodes, attr='weight'] <- -as.numeric(tg.data[match(leaf_tasks, tg.data$task),]$ins_count)
+        tg[from=leaf_tasks, to=leaf_join_nodes, attr='ins_count'] <- as.numeric(tg_data[match(leaf_tasks, tg_data$task),]$ins_count)
+        tg[from=leaf_tasks, to=leaf_join_nodes, attr='weight'] <- -as.numeric(tg_data[match(leaf_tasks, tg_data$task),]$ins_count)
     } else {
-        if("work_cycles" %in% colnames(tg.data))
+        if("work_cycles" %in% colnames(tg_data))
         {
-            tg[from=leaf_tasks, to=leaf_join_nodes, attr='work_cycles'] <- as.numeric(tg.data[match(leaf_tasks, tg.data$task),]$work_cycles)
-            tg[from=leaf_tasks, to=leaf_join_nodes, attr='weight'] <- -as.numeric(tg.data[match(leaf_tasks, tg.data$task),]$work_cycles)
+            tg[from=leaf_tasks, to=leaf_join_nodes, attr='work_cycles'] <- as.numeric(tg_data[match(leaf_tasks, tg_data$task),]$work_cycles)
+            tg[from=leaf_tasks, to=leaf_join_nodes, attr='weight'] <- -as.numeric(tg_data[match(leaf_tasks, tg_data$task),]$work_cycles)
         }
     }
     if(parsed$timing) toc("Connect leaf task to join")
@@ -202,9 +202,9 @@ if(!parsed$tree)
         next_fork <- next_fork
       } else {
         # Next fork is part of grandfather
-        parent_index <- match(parent, tg.data$task)
-        gfather <- tg.data[parent_index,]$parent
-        gfather_join <- paste('j', as.character(gfather), as.character(tg.data[parent_index,]$joins_at), sep=".")
+        parent_index <- match(parent, tg_data$task)
+        gfather <- tg_data[parent_index,]$parent
+        gfather_join <- paste('j', as.character(gfather), as.character(tg_data[parent_index,]$joins_at), sep=".")
 
         if(is.na(match(gfather_join, join_nodes_unique)) == F)
         {
@@ -276,11 +276,11 @@ if(parsed$timing) tic(type="elapsed")
 # Common vertex attributes
 V(tg)$label <- V(tg)$name
 # Set task vertex attributes
-task_index <- match(as.character(tg.data$task), V(tg)$name)
+task_index <- match(as.character(tg_data$task), V(tg)$name)
 # Set annotations
-for (annot in colnames(tg.data))
+for (annot in colnames(tg_data))
 {
-    values <- as.character(tg.data[,annot])
+    values <- as.character(tg_data[,annot])
     tg <- set.vertex.attribute(tg, name=annot, index=task_index, value=values)
 }
 if(parsed$timing) toc("Task attribute setting")
@@ -296,16 +296,16 @@ tg <- set.vertex.attribute(tg, name='shape', index=task_index, value=task_shape)
 size_scaled <- c("ins_count", "work_cycles", "overhead_cycles", "exec_cycles")
 for(attrib in size_scaled)
 {
-    if(attrib %in% colnames(tg.data))
+    if(attrib %in% colnames(tg_data))
     {
         # Set size
-        attrib_unique <- unique(tg.data[,attrib])
+        attrib_unique <- unique(tg_data[,attrib])
         if(length(attrib_unique) == 1) p_task_size <- task_size_mult
-        else p_task_size <- task_size_mult * as.numeric(cut(tg.data[,attrib], task_size_bins))
+        else p_task_size <- task_size_mult * as.numeric(cut(tg_data[,attrib], task_size_bins))
         annot_name <- paste(attrib, "_to_size", sep="")
         tg <- set.vertex.attribute(tg, name=annot_name, index=task_index, value=p_task_size)
         # Set height
-        attrib_val <- tg.data[,attrib]
+        attrib_val <- tg_data[,attrib]
         attrib_val_norm <- 1 + ((attrib_val - min(attrib_val)) / (max(attrib_val) - min(attrib_val)))
         annot_name <- paste(attrib, "_to_height", sep="")
         tg <- set.vertex.attribute(tg, name=annot_name, index=task_index, value=attrib_val_norm*task_size)
@@ -321,12 +321,12 @@ tg <- set.vertex.attribute(tg, name='color', index=task_index, value=task_color)
 attrib_color_scaled <- c("mem_fp", "compute_int", "PAPI_RES_STL_sum", "mem_hier_util", "work_deviation", "overhead_deviation", "parallel_benefit")
 for(attrib in attrib_color_scaled)
 {
-    if(attrib %in% colnames(tg.data))
+    if(attrib %in% colnames(tg_data))
     {
         # Set color in proportion to attrib
-        attrib_unique <- unique(tg.data[,attrib])
+        attrib_unique <- unique(tg_data[,attrib])
         if(length(attrib_unique) == 1) p_task_color <- task_color_pal[1]
-        else p_task_color <- task_color_pal[as.numeric(cut(tg.data[,attrib], task_color_bins))]
+        else p_task_color <- task_color_pal[as.numeric(cut(tg_data[,attrib], task_color_bins))]
         annot_name <- paste(attrib, "_to_color", sep="")
         tg <- set.vertex.attribute(tg, name=annot_name, index=task_index, value=p_task_color)
         # Write colors for reference
@@ -335,7 +335,7 @@ for(attrib in attrib_color_scaled)
         {
             write.csv(data.frame(value=attrib_unique, color=p_task_color), tg.file.out, row.names=F)
         } else {
-            v <- unique(cut(tg.data[,attrib], task_color_bins))
+            v <- unique(cut(tg_data[,attrib], task_color_bins))
             write.csv(data.frame(value=v, color=task_color_pal[as.numeric(v)]), tg.file.out, row.names=F)
         }
         if(parsed$verbose) print(paste("Wrote file:", tg.file.out))
@@ -345,10 +345,10 @@ for(attrib in attrib_color_scaled)
 attrib_color_distinct <- c("cpu_id", "outl_func", "tag")
 for(attrib in attrib_color_distinct)
 {
-    if(attrib %in% colnames(tg.data))
+    if(attrib %in% colnames(tg_data))
     {
         # Map distinct color to attrib
-        attrib_val <- as.character(tg.data[,attrib])
+        attrib_val <- as.character(tg_data[,attrib])
         unique_attrib_val <- unique(attrib_val)
         attrib_color <- rainbow(length(unique_attrib_val))
         annot_name <- paste(attrib, "_to_color", sep="")
@@ -385,7 +385,7 @@ tg <- set.vertex.attribute(tg, name='shape', index=fork_nodes_index, value=fork_
 if(parsed$timing) toc("Misc. attribute calculation")
 
 # Set fork balance in terms of exec_cycles
-if("exec_cycles" %in% colnames(tg.data))
+if("exec_cycles" %in% colnames(tg_data))
 {
     if(parsed$timing) tic(type="elapsed")
     #Rprof("profile-fork-bal-ec.out", line.profiling=TRUE)
@@ -397,7 +397,7 @@ if("exec_cycles" %in% colnames(tg.data))
       join_count <- as.numeric(fork_split[3])
 
       # Get exec_cycles
-      exec_cycles <- tg.data[tg.data$parent == parent & tg.data$joins_at == join_count, ]$exec_cycles
+      exec_cycles <- tg_data[tg_data$parent == parent & tg_data$joins_at == join_count, ]$exec_cycles
       exec_cycles <- exec_cycles[!is.na(exec_cycles)]
 
       # Compute balance
@@ -427,7 +427,7 @@ if("exec_cycles" %in% colnames(tg.data))
 }
 
 # Set fork balance in terms of work_cycles
-if("work_cycles" %in% colnames(tg.data))
+if("work_cycles" %in% colnames(tg_data))
 {
     if(parsed$timing) tic(type="elapsed")
     # Set fork balance
@@ -439,7 +439,7 @@ if("work_cycles" %in% colnames(tg.data))
       join_count <- as.numeric(fork_split[3])
 
       # Get work_cycles
-      work_cycles <- tg.data[tg.data$parent == parent & tg.data$joins_at == join_count, ]$work_cycles
+      work_cycles <- tg_data[tg_data$parent == parent & tg_data$joins_at == join_count, ]$work_cycles
       work_cycles <- work_cycles[!is.na(work_cycles)]
 
       # Compute balance
@@ -468,7 +468,7 @@ if("work_cycles" %in% colnames(tg.data))
 }
 
 # Set fork scatter
-if("cpu_id" %in% colnames(tg.data))
+if("cpu_id" %in% colnames(tg_data))
 {
     if(parsed$timing) tic(type="elapsed")
     # Set fork scatter
@@ -480,7 +480,7 @@ if("cpu_id" %in% colnames(tg.data))
       join_count <- as.numeric(fork_split[3])
 
       # Get cpu_id
-      cpu_id <- tg.data[tg.data$parent == parent & tg.data$joins_at == join_count, ]$cpu_id
+      cpu_id <- tg_data[tg_data$parent == parent & tg_data$joins_at == join_count, ]$cpu_id
       cpu_id <- cpu_id[!is.na(cpu_id)]
 
       # Compute scatter
@@ -529,12 +529,12 @@ if(!parsed$tree)
 
 # Set edge attributes
 if(parsed$timing) tic(type="elapsed")
-if("ins_count" %in% colnames(tg.data))
+if("ins_count" %in% colnames(tg_data))
 {
     tg <- set.edge.attribute(tg, name="weight", index=which(is.na(E(tg)$weight)), value=0)
     tg <- set.edge.attribute(tg, name="ins_count", index=which(is.na(E(tg)$ins_count)), value=0)
 } else {
-    if("work_cycles" %in% colnames(tg.data))
+    if("work_cycles" %in% colnames(tg_data))
     {
         tg <- set.edge.attribute(tg, name="weight", index=which(is.na(E(tg)$weight)), value=0)
         tg <- set.edge.attribute(tg, name="work_cycles", index=which(is.na(E(tg)$work_cycles)), value=0)
@@ -574,7 +574,7 @@ if(!parsed$tree)
 }
 if(parsed$timing) toc("Checking for bad structure")
 
-if("ins_count" %in% colnames(tg.data) && !parsed$tree)
+if("ins_count" %in% colnames(tg_data) && !parsed$tree)
 {
     if(parsed$verbose) print("Calculating critical path ...")
     if(parsed$timing) tic(type="elapsed")
@@ -645,7 +645,7 @@ if("ins_count" %in% colnames(tg.data) && !parsed$tree)
     print("span (critical path)")
     print(lpl)
     print("work")
-    work <- sum(as.numeric(tg.data$ins_count))
+    work <- sum(as.numeric(tg_data$ins_count))
     print(work)
     print("parallelism")
     print(work/lpl)
@@ -659,13 +659,13 @@ if("ins_count" %in% colnames(tg.data) && !parsed$tree)
         # Calc shape
         tgdf <- get.data.frame(tg, what="vertices")
         tgdf <- tgdf[!is.na(as.numeric(tgdf$label)),]
-        tg_shape <- hist(tgdf$rdist, breaks=sum(as.numeric(tg.data$ins_count))/(length(unique(tg.data$cpu_id))*mean(tg.data$ins_count)), plot=F)
+        tg_shape <- hist(tgdf$rdist, breaks=sum(as.numeric(tg_data$ins_count))/(length(unique(tg_data$cpu_id))*mean(tg_data$ins_count)), plot=F)
 
         # Write out shape
         tg.file.out <- paste(gsub(". $", "", parsed$out), "-shape.pdf", sep="")
         pdf(tg.file.out)
         plot(tg_shape, freq=T, xlab="Distance from START in instruction count", ylab="Tasks", main="Instantaneous task parallelism", col="white")
-        abline(h = length(unique(tg.data$cpu_id)), col = "blue", lty=2)
+        abline(h = length(unique(tg_data$cpu_id)), col = "blue", lty=2)
         abline(h = work/lpl , col = "red", lty=1)
         legend("top", legend = c("Number of cores", "Exposed task parallelism"), fill = c("blue", "red"))
         dev.off()
@@ -680,14 +680,14 @@ if("ins_count" %in% colnames(tg.data) && !parsed$tree)
         plot(tg_shape_depth, freq=T, xlab="Distance from START in node count", ylab="Tasks", main="Instantaneous task parallelism", col="white")
         lines(tg_shape_depth, type="p")
         lines(tg_shape_depth, type="h")
-        abline(h = length(unique(tg.data$cpu_id)), col = "blue", lty=2)
+        abline(h = length(unique(tg_data$cpu_id)), col = "blue", lty=2)
         abline(h = work/lpl , col = "red", lty=1)
         legend("top", legend = c("Number of cores", "Exposed task parallelism"), fill = c("blue", "red"))
         dev.off()
         if(parsed$verbose) print(paste("Wrote file:", tg.file.out))
     }
     if(parsed$timing) toc("Critical path calculation (based on instructions)")
-} else if("work_cycles" %in% colnames(tg.data) && !parsed$tree) {
+} else if("work_cycles" %in% colnames(tg_data) && !parsed$tree) {
     if(parsed$verbose) print("Calculating critical path ...")
     if(parsed$timing) tic(type="elapsed")
 
@@ -758,7 +758,7 @@ if("ins_count" %in% colnames(tg.data) && !parsed$tree)
     print("span (critical path)")
     print(lpl)
     print("work")
-    work <- sum(as.numeric(tg.data$work_cycles))
+    work <- sum(as.numeric(tg_data$work_cycles))
     print(work)
     print("parallelism")
     print(work/lpl)
@@ -772,13 +772,13 @@ if("ins_count" %in% colnames(tg.data) && !parsed$tree)
         # Calc shape
         tgdf <- get.data.frame(tg, what="vertices")
         tgdf <- tgdf[!is.na(as.numeric(tgdf$label)),]
-        tg_shape <- hist(tgdf$rdist, breaks=sum(as.numeric(tg.data$work_cycles))/(length(unique(tg.data$cpu_id))*mean(tg.data$work_cycles)), plot=F)
+        tg_shape <- hist(tgdf$rdist, breaks=sum(as.numeric(tg_data$work_cycles))/(length(unique(tg_data$cpu_id))*mean(tg_data$work_cycles)), plot=F)
 
         # Write out shape
         tg.file.out <- paste(gsub(". $", "", parsed$out), "-shape.pdf", sep="")
         pdf(tg.file.out)
         plot(tg_shape, freq=T, xlab="Distance from START in work cycles", ylab="Tasks", main="Instantaneous task parallelism", col="white")
-        abline(h = length(unique(tg.data$cpu_id)), col = "blue", lty=2)
+        abline(h = length(unique(tg_data$cpu_id)), col = "blue", lty=2)
         abline(h = work/lpl , col = "red", lty=1)
         dev.off()
         if(parsed$verbose) print(paste("Wrote file:", tg.file.out))
@@ -792,7 +792,7 @@ if("ins_count" %in% colnames(tg.data) && !parsed$tree)
         plot(tg_shape_depth, xlab="Distance from START in node count", ylab="Tasks", main="Instantaneous task parallelism", col="white")
         lines(tg_shape_depth, type="p")
         lines(tg_shape_depth, type="h")
-        abline(h = length(unique(tg.data$cpu_id)), col = "blue", lty=2)
+        abline(h = length(unique(tg_data$cpu_id)), col = "blue", lty=2)
         abline(h = work/lpl , col = "red", lty=1)
         dev.off()
         if(parsed$verbose) print(paste("Wrote file:", tg.file.out))
@@ -882,7 +882,7 @@ if(parsed$analyze)
     print("Task graph structure:")
     print(paste("Number of nodes =", length(V(base_tg))))
     print(paste("Number of edges =", length(E(base_tg))))
-    print(paste("Number of tasks =", length(tg.data$task)))
+    print(paste("Number of tasks =", length(tg_data$task)))
     if(!parsed$cplengthonly)
         print(paste("Number of critical tasks =", length(tgdf$task[tgdf$on_crit_path == 1])))
     print(paste("Number of forks =", length(fork_nodes_unique)))
@@ -890,11 +890,11 @@ if(parsed$analyze)
     sink()
 
     # Memory hierarchy utilization problem
-    if("mem_hier_util" %in% colnames(tg.data))
+    if("mem_hier_util" %in% colnames(tg_data))
     {
         prob_tg <- base_tg
         mem_hier_util.thresh <- 0.5
-        prob_task <- subset(tg.data, mem_hier_util > mem_hier_util.thresh, select=task)
+        prob_task <- subset(tg_data, mem_hier_util > mem_hier_util.thresh, select=task)
         sink(tg.ana.out, append=T)
         print(paste(length(prob_task$task), "tasks have mem_hier_util >", mem_hier_util.thresh))
         sink()
@@ -915,11 +915,11 @@ if(parsed$analyze)
     }
 
     # Memory footprint problem
-    if("mem_fp" %in% colnames(tg.data))
+    if("mem_fp" %in% colnames(tg_data))
     {
         prob_tg <- base_tg
         mem_fp.thresh <- 512000
-        prob_task <- subset(tg.data, mem_fp > mem_fp.thresh, select=task)
+        prob_task <- subset(tg_data, mem_fp > mem_fp.thresh, select=task)
         sink(tg.ana.out, append=T)
         print(paste(length(prob_task$task), "tasks have mem_fp >", mem_fp.thresh))
         sink()
@@ -940,11 +940,11 @@ if(parsed$analyze)
     }
 
     # Compute intensity problem
-    if("compute_int" %in% colnames(tg.data))
+    if("compute_int" %in% colnames(tg_data))
     {
         prob_tg <- base_tg
         compute_int.thresh <- 2
-        prob_task <- subset(tg.data, compute_int < compute_int.thresh, select=task)
+        prob_task <- subset(tg_data, compute_int < compute_int.thresh, select=task)
         sink(tg.ana.out, append=T)
         print(paste(length(prob_task$task), "tasks have compute_int <", compute_int.thresh))
         sink()
@@ -965,11 +965,11 @@ if(parsed$analyze)
     }
 
     # Work deviation problem
-    if("work_deviation" %in% colnames(tg.data))
+    if("work_deviation" %in% colnames(tg_data))
     {
         prob_tg <- base_tg
         work_deviation.thresh <- 2
-        prob_task <- subset(tg.data, work_deviation > work_deviation.thresh, select=task)
+        prob_task <- subset(tg_data, work_deviation > work_deviation.thresh, select=task)
         sink(tg.ana.out, append=T)
         print(paste(length(prob_task$task), "tasks have work_deviation >", work_deviation.thresh))
         sink()
@@ -990,11 +990,11 @@ if(parsed$analyze)
     }
 
     # Parallel benefit problem
-    if("parallel_benefit" %in% colnames(tg.data))
+    if("parallel_benefit" %in% colnames(tg_data))
     {
         prob_tg <- base_tg
         parallel_benefit.thresh <- 1
-        prob_task <- subset(tg.data, parallel_benefit < parallel_benefit.thresh, select=task)
+        prob_task <- subset(tg_data, parallel_benefit < parallel_benefit.thresh, select=task)
         sink(tg.ana.out, append=T)
         print(paste(length(prob_task$task), "tasks have parallel_benefit <", parallel_benefit.thresh))
         sink()
@@ -1018,7 +1018,7 @@ if(parsed$analyze)
     if(!parsed$cplengthonly && !parsed$tree)
     {
         prob_tg <- base_tg
-        parallelism.thresh <- length(unique(tg.data$cpu_id))
+        parallelism.thresh <- length(unique(tg_data$cpu_id))
         ranges <- which(tg_shape$counts < parallelism.thresh)
         sink(tg.ana.out, append=T)
         print(paste(length(ranges), "shape bins out of", length(tg_shape$counts), "have parallelism <", parallelism.thresh))
@@ -1041,7 +1041,7 @@ if(parsed$analyze)
     if(!parsed$cplengthonly && !parsed$tree)
     {
         prob_tg <- base_tg
-        parallelism.thresh <- length(unique(tg.data$cpu_id))
+        parallelism.thresh <- length(unique(tg_data$cpu_id))
         prob_depths <- tg_shape_depth$depth[which(tg_shape_depth$count < parallelism.thresh)]
         prob_depth_counts <- sort(unique(tg_shape_depth$count[which(tg_shape_depth$count < parallelism.thresh)]))
         prob_depth_colors <- heat.colors(length(prob_depth_counts))
@@ -1068,10 +1068,10 @@ if(parsed$analyze)
     }
 
     # Scatter problem
-    if("cpu_id" %in% colnames(tg.data) && !parsed$tree)
+    if("cpu_id" %in% colnames(tg_data) && !parsed$tree)
     {
         prob_tg <- base_tg
-        scatter.thresh <- (length(unique(tg.data$cpu_id))/4)
+        scatter.thresh <- (length(unique(tg_data$cpu_id))/4)
         prob_fork <- V(prob_tg)[fork_nodes_index]$name[which(fork_scatter > scatter.thresh)]
         sink(tg.ana.out, append=T)
         print(paste(length(prob_fork), "forks have scatter >", scatter.thresh))
@@ -1108,7 +1108,7 @@ if(parsed$analyze)
     }
 
     # Balance problem (work cycles)
-    if("work_cycles" %in% colnames(tg.data) && !parsed$tree)
+    if("work_cycles" %in% colnames(tg_data) && !parsed$tree)
     {
         prob_tg <- base_tg
         fork_bal.thresh <- 2
@@ -1143,7 +1143,7 @@ if(parsed$analyze)
     }
 
     # Balance problem (execution cycles)
-    if("exec_cycles" %in% colnames(tg.data) && !parsed$tree)
+    if("exec_cycles" %in% colnames(tg_data) && !parsed$tree)
     {
         prob_tg <- base_tg
         fork_bal.thresh <- 2
