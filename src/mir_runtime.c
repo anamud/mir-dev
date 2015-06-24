@@ -7,14 +7,9 @@
 
 #include "mir_runtime.h"
 #include "mir_defines.h"
-#include "mir_lock.h"
 #include "mir_memory.h"
 #include "mir_types.h"
-#include "mir_recorder.h"
-#include "mir_worker.h"
-#include "scheduling/mir_sched_pol.h"
 #include "arch/mir_arch.h"
-#include "mir_utils.h"
 #include "mir_omp_int.h"
 
 #ifdef MIR_MEM_POL_ENABLE

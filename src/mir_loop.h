@@ -1,8 +1,6 @@
 #ifndef MIR_LOOP_H
 #define MIR_LOOP_H 1
 
-#include <stdint.h>
-
 #include "mir_lock.h"
 
 /*LIBINT_DECL_BEGIN*/

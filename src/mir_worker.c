@@ -6,6 +6,7 @@
 #include "mir_task.h"
 #include "mir_utils.h"
 #include "mir_worker.h"
+#include "arch/mir_arch.h"
 #include "scheduling/mir_sched_pol.h"
 
 #ifdef __tile__

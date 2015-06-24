@@ -1,7 +1,6 @@
 #ifndef  MIR_MEMORY_H
 #define  MIR_MEMORY_H 1
 
-#include <stdlib.h>
 #include <stdint.h>
 #include "mir_types.h"
 

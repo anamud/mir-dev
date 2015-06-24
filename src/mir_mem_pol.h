@@ -2,7 +2,6 @@
 #define MIR_MEM_POL_H
 
 #include <stdint.h>
-#include <stdlib.h>
 #include "mir_types.h"
 #include "mir_defines.h"
 

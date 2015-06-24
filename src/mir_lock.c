@@ -1,15 +1,5 @@
 #include "mir_lock.h"
 
-#ifdef __tile__
-#ifdef TILEPRO_USE_SYNCMUTEX
-#include <tmc/sync.h>
-#else
-#include <tmc/spin.h>
-#endif
-#else
-#include <pthread.h>
-#endif
-
 void mir_lock_create(struct mir_lock_t* lock)
 {/*{{{*/
 #ifdef __tile__

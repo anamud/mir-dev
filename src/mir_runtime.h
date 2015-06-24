@@ -4,15 +4,8 @@
 #include <pthread.h>
 #include <stdint.h>
 #include <stdlib.h>
-#include <stdint.h>
 
-#include "mir_worker.h"
-#include "arch/mir_arch.h"
-#include "mir_defines.h"
-#include "mir_types.h"
 #include "scheduling/mir_sched_pol.h"
-#include "mir_task.h"
-#include "mir_types.h"
 #include "mir_omp_int.h"
 
 BEGIN_C_DECLS 
