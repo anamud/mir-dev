@@ -356,7 +356,7 @@ void GOMP_parallel_start (void (*fn) (void *), void * data, unsigned num_threads
     // Create thread team.
     mir_create();
 
-#ifdef VALARAUKO_GCC_4_4_7
+#ifdef GCC_PRE_4_9
     MIR_RECORDER_STATE_BEGIN(MIR_STATE_TCREATE);
 
     // Create task
@@ -379,7 +379,7 @@ void GOMP_parallel_end (void)
 {/*{{{*/
     mir_task_wait();
 
-#ifdef VALARAUKO_GCC_4_4_7
+#ifdef GCC_PRE_4_9
     // Stop profiling and book-keeping for parallel task
     struct mir_worker_t* worker = pthread_getspecific (runtime->worker_index);
     MIR_ASSERT(worker->current_task != NULL);

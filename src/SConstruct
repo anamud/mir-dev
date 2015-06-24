@@ -5,6 +5,9 @@
 import os
 import sys
 
+def versiontuple(v):
+    return tuple(map(int, (v.split("."))))
+
 MIR_ROOT = os.environ.get('MIR_ROOT')
 if(MIR_ROOT == None):
     # Use the parent directory of the directory this SConstruct resides in.
@@ -62,13 +65,13 @@ if os.path.isfile('HAVE_PAPI'):
     env['CCFLAGS'] += ['-I' + PAPI_ROOT+'/include']
     env['CCFLAGS'] += ['-DMIR_RECORDER_USE_HW_PERF_COUNTERS']
 
-# Enable specialized support for OpenMP on Valarauko with GCC 4.4.7
+# Enable specialized support for GCC OpenMP Pre-4.9.0.
 import platform, commands
 machine = platform.node()
 compiler_version = commands.getoutput(str(env['CC']).strip('[]') + ' -dumpversion')
-if compiler_version == "4.4.7" and compiler[0] == "/usr/bin/gcc" and machine == "valarauko.sics.se":
-    print('Enabling special support for OpenMP on Valarauko with OpenGCC 4.4.7')
-    env['CCFLAGS'] += ['-DVALARAUKO_GCC_4_4_7']
+if versiontuple(compiler_version) < versiontuple("4.9.0") and compiler[0] == "/usr/bin/gcc":
+    print('Enabling GCC Pre-4.9.0 OpenMP support')
+    env['CCFLAGS'] += ['-DGCC_PRE_4_9']
 
 # Detect topology
 # FIXME: This runs every time rather than only when sources have changed.
