@@ -427,3 +427,16 @@ bool GOMP_single_start (void)
     struct mir_worker_t* worker = mir_worker_get_context();
     return worker->current_task;
 }/*}}}*/
+
+int omp_get_thread_num (void)
+{/*{{{*/
+    if (runtime == NULL)
+        return 0;
+    struct mir_worker_t* worker = mir_worker_get_context();
+    return worker->id;
+}/*}}}*/
+
+int omp_get_num_threads (void)
+{/*{{{*/
+    return runtime ? runtime->num_workers : 1;
+}/*}}}*/
