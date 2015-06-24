@@ -660,12 +660,16 @@ if(!is.na(path_weight) && !parsed$tree)
         # Calc shape
         tgdf <- get.data.frame(tg, what="vertices")
         tgdf <- tgdf[!is.na(as.numeric(tgdf$label)),]
-        tg_shape <- hist(tgdf$rdist, breaks=work/(length(unique(tg_data$cpu_id))*mean(tg_data[,path_weight])), plot=F)
+        #tg_shape_interval_width <- work/(length(unique(tg_data$cpu_id))*mean(tg_data[,path_weight]))
+        tg_shape_interval_width <- median(tg_vertices_df$exec_cycles)
+        stopifnot(tg_shape_interval_width > 0)
+        tg_shape_breaks <- seq(0, max(tgdf$rdist) + 1 + tg_shape_interval_width, by=tg_shape_interval_width)
+        tg_shape <- hist(tgdf$rdist, breaks=tg_shape_breaks, plot=F)
 
         # Write out shape
         tg_out_file <- paste(gsub(". $", "", parsed$out), "-shape.pdf", sep="")
         pdf(tg_out_file)
-        plot(tg_shape, freq=T, xlab=paste("Distance from START in", path_weight), ylab="Tasks", main="Instantaneous task parallelism", col="white")
+        plot(tg_shape, freq=T, xlab=paste("Elapsed ", path_weight), ylab="Tasks", main="Instantaneous task parallelism", col="white")
         abline(h = length(unique(tg_data$cpu_id)), col = "blue", lty=2)
         abline(h = work/lpl , col = "red", lty=1)
         legend("top", legend = c("Number of cores", "Exposed task parallelism"), fill = c("blue", "red"))
