@@ -6,6 +6,7 @@
 #include <stdlib.h>
 
 #include "scheduling/mir_sched_pol.h"
+#include "arch/mir_arch.h"
 #include "mir_omp_int.h"
 
 BEGIN_C_DECLS 
