@@ -422,6 +422,8 @@ void GOMP_taskwait (void)
 
 bool GOMP_single_start (void)
 {/*{{{*/
-    MIR_DEBUG(MIR_DEBUG_STR "Note: GOMP_single_start implementation always returns true.\n");
-    return true;
+    // Return true for all tasks executing outline functions but avoid
+    // returning true for the non-task in the starting thread.
+    struct mir_worker_t* worker = mir_worker_get_context();
+    return worker->current_task;
 }/*}}}*/
