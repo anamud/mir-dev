@@ -342,7 +342,6 @@ void mir_create()
     }
 
     // Create the global runtime
-    MIR_ASSERT(runtime == NULL);
     runtime = mir_malloc_int(sizeof(struct mir_runtime_t));
     if ( NULL == runtime )
         MIR_ABORT(MIR_ERROR_STR "Unable to create the runtime!\n");
