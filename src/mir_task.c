@@ -269,42 +269,22 @@ void mir_loop_task_create(mir_tfunc_t tfunc, void* data, struct mir_loop_des_t* 
     // Create the task
     MIR_RECORDER_STATE_BEGIN(MIR_STATE_TCREATE);
 
-    if(num_loops == 1)
+    // Create task on all workers
+    int num_workers = runtime->num_workers;
+    for(int i=0; i<num_workers; i++)
     {
-        // Create task on all workers
-        int num_workers = runtime->num_workers;
-        for(int i=0; i<num_workers; i++)
-        {
-            // Create task
-            struct mir_task_t* task = mir_task_create_common(tfunc, data, 0, 0, NULL, name);
-            MIR_ASSERT(task != NULL);
+        // Create task
+        struct mir_task_t* task = mir_task_create_common(tfunc, data, 0, 0, NULL, name);
+        MIR_ASSERT(task != NULL);
 
-            // Set loop
-            task->loop = &loops[0];
+        // Set loop
+        task->loop = &loops[num_loops == 1 ? 0 : i];
 
-            // Schedule on worker
-            mir_task_schedule_on_worker(task, i);
-        }
-    }
-    else
-    {
-        // Create task on all workers
-        int num_workers = runtime->num_workers;
-        for(int i=0; i<num_workers; i++)
-        {
-            // Create task
-            struct mir_task_t* task = mir_task_create_common(tfunc, data, 0, 0, NULL, name);
-            MIR_ASSERT(task != NULL);
-
-            // Set loop
-            task->loop = &loops[i];
-
-            // Schedule on worker
-            mir_task_schedule_on_worker(task, i);
-        }
+        // Schedule on worker
+        mir_task_schedule_on_worker(task, i);
     }
 
-        MIR_RECORDER_STATE_END(NULL, 0);
+    MIR_RECORDER_STATE_END(NULL, 0);
 }/*}}}*/
 
 static void mir_task_destroy(struct mir_task_t* task)
