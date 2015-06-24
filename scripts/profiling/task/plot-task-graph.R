@@ -914,6 +914,7 @@ if(parsed$analyze)
             prob_task_index <- match(as.character(prob_task$label), V(prob_tg)$name)
             #prob_task_color <- get.vertex.attribute(prob_tg, name='cpu_id_to_color', index=prob_task_index)
             prob_task_color <- "#FF0000"
+            # TODO: Highlight range.
             prob_tg <- set.vertex.attribute(prob_tg, name='color', index=prob_task_index, value=prob_task_color)
             prob_tg <- set.vertex.attribute(prob_tg, name='problematic', index=prob_task_index, value=1)
         }
