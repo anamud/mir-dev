@@ -418,7 +418,7 @@ void mir_destroy()
         /*{{{*/
         MIR_DEBUG(MIR_DEBUG_STR "Dumping worker stats ...\n");
         // Open stats file
-        FILE* stats_file = NULL;
+        FILE* stats_file;
         stats_file = fopen(MIR_WORKER_STATS_FILE_NAME, "w");
         if (!stats_file)
             MIR_ABORT(MIR_ERROR_STR "Cannot open worker stats file %s for writing!\n", MIR_WORKER_STATS_FILE_NAME);
@@ -444,7 +444,7 @@ void mir_destroy()
         /*{{{*/
         MIR_DEBUG(MIR_DEBUG_STR "Dumping task statistics ...\n");
         // Open stats file
-        FILE* task_statistics_file = NULL;
+        FILE* task_statistics_file;
         task_statistics_file = fopen(MIR_TASK_STATS_FILE_NAME, "w");
         if (!task_statistics_file)
             MIR_ABORT(MIR_ERROR_STR "Cannot open task statistics file %s for writing!\n", MIR_TASK_STATS_FILE_NAME);
@@ -465,7 +465,6 @@ void mir_destroy()
 
     // Kill workers
     MIR_DEBUG(MIR_DEBUG_STR "Killing workers ...\n");
-    //MIR_INFORM(MIR_INFORM_STR "Killing workers ...\n");
     __sync_fetch_and_add(&g_sig_worker_alive, runtime->num_workers - 1);
     for (int i = 0; i < runtime->num_workers; i++)
     {
