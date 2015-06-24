@@ -63,7 +63,7 @@ sink()
 
 # Remove non-sense data
 if(parsed$timing) tic(type="elapsed")
-# Remove background task 
+# Remove background task
 tg.data <- tg.data[!is.na(tg.data$parent),]
 if(parsed$timing) toc("Removing non-sense data")
 
@@ -130,15 +130,15 @@ if(parsed$timing) toc("Node list creation")
 if(parsed$timing) tic(type="elapsed")
 if(!parsed$tree)
 {
-tg <- graph.empty(directed=TRUE) + vertices('E', 
-                                            unique(c(join_nodes_unique, 
-                                                     fork_nodes_unique, 
-                                                     parent_nodes_unique, 
+tg <- graph.empty(directed=TRUE) + vertices('E',
+                                            unique(c(join_nodes_unique,
+                                                     fork_nodes_unique,
+                                                     parent_nodes_unique,
                                                      tg.data$task)))
 } else {
-tg <- graph.empty(directed=TRUE) + vertices('E', 
-                                            unique(c(fork_nodes_unique, 
-                                                     parent_nodes_unique, 
+tg <- graph.empty(directed=TRUE) + vertices('E',
+                                            unique(c(fork_nodes_unique,
+                                                     parent_nodes_unique,
                                                      tg.data$task)))
 }
 if(parsed$timing) toc("Graph creation")
@@ -156,7 +156,7 @@ first_forks_index <- which(grepl("f.[0-9]+.0$", fork_nodes_unique))
 parent_first_forks <- as.vector(sapply(fork_nodes_unique[first_forks_index], function(x) {gsub('f.(.*)\\.+.*','\\1', x)}))
 first_forks <- fork_nodes_unique[first_forks_index]
 tg[to=first_forks, from=parent_first_forks, attr='kind'] <- 'scope'
-tg[to=first_forks, from=parent_first_forks, attr='color'] <- scope_edge_color   
+tg[to=first_forks, from=parent_first_forks, attr='color'] <- scope_edge_color
 if("ins_count" %in% colnames(tg.data))
 {
     tg[to=first_forks, from=parent_first_forks, attr='ins_count'] <- as.numeric(tg.data[match(parent_first_forks, tg.data$task),]$ins_count)
@@ -172,7 +172,7 @@ if(parsed$timing) toc("Connect parent to first fork")
 
 if(!parsed$tree)
 {
-    # Connect leaf task to join 
+    # Connect leaf task to join
     if(parsed$timing) tic(type="elapsed")
     leaf_tasks <- tg.data$task[tg.data$leaf == T]
     leaf_join_nodes <- join_nodes[match(leaf_tasks, tg.data$task)]
@@ -197,12 +197,12 @@ if(!parsed$tree)
     find_next_fork <- function(node)
     {
       #print(paste('Processing node',node, sep=" "))
-      
+
       # Get node info
       node_split <- unlist(strsplit(node, "\\."))
       parent <- as.numeric(node_split[2])
       join_count <- as.numeric(node_split[3])
-      
+
       # Find next fork
       next_fork <- paste('f', as.character(parent), as.character(join_count+1), sep=".")
       if(is.na(match(next_fork, fork_nodes_unique)) == F)
@@ -217,9 +217,9 @@ if(!parsed$tree)
 
         if(is.na(match(gfather_join, join_nodes_unique)) == F)
         {
-          # Connect to grandfather's join     
+          # Connect to grandfather's join
           next_fork <- gfather_join
-        } else { 
+        } else {
           # Connect to end node
           next_fork <- 'E'
         }
@@ -238,12 +238,12 @@ if(!parsed$tree)
     find_next_fork <- function(node)
     {
       #print(paste('Processing node',node, sep=" "))
-      
+
       # Get node info
       node_split <- unlist(strsplit(node, "\\."))
       parent <- as.numeric(node_split[2])
       join_count <- as.numeric(node_split[3])
-      
+
       # Find next fork
       next_fork <- paste('f', as.character(parent), as.character(join_count+1), sep=".")
       if(is.na(match(next_fork, fork_nodes_unique)) == F)
@@ -294,7 +294,7 @@ for (annot in colnames(tg.data))
 }
 if(parsed$timing) toc("Task attribute setting")
 
-# Set size 
+# Set size
 if(parsed$timing) tic(type="elapsed")
 # Constants
 tg <- set.vertex.attribute(tg, name='size', index=task_index, value=task_size)
@@ -322,7 +322,7 @@ for(attrib in size_scaled)
 }
 if(parsed$timing) toc("Task size calculation")
 
-# Set color   
+# Set color
 if(parsed$timing) tic(type="elapsed")
 # Constants
 tg <- set.vertex.attribute(tg, name='color', index=task_index, value=task_color)
@@ -340,7 +340,7 @@ for(attrib in attrib_color_scaled)
         tg <- set.vertex.attribute(tg, name=annot_name, index=task_index, value=p_task_color)
         # Write colors for reference
         tg.file.out <- paste(gsub(". $", "", parsed$out), annot_name, sep=".")
-        if(length(attrib_unique) == 1) 
+        if(length(attrib_unique) == 1)
         {
             write.csv(data.frame(value=attrib_unique, color=p_task_color), tg.file.out, row.names=F)
         } else {
@@ -385,7 +385,7 @@ tg <- set.vertex.attribute(tg, name='label', index=end_index, value='E')
 tg <- set.vertex.attribute(tg, name='size', index=end_index, value=end_size)
 tg <- set.vertex.attribute(tg, name='shape', index=end_index, value=end_shape)
 
-# Set fork vertex attributes 
+# Set fork vertex attributes
 fork_nodes_index <- startsWith(V(tg)$name, 'f')
 tg <- set.vertex.attribute(tg, name='size', index=fork_nodes_index, value=fork_size)
 tg <- set.vertex.attribute(tg, name='color', index=fork_nodes_index, value=fork_color)
@@ -404,14 +404,14 @@ if("exec_cycles" %in% colnames(tg.data))
       fork_split <- unlist(strsplit(fork, "\\."))
       parent <- as.numeric(fork_split[2])
       join_count <- as.numeric(fork_split[3])
-      
+
       # Get exec_cycles
       exec_cycles <- tg.data[tg.data$parent == parent & tg.data$joins_at == join_count, ]$exec_cycles
       exec_cycles <- exec_cycles[!is.na(exec_cycles)]
-      
+
       # Compute balance
       bal <- max(exec_cycles)/mean(exec_cycles)
-      
+
       bal
     }
     fork_bal_ec <- as.vector(sapply(V(tg)$name[fork_nodes_index], get_fork_bal))
@@ -431,7 +431,7 @@ if("exec_cycles" %in% colnames(tg.data))
     pdf(tg.info.plot.out)
     box_plotter(fork_bal_ec, xt="", yt="Sibling load balance = max(exec_cycles)/mean(exec_cycles)")
     junk <- dev.off()
-    if(parsed$verbose) print(paste("Wrote file:", tg.info.plot.out)) 
+    if(parsed$verbose) print(paste("Wrote file:", tg.info.plot.out))
     if(parsed$timing) toc("Sibling load balance calculation (execution cycles)")
 }
 
@@ -446,14 +446,14 @@ if("work_cycles" %in% colnames(tg.data))
       fork_split <- unlist(strsplit(fork, "\\."))
       parent <- as.numeric(fork_split[2])
       join_count <- as.numeric(fork_split[3])
-      
+
       # Get work_cycles
       work_cycles <- tg.data[tg.data$parent == parent & tg.data$joins_at == join_count, ]$work_cycles
       work_cycles <- work_cycles[!is.na(work_cycles)]
-      
+
       # Compute balance
       bal <- max(work_cycles)/mean(work_cycles)
-      
+
       bal
     }
     fork_bal_wc <- as.vector(sapply(V(tg)[fork_nodes_index]$name, get_fork_bal))
@@ -472,7 +472,7 @@ if("work_cycles" %in% colnames(tg.data))
     pdf(tg.info.plot.out)
     box_plotter(fork_bal_wc, xt="", yt="Sibling load balance = max(work_cycles)/mean(work_cycles)")
     junk <- dev.off()
-    if(parsed$verbose) print(paste("Wrote file:", tg.info.plot.out)) 
+    if(parsed$verbose) print(paste("Wrote file:", tg.info.plot.out))
     if(parsed$timing) toc("Sibling load balance calculation (work cycles)")
 }
 
@@ -487,17 +487,17 @@ if("cpu_id" %in% colnames(tg.data))
       fork_split <- unlist(strsplit(fork, "\\."))
       parent <- as.numeric(fork_split[2])
       join_count <- as.numeric(fork_split[3])
-      
+
       # Get cpu_id
       cpu_id <- tg.data[tg.data$parent == parent & tg.data$joins_at == join_count, ]$cpu_id
       cpu_id <- cpu_id[!is.na(cpu_id)]
-      
+
       # Compute scatter
       if(length(cpu_id) > 1)
           scatter <- c(dist(cpu_id))
-      else 
+      else
           scatter <- 0
-      
+
       median(scatter)
     }
     fork_scatter <- as.vector(sapply(V(tg)[fork_nodes_index]$name, get_fork_scatter))
@@ -520,11 +520,11 @@ if("cpu_id" %in% colnames(tg.data))
     pdf(tg.info.plot.out)
     box_plotter(fork_scatter, xt="", yt="Sibling scatter = median(scatter)")
     junk <- dev.off()
-    if(parsed$verbose) print(paste("Wrote file:", tg.info.plot.out)) 
+    if(parsed$verbose) print(paste("Wrote file:", tg.info.plot.out))
     if(parsed$timing) toc("Fork scatter calculation")
 }
 
-# Set join vertex attributes 
+# Set join vertex attributes
 if(!parsed$tree)
 {
     if(parsed$timing) tic(type="elapsed")
@@ -592,12 +592,12 @@ if("ins_count" %in% colnames(tg.data) && !parsed$tree)
 
     # Get critical path
     #Rprof("profile-critpathcalc.out")
-    if(parsed$cplengthonly) 
+    if(parsed$cplengthonly)
     {
       # Get critical path length
       sp <- shortest.paths(tg, v=start_index, to=end_index, mode="out")
       lpl <- -as.numeric(sp)
-    } else {    
+    } else {
       lntg <- length(V(tg))
       pb <- txtProgressBar(min = 0, max = lntg, style = 3)
       ctr <- 0
@@ -616,11 +616,11 @@ if("ins_count" %in% colnames(tg.data) && !parsed$tree)
         ni <- incident(tg, node, mode="in")
         w <- E(tg)$ins_count[ni]
         # Get distance from root to node's predecessors
-        nn <- neighbors(tg, node, mode="in") 
+        nn <- neighbors(tg, node, mode="in")
         d <- vgdf$rdist[nn]
         # Add distances (assuming one-one corr.)
         wd <- w+d
-        # Set node's distance from root to max of added distances 
+        # Set node's distance from root to max of added distances
         mwd <- max(wd)
         vgdf$rdist[node] <- mwd
         # Set node's path from root to path of max of added distances
@@ -634,20 +634,20 @@ if("ins_count" %in% colnames(tg.data) && !parsed$tree)
       ## Longest path is the largest root distance
       lpl <- max(vgdf$rdist)
       # Enumerate longest path
-      lpm <- unlist(vgdf$rpath[match(lpl,vgdf$rdist)])    
+      lpm <- unlist(vgdf$rpath[match(lpl,vgdf$rdist)])
       vgdf$on_crit_path <- 0
       vgdf$on_crit_path[lpm] <- 1
       # Set back on graph
-      tg <- set.vertex.attribute(tg, name="on_crit_path", index=V(tg), value=vgdf$on_crit_path) 
+      tg <- set.vertex.attribute(tg, name="on_crit_path", index=V(tg), value=vgdf$on_crit_path)
       tg <- set.vertex.attribute(tg, name="rdist", index=V(tg), value=vgdf$rdist)
       tg <- set.vertex.attribute(tg, name="depth", index=V(tg), value=vgdf$depth)
-      critical_edges <- E(tg)[V(tg)[on_crit_path==1] %--% V(tg)[on_crit_path==1]] 
+      critical_edges <- E(tg)[V(tg)[on_crit_path==1] %--% V(tg)[on_crit_path==1]]
       tg <- set.edge.attribute(tg, name="on_crit_path", index=critical_edges, value=1)
       if(parsed$verbose) {ctr <- ctr + 1; setTxtProgressBar(pb, ctr);}
       close(pb)
     }
     #Rprof(NULL)
-    
+
     # Calculate and write info
     sink(tg.info.out, append=T)
     print("Unit = Instructions")
@@ -660,9 +660,9 @@ if("ins_count" %in% colnames(tg.data) && !parsed$tree)
     print(work/lpl)
     sink()
 
-    if(!parsed$cplengthonly) 
+    if(!parsed$cplengthonly)
     {
-        # Clear rpath since dot/table writing complains 
+        # Clear rpath since dot/table writing complains
         tg <- remove.vertex.attribute(tg,"rpath")
 
         # Calc shape
@@ -681,7 +681,7 @@ if("ins_count" %in% colnames(tg.data) && !parsed$tree)
         if(parsed$verbose) print(paste("Wrote file:", tg.file.out))
 
         # Calc shape based on depth
-        tg_shape_depth <- tgdf %>% group_by(depth) %>% summarise(count = n()) 
+        tg_shape_depth <- tgdf %>% group_by(depth) %>% summarise(count = n())
 
         # Write out shape based on depth
         tg.file.out <- paste(gsub(". $", "", parsed$out), "-shape-depth.pdf", sep="")
@@ -705,12 +705,12 @@ if("ins_count" %in% colnames(tg.data) && !parsed$tree)
 
     # Get critical path
     #Rprof("profile-critpathcalc.out")
-    if(parsed$cplengthonly) 
+    if(parsed$cplengthonly)
     {
       # Get critical path length
       sp <- shortest.paths(tg, v=start_index, to=end_index, mode="out")
       lpl <- -as.numeric(sp)
-    } else {    
+    } else {
       lntg <- length(V(tg))
       pb <- txtProgressBar(min = 0, max = lntg, style = 3)
       ctr <- 0
@@ -729,11 +729,11 @@ if("ins_count" %in% colnames(tg.data) && !parsed$tree)
         ni <- incident(tg, node, mode="in")
         w <- E(tg)$work_cycles[ni]
         # Get distance from root to node's predecessors
-        nn <- neighbors(tg, node, mode="in") 
+        nn <- neighbors(tg, node, mode="in")
         d <- vgdf$rdist[nn]
         # Add distances (assuming one-one corr.)
         wd <- w+d
-        # Set node's distance from root to max of added distances 
+        # Set node's distance from root to max of added distances
         mwd <- max(wd)
         vgdf$rdist[node] <- mwd
         # Set node's path from root to path of max of added distances
@@ -747,20 +747,20 @@ if("ins_count" %in% colnames(tg.data) && !parsed$tree)
       ## Longest path is the largest root distance
       lpl <- max(vgdf$rdist)
       # Enumerate longest path
-      lpm <- unlist(vgdf$rpath[match(lpl,vgdf$rdist)])    
+      lpm <- unlist(vgdf$rpath[match(lpl,vgdf$rdist)])
       vgdf$on_crit_path <- 0
       vgdf$on_crit_path[lpm] <- 1
       # Set back on graph
-      tg <- set.vertex.attribute(tg, name="on_crit_path", index=V(tg), value=vgdf$on_crit_path) 
+      tg <- set.vertex.attribute(tg, name="on_crit_path", index=V(tg), value=vgdf$on_crit_path)
       tg <- set.vertex.attribute(tg, name="rdist", index=V(tg), value=vgdf$rdist)
       tg <- set.vertex.attribute(tg, name="depth", index=V(tg), value=vgdf$depth)
-      critical_edges <- E(tg)[V(tg)[on_crit_path==1] %--% V(tg)[on_crit_path==1]] 
+      critical_edges <- E(tg)[V(tg)[on_crit_path==1] %--% V(tg)[on_crit_path==1]]
       tg <- set.edge.attribute(tg, name="on_crit_path", index=critical_edges, value=1)
       if(parsed$verbose) {ctr <- ctr + 1; setTxtProgressBar(pb, ctr);}
       close(pb)
     }
     #Rprof(NULL)
-    
+
     # Calculate and write info
     sink(tg.info.out, append=T)
     print("Unit = Cycles")
@@ -773,9 +773,9 @@ if("ins_count" %in% colnames(tg.data) && !parsed$tree)
     print(work/lpl)
     sink()
 
-    if(!parsed$cplengthonly) 
+    if(!parsed$cplengthonly)
     {
-        # Clear rpath since dot/table writing complains 
+        # Clear rpath since dot/table writing complains
         tg <- remove.vertex.attribute(tg,"rpath")
 
         # Calc shape
@@ -793,7 +793,7 @@ if("ins_count" %in% colnames(tg.data) && !parsed$tree)
         if(parsed$verbose) print(paste("Wrote file:", tg.file.out))
 
         # Calc shape based on depth
-        tg_shape_depth <- tgdf %>% group_by(depth) %>% summarise(count = n()) 
+        tg_shape_depth <- tgdf %>% group_by(depth) %>% summarise(count = n())
 
         # Write out shape based on depth
         tg.file.out <- paste(gsub(". $", "", parsed$out), "-shape-depth.pdf", sep="")
@@ -857,7 +857,7 @@ sink()
 if(parsed$verbose) print(paste("Wrote file:", tg.file.out))
 if(parsed$timing) toc("Write edgelist")
 
-# Write node attributes 
+# Write node attributes
 if(parsed$timing) tic(type="elapsed")
 tg.file.out <- paste(gsub(". $", "", parsed$out), ".nodeattr", sep="")
 write.table(get.data.frame(tg, what="vertices"), sep=",", file=tg.file.out)
@@ -871,7 +871,7 @@ if(parsed$analyze)
     if(parsed$timing) tic(type="elapsed")
     # add.alpha function from http://www.magesblog.com/2013/04/how-to-change-alpha-value-of-colours-in.html
     add.alpha <- function(col, alpha=1){
-      apply(sapply(col, col2rgb)/255, 2, function(x) rgb(x[1], x[2], x[3], alpha=alpha))  
+      apply(sapply(col, col2rgb)/255, 2, function(x) rgb(x[1], x[2], x[3], alpha=alpha))
     }
 
     # Base task graph with transparent elements
@@ -1024,7 +1024,7 @@ if(parsed$analyze)
     }
 
     # Parallelism problem
-    if(!parsed$cplengthonly && !parsed$tree) 
+    if(!parsed$cplengthonly && !parsed$tree)
     {
         prob_tg <- base_tg
         parallelism.thresh <- length(unique(tg.data$cpu_id))
@@ -1047,7 +1047,7 @@ if(parsed$analyze)
     }
 
     # Parallelism problem (based on depth)
-    if(!parsed$cplengthonly && !parsed$tree) 
+    if(!parsed$cplengthonly && !parsed$tree)
     {
         prob_tg <- base_tg
         parallelism.thresh <- length(unique(tg.data$cpu_id))
@@ -1089,7 +1089,7 @@ if(parsed$analyze)
         for(f in prob_fork)
         {
             f_i <- match(as.character(f), V(prob_tg)$name)
-            prob_task_index <- neighbors(prob_tg, f_i, mode="out") 
+            prob_task_index <- neighbors(prob_tg, f_i, mode="out")
             if(!parsed$cplengthonly)
             {
                 if(any(get.vertex.attribute(prob_tg, name='on_crit_path', index=prob_task_index) == 1))
@@ -1129,7 +1129,7 @@ if(parsed$analyze)
         for(f in prob_fork)
         {
             f_i <- match(as.character(f), V(prob_tg)$name)
-            prob_task_index <- neighbors(prob_tg, f_i, mode="out") 
+            prob_task_index <- neighbors(prob_tg, f_i, mode="out")
             if(!parsed$cplengthonly)
             {
                 if(any(get.vertex.attribute(prob_tg, name='on_crit_path', index=prob_task_index) == 1))
@@ -1164,7 +1164,7 @@ if(parsed$analyze)
         for(f in prob_fork)
         {
             f_i <- match(as.character(f), V(prob_tg)$name)
-            prob_task_index <- neighbors(prob_tg, f_i, mode="out") 
+            prob_task_index <- neighbors(prob_tg, f_i, mode="out")
             if(!parsed$cplengthonly)
             {
                 if(any(get.vertex.attribute(prob_tg, name='on_crit_path', index=prob_task_index) == 1))
