@@ -301,15 +301,14 @@ query <- data.table(start = shape_bins_lower,
 setkey(subject, start, end)
 overlaps <- foverlaps(query, subject, type="any")
 overlaps <- overlaps[, .(count = sum(!is.na(start)),
-                         which = paste(interval, collapse=", ")),
-by = .(i.start, i.end)]
-#print(overlaps)
+                        fragment = paste(interval, collapse=";")),
+                        by = .(i.start, i.end)]
 if(arg_timing) toc("Shape calculation [Step 3]")
 if(arg_timing) tic(type="elapsed")
 #tg_shape <- data.frame(low=shape_bins_lower, count=countOverlaps(query, subject))
 tg_shape <- data.frame(low=shape_bins_lower, count=overlaps$count)
 if(arg_timing) toc("Shape calculation [Step 4]")
-# Write shape
+# Write shape to file
 tg_file_out <- paste(gsub(". $", "", arg_outfileprefix), "-shape.pdf", sep="")
 pdf(tg_file_out)
 plot(tg_shape, xlab="Distance from START in execution cycles", ylab="Fragments", main="Instantaneous task parallelism", col="black", type='h', yaxs='i')
@@ -317,8 +316,28 @@ abline(h = length(unique(tg_data$cpu_id)), col = "blue", lty=2)
 abline(h = parallelism , col = "red", lty=1)
 write_res <- dev.off()
 if(arg_verbose) print(paste("Wrote file:", tg_file_out))
+# Write shape raw data to file
+tg_file_out <- paste(gsub(". $", "", arg_outfileprefix), "-shape.csv", sep="")
+write_res <- write.csv(overlaps, file=tg_file_out, row.names=F)
+if(arg_verbose) print(paste("Wrote file:", tg_file_out))
 
-# Write graph as gml file
+# Task shape contribution
+if(arg_timing) tic(type="elapsed")
+# Remove intervals where count is NA
+overlaps[fragment == "NA"] <- NA
+overlaps <- overlaps[complete.cases(overlaps),]
+# Melt csv fragment list into rows
+overlaps <- overlaps[, list(count, fragment = as.numeric(unlist(strsplit(as.character(fragment), ';' )))), by = .(i.start, i.end)]
+# Get task of fragment
+overlaps$task <- as.integer(overlaps$fragment)
+overlaps_agg <- overlaps[, j=list(median_shape_contrib = as.numeric(median(count, na.rm = TRUE)), min_shape_contrib = as.numeric(min(count, na.rm = TRUE)), max_shape_contrib = as.numeric(max(count, na.rm = TRUE))), by=list(task)]
+if(arg_timing) toc("Shape calculation [Step 5]")
+# Write shape contribution to file
+tg_file_out <- paste(gsub(". $", "", arg_outfileprefix), "-shape-contrib.csv", sep="")
+write_res <- write.csv(overlaps_agg, file=tg_file_out, row.names=F)
+if(arg_verbose) print(paste("Wrote file:", tg_file_out))
+
+# Write task graph to file
 tg_file_out <- paste(gsub(". $", "", arg_outfileprefix), ".graphml", sep="")
 write_res <- write.graph(tg, file=tg_file_out, format="graphml")
-if(arg_verbose) print(paste("Wrote file:", tg_file_out, sep=" "))
+if(arg_verbose) print(paste("Wrote file:", tg_file_out))
