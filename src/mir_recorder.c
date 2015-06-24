@@ -79,7 +79,7 @@ struct _perf_ctr_map perf_ctr_map[MIR_RECORDER_NUM_PAPI_HWPC] = {
 
 struct mir_recorder_t* mir_recorder_create(uint16_t id)
 {/*{{{*/
-    struct mir_recorder_t* recorder = (struct mir_recorder_t*) mir_malloc_int (sizeof(struct mir_recorder_t));
+    struct mir_recorder_t* recorder = mir_malloc_int (sizeof(struct mir_recorder_t));
     MIR_ASSERT(recorder != NULL);
 
     // Open buffer file

@@ -145,14 +145,14 @@ void mir_worker_local_init(struct mir_worker_t* worker)
     CPU_ZERO(&cpu_set);
     int sys_cpu = runtime->arch->sys_cpu_of(worker->cpu_id);
     CPU_SET(sys_cpu, &cpu_set);
-    sched_setaffinity((pid_t)0, sizeof(cpu_set), &cpu_set);
+    sched_setaffinity(0, sizeof(cpu_set), &cpu_set);
 #endif
 
     // Create and reset worker statistics counters
     worker->statistics = NULL;
     if(runtime->enable_worker_stats == 1)
     {
-        worker->statistics = (struct mir_worker_statistics_t*) mir_malloc_int (sizeof(struct mir_worker_statistics_t));
+        worker->statistics = mir_malloc_int (sizeof(struct mir_worker_statistics_t));
         MIR_ASSERT(worker->statistics != NULL);
         mir_worker_statistics_init(worker->statistics);
     }

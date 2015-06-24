@@ -8,7 +8,7 @@ struct mir_queue_t* mir_queue_create(uint32_t capacity)
 {/*{{{*/
     MIR_ASSERT(capacity > 0);
 
-    struct mir_queue_t* queue = (struct mir_queue_t*)mir_cmalloc_int(sizeof(struct mir_queue_t));
+    struct mir_queue_t* queue = mir_cmalloc_int(sizeof(struct mir_queue_t));
     MIR_ASSERT(queue != NULL);
 
     queue->buffer = NULL;

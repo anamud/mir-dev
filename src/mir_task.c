@@ -69,9 +69,9 @@ struct mir_task_t* mir_task_create_common(mir_tfunc_t tfunc, void* data, size_t 
 
     struct mir_task_t* task = NULL;
 #ifdef MIR_TASK_ALLOCATE_ON_STACK
-    task = (struct mir_task_t*) alloca (sizeof(struct mir_task_t));
+    task = alloca (sizeof(struct mir_task_t));
 #else
-    task = (struct mir_task_t*) mir_malloc_int (sizeof(struct mir_task_t));
+    task = mir_malloc_int (sizeof(struct mir_task_t));
 #endif
     MIR_ASSERT(task != NULL);
 
@@ -119,9 +119,9 @@ struct mir_task_t* mir_task_create_common(mir_tfunc_t tfunc, void* data, size_t 
     {/*{{{*/
         // FIXME: Dynamic allocation increases task creation time
 #ifdef MIR_TASK_ALLOCATE_ON_STACK
-        task->data_footprints = ( struct mir_data_footprint_t* ) alloca ( num_data_footprints * sizeof( struct mir_data_footprint_t ) );
+        task->data_footprints = alloca ( num_data_footprints * sizeof( struct mir_data_footprint_t ) );
 #else
-        task->data_footprints = ( struct mir_data_footprint_t* ) mir_malloc_int ( num_data_footprints * sizeof( struct mir_data_footprint_t ) );
+        task->data_footprints = mir_malloc_int ( num_data_footprints * sizeof( struct mir_data_footprint_t ) );
 #endif
         MIR_ASSERT(task->data_footprints != NULL);
 
@@ -481,7 +481,7 @@ struct mir_mem_node_dist_t* mir_task_get_mem_node_dist(struct mir_task_t* task, 
 
 struct mir_twc_t* mir_twc_create() 
 {/*{{{*/
-    struct mir_twc_t* twc = (struct mir_twc_t*) mir_malloc_int (sizeof(struct mir_twc_t));
+    struct mir_twc_t* twc = mir_malloc_int (sizeof(struct mir_twc_t));
     MIR_ASSERT(twc != NULL);
 
     // Book-keeping
@@ -502,7 +502,7 @@ void mir_task_wait()
 {/*{{{*/
     MIR_RECORDER_STATE_BEGIN(MIR_STATE_TSYNC);
 
-    struct mir_worker_t* worker = (struct mir_worker_t*) pthread_getspecific (runtime->worker_index);
+    struct mir_worker_t* worker = pthread_getspecific (runtime->worker_index);
     struct mir_twc_t* twc = NULL;
     if(worker->current_task)
         twc = worker->current_task->ctwc;
