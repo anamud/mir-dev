@@ -6,11 +6,6 @@
 #include <stdint.h>
 #include <string.h>
 
-#ifdef __tile__
-#include <tmc/alloc.h>
-#include <tmc/mem.h>
-#endif
-
 uint64_t g_total_allocated_memory = 0;
 
 // From bit-twiddling-hacks: http://graphics.stanford.edu/~seander/bithacks.html

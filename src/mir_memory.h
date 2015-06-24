@@ -1,6 +1,11 @@
 #ifndef  MIR_MEMORY_H
 #define  MIR_MEMORY_H 1
 
+#ifdef __tile__
+#include <tmc/alloc.h>
+#include <tmc/mem.h>
+#endif
+
 #include <stdint.h>
 #include "mir_types.h"
 
@@ -15,8 +20,6 @@ void mir_free_int(void *p, size_t bytes);
 uint64_t mir_get_allocated_memory();
 
 #ifdef __tile__
-#include <tmc/alloc.h>
-#include <tmc/mem.h>
 static inline void page_attr_set(tmc_alloc_t* alloc)
 {/*{{{*/
 #if defined (MIR_PAGE_NO_LOCAL_CACHING)
