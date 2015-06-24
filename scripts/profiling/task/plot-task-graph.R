@@ -757,8 +757,8 @@ if(parsed$analyze)
     }
 
     # Analysis text output
-    tg.ana.out <- paste(gsub(". $", "", parsed$out), "-analysis.info", sep="")
-    sink(tg.ana.out)
+    tg_analysis_out_file <- paste(gsub(". $", "", parsed$out), "-analysis.info", sep="")
+    sink(tg_analysis_out_file)
     print("Task graph structure:")
     print(paste("Number of nodes =", length(V(base_tg))))
     print(paste("Number of edges =", length(E(base_tg))))
@@ -773,16 +773,16 @@ if(parsed$analyze)
     if("mem_hier_util" %in% colnames(tg_data))
     {
         prob_tg <- base_tg
-        mem_hier_util.thresh <- 0.5
-        prob_task <- subset(tg_data, mem_hier_util > mem_hier_util.thresh, select=task)
-        sink(tg.ana.out, append=T)
-        print(paste(length(prob_task$task), "tasks have mem_hier_util >", mem_hier_util.thresh))
+        mem_hier_util_thresh <- 0.5
+        prob_task <- subset(tg_data, mem_hier_util > mem_hier_util_thresh, select=task)
+        sink(tg_analysis_out_file, append=T)
+        print(paste(length(prob_task$task), "tasks have mem_hier_util >", mem_hier_util_thresh))
         sink()
         if(!parsed$cplengthonly)
         {
-            prob_task_critical <- subset(tgdf, mem_hier_util > mem_hier_util.thresh & on_crit_path == 1, select=task)
-            sink(tg.ana.out, append=T)
-            print(paste(length(prob_task_critical$task), "critical tasks have mem_hier_util >", mem_hier_util.thresh))
+            prob_task_critical <- subset(tgdf, mem_hier_util > mem_hier_util_thresh & on_crit_path == 1, select=task)
+            sink(tg_analysis_out_file, append=T)
+            print(paste(length(prob_task_critical$task), "critical tasks have mem_hier_util >", mem_hier_util_thresh))
             sink()
         }
         prob_task_index <- match(as.character(prob_task$task), V(prob_tg)$name)
@@ -798,16 +798,16 @@ if(parsed$analyze)
     if("mem_fp" %in% colnames(tg_data))
     {
         prob_tg <- base_tg
-        mem_fp.thresh <- 512000
-        prob_task <- subset(tg_data, mem_fp > mem_fp.thresh, select=task)
-        sink(tg.ana.out, append=T)
-        print(paste(length(prob_task$task), "tasks have mem_fp >", mem_fp.thresh))
+        mem_fp_thresh <- 512000
+        prob_task <- subset(tg_data, mem_fp > mem_fp_thresh, select=task)
+        sink(tg_analysis_out_file, append=T)
+        print(paste(length(prob_task$task), "tasks have mem_fp >", mem_fp_thresh))
         sink()
         if(!parsed$cplengthonly)
         {
-            prob_task_critical <- subset(tgdf, mem_fp > mem_fp.thresh & on_crit_path == 1, select=task)
-            sink(tg.ana.out, append=T)
-            print(paste(length(prob_task_critical$task), "critical tasks have mem_fp >", mem_fp.thresh))
+            prob_task_critical <- subset(tgdf, mem_fp > mem_fp_thresh & on_crit_path == 1, select=task)
+            sink(tg_analysis_out_file, append=T)
+            print(paste(length(prob_task_critical$task), "critical tasks have mem_fp >", mem_fp_thresh))
             sink()
         }
         prob_task_index <- match(as.character(prob_task$task), V(prob_tg)$name)
@@ -823,16 +823,16 @@ if(parsed$analyze)
     if("compute_int" %in% colnames(tg_data))
     {
         prob_tg <- base_tg
-        compute_int.thresh <- 2
-        prob_task <- subset(tg_data, compute_int < compute_int.thresh, select=task)
-        sink(tg.ana.out, append=T)
-        print(paste(length(prob_task$task), "tasks have compute_int <", compute_int.thresh))
+        compute_int_thresh <- 2
+        prob_task <- subset(tg_data, compute_int < compute_int_thresh, select=task)
+        sink(tg_analysis_out_file, append=T)
+        print(paste(length(prob_task$task), "tasks have compute_int <", compute_int_thresh))
         sink()
         if(!parsed$cplengthonly)
         {
-            prob_task_critical <- subset(tgdf, compute_int < compute_int.thresh & on_crit_path == 1, select=task)
-            sink(tg.ana.out, append=T)
-            print(paste(length(prob_task_critical$task), "critical tasks have compute_int <", compute_int.thresh))
+            prob_task_critical <- subset(tgdf, compute_int < compute_int_thresh & on_crit_path == 1, select=task)
+            sink(tg_analysis_out_file, append=T)
+            print(paste(length(prob_task_critical$task), "critical tasks have compute_int <", compute_int_thresh))
             sink()
         }
         prob_task_index <- match(as.character(prob_task$task), V(prob_tg)$name)
@@ -848,16 +848,16 @@ if(parsed$analyze)
     if("work_deviation" %in% colnames(tg_data))
     {
         prob_tg <- base_tg
-        work_deviation.thresh <- 2
-        prob_task <- subset(tg_data, work_deviation > work_deviation.thresh, select=task)
-        sink(tg.ana.out, append=T)
-        print(paste(length(prob_task$task), "tasks have work_deviation >", work_deviation.thresh))
+        work_deviation_thresh <- 2
+        prob_task <- subset(tg_data, work_deviation > work_deviation_thresh, select=task)
+        sink(tg_analysis_out_file, append=T)
+        print(paste(length(prob_task$task), "tasks have work_deviation >", work_deviation_thresh))
         sink()
         if(!parsed$cplengthonly)
         {
-            prob_task_critical <- subset(tgdf, work_deviation > work_deviation.thresh & on_crit_path == 1, select=task)
-            sink(tg.ana.out, append=T)
-            print(paste(length(prob_task_critical$task), "critical tasks have work_deviation >", work_deviation.thresh))
+            prob_task_critical <- subset(tgdf, work_deviation > work_deviation_thresh & on_crit_path == 1, select=task)
+            sink(tg_analysis_out_file, append=T)
+            print(paste(length(prob_task_critical$task), "critical tasks have work_deviation >", work_deviation_thresh))
             sink()
         }
         prob_task_index <- match(as.character(prob_task$task), V(prob_tg)$name)
@@ -873,16 +873,16 @@ if(parsed$analyze)
     if("parallel_benefit" %in% colnames(tg_data))
     {
         prob_tg <- base_tg
-        parallel_benefit.thresh <- 1
-        prob_task <- subset(tg_data, parallel_benefit < parallel_benefit.thresh, select=task)
-        sink(tg.ana.out, append=T)
-        print(paste(length(prob_task$task), "tasks have parallel_benefit <", parallel_benefit.thresh))
+        parallel_benefit_thresh <- 1
+        prob_task <- subset(tg_data, parallel_benefit < parallel_benefit_thresh, select=task)
+        sink(tg_analysis_out_file, append=T)
+        print(paste(length(prob_task$task), "tasks have parallel_benefit <", parallel_benefit_thresh))
         sink()
         if(!parsed$cplengthonly)
         {
-            prob_task_critical <- subset(tgdf, parallel_benefit < parallel_benefit.thresh & on_crit_path == 1, select=task)
-            sink(tg.ana.out, append=T)
-            print(paste(length(prob_task_critical$task), "critical tasks have parallel_benefit <", parallel_benefit.thresh))
+            prob_task_critical <- subset(tgdf, parallel_benefit < parallel_benefit_thresh & on_crit_path == 1, select=task)
+            sink(tg_analysis_out_file, append=T)
+            print(paste(length(prob_task_critical$task), "critical tasks have parallel_benefit <", parallel_benefit_thresh))
             sink()
         }
         prob_task_index <- match(as.character(prob_task$task), V(prob_tg)$name)
@@ -898,10 +898,10 @@ if(parsed$analyze)
     if(!parsed$cplengthonly && !parsed$tree)
     {
         prob_tg <- base_tg
-        parallelism.thresh <- length(unique(tg_data$cpu_id))
-        ranges <- which(tg_shape$counts < parallelism.thresh)
-        sink(tg.ana.out, append=T)
-        print(paste(length(ranges), "shape bins out of", length(tg_shape$counts), "have parallelism <", parallelism.thresh))
+        parallelism_thresh <- length(unique(tg_data$cpu_id))
+        ranges <- which(tg_shape$counts < parallelism_thresh)
+        sink(tg_analysis_out_file, append=T)
+        print(paste(length(ranges), "shape bins out of", length(tg_shape$counts), "have parallelism <", parallelism_thresh))
         sink()
         for (r in ranges)
         {
@@ -921,12 +921,12 @@ if(parsed$analyze)
     if(!parsed$cplengthonly && !parsed$tree)
     {
         prob_tg <- base_tg
-        parallelism.thresh <- length(unique(tg_data$cpu_id))
-        prob_depths <- tg_shape_depth$depth[which(tg_shape_depth$count < parallelism.thresh)]
-        prob_depth_counts <- sort(unique(tg_shape_depth$count[which(tg_shape_depth$count < parallelism.thresh)]))
+        parallelism_thresh <- length(unique(tg_data$cpu_id))
+        prob_depths <- tg_shape_depth$depth[which(tg_shape_depth$count < parallelism_thresh)]
+        prob_depth_counts <- sort(unique(tg_shape_depth$count[which(tg_shape_depth$count < parallelism_thresh)]))
         prob_depth_colors <- heat.colors(length(prob_depth_counts))
-        sink(tg.ana.out, append=T)
-        print(paste(length(prob_depths), "shape (depth) bins out of", length(tg_shape_depth$count), "have parallelism <", parallelism.thresh))
+        sink(tg_analysis_out_file, append=T)
+        print(paste(length(prob_depths), "shape (depth) bins out of", length(tg_shape_depth$count), "have parallelism <", parallelism_thresh))
         sink()
         for (d in prob_depths)
         {
@@ -951,10 +951,10 @@ if(parsed$analyze)
     if("cpu_id" %in% colnames(tg_data) && !parsed$tree)
     {
         prob_tg <- base_tg
-        scatter.thresh <- (length(unique(tg_data$cpu_id))/4)
-        prob_fork <- V(prob_tg)[fork_nodes_index]$name[which(fork_scatter > scatter.thresh)]
-        sink(tg.ana.out, append=T)
-        print(paste(length(prob_fork), "forks have scatter >", scatter.thresh))
+        scatter_thresh <- (length(unique(tg_data$cpu_id))/4)
+        prob_fork <- V(prob_tg)[fork_nodes_index]$name[which(fork_scatter > scatter_thresh)]
+        sink(tg_analysis_out_file, append=T)
+        print(paste(length(prob_fork), "forks have scatter >", scatter_thresh))
         sink()
         prob_fork_critical <- 0
         for(f in prob_fork)
@@ -978,8 +978,8 @@ if(parsed$analyze)
         }
         if(!parsed$cplengthonly)
         {
-            sink(tg.ana.out, append=T)
-            print(paste(prob_fork_critical, "critical forks have scatter >", scatter.thresh))
+            sink(tg_analysis_out_file, append=T)
+            print(paste(prob_fork_critical, "critical forks have scatter >", scatter_thresh))
             sink()
         }
         tg_out_file <- paste(gsub(". $", "", parsed$out), "-problem-scatter.graphml", sep="")
@@ -991,10 +991,10 @@ if(parsed$analyze)
     if("work_cycles" %in% colnames(tg_data) && !parsed$tree)
     {
         prob_tg <- base_tg
-        fork_bal.thresh <- 2
-        prob_fork <- V(prob_tg)[fork_nodes_index]$name[which(fork_bal_wc > fork_bal.thresh)]
-        sink(tg.ana.out, append=T)
-        print(paste(length(prob_fork), "forks have load balance (work cycles) >", fork_bal.thresh))
+        fork_bal_thresh <- 2
+        prob_fork <- V(prob_tg)[fork_nodes_index]$name[which(fork_bal_wc > fork_bal_thresh)]
+        sink(tg_analysis_out_file, append=T)
+        print(paste(length(prob_fork), "forks have load balance (work cycles) >", fork_bal_thresh))
         sink()
         prob_fork_critical <- 0
         for(f in prob_fork)
@@ -1013,8 +1013,8 @@ if(parsed$analyze)
         }
         if(!parsed$cplengthonly)
         {
-            sink(tg.ana.out, append=T)
-            print(paste(prob_fork_critical, "critical forks have load balance (work cycles) >", fork_bal.thresh))
+            sink(tg_analysis_out_file, append=T)
+            print(paste(prob_fork_critical, "critical forks have load balance (work cycles) >", fork_bal_thresh))
             sink()
         }
         tg_out_file <- paste(gsub(". $", "", parsed$out), "-problem-balance-work-cycles.graphml", sep="")
@@ -1026,10 +1026,10 @@ if(parsed$analyze)
     if("exec_cycles" %in% colnames(tg_data) && !parsed$tree)
     {
         prob_tg <- base_tg
-        fork_bal.thresh <- 2
-        prob_fork <- V(prob_tg)[fork_nodes_index]$name[which(fork_bal_ec > fork_bal.thresh)]
-        sink(tg.ana.out, append=T)
-        print(paste(length(prob_fork), "forks have load balance (execution cycles) >", fork_bal.thresh))
+        fork_bal_thresh <- 2
+        prob_fork <- V(prob_tg)[fork_nodes_index]$name[which(fork_bal_ec > fork_bal_thresh)]
+        sink(tg_analysis_out_file, append=T)
+        print(paste(length(prob_fork), "forks have load balance (execution cycles) >", fork_bal_thresh))
         sink()
         prob_fork_critical <- 0
         for(f in prob_fork)
@@ -1048,8 +1048,8 @@ if(parsed$analyze)
         }
         if(!parsed$cplengthonly)
         {
-            sink(tg.ana.out, append=T)
-            print(paste(prob_fork_critical, "critical forks have load balance (execution cycles) >", fork_bal.thresh))
+            sink(tg_analysis_out_file, append=T)
+            print(paste(prob_fork_critical, "critical forks have load balance (execution cycles) >", fork_bal_thresh))
             sink()
         }
         tg_out_file <- paste(gsub(". $", "", parsed$out), "-problem-balance-exec-cycles.graphml", sep="")
@@ -1057,7 +1057,7 @@ if(parsed$analyze)
         if(parsed$verbose) print(paste("Wrote file:", tg_out_file))
     }
 
-    if(parsed$verbose) print(paste("Wrote file:", tg.ana.out))
+    if(parsed$verbose) print(paste("Wrote file:", tg_analysis_out_file))
     if(parsed$timing) toc("Analyzing graph for problems")
 }
 
