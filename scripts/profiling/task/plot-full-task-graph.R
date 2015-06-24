@@ -275,11 +275,14 @@ tg_vertices_df <- tg_vertices_df[with(tg_vertices_df, grepl("^[0-9]+.[0-9]+$", n
 tg_vertices_df$rdist_exec_cycles <- tg_vertices_df$rdist + tg_vertices_df$exec_cycles
 if(arg_timing) toc("Shape calculation [Step 1]")
 if(arg_timing) tic(type="elapsed")
-# Calculate breaks based on average length of fragment
-shape_breaks <- total_work/(length(unique(tg_data$cpu_id))*median(tg_vertices_df$exec_cycles))
+# Calculate breaks based on summary lengths of fragment
+#shape_breaks <- total_work/(length(unique(tg_data$cpu_id))*median(tg_vertices_df$exec_cycles))
+shape_interval_width <- median(tg_vertices_df$exec_cycles)
+stopifnot(shape_interval_width > 0)
+shape_breaks <- seq(0, max(tg_vertices_df$rdist_exec_cycles) + 1 + shape_interval_width, by=shape_interval_width)
 if(arg_timing) toc("Shape calculation [Step 2.1]")
 if(arg_timing) tic(type="elapsed")
-shape_bins_lower <- hist(seq(0,lpl), breaks=shape_breaks, plot=F)$breaks
+shape_bins_lower <- hist(seq(0, max(tg_vertices_df$rdist_exec_cycles) + 1), breaks=shape_breaks, plot=F)$breaks
 stopifnot(length(shape_bins_lower) > 1)
 shape_bins_upper <- shape_bins_lower + (shape_bins_lower[2] - shape_bins_lower[1] - 1)
 if(arg_timing) toc("Shape calculation [Step 2.2]")
