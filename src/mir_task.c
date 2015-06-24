@@ -9,10 +9,7 @@
 #include "mir_memory.h"
 #include "mir_queue.h"
 #include "mir_loop.h"
-
-#ifdef MIR_MEM_POL_ENABLE
 #include "mir_mem_pol.h"
-#endif 
 
 #include <stdint.h>
 #include <stdlib.h>

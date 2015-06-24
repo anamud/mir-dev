@@ -49,7 +49,11 @@ void mir_mem_get_mem_node_dist(struct mir_mem_node_dist_t* dist, void* addr, siz
 void mir_mem_node_dist_get_stat(struct mir_mem_node_dist_stat_t* stat, const struct mir_mem_node_dist_t* dist);
 
 unsigned long mir_mem_node_dist_get_comm_cost(const struct mir_mem_node_dist_t* dist, uint16_t from_node);
-
+#else
+#define mir_mem_pol_create() ;
+#define mir_mem_pol_destroy() ;
+#define mir_mem_pol_init() ;
+#define mir_mem_pol_config(x) ;
 #endif
 END_C_DECLS
 
