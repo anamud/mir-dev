@@ -57,8 +57,8 @@ tg_data <- read.csv(parsed$data, header=TRUE)
 if(parsed$timing) toc("Read data")
 
 # Information output
-tg.info.out <- paste(gsub(". $", "", parsed$out), ".info", sep="")
-sink(tg.info.out)
+tg_info_out_file <- paste(gsub(". $", "", parsed$out), ".info", sep="")
+sink(tg_info_out_file)
 sink()
 
 # Remove non-sense data
@@ -414,7 +414,7 @@ if("exec_cycles" %in% colnames(tg_data))
     tg <- set.vertex.attribute(tg, name='exec_balance_to_size', index=fork_nodes_index, value=p_fork_size)
     #Rprof(NULL)
 
-    sink(tg.info.out, append=T)
+    sink(tg_info_out_file, append=T)
     print("Load balance among siblings = max(exec_cycles)/mean(exec_cycles):")
     print(summary(fork_bal_ec))
     sink()
@@ -455,7 +455,7 @@ if("work_cycles" %in% colnames(tg_data))
     else p_fork_size <- fork_size_mult * as.numeric(cut(fork_bal_wc, fork_size_bins))
     tg <- set.vertex.attribute(tg, name='work_balance_to_size', index=fork_nodes_index, value=p_fork_size)
 
-    sink(tg.info.out, append=T)
+    sink(tg_info_out_file, append=T)
     print("Load balance among siblings = max(work_cycles)/mean(work_cycles):")
     print(summary(fork_bal_wc))
     sink()
@@ -503,7 +503,7 @@ if("cpu_id" %in% colnames(tg_data))
     else p_fork_color <- fork_color_pal[as.numeric(cut(fork_scatter, fork_color_bins))]
     tg <- set.vertex.attribute(tg, name='scatter_to_color', index=fork_nodes_index, value=p_fork_color)
 
-    sink(tg.info.out, append=T)
+    sink(tg_info_out_file, append=T)
     print("Scatter among siblings = median(scatter):")
     print(summary(fork_scatter))
     sink()
@@ -640,7 +640,7 @@ if("ins_count" %in% colnames(tg_data) && !parsed$tree)
     #Rprof(NULL)
 
     # Calculate and write info
-    sink(tg.info.out, append=T)
+    sink(tg_info_out_file, append=T)
     print("Unit = Instructions")
     print("span (critical path)")
     print(lpl)
@@ -753,7 +753,7 @@ if("ins_count" %in% colnames(tg_data) && !parsed$tree)
     #Rprof(NULL)
 
     # Calculate and write info
-    sink(tg.info.out, append=T)
+    sink(tg_info_out_file, append=T)
     print("Unit = Cycles")
     print("span (critical path)")
     print(lpl)
