@@ -69,16 +69,16 @@ if(parsed$timing) toc("Removing non-sense data")
 
 # Set colors
 if(parsed$timing) tic(type="elapsed")
+join_color <- "#FF7F50"  # coral
+fork_color <- "#2E8B57"  # seagreen
+task_color <- "#4682B4" #steelblue
+other_color <- "#DEB887" # burlywood
+create_edge_color <- fork_color
+sync_edge_color <- join_color
+scope_edge_color <- "#000000"
+cont_edge_color <- "#000000"
+colorf <- colorRampPalette(c("blue", "red"))
 if(parsed$palette == "color") {
-    join_color <- "#FF7F50"  # coral
-    fork_color <- "#2E8B57"  # seagreen
-    task_color <- "#4682B4" #steelblue
-    other_color <- "#DEB887" # burlywood
-    create_edge_color <- fork_color
-    sync_edge_color <- join_color
-    scope_edge_color <- "#000000"
-    cont_edge_color <- "#000000"
-    colorf <- colorRampPalette(c("blue", "red"))
 } else if(parsed$palette == "gray") {
     join_color <- "#D3D3D3"  # light gray
     fork_color <- "#D3D3D3"  # light gray
@@ -91,15 +91,6 @@ if(parsed$palette == "color") {
     colorf <- colorRampPalette(c("gray10", "gray90"))
 } else {
     print("Unsupported color format. Supported formats: color, gray. Defaulting to color.")
-    join_color <- "#FF7F50"  # coral
-    fork_color <- "#2E8B57"  # seagreen
-    task_color <- "#4682B4" #steelblue
-    other_color <- "#DEB887" # burlywood
-    create_edge_color <- fork_color
-    sync_edge_color <- join_color
-    scope_edge_color <- "#000000"
-    cont_edge_color <- "#000000"
-    colorf <- colorRampPalette(c("blue", "red"))
 }
 
 # Task color binning
