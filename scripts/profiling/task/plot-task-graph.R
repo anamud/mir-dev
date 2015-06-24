@@ -15,13 +15,13 @@ suppressMessages(library(gdata, quietly=TRUE, warn.conflicts=FALSE))
 # Graph element sizes
 join_size <- 10
 fork_size <- join_size
+fork_size_mult <- 10
+fork_size_bins <- 10
 start_size <- 15
 end_size <- start_size
 task_size <- 30
 task_size_mult <- 10
 task_size_bins <- 10
-fork_size_mult <- 10
-fork_size_bins <- 10
 
 # Graph element shapes
 task_shape <- "rectangle"
@@ -66,6 +66,24 @@ if(parsed$timing) tic(type="elapsed")
 # Remove background task
 tg_data <- tg_data[!is.na(tg_data$parent),]
 if(parsed$timing) toc("Removing non-sense data")
+
+# Critical path calculation weight
+if("ins_count" %in% colnames(tg_data))
+{
+    path_weight <- "ins_count"
+} else {
+    if("work_cycles" %in% colnames(tg_data))
+    {
+        path_weight <- "work_cycles"
+    }
+} else {
+    if("exec_cycles" %in% colnames(tg_data))
+    {
+        path_weight <- "exec_cycles"
+    }
+} else {
+    path_weight <- NA
+}
 
 # Set colors
 if(parsed$timing) tic(type="elapsed")
@@ -148,16 +166,10 @@ parent_first_forks <- as.vector(sapply(fork_nodes_unique[first_forks_index], fun
 first_forks <- fork_nodes_unique[first_forks_index]
 tg[to=first_forks, from=parent_first_forks, attr='kind'] <- 'scope'
 tg[to=first_forks, from=parent_first_forks, attr='color'] <- scope_edge_color
-if("ins_count" %in% colnames(tg_data))
+if(!is.na(path_weight)
 {
-    tg[to=first_forks, from=parent_first_forks, attr='ins_count'] <- as.numeric(tg_data[match(parent_first_forks, tg_data$task),]$ins_count)
-    tg[to=first_forks, from=parent_first_forks, attr='weight'] <- -as.numeric(tg_data[match(parent_first_forks, tg_data$task),]$ins_count)
-} else {
-    if("work_cycles" %in% colnames(tg_data))
-    {
-        tg[to=first_forks, from=parent_first_forks, attr='work_cycles'] <- as.numeric(tg_data[match(parent_first_forks, tg_data$task),]$work_cycles)
-        tg[to=first_forks, from=parent_first_forks, attr='weight'] <- -as.numeric(tg_data[match(parent_first_forks, tg_data$task),]$work_cycles)
-    }
+    tg[to=first_forks, from=parent_first_forks, attr=path_weight] <- as.numeric(tg_data[match(parent_first_forks, tg_data$task),path_weight])
+    tg[to=first_forks, from=parent_first_forks, attr='weight'] <- -as.numeric(tg_data[match(parent_first_forks, tg_data$task),path_weight])
 }
 if(parsed$timing) toc("Connect parent to first fork")
 
@@ -169,16 +181,10 @@ if(!parsed$tree)
     leaf_join_nodes <- join_nodes[match(leaf_tasks, tg_data$task)]
     tg[from=leaf_tasks, to=leaf_join_nodes, attr='kind'] <- 'sync'
     tg[from=leaf_tasks, to=leaf_join_nodes, attr='color'] <- sync_edge_color
-    if("ins_count" %in% colnames(tg_data))
+    if(!is.na(path_weight)
     {
-        tg[from=leaf_tasks, to=leaf_join_nodes, attr='ins_count'] <- as.numeric(tg_data[match(leaf_tasks, tg_data$task),]$ins_count)
-        tg[from=leaf_tasks, to=leaf_join_nodes, attr='weight'] <- -as.numeric(tg_data[match(leaf_tasks, tg_data$task),]$ins_count)
-    } else {
-        if("work_cycles" %in% colnames(tg_data))
-        {
-            tg[from=leaf_tasks, to=leaf_join_nodes, attr='work_cycles'] <- as.numeric(tg_data[match(leaf_tasks, tg_data$task),]$work_cycles)
-            tg[from=leaf_tasks, to=leaf_join_nodes, attr='weight'] <- -as.numeric(tg_data[match(leaf_tasks, tg_data$task),]$work_cycles)
-        }
+        tg[from=leaf_tasks, to=leaf_join_nodes, attr=path_weight] <- as.numeric(tg_data[match(leaf_tasks, tg_data$task),path_weight])
+        tg[from=leaf_tasks, to=leaf_join_nodes, attr='weight'] <- -as.numeric(tg_data[match(leaf_tasks, tg_data$task),path_weight])
     }
     if(parsed$timing) toc("Connect leaf task to join")
 
@@ -530,15 +536,10 @@ if(!parsed$tree)
 # Set edge attributes
 if(parsed$timing) tic(type="elapsed")
 if("ins_count" %in% colnames(tg_data))
+if(!is.na(path_weight)
 {
     tg <- set.edge.attribute(tg, name="weight", index=which(is.na(E(tg)$weight)), value=0)
-    tg <- set.edge.attribute(tg, name="ins_count", index=which(is.na(E(tg)$ins_count)), value=0)
-} else {
-    if("work_cycles" %in% colnames(tg_data))
-    {
-        tg <- set.edge.attribute(tg, name="weight", index=which(is.na(E(tg)$weight)), value=0)
-        tg <- set.edge.attribute(tg, name="work_cycles", index=which(is.na(E(tg)$work_cycles)), value=0)
-    }
+    tg <- set.edge.attribute(tg, name=path_weight, index=which(is.na(E(tg)[,path_weight])), value=0)
 }
 if(parsed$timing) toc("Edge attribute setting")
 
@@ -574,7 +575,7 @@ if(!parsed$tree)
 }
 if(parsed$timing) toc("Checking for bad structure")
 
-if("ins_count" %in% colnames(tg_data) && !parsed$tree)
+if(!is.na(path_weight) && !parsed$tree)
 {
     if(parsed$verbose) print("Calculating critical path ...")
     if(parsed$timing) tic(type="elapsed")
@@ -605,7 +606,7 @@ if("ins_count" %in% colnames(tg_data) && !parsed$tree)
       {
         # Get distance from node's predecessors
         ni <- incident(tg, node, mode="in")
-        w <- E(tg)$ins_count[ni]
+        w <- E(tg)[ni,path_weight]
         # Get distance from root to node's predecessors
         nn <- neighbors(tg, node, mode="in")
         d <- vgdf$rdist[nn]
@@ -645,7 +646,7 @@ if("ins_count" %in% colnames(tg_data) && !parsed$tree)
     print("span (critical path)")
     print(lpl)
     print("work")
-    work <- sum(as.numeric(tg_data$ins_count))
+    work <- sum(as.numeric(tg_data[,path_weight]))
     print(work)
     print("parallelism")
     print(work/lpl)
@@ -659,12 +660,12 @@ if("ins_count" %in% colnames(tg_data) && !parsed$tree)
         # Calc shape
         tgdf <- get.data.frame(tg, what="vertices")
         tgdf <- tgdf[!is.na(as.numeric(tgdf$label)),]
-        tg_shape <- hist(tgdf$rdist, breaks=sum(as.numeric(tg_data$ins_count))/(length(unique(tg_data$cpu_id))*mean(tg_data$ins_count)), plot=F)
+        tg_shape <- hist(tgdf$rdist, breaks=work/(length(unique(tg_data$cpu_id))*mean(tg_data[,path_weight])), plot=F)
 
         # Write out shape
         tg.file.out <- paste(gsub(". $", "", parsed$out), "-shape.pdf", sep="")
         pdf(tg.file.out)
-        plot(tg_shape, freq=T, xlab="Distance from START in instruction count", ylab="Tasks", main="Instantaneous task parallelism", col="white")
+        plot(tg_shape, freq=T, xlab=paste("Distance from START in", path_weight), ylab="Tasks", main="Instantaneous task parallelism", col="white")
         abline(h = length(unique(tg_data$cpu_id)), col = "blue", lty=2)
         abline(h = work/lpl , col = "red", lty=1)
         legend("top", legend = c("Number of cores", "Exposed task parallelism"), fill = c("blue", "red"))
@@ -686,118 +687,7 @@ if("ins_count" %in% colnames(tg_data) && !parsed$tree)
         dev.off()
         if(parsed$verbose) print(paste("Wrote file:", tg.file.out))
     }
-    if(parsed$timing) toc("Critical path calculation (based on instructions)")
-} else if("work_cycles" %in% colnames(tg_data) && !parsed$tree) {
-    if(parsed$verbose) print("Calculating critical path ...")
-    if(parsed$timing) tic(type="elapsed")
-
-    # Simplify - DO NOT USE. Fucks up the critical path analysis.
-    #tg <- simplify(tg, edge.attr.comb=toString)
-
-    # Get critical path
-    #Rprof("profile-critpathcalc.out")
-    if(parsed$cplengthonly)
-    {
-      # Get critical path length
-      sp <- shortest.paths(tg, v=start_index, to=end_index, mode="out")
-      lpl <- -as.numeric(sp)
-    } else {
-      lntg <- length(V(tg))
-      pb <- txtProgressBar(min = 0, max = lntg, style = 3)
-      ctr <- 0
-      # Topological sort
-      tsg <- topological.sort(tg)
-      # Set root path attributes
-      V(tg)[tsg[1]]$rdist <- 0
-      V(tg)[tsg[1]]$depth <- 0
-      V(tg)[tsg[1]]$rpath <- tsg[1]
-      # Get data frame of graph object
-      vgdf <- get.data.frame(tg, what="vertices")
-      # Get longest paths from root
-      for(node in tsg[-1])
-      {
-        # Get distance from node's predecessors
-        ni <- incident(tg, node, mode="in")
-        w <- E(tg)$work_cycles[ni]
-        # Get distance from root to node's predecessors
-        nn <- neighbors(tg, node, mode="in")
-        d <- vgdf$rdist[nn]
-        # Add distances (assuming one-one corr.)
-        wd <- w+d
-        # Set node's distance from root to max of added distances
-        mwd <- max(wd)
-        vgdf$rdist[node] <- mwd
-        # Set node's path from root to path of max of added distances
-        mwdn <- as.vector(nn)[match(mwd,wd)]
-        nrp <- list(c(unlist(vgdf$rpath[mwdn]), node))
-        vgdf$rpath[node] <- nrp
-        # Set node's depth as one greater than the largest depth its predecessors
-        vgdf$depth[node] <- max(vgdf$depth[nn]) + 1
-        if(parsed$verbose) {ctr <- ctr + 1; setTxtProgressBar(pb, ctr);}
-      }
-      ## Longest path is the largest root distance
-      lpl <- max(vgdf$rdist)
-      # Enumerate longest path
-      lpm <- unlist(vgdf$rpath[match(lpl,vgdf$rdist)])
-      vgdf$on_crit_path <- 0
-      vgdf$on_crit_path[lpm] <- 1
-      # Set back on graph
-      tg <- set.vertex.attribute(tg, name="on_crit_path", index=V(tg), value=vgdf$on_crit_path)
-      tg <- set.vertex.attribute(tg, name="rdist", index=V(tg), value=vgdf$rdist)
-      tg <- set.vertex.attribute(tg, name="depth", index=V(tg), value=vgdf$depth)
-      critical_edges <- E(tg)[V(tg)[on_crit_path==1] %--% V(tg)[on_crit_path==1]]
-      tg <- set.edge.attribute(tg, name="on_crit_path", index=critical_edges, value=1)
-      if(parsed$verbose) {ctr <- ctr + 1; setTxtProgressBar(pb, ctr);}
-      close(pb)
-    }
-    #Rprof(NULL)
-
-    # Calculate and write info
-    sink(tg_info_out_file, append=T)
-    print("Unit = Cycles")
-    print("span (critical path)")
-    print(lpl)
-    print("work")
-    work <- sum(as.numeric(tg_data$work_cycles))
-    print(work)
-    print("parallelism")
-    print(work/lpl)
-    sink()
-
-    if(!parsed$cplengthonly)
-    {
-        # Clear rpath since dot/table writing complains
-        tg <- remove.vertex.attribute(tg,"rpath")
-
-        # Calc shape
-        tgdf <- get.data.frame(tg, what="vertices")
-        tgdf <- tgdf[!is.na(as.numeric(tgdf$label)),]
-        tg_shape <- hist(tgdf$rdist, breaks=sum(as.numeric(tg_data$work_cycles))/(length(unique(tg_data$cpu_id))*mean(tg_data$work_cycles)), plot=F)
-
-        # Write out shape
-        tg.file.out <- paste(gsub(". $", "", parsed$out), "-shape.pdf", sep="")
-        pdf(tg.file.out)
-        plot(tg_shape, freq=T, xlab="Distance from START in work cycles", ylab="Tasks", main="Instantaneous task parallelism", col="white")
-        abline(h = length(unique(tg_data$cpu_id)), col = "blue", lty=2)
-        abline(h = work/lpl , col = "red", lty=1)
-        dev.off()
-        if(parsed$verbose) print(paste("Wrote file:", tg.file.out))
-
-        # Calc shape based on depth
-        tg_shape_depth <- tgdf %>% group_by(depth) %>% summarise(count = n())
-
-        # Write out shape based on depth
-        tg.file.out <- paste(gsub(". $", "", parsed$out), "-shape-depth.pdf", sep="")
-        pdf(tg.file.out)
-        plot(tg_shape_depth, xlab="Distance from START in node count", ylab="Tasks", main="Instantaneous task parallelism", col="white")
-        lines(tg_shape_depth, type="p")
-        lines(tg_shape_depth, type="h")
-        abline(h = length(unique(tg_data$cpu_id)), col = "blue", lty=2)
-        abline(h = work/lpl , col = "red", lty=1)
-        dev.off()
-        if(parsed$verbose) print(paste("Wrote file:", tg.file.out))
-    }
-    if(parsed$timing) toc("Critical path calculation (based on cycles)")
+    if(parsed$timing) toc("Critical path calculation")
 } else {
     if(parsed$verbose) print("Simplifying graph ...")
     if(parsed$timing) tic(type="elapsed")
@@ -819,16 +709,6 @@ tg.file.out <- paste(gsub(". $", "", parsed$out), ".graphml", sep="")
 res <- write.graph(tg, file=tg.file.out, format="graphml")
 if(parsed$verbose) print(paste("Wrote file:", tg.file.out))
 if(parsed$timing) toc("Write graphml")
-
-## Write pdf file
-#if(parsed$timing) tic(type="elapsed")
-#lyt <- layout.fruchterman.reingold(tg,niter=500,area=vcount(tg)^2,coolexp=3,repulserad=vcount(tg)^3,maxdelta=vcount(tg))
-#tg.file.out <- paste(gsub(". $", "", parsed$out), ".pdf", sep="")
-#pdf(file=tg.file.out)
-#plot(tg, layout=lyt)
-#dev.off()
-#if(parsed$verbose) print(paste("Wrote file:", tg.file.out))
-#if(parsed$timing) toc("Write pdf")
 
 # Write adjacency matrix file
 if(parsed$timing) tic(type="elapsed")
