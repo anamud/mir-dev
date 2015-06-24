@@ -16,7 +16,7 @@ void test(int n);
 int main(int argc, char **argv);
 
 // Defines
-#define REUSE_COUNT 1
+#define REUSE_COUNT 2
 
 long get_usecs(void)
 {
@@ -44,17 +44,6 @@ void test(int n)
         }
         #pragma omp taskwait
     }
-
-// Empty taskwait
-    #pragma omp taskwait
-
-// Some more tasks
-    for (int i = 0; i < n; i++)
-    {
-        #pragma omp task firstprivate(i) shared(n)
-        process(i, n);
-    }
-    #pragma omp taskwait
 }/*}}}*/
 
 int main(int argc, char **argv)
