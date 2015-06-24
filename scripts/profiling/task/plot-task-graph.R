@@ -336,15 +336,15 @@ for(attrib in attrib_color_scaled)
         annot_name <- paste(attrib, "_to_color", sep="")
         tg <- set.vertex.attribute(tg, name=annot_name, index=task_index, value=p_task_color)
         # Write colors for reference
-        tg.file.out <- paste(gsub(". $", "", parsed$out), annot_name, sep=".")
+        tg_out_file <- paste(gsub(". $", "", parsed$out), annot_name, sep=".")
         if(length(attrib_unique) == 1)
         {
-            write.csv(data.frame(value=attrib_unique, color=p_task_color), tg.file.out, row.names=F)
+            write.csv(data.frame(value=attrib_unique, color=p_task_color), tg_out_file, row.names=F)
         } else {
             v <- unique(cut(tg_data[,attrib], task_color_bins))
-            write.csv(data.frame(value=v, color=task_color_pal[as.numeric(v)]), tg.file.out, row.names=F)
+            write.csv(data.frame(value=v, color=task_color_pal[as.numeric(v)]), tg_out_file, row.names=F)
         }
-        if(parsed$verbose) print(paste("Wrote file:", tg.file.out))
+        if(parsed$verbose) print(paste("Wrote file:", tg_out_file))
     }
 }
 # Set attributes to distinct color
@@ -360,9 +360,9 @@ for(attrib in attrib_color_distinct)
         annot_name <- paste(attrib, "_to_color", sep="")
         tg <- set.vertex.attribute(tg, name=annot_name, index=task_index, value=attrib_color[match(attrib_val, unique_attrib_val)])
         # Write colors for reference
-        tg.file.out <- paste(gsub(". $", "", parsed$out), annot_name, sep=".")
-        write.csv(data.frame(value=unique_attrib_val, color=attrib_color), tg.file.out, row.names=F)
-        if(parsed$verbose) print(paste("Wrote file:", tg.file.out))
+        tg_out_file <- paste(gsub(". $", "", parsed$out), annot_name, sep=".")
+        write.csv(data.frame(value=unique_attrib_val, color=attrib_color), tg_out_file, row.names=F)
+        if(parsed$verbose) print(paste("Wrote file:", tg_out_file))
     }
 }
 if(parsed$timing) toc("Task color calculation")
@@ -663,21 +663,21 @@ if(!is.na(path_weight) && !parsed$tree)
         tg_shape <- hist(tgdf$rdist, breaks=work/(length(unique(tg_data$cpu_id))*mean(tg_data[,path_weight])), plot=F)
 
         # Write out shape
-        tg.file.out <- paste(gsub(". $", "", parsed$out), "-shape.pdf", sep="")
-        pdf(tg.file.out)
+        tg_out_file <- paste(gsub(". $", "", parsed$out), "-shape.pdf", sep="")
+        pdf(tg_out_file)
         plot(tg_shape, freq=T, xlab=paste("Distance from START in", path_weight), ylab="Tasks", main="Instantaneous task parallelism", col="white")
         abline(h = length(unique(tg_data$cpu_id)), col = "blue", lty=2)
         abline(h = work/lpl , col = "red", lty=1)
         legend("top", legend = c("Number of cores", "Exposed task parallelism"), fill = c("blue", "red"))
         dev.off()
-        if(parsed$verbose) print(paste("Wrote file:", tg.file.out))
+        if(parsed$verbose) print(paste("Wrote file:", tg_out_file))
 
         # Calc shape based on depth
         tg_shape_depth <- tgdf %>% group_by(depth) %>% summarise(count = n())
 
         # Write out shape based on depth
-        tg.file.out <- paste(gsub(". $", "", parsed$out), "-shape-depth.pdf", sep="")
-        pdf(tg.file.out)
+        tg_out_file <- paste(gsub(". $", "", parsed$out), "-shape-depth.pdf", sep="")
+        pdf(tg_out_file)
         plot(tg_shape_depth, freq=T, xlab="Distance from START in node count", ylab="Tasks", main="Instantaneous task parallelism", col="white")
         lines(tg_shape_depth, type="p")
         lines(tg_shape_depth, type="h")
@@ -685,7 +685,7 @@ if(!is.na(path_weight) && !parsed$tree)
         abline(h = work/lpl , col = "red", lty=1)
         legend("top", legend = c("Number of cores", "Exposed task parallelism"), fill = c("blue", "red"))
         dev.off()
-        if(parsed$verbose) print(paste("Wrote file:", tg.file.out))
+        if(parsed$verbose) print(paste("Wrote file:", tg_out_file))
     }
     if(parsed$timing) toc("Critical path calculation")
 } else {
@@ -698,41 +698,41 @@ if(!is.na(path_weight) && !parsed$tree)
 if(parsed$verbose) print("Writing graph files ...")
 ## Write dot file
 #if(parsed$timing) tic(type="elapsed")
-#tg.file.out <- paste(gsub(". $", "", parsed$out), ".dot", sep="")
-#res <- write.graph(tg, file=tg.file.out, format="dot")
-#if(parsed$verbose) print(paste("Wrote file:", tg.file.out))
+#tg_out_file <- paste(gsub(". $", "", parsed$out), ".dot", sep="")
+#res <- write.graph(tg, file=tg_out_file, format="dot")
+#if(parsed$verbose) print(paste("Wrote file:", tg_out_file))
 #if(parsed$timing) toc("Write dot")
 
 # Write gml file
 if(parsed$timing) tic(type="elapsed")
-tg.file.out <- paste(gsub(". $", "", parsed$out), ".graphml", sep="")
-res <- write.graph(tg, file=tg.file.out, format="graphml")
-if(parsed$verbose) print(paste("Wrote file:", tg.file.out))
+tg_out_file <- paste(gsub(". $", "", parsed$out), ".graphml", sep="")
+res <- write.graph(tg, file=tg_out_file, format="graphml")
+if(parsed$verbose) print(paste("Wrote file:", tg_out_file))
 if(parsed$timing) toc("Write graphml")
 
 # Write adjacency matrix file
 if(parsed$timing) tic(type="elapsed")
-tg.file.out <- paste(gsub(". $", "", parsed$out), ".adjmat", sep="")
-sink(tg.file.out)
+tg_out_file <- paste(gsub(". $", "", parsed$out), ".adjmat", sep="")
+sink(tg_out_file)
 print(get.adjacency(tg,names=T))
 sink()
-if(parsed$verbose) print(paste("Wrote file:", tg.file.out))
+if(parsed$verbose) print(paste("Wrote file:", tg_out_file))
 if(parsed$timing) toc("Write adjacency matrix")
 
 # Write edgelist file
 if(parsed$timing) tic(type="elapsed")
-tg.file.out <- paste(gsub(". $", "", parsed$out), ".edgelist", sep="")
-sink(tg.file.out)
+tg_out_file <- paste(gsub(". $", "", parsed$out), ".edgelist", sep="")
+sink(tg_out_file)
 print(get.edgelist(tg, names=T))
 sink()
-if(parsed$verbose) print(paste("Wrote file:", tg.file.out))
+if(parsed$verbose) print(paste("Wrote file:", tg_out_file))
 if(parsed$timing) toc("Write edgelist")
 
 # Write node attributes
 if(parsed$timing) tic(type="elapsed")
-tg.file.out <- paste(gsub(". $", "", parsed$out), ".nodeattr", sep="")
-write.table(get.data.frame(tg, what="vertices"), sep=",", file=tg.file.out)
-if(parsed$verbose) print(paste("Wrote file:", tg.file.out))
+tg_out_file <- paste(gsub(". $", "", parsed$out), ".nodeattr", sep="")
+write.table(get.data.frame(tg, what="vertices"), sep=",", file=tg_out_file)
+if(parsed$verbose) print(paste("Wrote file:", tg_out_file))
 if(parsed$timing) toc("Write node attributes")
 
 # Show problems
@@ -789,9 +789,9 @@ if(parsed$analyze)
         prob_task_color <- get.vertex.attribute(prob_tg, name='mem_hier_util_to_color', index=prob_task_index)
         prob_tg <- set.vertex.attribute(prob_tg, name='color', index=prob_task_index, value=prob_task_color)
         prob_tg <- set.vertex.attribute(prob_tg, name='problematic', index=prob_task_index, value=1)
-        tg_file_out <- paste(gsub(". $", "", parsed$out), "-problem-memory-hierarchy-utilization.graphml", sep="")
-        res <- write.graph(prob_tg, file=tg_file_out, format="graphml")
-        if(parsed$verbose) print(paste("Wrote file:", tg_file_out))
+        tg_out_file <- paste(gsub(". $", "", parsed$out), "-problem-memory-hierarchy-utilization.graphml", sep="")
+        res <- write.graph(prob_tg, file=tg_out_file, format="graphml")
+        if(parsed$verbose) print(paste("Wrote file:", tg_out_file))
     }
 
     # Memory footprint problem
@@ -814,9 +814,9 @@ if(parsed$analyze)
         prob_task_color <- get.vertex.attribute(prob_tg, name='mem_fp_to_color', index=prob_task_index)
         prob_tg <- set.vertex.attribute(prob_tg, name='color', index=prob_task_index, value=prob_task_color)
         prob_tg <- set.vertex.attribute(prob_tg, name='problematic', index=prob_task_index, value=1)
-        tg_file_out <- paste(gsub(". $", "", parsed$out), "-problem-memory-footprint.graphml", sep="")
-        res <- write.graph(prob_tg, file=tg_file_out, format="graphml")
-        if(parsed$verbose) print(paste("Wrote file:", tg_file_out))
+        tg_out_file <- paste(gsub(". $", "", parsed$out), "-problem-memory-footprint.graphml", sep="")
+        res <- write.graph(prob_tg, file=tg_out_file, format="graphml")
+        if(parsed$verbose) print(paste("Wrote file:", tg_out_file))
     }
 
     # Compute intensity problem
@@ -839,9 +839,9 @@ if(parsed$analyze)
         prob_task_color <- get.vertex.attribute(prob_tg, name='compute_int_to_color', index=prob_task_index)
         prob_tg <- set.vertex.attribute(prob_tg, name='color', index=prob_task_index, value=prob_task_color)
         prob_tg <- set.vertex.attribute(prob_tg, name='problematic', index=prob_task_index, value=1)
-        tg_file_out <- paste(gsub(". $", "", parsed$out), "-problem-compute-intensity.graphml", sep="")
-        res <- write.graph(prob_tg, file=tg_file_out, format="graphml")
-        if(parsed$verbose) print(paste("Wrote file:", tg_file_out))
+        tg_out_file <- paste(gsub(". $", "", parsed$out), "-problem-compute-intensity.graphml", sep="")
+        res <- write.graph(prob_tg, file=tg_out_file, format="graphml")
+        if(parsed$verbose) print(paste("Wrote file:", tg_out_file))
     }
 
     # Work deviation problem
@@ -864,9 +864,9 @@ if(parsed$analyze)
         prob_task_color <- get.vertex.attribute(prob_tg, name='work_deviation_to_color', index=prob_task_index)
         prob_tg <- set.vertex.attribute(prob_tg, name='color', index=prob_task_index, value=prob_task_color)
         prob_tg <- set.vertex.attribute(prob_tg, name='problematic', index=prob_task_index, value=1)
-        tg_file_out <- paste(gsub(". $", "", parsed$out), "-problem-work-deviation.graphml", sep="")
-        res <- write.graph(prob_tg, file=tg_file_out, format="graphml")
-        if(parsed$verbose) print(paste("Wrote file:", tg_file_out))
+        tg_out_file <- paste(gsub(". $", "", parsed$out), "-problem-work-deviation.graphml", sep="")
+        res <- write.graph(prob_tg, file=tg_out_file, format="graphml")
+        if(parsed$verbose) print(paste("Wrote file:", tg_out_file))
     }
 
     # Parallel benefit problem
@@ -889,9 +889,9 @@ if(parsed$analyze)
         prob_task_color <- get.vertex.attribute(prob_tg, name='parallel_benefit_to_color', index=prob_task_index)
         prob_tg <- set.vertex.attribute(prob_tg, name='color', index=prob_task_index, value=prob_task_color)
         prob_tg <- set.vertex.attribute(prob_tg, name='problematic', index=prob_task_index, value=1)
-        tg_file_out <- paste(gsub(". $", "", parsed$out), "-problem-parallel-benefit.graphml", sep="")
-        res <- write.graph(prob_tg, file=tg_file_out, format="graphml")
-        if(parsed$verbose) print(paste("Wrote file:", tg_file_out))
+        tg_out_file <- paste(gsub(". $", "", parsed$out), "-problem-parallel-benefit.graphml", sep="")
+        res <- write.graph(prob_tg, file=tg_out_file, format="graphml")
+        if(parsed$verbose) print(paste("Wrote file:", tg_out_file))
     }
 
     # Parallelism problem
@@ -912,9 +912,9 @@ if(parsed$analyze)
             prob_tg <- set.vertex.attribute(prob_tg, name='color', index=prob_task_index, value=prob_task_color)
             prob_tg <- set.vertex.attribute(prob_tg, name='problematic', index=prob_task_index, value=1)
         }
-        tg_file_out <- paste(gsub(". $", "", parsed$out), "-problem-parallelism.graphml", sep="")
-        res <- write.graph(prob_tg, file=tg_file_out, format="graphml")
-        if(parsed$verbose) print(paste("Wrote file:", tg_file_out))
+        tg_out_file <- paste(gsub(". $", "", parsed$out), "-problem-parallelism.graphml", sep="")
+        res <- write.graph(prob_tg, file=tg_out_file, format="graphml")
+        if(parsed$verbose) print(paste("Wrote file:", tg_out_file))
     }
 
     # Parallelism problem (based on depth)
@@ -939,12 +939,12 @@ if(parsed$analyze)
             prob_tg <- set.vertex.attribute(prob_tg, name='color', index=prob_task_index, value=prob_task_color)
             prob_tg <- set.vertex.attribute(prob_tg, name='problematic', index=prob_task_index, value=1)
         }
-        tg_file_out <- paste(gsub(". $", "", parsed$out), "-problem-parallelism-depth.graphml", sep="")
-        res <- write.graph(prob_tg, file=tg_file_out, format="graphml")
-        if(parsed$verbose) print(paste("Wrote file:", tg_file_out))
-        tg_file_out <- paste(gsub(". $", "", parsed$out), "-problem-parallelism-depth.parallelism_to_color", sep="")
-        write.csv(data.frame(value=prob_depth_counts, color=prob_depth_colors), tg_file_out, row.names=F)
-        if(parsed$verbose) print(paste("Wrote file:", tg_file_out))
+        tg_out_file <- paste(gsub(". $", "", parsed$out), "-problem-parallelism-depth.graphml", sep="")
+        res <- write.graph(prob_tg, file=tg_out_file, format="graphml")
+        if(parsed$verbose) print(paste("Wrote file:", tg_out_file))
+        tg_out_file <- paste(gsub(". $", "", parsed$out), "-problem-parallelism-depth.parallelism_to_color", sep="")
+        write.csv(data.frame(value=prob_depth_counts, color=prob_depth_colors), tg_out_file, row.names=F)
+        if(parsed$verbose) print(paste("Wrote file:", tg_out_file))
     }
 
     # Scatter problem
@@ -982,9 +982,9 @@ if(parsed$analyze)
             print(paste(prob_fork_critical, "critical forks have scatter >", scatter.thresh))
             sink()
         }
-        tg_file_out <- paste(gsub(". $", "", parsed$out), "-problem-scatter.graphml", sep="")
-        res <- write.graph(prob_tg, file=tg_file_out, format="graphml")
-        if(parsed$verbose) print(paste("Wrote file:", tg_file_out))
+        tg_out_file <- paste(gsub(". $", "", parsed$out), "-problem-scatter.graphml", sep="")
+        res <- write.graph(prob_tg, file=tg_out_file, format="graphml")
+        if(parsed$verbose) print(paste("Wrote file:", tg_out_file))
     }
 
     # Balance problem (work cycles)
@@ -1017,9 +1017,9 @@ if(parsed$analyze)
             print(paste(prob_fork_critical, "critical forks have load balance (work cycles) >", fork_bal.thresh))
             sink()
         }
-        tg_file_out <- paste(gsub(". $", "", parsed$out), "-problem-balance-work-cycles.graphml", sep="")
-        res <- write.graph(prob_tg, file=tg_file_out, format="graphml")
-        if(parsed$verbose) print(paste("Wrote file:", tg_file_out))
+        tg_out_file <- paste(gsub(". $", "", parsed$out), "-problem-balance-work-cycles.graphml", sep="")
+        res <- write.graph(prob_tg, file=tg_out_file, format="graphml")
+        if(parsed$verbose) print(paste("Wrote file:", tg_out_file))
     }
 
     # Balance problem (execution cycles)
@@ -1052,9 +1052,9 @@ if(parsed$analyze)
             print(paste(prob_fork_critical, "critical forks have load balance (execution cycles) >", fork_bal.thresh))
             sink()
         }
-        tg_file_out <- paste(gsub(". $", "", parsed$out), "-problem-balance-exec-cycles.graphml", sep="")
-        res <- write.graph(prob_tg, file=tg_file_out, format="graphml")
-        if(parsed$verbose) print(paste("Wrote file:", tg_file_out))
+        tg_out_file <- paste(gsub(". $", "", parsed$out), "-problem-balance-exec-cycles.graphml", sep="")
+        res <- write.graph(prob_tg, file=tg_out_file, format="graphml")
+        if(parsed$verbose) print(paste("Wrote file:", tg_out_file))
     }
 
     if(parsed$verbose) print(paste("Wrote file:", tg.ana.out))
