@@ -66,10 +66,10 @@ if os.path.isfile('HAVE_PAPI'):
     env['CCFLAGS'] += ['-DMIR_RECORDER_USE_HW_PERF_COUNTERS']
 
 # Enable specialized support for GCC OpenMP Pre-4.9.0.
-import platform, commands
-machine = platform.node()
+import commands
 compiler_version = commands.getoutput(str(env['CC']).strip('[]') + ' -dumpversion')
-if versiontuple(compiler_version) < versiontuple("4.9.0") and compiler[0] == "/usr/bin/gcc":
+compiler_name = commands.getoutput(str(env['CC']).strip('[]') + ' --version')
+if versiontuple(compiler_version) < versiontuple("4.9.0") and compiler_name.startswith("gcc"):
     print('Enabling GCC Pre-4.9.0 OpenMP support')
     env['CCFLAGS'] += ['-DGCC_PRE_4_9']
 
