@@ -105,7 +105,7 @@ void GOMP_parallel_loop_dynamic (void (*fn) (void *), void *data, unsigned num_t
     mir_lock_create(&(loop->lock)); 
 
     // Create loop task on all workers
-    mir_loop_task_create((mir_tfunc_t) fn, (void*) data, loop, 1, "GOMP_for_dynamic_task");
+    mir_loop_task_create((mir_tfunc_t) fn, data, loop, 1, "GOMP_for_dynamic_task");
 
     // Wait for workers to finish
     mir_task_wait();
@@ -234,7 +234,7 @@ void GOMP_parallel_loop_static (void (*fn) (void *), void *data, unsigned num_th
     }
 
     // Create loop task on all workers
-    mir_loop_task_create((mir_tfunc_t) fn, (void*) data, loops, num_workers, "GOMP_for_static_task");
+    mir_loop_task_create((mir_tfunc_t) fn, data, loops, num_workers, "GOMP_for_static_task");
 
     // Wait for workers to finish
     mir_task_wait();
@@ -249,7 +249,7 @@ void GOMP_parse_schedule (void)
     if (env == NULL)
         return;
 
-    while (isspace ((unsigned char) *env))
+    while (isspace (*env))
         ++env;
     if (strncasecmp (env, "static", 6) == 0)
     {
@@ -264,7 +264,7 @@ void GOMP_parse_schedule (void)
     else
         goto unknown;
 
-    while (isspace ((unsigned char) *env))
+    while (isspace (*env))
         ++env;
     if (*env == '\0')
     {
@@ -274,7 +274,7 @@ void GOMP_parse_schedule (void)
     }
     if (*env++ != ',')
         goto unknown;
-    while (isspace ((unsigned char) *env))
+    while (isspace (*env))
         ++env;
     if (*env == '\0')
         goto invalid;
@@ -284,7 +284,7 @@ void GOMP_parse_schedule (void)
     if (errno)
         goto invalid;
 
-    while (isspace ((unsigned char) *end))
+    while (isspace (*end))
         ++end;
     if (*end != '\0')
         goto invalid;
@@ -360,7 +360,7 @@ void GOMP_parallel_start (void (*fn) (void *), void * data, unsigned num_threads
     MIR_RECORDER_STATE_BEGIN(MIR_STATE_TCREATE);
 
     // Create task
-    struct mir_task_t* task = mir_task_create_common((mir_tfunc_t) fn, (void*) data, (size_t)(0), 0, NULL, "GOMP_parallel_task");
+    struct mir_task_t* task = mir_task_create_common((mir_tfunc_t) fn, data, 0, 0, NULL, "GOMP_parallel_task");
     MIR_ASSERT(task != NULL);
 
     MIR_RECORDER_STATE_END(NULL, 0);
@@ -371,7 +371,7 @@ void GOMP_parallel_start (void (*fn) (void *), void * data, unsigned num_threads
     // Schedule on this worker.
     struct mir_worker_t* worker = mir_worker_get_context(); 
     MIR_ASSERT(worker != NULL);
-    mir_task_create_on_worker((mir_tfunc_t) fn, (void*) data, (size_t)(0), 0, NULL, "GOMP_parallel_task", worker->id);
+    mir_task_create_on_worker((mir_tfunc_t) fn, data, 0, 0, NULL, "GOMP_parallel_task", worker->id);
 #endif
 }/*}}}*/
 
@@ -381,7 +381,7 @@ void GOMP_parallel_end (void)
 
 #ifdef VALARAUKO_GCC_4_4_7
     // Stop profiling and book-keeping for parallel task
-    struct mir_worker_t* worker = (struct mir_worker_t*) pthread_getspecific (runtime->worker_index);
+    struct mir_worker_t* worker = pthread_getspecific (runtime->worker_index);
     MIR_ASSERT(worker->current_task != NULL);
     mir_task_execute_epilog(worker->current_task);
 #endif
@@ -407,10 +407,10 @@ void GOMP_task (void (*fn) (void *), void *data, void (*copyfn) (void *, void *)
         char* buf = mir_malloc_int(sizeof(char) * arg_size);
         MIR_ASSERT(buf != NULL);
         copyfn(buf, data); 
-        mir_task_create((mir_tfunc_t) fn, (void*) buf, (size_t)(arg_size), 0, NULL, task_name);
+        mir_task_create((mir_tfunc_t) fn, buf, (size_t)(arg_size), 0, NULL, task_name);
     }
     else
-        mir_task_create((mir_tfunc_t) fn, (void*) data, (size_t)(arg_size), 0, NULL, task_name);
+        mir_task_create((mir_tfunc_t) fn, data, (size_t)(arg_size), 0, NULL, task_name);
 }/*}}}*/
 
 void GOMP_taskwait (void)
