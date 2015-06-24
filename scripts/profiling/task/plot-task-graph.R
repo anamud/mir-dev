@@ -658,13 +658,13 @@ if(!is.na(path_weight) && !parsed$tree)
         tg <- remove.vertex.attribute(tg,"rpath")
 
         # Calc shape
-        tgdf <- get.data.frame(tg, what="vertices")
-        tgdf <- tgdf[!is.na(as.numeric(tgdf$label)),]
+        tg_df <- get.data.frame(tg, what="vertices")
+        tg_df <- tg_df[!is.na(as.numeric(tg_df$label)),]
         #tg_shape_interval_width <- work/(length(unique(tg_data$cpu_id))*mean(tg_data[,path_weight]))
         tg_shape_interval_width <- median(tg_vertices_df$exec_cycles)
         stopifnot(tg_shape_interval_width > 0)
-        tg_shape_breaks <- seq(0, max(tgdf$rdist) + 1 + tg_shape_interval_width, by=tg_shape_interval_width)
-        tg_shape <- hist(tgdf$rdist, breaks=tg_shape_breaks, plot=F)
+        tg_shape_breaks <- seq(0, max(tg_df$rdist) + 1 + tg_shape_interval_width, by=tg_shape_interval_width)
+        tg_shape <- hist(tg_df$rdist, breaks=tg_shape_breaks, plot=F)
 
         # Write out shape
         tg_out_file <- paste(gsub(". $", "", parsed$out), "-shape.pdf", sep="")
@@ -678,7 +678,7 @@ if(!is.na(path_weight) && !parsed$tree)
 
         ## THIS IS A MEANINGLESS FEATURE. TODO: Remove.
         ## Calc shape based on depth
-        #tg_shape_depth <- tgdf %>% group_by(depth) %>% summarise(count = n())
+        #tg_shape_depth <- tg_df %>% group_by(depth) %>% summarise(count = n())
 
         ## Write out shape based on depth
         #tg_out_file <- paste(gsub(". $", "", parsed$out), "-shape-depth.pdf", sep="")
@@ -769,7 +769,7 @@ if(parsed$analyze)
     print(paste("Number of edges =", length(E(base_tg))))
     print(paste("Number of tasks =", length(tg_data$task)))
     if(!parsed$cplengthonly)
-        print(paste("Number of critical tasks =", length(tgdf$task[tgdf$on_crit_path == 1])))
+        print(paste("Number of critical tasks =", length(tg_df$task[tg_df$on_crit_path == 1])))
     print(paste("Number of forks =", length(fork_nodes_unique)))
     print("Analysis:")
     sink()
@@ -785,7 +785,7 @@ if(parsed$analyze)
         sink()
         if(!parsed$cplengthonly)
         {
-            prob_task_critical <- subset(tgdf, mem_hier_util > mem_hier_util_thresh & on_crit_path == 1, select=task)
+            prob_task_critical <- subset(tg_df, mem_hier_util > mem_hier_util_thresh & on_crit_path == 1, select=task)
             sink(tg_analysis_out_file, append=T)
             print(paste(length(prob_task_critical$task), "critical tasks have mem_hier_util >", mem_hier_util_thresh))
             sink()
@@ -810,7 +810,7 @@ if(parsed$analyze)
         sink()
         if(!parsed$cplengthonly)
         {
-            prob_task_critical <- subset(tgdf, mem_fp > mem_fp_thresh & on_crit_path == 1, select=task)
+            prob_task_critical <- subset(tg_df, mem_fp > mem_fp_thresh & on_crit_path == 1, select=task)
             sink(tg_analysis_out_file, append=T)
             print(paste(length(prob_task_critical$task), "critical tasks have mem_fp >", mem_fp_thresh))
             sink()
@@ -835,7 +835,7 @@ if(parsed$analyze)
         sink()
         if(!parsed$cplengthonly)
         {
-            prob_task_critical <- subset(tgdf, compute_int < compute_int_thresh & on_crit_path == 1, select=task)
+            prob_task_critical <- subset(tg_df, compute_int < compute_int_thresh & on_crit_path == 1, select=task)
             sink(tg_analysis_out_file, append=T)
             print(paste(length(prob_task_critical$task), "critical tasks have compute_int <", compute_int_thresh))
             sink()
@@ -860,7 +860,7 @@ if(parsed$analyze)
         sink()
         if(!parsed$cplengthonly)
         {
-            prob_task_critical <- subset(tgdf, work_deviation > work_deviation_thresh & on_crit_path == 1, select=task)
+            prob_task_critical <- subset(tg_df, work_deviation > work_deviation_thresh & on_crit_path == 1, select=task)
             sink(tg_analysis_out_file, append=T)
             print(paste(length(prob_task_critical$task), "critical tasks have work_deviation >", work_deviation_thresh))
             sink()
@@ -885,7 +885,7 @@ if(parsed$analyze)
         sink()
         if(!parsed$cplengthonly)
         {
-            prob_task_critical <- subset(tgdf, parallel_benefit < parallel_benefit_thresh & on_crit_path == 1, select=task)
+            prob_task_critical <- subset(tg_df, parallel_benefit < parallel_benefit_thresh & on_crit_path == 1, select=task)
             sink(tg_analysis_out_file, append=T)
             print(paste(length(prob_task_critical$task), "critical tasks have parallel_benefit <", parallel_benefit_thresh))
             sink()
@@ -910,7 +910,7 @@ if(parsed$analyze)
         sink()
         for (r in ranges)
         {
-            prob_task <- subset(tgdf, rdist < tg_shape$breaks[r+1] & rdist > tg_shape$breaks[r], select=label)
+            prob_task <- subset(tg_df, rdist < tg_shape$breaks[r+1] & rdist > tg_shape$breaks[r], select=label)
             prob_task_index <- match(as.character(prob_task$label), V(prob_tg)$name)
             #prob_task_color <- get.vertex.attribute(prob_tg, name='cpu_id_to_color', index=prob_task_index)
             prob_task_color <- "#FF0000"
@@ -936,7 +936,7 @@ if(parsed$analyze)
         #sink()
         #for (d in prob_depths)
         #{
-            #prob_task <- subset(tgdf, depth==d, select=label)
+            #prob_task <- subset(tg_df, depth==d, select=label)
             #prob_task_index <- match(as.character(prob_task$label), V(prob_tg)$name)
             ## Get color
             ##prob_task_color <- get.vertex.attribute(prob_tg, name='cpu_id_to_color', index=prob_task_index)
