@@ -672,20 +672,21 @@ if(!is.na(path_weight) && !parsed$tree)
         dev.off()
         if(parsed$verbose) print(paste("Wrote file:", tg_out_file))
 
-        # Calc shape based on depth
-        tg_shape_depth <- tgdf %>% group_by(depth) %>% summarise(count = n())
+        ## THIS IS A MEANINGLESS FEATURE. TODO: Remove.
+        ## Calc shape based on depth
+        #tg_shape_depth <- tgdf %>% group_by(depth) %>% summarise(count = n())
 
-        # Write out shape based on depth
-        tg_out_file <- paste(gsub(". $", "", parsed$out), "-shape-depth.pdf", sep="")
-        pdf(tg_out_file)
-        plot(tg_shape_depth, freq=T, xlab="Distance from START in node count", ylab="Tasks", main="Instantaneous task parallelism", col="white")
-        lines(tg_shape_depth, type="p")
-        lines(tg_shape_depth, type="h")
-        abline(h = length(unique(tg_data$cpu_id)), col = "blue", lty=2)
-        abline(h = work/lpl , col = "red", lty=1)
-        legend("top", legend = c("Number of cores", "Exposed task parallelism"), fill = c("blue", "red"))
-        dev.off()
-        if(parsed$verbose) print(paste("Wrote file:", tg_out_file))
+        ## Write out shape based on depth
+        #tg_out_file <- paste(gsub(". $", "", parsed$out), "-shape-depth.pdf", sep="")
+        #pdf(tg_out_file)
+        #plot(tg_shape_depth, freq=T, xlab="Distance from START in node count", ylab="Tasks", main="Instantaneous task parallelism", col="white")
+        #lines(tg_shape_depth, type="p")
+        #lines(tg_shape_depth, type="h")
+        #abline(h = length(unique(tg_data$cpu_id)), col = "blue", lty=2)
+        #abline(h = work/lpl , col = "red", lty=1)
+        #legend("top", legend = c("Number of cores", "Exposed task parallelism"), fill = c("blue", "red"))
+        #dev.off()
+        #if(parsed$verbose) print(paste("Wrote file:", tg_out_file))
     }
     if(parsed$timing) toc("Critical path calculation")
 } else {
@@ -917,35 +918,36 @@ if(parsed$analyze)
         if(parsed$verbose) print(paste("Wrote file:", tg_out_file))
     }
 
-    # Parallelism problem (based on depth)
-    if(!parsed$cplengthonly && !parsed$tree)
-    {
-        prob_tg <- base_tg
-        parallelism_thresh <- length(unique(tg_data$cpu_id))
-        prob_depths <- tg_shape_depth$depth[which(tg_shape_depth$count < parallelism_thresh)]
-        prob_depth_counts <- sort(unique(tg_shape_depth$count[which(tg_shape_depth$count < parallelism_thresh)]))
-        prob_depth_colors <- heat.colors(length(prob_depth_counts))
-        sink(tg_analysis_out_file, append=T)
-        print(paste(length(prob_depths), "shape (depth) bins out of", length(tg_shape_depth$count), "have parallelism <", parallelism_thresh))
-        sink()
-        for (d in prob_depths)
-        {
-            prob_task <- subset(tgdf, depth==d, select=label)
-            prob_task_index <- match(as.character(prob_task$label), V(prob_tg)$name)
-            # Get color
-            #prob_task_color <- get.vertex.attribute(prob_tg, name='cpu_id_to_color', index=prob_task_index)
-            #prob_task_color <- "#000000"
-            prob_task_color <- prob_depth_colors[which(prob_depth_counts == tg_shape_depth$count[which(tg_shape_depth$depth == d)])]
-            prob_tg <- set.vertex.attribute(prob_tg, name='color', index=prob_task_index, value=prob_task_color)
-            prob_tg <- set.vertex.attribute(prob_tg, name='problematic', index=prob_task_index, value=1)
-        }
-        tg_out_file <- paste(gsub(". $", "", parsed$out), "-problem-parallelism-depth.graphml", sep="")
-        res <- write.graph(prob_tg, file=tg_out_file, format="graphml")
-        if(parsed$verbose) print(paste("Wrote file:", tg_out_file))
-        tg_out_file <- paste(gsub(". $", "", parsed$out), "-problem-parallelism-depth.parallelism_to_color", sep="")
-        write.csv(data.frame(value=prob_depth_counts, color=prob_depth_colors), tg_out_file, row.names=F)
-        if(parsed$verbose) print(paste("Wrote file:", tg_out_file))
-    }
+    ## THIS IS A MEANINGLESS FEATURE. TODO: Remove.
+    ## Parallelism problem (based on depth)
+    #if(!parsed$cplengthonly && !parsed$tree)
+    #{
+        #prob_tg <- base_tg
+        #parallelism_thresh <- length(unique(tg_data$cpu_id))
+        #prob_depths <- tg_shape_depth$depth[which(tg_shape_depth$count < parallelism_thresh)]
+        #prob_depth_counts <- sort(unique(tg_shape_depth$count[which(tg_shape_depth$count < parallelism_thresh)]))
+        #prob_depth_colors <- heat.colors(length(prob_depth_counts))
+        #sink(tg_analysis_out_file, append=T)
+        #print(paste(length(prob_depths), "shape (depth) bins out of", length(tg_shape_depth$count), "have parallelism <", parallelism_thresh))
+        #sink()
+        #for (d in prob_depths)
+        #{
+            #prob_task <- subset(tgdf, depth==d, select=label)
+            #prob_task_index <- match(as.character(prob_task$label), V(prob_tg)$name)
+            ## Get color
+            ##prob_task_color <- get.vertex.attribute(prob_tg, name='cpu_id_to_color', index=prob_task_index)
+            ##prob_task_color <- "#000000"
+            #prob_task_color <- prob_depth_colors[which(prob_depth_counts == tg_shape_depth$count[which(tg_shape_depth$depth == d)])]
+            #prob_tg <- set.vertex.attribute(prob_tg, name='color', index=prob_task_index, value=prob_task_color)
+            #prob_tg <- set.vertex.attribute(prob_tg, name='problematic', index=prob_task_index, value=1)
+        #}
+        #tg_out_file <- paste(gsub(". $", "", parsed$out), "-problem-parallelism-depth.graphml", sep="")
+        #res <- write.graph(prob_tg, file=tg_out_file, format="graphml")
+        #if(parsed$verbose) print(paste("Wrote file:", tg_out_file))
+        #tg_out_file <- paste(gsub(". $", "", parsed$out), "-problem-parallelism-depth.parallelism_to_color", sep="")
+        #write.csv(data.frame(value=prob_depth_counts, color=prob_depth_colors), tg_out_file, row.names=F)
+        #if(parsed$verbose) print(paste("Wrote file:", tg_out_file))
+    #}
 
     # Scatter problem
     if("cpu_id" %in% colnames(tg_data) && !parsed$tree)
