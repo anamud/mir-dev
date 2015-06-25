@@ -216,8 +216,14 @@ void mir_task_create(mir_tfunc_t tfunc, void* data, size_t data_size, unsigned i
 {/*{{{*/
     MIR_ASSERT(tfunc != NULL);
 
+    mir_task_create_on_worker(tfunc, data, data_size, num_data_footprints,
+			      data_footprints, name, -1);
+}/*}}}*/
+
+void mir_task_create_on_worker(mir_tfunc_t tfunc, void* data, size_t data_size, unsigned int num_data_footprints, struct mir_data_footprint_t* data_footprints, const char* name, int workerid)
+{/*{{{*/
     // To inline or not to line, that is the grand question!
-    if(inline_necessary() == 1)
+    if(workerid < 0 && inline_necessary() == 1)
     {
         tfunc(data);
         // Update worker stats
@@ -229,12 +235,6 @@ void mir_task_create(mir_tfunc_t tfunc, void* data, size_t data_size, unsigned i
         // FIXME: What about reporting inlining to the Pin profiler!?
     }
 
-    mir_task_create_on_worker(tfunc, data, data_size, num_data_footprints,
-			      data_footprints, name, -1);
-}/*}}}*/
-
-void mir_task_create_on_worker(mir_tfunc_t tfunc, void* data, size_t data_size, unsigned int num_data_footprints, struct mir_data_footprint_t* data_footprints, const char* name, int workerid)
-{/*{{{*/
     MIR_RECORDER_STATE_BEGIN(MIR_STATE_TCREATE);
 
     // Create task
