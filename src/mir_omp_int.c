@@ -17,7 +17,8 @@
 
 void GOMP_barrier (void)
 {/*{{{*/
-    MIR_DEBUG(MIR_DEBUG_STR "Note: GOMP_barrier is dummy.\n");
+    MIR_DEBUG(MIR_DEBUG_STR "Note: GOMP_barrier is not tested rigorously.\n");
+    mir_task_wait_int(runtime->omp_barrier);
 }/*}}}*/
 
 /* critical.c */
@@ -443,7 +444,15 @@ bool GOMP_single_start (void)
     // Return true for all tasks executing outline functions but avoid
     // returning true for the non-task in the starting thread.
     struct mir_worker_t* worker = mir_worker_get_context();
-    return worker->current_task;
+    if (worker->current_task)
+    {
+        __sync_fetch_and_add(&(runtime->omp_barrier->count), 1);
+        return true;
+    }
+    else
+    {
+        return false;
+    }
 }/*}}}*/
 
 int omp_get_thread_num (void)
