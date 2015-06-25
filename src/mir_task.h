@@ -131,8 +131,6 @@ static void T_DBG(char*msg, struct mir_task_t *t)
 #define T_DBG(x,y)
 #endif
 
-/*LIBINT*/ void mir_task_create(mir_tfunc_t tfunc, void* data, size_t data_size, unsigned int num_data_footprints, struct mir_data_footprint_t* data_footprints, const char* name);
-
 struct mir_task_t* mir_task_create_common(mir_tfunc_t tfunc, void* data, size_t data_size, unsigned int num_data_footprints, const struct mir_data_footprint_t* data_footprints, const char* name);
 
 /*LIBINT*/ void mir_task_create_on_worker(mir_tfunc_t tfunc, void* data, size_t data_size, unsigned int num_data_footprints, struct mir_data_footprint_t* data_footprints, const char* name, int target);

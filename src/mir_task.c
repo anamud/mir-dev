@@ -212,14 +212,6 @@ static inline void mir_task_schedule_on_worker(struct mir_task_t* task, int work
     T_DBG("Sb", task);
 }/*}}}*/
 
-void mir_task_create(mir_tfunc_t tfunc, void* data, size_t data_size, unsigned int num_data_footprints, struct mir_data_footprint_t* data_footprints, const char* name)
-{/*{{{*/
-    MIR_ASSERT(tfunc != NULL);
-
-    mir_task_create_on_worker(tfunc, data, data_size, num_data_footprints,
-			      data_footprints, name, -1);
-}/*}}}*/
-
 void mir_task_create_on_worker(mir_tfunc_t tfunc, void* data, size_t data_size, unsigned int num_data_footprints, struct mir_data_footprint_t* data_footprints, const char* name, int workerid)
 {/*{{{*/
     // To inline or not to line, that is the grand question!
