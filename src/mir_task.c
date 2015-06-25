@@ -194,7 +194,6 @@ void mir_task_schedule_on_worker(struct mir_task_t* task, int workerid)
         MIR_ASSERT(worker != NULL);
         // Push task to the scheduling policy
         pushed = runtime->sched_pol->push(worker, task);
-
     }
     else
     {
