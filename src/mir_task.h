@@ -150,6 +150,8 @@ struct mir_mem_node_dist_t* mir_task_get_mem_node_dist(struct mir_task_t* task, 
 
 struct mir_twc_t* mir_twc_create();
 
+void mir_task_wait_int(struct mir_twc_t* twc);
+
 /*LIBINT*/ void mir_task_wait();
 
 void mir_task_list_write_header_to_file(FILE* file);

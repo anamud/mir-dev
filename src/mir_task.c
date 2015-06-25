@@ -474,16 +474,9 @@ struct mir_twc_t* mir_twc_create()
     return twc;
 }/*}}}*/
 
-void mir_task_wait()
+void mir_task_wait_int(struct mir_twc_t* twc)
 {/*{{{*/
     MIR_RECORDER_STATE_BEGIN(MIR_STATE_TSYNC);
-
-    struct mir_worker_t* worker = pthread_getspecific (runtime->worker_index);
-    struct mir_twc_t* twc;
-    if(worker->current_task)
-        twc = worker->current_task->ctwc;
-    else
-        twc = runtime->ctwc;
 
     // Prevent empty synchronizations
     // This upsets finding next forks in the task graph plotter
@@ -511,6 +504,20 @@ void mir_task_wait()
        twc->count_per_worker[i] = 0;
 
     MIR_RECORDER_STATE_END(NULL, 0);
+
+    return;
+}/*}}}*/
+
+void mir_task_wait()
+{/*{{{*/
+    struct mir_worker_t* worker = pthread_getspecific (runtime->worker_index);
+    struct mir_twc_t* twc;
+    if(worker->current_task)
+        twc = worker->current_task->ctwc;
+    else
+        twc = runtime->ctwc;
+
+    mir_task_wait_int(twc);
 
     return;
 }/*}}}*/
