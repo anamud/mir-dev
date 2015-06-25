@@ -79,7 +79,6 @@ struct mir_twc_t
 {/*{{{*/
     unsigned long count;
     unsigned long num_passes;
-    struct mir_task_t* parent;
     unsigned int count_per_worker[MIR_WORKER_MAX_COUNT];
 };/*}}}*/
 

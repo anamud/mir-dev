@@ -473,9 +473,6 @@ struct mir_twc_t* mir_twc_create()
     // Reset num times passed
     twc->num_passes = 0;
 
-    // Set parent context
-    twc->parent = mir_worker_get_context()->current_task;
-
     return twc;
 }/*}}}*/
 
