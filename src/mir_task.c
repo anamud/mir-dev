@@ -56,7 +56,7 @@ static inline int inline_necessary()
     return 0;
 }/*}}}*/
 
-struct mir_task_t* mir_task_create_common(mir_tfunc_t tfunc, void* data, size_t data_size, unsigned int num_data_footprints, const struct mir_data_footprint_t* data_footprints, const char* name)
+struct mir_task_t* mir_task_create_common(mir_tfunc_t tfunc, void* data, size_t data_size, unsigned int num_data_footprints, const struct mir_data_footprint_t* data_footprints, const char* name, struct mir_omp_team_t *myteam)
 {/*{{{*/
     MIR_ASSERT(tfunc != NULL);
 
@@ -131,6 +131,7 @@ struct mir_task_t* mir_task_create_common(mir_tfunc_t tfunc, void* data, size_t 
     struct mir_worker_t* worker = mir_worker_get_context(); 
     MIR_ASSERT(worker != NULL);
     task->parent = worker->current_task;
+    task->team = myteam;
 
     // Wait counters
     // For children
@@ -211,7 +212,7 @@ static inline void mir_task_schedule_on_worker(struct mir_task_t* task, int work
     T_DBG("Sb", task);
 }/*}}}*/
 
-void mir_task_create_on_worker(mir_tfunc_t tfunc, void* data, size_t data_size, unsigned int num_data_footprints, struct mir_data_footprint_t* data_footprints, const char* name, int workerid)
+void mir_task_create_on_worker(mir_tfunc_t tfunc, void* data, size_t data_size, unsigned int num_data_footprints, struct mir_data_footprint_t* data_footprints, const char* name, struct mir_omp_team_t *myteam, int workerid)
 {/*{{{*/
     // To inline or not to line, that is the grand question!
     if(workerid < 0 && inline_necessary() == 1)
@@ -231,7 +232,7 @@ void mir_task_create_on_worker(mir_tfunc_t tfunc, void* data, size_t data_size, 
     MIR_RECORDER_STATE_BEGIN(MIR_STATE_TCREATE);
 
     // Create task
-    struct mir_task_t* task = mir_task_create_common(tfunc, data, data_size, num_data_footprints, data_footprints, name);
+    struct mir_task_t* task = mir_task_create_common(tfunc, data, data_size, num_data_footprints, data_footprints, name, myteam);
     MIR_ASSERT(task != NULL);
 
     // Schedule task
@@ -245,12 +246,16 @@ void mir_loop_task_create(mir_tfunc_t tfunc, void* data, struct mir_loop_des_t* 
     // Create the task
     MIR_RECORDER_STATE_BEGIN(MIR_STATE_TCREATE);
 
+    struct mir_worker_t* worker = mir_worker_get_context();
+    struct mir_omp_team_t *team;
+    team = worker->current_task ? worker->current_task->team : NULL;
+
     // Create task on all workers
     int num_workers = runtime->num_workers;
     for(int i=0; i<num_workers; i++)
     {
         // Create task
-        struct mir_task_t* task = mir_task_create_common(tfunc, data, 0, 0, NULL, name);
+        struct mir_task_t* task = mir_task_create_common(tfunc, data, 0, 0, NULL, name, team);
         MIR_ASSERT(task != NULL);
 
         // Set loop

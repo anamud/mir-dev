@@ -11,6 +11,7 @@
 #include "mir_worker.h"
 #include "mir_lock.h"
 #include "mir_recorder.h"
+#include "mir_team.h"
 
 /* barrier.c */
 
@@ -357,7 +358,11 @@ void GOMP_parallel_start (void (*fn) (void *), void * data, unsigned num_threads
     MIR_RECORDER_STATE_BEGIN(MIR_STATE_TCREATE);
 
     // Create task
-    struct mir_task_t* task = mir_task_create_common((mir_tfunc_t) fn, data, 0, 0, NULL, "GOMP_parallel_task");
+    struct mir_worker_t* worker = mir_worker_get_context();
+    struct mir_omp_team_t *prevteam;
+    prevteam = worker->current_task ? worker->current_task->team : NULL;
+    struct mir_omp_team_t *team = mir_new_omp_team(prevteam, num_threads);
+    struct mir_task_t* task = mir_task_create_common((mir_tfunc_t) fn, data, 0, 0, NULL, "GOMP_parallel_task", team);
     MIR_ASSERT(task != NULL);
 
     // Older GCCs force us to create a dummy task for the outline function
@@ -380,12 +385,18 @@ void GOMP_parallel_end (void)
 {/*{{{*/
     mir_task_wait();
 
-#ifdef GCC_PRE_4_9
-    // Stop profiling and book-keeping for parallel task
     struct mir_worker_t* worker = pthread_getspecific (runtime->worker_index);
     MIR_ASSERT(worker->current_task != NULL);
+    struct mir_omp_team_t *team = worker->current_task->team;
+
+#ifdef GCC_PRE_4_9
+    // Stop profiling and book-keeping for parallel task
     mir_task_execute_epilog(worker->current_task);
 #endif
+
+    // Last task so unlink team.
+    if (team != NULL)
+        team->prev = NULL;
 
     mir_soft_destroy();
 }/*}}}*/
@@ -403,15 +414,21 @@ void GOMP_task (void (*fn) (void *), void *data, void (*copyfn) (void *, void *)
     char task_name[MIR_SHORT_NAME_LEN];
     sprintf(task_name, "%p", &fn);
 
+    struct mir_worker_t* worker = mir_worker_get_context(); 
+    MIR_ASSERT(worker != NULL);
+
+    struct mir_omp_team_t *team;
+    team = worker->current_task ? worker->current_task->team : NULL;
+
     if(copyfn)
     {
         char* buf = mir_malloc_int(sizeof(char) * arg_size);
         MIR_ASSERT(buf != NULL);
         copyfn(buf, data); 
-        mir_task_create_on_worker((mir_tfunc_t) fn, buf, (size_t)(arg_size), 0, NULL, task_name, -1);
+        mir_task_create_on_worker((mir_tfunc_t) fn, buf, (size_t)(arg_size), 0, NULL, task_name, team, -1);
     }
     else
-        mir_task_create_on_worker((mir_tfunc_t) fn, data, (size_t)(arg_size), 0, NULL, task_name, -1);
+        mir_task_create_on_worker((mir_tfunc_t) fn, data, (size_t)(arg_size), 0, NULL, task_name, team, -1);
 }/*}}}*/
 
 void GOMP_taskwait (void)
