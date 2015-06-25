@@ -42,7 +42,7 @@ static void mir_preconfig_init()
     runtime->worker_cpu_map = mir_malloc_int(sizeof(uint16_t) * runtime->arch->num_cores);
     MIR_ASSERT(runtime->worker_cpu_map != NULL);
     for (int i = 0; i < runtime->num_workers; i++)
-        runtime->worker_cpu_map[i] = (uint16_t) i;
+        runtime->worker_cpu_map[i] = i;
     int rval = pthread_key_create(&runtime->worker_index, NULL);
     MIR_ASSERT(rval == 0);
 
@@ -77,7 +77,7 @@ static void mir_postconfig_init()
     {
         /*{{{*/
         // Create shared memory
-        runtime->ofp_shmid = shmget((int)(MIR_OFP_SHM_KEY), MIR_OFP_SHM_SIZE, IPC_CREAT | 0666);
+        runtime->ofp_shmid = shmget(MIR_OFP_SHM_KEY, MIR_OFP_SHM_SIZE, IPC_CREAT | 0666);
         if (runtime->ofp_shmid < 0) MIR_ABORT(MIR_ERROR_STR "shmget failed [%d]!\n", runtime->ofp_shmid);
 
         // Attach
