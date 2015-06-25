@@ -2,8 +2,15 @@
 #define MIR_RECORDER_H 1
 
 #include <stdint.h>
-#include <stdlib.h>
 #include <stdio.h>
+
+#ifdef MIR_RECORDER_USE_HW_PERF_COUNTERS
+#ifdef __tile__
+#include <arch/cycle.h>
+#else
+#include <papi.h>
+#endif
+#endif
 
 #include "mir_types.h"
 

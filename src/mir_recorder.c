@@ -35,7 +35,6 @@ struct _perf_ctr_map
 
 #ifdef __tile__
 
-#include <arch/cycle.h>
 #define SPR_PERF_COUNT_CTL  0x4207
 #define SPR_AUX_PERF_COUNT_CTL  0x6007
 #define SPR_PERF_COUNT_0 0x4205
@@ -58,7 +57,6 @@ struct _perf_ctr_map perf_ctr_map[4] = {
 
 #else
 
-#include "papi.h"
 // Ignore the codes 0x0
 // Add as many perf counters as MIR_RECORDER_NUM_PAPI_HWPC 
 struct _perf_ctr_map perf_ctr_map[MIR_RECORDER_NUM_PAPI_HWPC] = {

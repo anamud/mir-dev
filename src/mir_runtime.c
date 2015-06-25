@@ -13,12 +13,6 @@
 #include "mir_omp_int.h"
 #include "mir_mem_pol.h"
 
-#ifdef MIR_RECORDER_USE_HW_PERF_COUNTERS
-#ifndef __tile__
-#include "papi.h"
-#endif
-#endif
-
 // The global runtime object
 struct mir_runtime_t* runtime = NULL;
 
