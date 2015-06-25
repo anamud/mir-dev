@@ -21,8 +21,6 @@
 #include <math.h>
 #include <unistd.h>
 
-extern struct mir_runtime_t* runtime;
-
 // FIXME: nodes are inconsistently u16
 struct mem_header_t
 {/*{{{*/

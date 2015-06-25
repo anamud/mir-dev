@@ -12,8 +12,6 @@
 #include "mir_lock.h"
 #include "mir_recorder.h"
 
-extern struct mir_runtime_t* runtime;
-
 /* barrier.c */
 
 void GOMP_barrier (void)

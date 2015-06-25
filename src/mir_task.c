@@ -16,7 +16,6 @@
 #include <string.h>
 #include <alloca.h>
 
-extern struct mir_runtime_t* runtime;
 extern uint32_t g_num_tasks_waiting;
 
 // FIXME: Make these per-worker

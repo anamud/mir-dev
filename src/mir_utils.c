@@ -8,8 +8,6 @@
 #include <time.h>
 #include <errno.h>
 
-extern struct mir_runtime_t* runtime; 
-
 int mir_pstack_set_size(size_t sz)
 {/*{{{*/
     struct rlimit rl;

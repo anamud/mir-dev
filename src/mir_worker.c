@@ -21,7 +21,6 @@ uint32_t g_worker_status_board = 0;
 uint32_t g_num_tasks_waiting = 0;
 
 extern uint32_t g_sig_worker_alive;
-extern struct mir_runtime_t* runtime;
 
 static void* mir_worker_loop(void* arg)
 {/*{{{*/

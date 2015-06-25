@@ -11,8 +11,6 @@
 #include "mir_runtime.h"
 #include "mir_worker.h"
 
-extern struct mir_runtime_t* runtime;
-
 const char* mir_state_name_string[MIR_RECORDER_NUM_STATES] = 
 {/*{{{*/
     "TIDLE",

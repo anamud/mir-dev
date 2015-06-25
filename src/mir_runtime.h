@@ -44,6 +44,8 @@ struct mir_runtime_t
     int enable_ofp_handshake;
 };/*}}}*/
 
+extern struct mir_runtime_t* runtime;
+
 /*LIBINT*/ void mir_create();
 
 /*LIBINT*/ void mir_soft_destroy();
