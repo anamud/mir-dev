@@ -1,5 +1,15 @@
-Description: This is the source repository of the MIR task-based runtime system library. To get started with using MIR, please read docs/MIR_UG.pdf. The name MIR is inspired by Mir Publishers from Moscow. I enjoyed Mir books on electronics and geometry during my childhood. 
+Description: This is the source repository of the MIR task-based runtime system library. To get started with using MIR, please read docs/MIR_UG.pdf. The name MIR is inspired by Mir Publishers from Moscow. I enjoyed Mir books on electronics and geometry during my childhood.
+
 Alternative names of the MIR runtime system: mir, Mir.
-Author:  Ananya Muddukrishna.
+
+Author: Ananya Muddukrishna.
+
 E-mail: ananya@kth.se.
 
+Contributors: Peter A. Jonsson.
+
+Selected Publications:
+
+[1] Muddukrishna, Ananya, P. A. Jonsson, and M. Brorsson, “Characterizing task-based OpenMP programs,” PLoS ONE, vol. 10, 04 2015.
+
+[2] Muddukrishna, Ananya, P. A. Jonsson, and M. Brorsson, “Locality-aware task scheduling and data distribution for OpenMP programs on NUMA systems and manycore processors,” Scientific Programming, no. 981759, 2015.
