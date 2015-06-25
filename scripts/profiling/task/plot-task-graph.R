@@ -67,6 +67,7 @@ if(parsed$timing) tic(type="elapsed")
 tg_data <- tg_data[!is.na(tg_data$parent),]
 if(parsed$timing) toc("Removing non-sense data")
 
+browser()
 # Critical path calculation weight
 if("ins_count" %in% colnames(tg_data)) {
     path_weight <- "ins_count"
@@ -327,7 +328,7 @@ for(attrib in attrib_color_scaled)
     if(substring(attrib, 1, 1) == "-")
     {
         invert_colors <- T
-        attrib <- substring(attrib, 2, length(attrib))
+        attrib <- substring(attrib, 2, nchar(attrib))
     }
     if(attrib %in% colnames(tg_data))
     {
@@ -336,7 +337,7 @@ for(attrib in attrib_color_scaled)
         if(invert_colors)
         {
             if(length(attrib_unique) == 1) p_task_color <- task_color_pal[task_color_bins]
-            else p_task_color <- task_color_pal[task_color_bins - as.numeric(cut(tg_data[,attrib], task_color_bins))]
+            else p_task_color <- rev(task_color_pal)[as.numeric(cut(tg_data[,attrib], task_color_bins))]
         } else {
             if(length(attrib_unique) == 1) p_task_color <- task_color_pal[1]
             else p_task_color <- task_color_pal[as.numeric(cut(tg_data[,attrib], task_color_bins))]
