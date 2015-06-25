@@ -64,7 +64,7 @@ struct mir_task_t* mir_task_create_common(mir_tfunc_t tfunc, void* data, size_t 
     // Overhead measurement
     uint64_t start_instant = mir_get_cycles();
 
-    struct mir_task_t* task = NULL;
+    struct mir_task_t* task;
 #ifdef MIR_TASK_ALLOCATE_ON_STACK
     task = alloca (sizeof(struct mir_task_t));
 #else
@@ -500,7 +500,7 @@ void mir_task_wait()
     MIR_RECORDER_STATE_BEGIN(MIR_STATE_TSYNC);
 
     struct mir_worker_t* worker = pthread_getspecific (runtime->worker_index);
-    struct mir_twc_t* twc = NULL;
+    struct mir_twc_t* twc;
     if(worker->current_task)
         twc = worker->current_task->ctwc;
     else
