@@ -9,7 +9,7 @@
 #include "arch/mir_arch.h"
 #include "mir_omp_int.h"
 
-BEGIN_C_DECLS 
+BEGIN_C_DECLS
 
 struct mir_runtime_t
 {/*{{{*/
@@ -53,5 +53,5 @@ extern struct mir_runtime_t* runtime;
 
 /*LIBINT*/ void mir_destroy();
 
-END_C_DECLS 
+END_C_DECLS
 #endif //MIR_RUNTIME_H
