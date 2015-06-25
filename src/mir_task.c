@@ -176,29 +176,6 @@ struct mir_task_t* mir_task_create_common(mir_tfunc_t tfunc, void* data, size_t 
     return task;
 }/*}}}*/
 
-static inline void mir_task_schedule(struct mir_task_t* task)
-{/*{{{*/
-    MIR_ASSERT(task != NULL);
-
-    // Overhead measurement
-    uint64_t start_instant = mir_get_cycles();
-
-    struct mir_worker_t* worker = mir_worker_get_context(); 
-    MIR_ASSERT(NULL != worker);
-
-    // Push task to the scheduling policy
-    int pushed = runtime->sched_pol->push(worker, task);
-
-    // Overhead measurement
-    if(pushed == 1)
-    {
-        if(worker->current_task) worker->current_task->overhead_cycles += (mir_get_cycles() - start_instant);
-    }
-
-    //__sync_synchronize();
-    T_DBG("Sb", task);
-}/*}}}*/
-
 static inline void mir_task_schedule_on_worker(struct mir_task_t* task, int workerid)
 {/*{{{*/
     MIR_ASSERT(workerid < runtime->num_workers);
@@ -207,13 +184,29 @@ static inline void mir_task_schedule_on_worker(struct mir_task_t* task, int work
     // Overhead measurement
     uint64_t start_instant = mir_get_cycles();
 
-    // Push task to specific worker 
-    struct mir_worker_t* worker = &runtime->workers[workerid];
-    MIR_ASSERT(worker != NULL);
-    mir_worker_push(worker, task);
+
+    struct mir_worker_t* worker;
+    int pushed;
+
+    if (workerid < 0)
+    {
+        worker = mir_worker_get_context();
+        MIR_ASSERT(worker != NULL);
+        // Push task to the scheduling policy
+        pushed = runtime->sched_pol->push(worker, task);
+
+    }
+    else
+    {
+        worker = &runtime->workers[workerid];
+        MIR_ASSERT(worker != NULL);
+        // Push task to specific worker 
+        mir_worker_push(worker, task);
+        pushed = 1;
+    }
 
     // Overhead measurement
-    if(worker->current_task) worker->current_task->overhead_cycles += (mir_get_cycles() - start_instant);
+    if(pushed == 1 && worker->current_task) worker->current_task->overhead_cycles += (mir_get_cycles() - start_instant);
 
     //__sync_synchronize();
     T_DBG("Sb", task);
@@ -244,7 +237,7 @@ void mir_task_create(mir_tfunc_t tfunc, void* data, size_t data_size, unsigned i
     MIR_ASSERT(task != NULL);
 
     // Schedule task
-    mir_task_schedule(task);
+    mir_task_schedule_on_worker(task, -1);
 
     MIR_RECORDER_STATE_END(NULL, 0);
 }/*}}}*/
