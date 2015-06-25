@@ -180,16 +180,18 @@ static inline void mir_task_schedule(struct mir_task_t* task)
 {/*{{{*/
     MIR_ASSERT(task != NULL);
 
+    struct mir_worker_t* worker = mir_worker_get_context(); 
+    MIR_ASSERT(NULL != worker);
+
     // Overhead measurement
     uint64_t start_instant = mir_get_cycles();
 
     // Push task to the scheduling policy
-    int pushed = runtime->sched_pol->push(task);
+    int pushed = runtime->sched_pol->push(worker, task);
 
     // Overhead measurement
     if(pushed == 1)
     {
-        struct mir_worker_t* worker = mir_worker_get_context(); MIR_ASSERT(worker != NULL); 
         if(worker->current_task) worker->current_task->overhead_cycles += (mir_get_cycles() - start_instant);
     }
 

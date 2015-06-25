@@ -90,13 +90,10 @@ void destroy_ws ()
     sp->queues = NULL;
 }/*}}}*/
 
-int push_ws (struct mir_task_t* task)
+int push_ws (struct mir_worker_t* worker, struct mir_task_t* task)
 {/*{{{*/
     MIR_ASSERT(NULL != task);
     //MIR_RECORDER_STATE_BEGIN(MIR_STATE_TSCHED);
-
-    // Get this worker!
-    struct mir_worker_t* worker = mir_worker_get_context(); 
     MIR_ASSERT(NULL != worker);
 
     int pushed = 1;

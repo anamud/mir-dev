@@ -150,13 +150,12 @@ static inline int is_data_dist_significant(struct mir_mem_node_dist_t* dist)
     return 1;
 }/*}}}*/
 
-int push_numa (struct mir_task_t* task)
+int push_numa (struct mir_worker_t* this_worker, struct mir_task_t* task)
 {/*{{{*/
     MIR_ASSERT(NULL != task);
     //MIR_RECORDER_STATE_BEGIN(MIR_STATE_TSCHED);
 
     struct mir_worker_t* least_cost_worker = NULL;
-    struct mir_worker_t* this_worker = mir_worker_get_context();
     MIR_ASSERT(NULL != this_worker);
     int push_to_alt_queue = 0;
     int pushed = 1;
