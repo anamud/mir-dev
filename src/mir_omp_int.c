@@ -392,11 +392,11 @@ void GOMP_parallel_end (void)
     mir_task_wait();
 
     struct mir_worker_t* worker = pthread_getspecific (runtime->worker_index);
-    MIR_ASSERT(worker->current_task != NULL);
     struct mir_omp_team_t *team = worker->current_task->team;
 
 #ifdef GCC_PRE_4_9
     // Stop profiling and book-keeping for parallel task
+    MIR_ASSERT(worker->current_task != NULL);
     mir_task_execute_epilog(worker->current_task);
 #endif
 
