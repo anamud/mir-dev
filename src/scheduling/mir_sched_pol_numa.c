@@ -153,7 +153,6 @@ static inline int is_data_dist_significant(struct mir_mem_node_dist_t* dist)
 int push_numa (struct mir_worker_t* this_worker, struct mir_task_t* task)
 {/*{{{*/
     MIR_ASSERT(NULL != task);
-    //MIR_RECORDER_STATE_BEGIN(MIR_STATE_TSCHED);
 
     struct mir_worker_t* least_cost_worker = NULL;
     MIR_ASSERT(NULL != this_worker);

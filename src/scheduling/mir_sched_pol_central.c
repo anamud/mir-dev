@@ -90,7 +90,6 @@ void destroy_central ()
 int push_central (struct mir_worker_t* worker, struct mir_task_t* task)
 {/*{{{*/
     MIR_ASSERT(NULL != task);
-    //MIR_RECORDER_STATE_BEGIN(MIR_STATE_TSCHED);
     MIR_ASSERT(NULL != worker);
 
     int pushed = 1;
