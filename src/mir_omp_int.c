@@ -405,10 +405,10 @@ void GOMP_task (void (*fn) (void *), void *data, void (*copyfn) (void *, void *)
         char* buf = mir_malloc_int(sizeof(char) * arg_size);
         MIR_ASSERT(buf != NULL);
         copyfn(buf, data); 
-        mir_task_create((mir_tfunc_t) fn, buf, (size_t)(arg_size), 0, NULL, task_name);
+        mir_task_create_on_worker((mir_tfunc_t) fn, buf, (size_t)(arg_size), 0, NULL, task_name, -1);
     }
     else
-        mir_task_create((mir_tfunc_t) fn, data, (size_t)(arg_size), 0, NULL, task_name);
+        mir_task_create_on_worker((mir_tfunc_t) fn, data, (size_t)(arg_size), 0, NULL, task_name, -1);
 }/*}}}*/
 
 void GOMP_taskwait (void)
