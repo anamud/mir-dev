@@ -8,9 +8,6 @@
 #include "mir_runtime.h"
 #include "mir_defines.h"
 #include "mir_memory.h"
-#include "mir_types.h"
-#include "arch/mir_arch.h"
-#include "mir_omp_int.h"
 #include "mir_mem_pol.h"
 
 // The global runtime object
