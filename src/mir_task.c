@@ -199,7 +199,7 @@ static inline void mir_task_schedule(struct mir_task_t* task)
     T_DBG("Sb", task);
 }/*}}}*/
 
-static inline void mir_task_schedule_on_worker(struct mir_task_t* task, unsigned int workerid)
+static inline void mir_task_schedule_on_worker(struct mir_task_t* task, int workerid)
 {/*{{{*/
     MIR_ASSERT(workerid < runtime->num_workers);
     MIR_ASSERT(task != NULL);
@@ -249,7 +249,7 @@ void mir_task_create(mir_tfunc_t tfunc, void* data, size_t data_size, unsigned i
     MIR_RECORDER_STATE_END(NULL, 0);
 }/*}}}*/
 
-void mir_task_create_on_worker(mir_tfunc_t tfunc, void* data, size_t data_size, unsigned int num_data_footprints, struct mir_data_footprint_t* data_footprints, const char* name, unsigned int workerid)
+void mir_task_create_on_worker(mir_tfunc_t tfunc, void* data, size_t data_size, unsigned int num_data_footprints, struct mir_data_footprint_t* data_footprints, const char* name, int workerid)
 {/*{{{*/
     MIR_RECORDER_STATE_BEGIN(MIR_STATE_TCREATE);
 
