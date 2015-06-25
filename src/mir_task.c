@@ -42,7 +42,7 @@ static inline int inline_necessary()
         return 0;
 
     // Temporary solution to enable inlining unconditionally
-    // FIXME: Make this better. Maybe a negative number based condition 
+    // FIXME: Make this better. Maybe a negative number based condition
     // ... or based on a number gt num_workers
     if(runtime->task_inlining_limit == 1)
         return 1;
@@ -86,7 +86,7 @@ struct mir_task_t* mir_task_create_common(mir_tfunc_t tfunc, void* data, size_t 
         memcpy((void*)&task->data[0], data, data_size);
     }
     else
-        task->data = data; 
+        task->data = data;
 
     // Task unique id
     // A running number
@@ -128,7 +128,7 @@ struct mir_task_t* mir_task_create_common(mir_tfunc_t tfunc, void* data, size_t 
     }/*}}}*/
 
     // Task parent
-    struct mir_worker_t* worker = mir_worker_get_context(); 
+    struct mir_worker_t* worker = mir_worker_get_context();
     MIR_ASSERT(worker != NULL);
     task->parent = worker->current_task;
     task->team = myteam;
@@ -142,7 +142,7 @@ struct mir_task_t* mir_task_create_common(mir_tfunc_t tfunc, void* data, size_t 
     else
         task->twc = runtime->ctwc;
     __sync_fetch_and_add(&(task->twc->count), 1);
-    
+
     // Task children book-keeping
     task->num_children = 0;
     task->child_number = 0;
@@ -184,7 +184,6 @@ void mir_task_schedule_on_worker(struct mir_task_t* task, int workerid)
     // Overhead measurement
     uint64_t start_instant = mir_get_cycles();
 
-
     struct mir_worker_t* worker;
     int pushed;
 
@@ -199,7 +198,7 @@ void mir_task_schedule_on_worker(struct mir_task_t* task, int workerid)
     {
         worker = &runtime->workers[workerid];
         MIR_ASSERT(worker != NULL);
-        // Push task to specific worker 
+        // Push task to specific worker
         mir_worker_push(worker, task);
         pushed = 1;
     }
@@ -220,7 +219,7 @@ void mir_task_create_on_worker(mir_tfunc_t tfunc, void* data, size_t data_size, 
         // Update worker stats
         if(runtime->enable_worker_stats == 1)
         {
-            struct mir_worker_t* worker = mir_worker_get_context(); 
+            struct mir_worker_t* worker = mir_worker_get_context();
             MIR_ASSERT(worker != NULL);
             worker->statistics->num_tasks_inlined++;
         }
@@ -294,7 +293,7 @@ void mir_task_execute_prolog(struct mir_task_t* task)
         }
         else
             sprintf(event_meta_data_pre, "0, NULL");
-        // Record event 
+        // Record event
         MIR_RECORDER_EVENT(&event_meta_data_pre[0], MIR_RECORDER_EVENT_META_DATA_MAX_SIZE-1);
         // Record state
         MIR_RECORDER_STATE_BEGIN( MIR_STATE_TEXEC);
@@ -340,8 +339,8 @@ void mir_task_execute_epilog(struct mir_task_t* task)
     task->exec_end_instant = mir_get_cycles() - runtime->init_time;
     task->exec_cycles += (mir_get_cycles() - task->exec_resume_instant);
 
-    // Record sync point 
-    // NOTE: All sibling tasks will have the same sync point 
+    // Record sync point
+    // NOTE: All sibling tasks will have the same sync point
     task->sync_pass = 0;
     if(task->twc)
         task->sync_pass = task->twc->num_passes;
@@ -372,8 +371,8 @@ void mir_task_execute_epilog(struct mir_task_t* task)
     // Mark task as done
     task->done = 1;
 
-    // Update task wait counter 
-    if(task->twc) 
+    // Update task wait counter
+    if(task->twc)
         task->twc->count_per_worker[worker->id]++;
 
     // Signal
@@ -414,8 +413,8 @@ static inline void mir_data_footprint_get_mem_node_dist(struct mir_mem_node_dist
         for(uint64_t brow=0; brow<=footprint->end; brow++)
         {
             void* base = footprint->base + brow*row_sz*footprint->type;
-            mir_mem_get_mem_node_dist( dist, base, 
-                    (footprint->end - footprint->start + 1) * footprint->type, 
+            mir_mem_get_mem_node_dist( dist, base,
+                    (footprint->end - footprint->start + 1) * footprint->type,
                     footprint->part_of );
             /*MIR_INFORM("Footprint composed of these addresses:\n");*/
             /*MIR_INFORM("%p[%lu-%lu]\n", base, footprint->start, footprint->end);*/
@@ -423,8 +422,8 @@ static inline void mir_data_footprint_get_mem_node_dist(struct mir_mem_node_dist
     }
     else
     {
-        mir_mem_get_mem_node_dist( dist, footprint->base, 
-                (footprint->end - footprint->start + 1) * footprint->type, 
+        mir_mem_get_mem_node_dist( dist, footprint->base,
+                (footprint->end - footprint->start + 1) * footprint->type,
                 footprint->part_of );
         /*MIR_INFORM("Footprint composed of these addresses:\n");*/
         /*MIR_INFORM("%p[%lu-%lu]\n", footprint->base, footprint->start, footprint->end);*/
@@ -459,7 +458,7 @@ struct mir_mem_node_dist_t* mir_task_get_mem_node_dist(struct mir_task_t* task, 
 }/*}}}*/
 #endif
 
-struct mir_twc_t* mir_twc_create() 
+struct mir_twc_t* mir_twc_create()
 {/*{{{*/
     struct mir_twc_t* twc = mir_malloc_int (sizeof(struct mir_twc_t));
     MIR_ASSERT(twc != NULL);
@@ -506,7 +505,7 @@ void mir_task_wait()
     // Update num times passed
     __sync_fetch_and_add(&(twc->num_passes), 1);
 
-    // Reset counts 
+    // Reset counts
     twc->count = 0;
     for(int i=0; i<runtime->num_workers; i++)
        twc->count_per_worker[i] = 0;
@@ -531,8 +530,8 @@ void mir_task_list_write_to_file(struct mir_task_list_t* list, FILE* file)
         if(temp->task->parent)
             task_parent.uid = temp->task->parent->id.uid;
 
-        fprintf(file, "%" MIR_FORMSPEC_UL ",%" MIR_FORMSPEC_UL ",%lu,%u,%u,%u,%" MIR_FORMSPEC_UL ",%" MIR_FORMSPEC_UL ",%u,%" MIR_FORMSPEC_UL ",%s\n", 
-                temp->task->id.uid, 
+        fprintf(file, "%" MIR_FORMSPEC_UL ",%" MIR_FORMSPEC_UL ",%lu,%u,%u,%u,%" MIR_FORMSPEC_UL ",%" MIR_FORMSPEC_UL ",%u,%" MIR_FORMSPEC_UL ",%s\n",
+                temp->task->id.uid,
                 task_parent.uid,
                 temp->task->sync_pass,
                 temp->task->cpu_id,
