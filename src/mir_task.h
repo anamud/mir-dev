@@ -71,9 +71,6 @@ BEGIN_C_DECLS
 // The task function pointer type
 /*LIBINT*/ typedef void* (*mir_tfunc_t)(void*);
 
-// Forward declaration
-struct mir_task_t;
-
 // The task wait counter
 struct mir_twc_t 
 {/*{{{*/
