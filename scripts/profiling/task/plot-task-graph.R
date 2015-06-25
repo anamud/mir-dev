@@ -68,19 +68,12 @@ tg_data <- tg_data[!is.na(tg_data$parent),]
 if(parsed$timing) toc("Removing non-sense data")
 
 # Critical path calculation weight
-if("ins_count" %in% colnames(tg_data))
-{
+if("ins_count" %in% colnames(tg_data)) {
     path_weight <- "ins_count"
-} else {
-    if("work_cycles" %in% colnames(tg_data))
-    {
+} else if("work_cycles" %in% colnames(tg_data)) {
         path_weight <- "work_cycles"
-    }
-} else {
-    if("exec_cycles" %in% colnames(tg_data))
-    {
+} else if("exec_cycles" %in% colnames(tg_data)) {
         path_weight <- "exec_cycles"
-    }
 } else {
     path_weight <- NA
 }
@@ -166,10 +159,11 @@ parent_first_forks <- as.vector(sapply(fork_nodes_unique[first_forks_index], fun
 first_forks <- fork_nodes_unique[first_forks_index]
 tg[to=first_forks, from=parent_first_forks, attr='kind'] <- 'scope'
 tg[to=first_forks, from=parent_first_forks, attr='color'] <- scope_edge_color
-if(!is.na(path_weight)
+if(!is.na(path_weight))
 {
-    tg[to=first_forks, from=parent_first_forks, attr=path_weight] <- as.numeric(tg_data[match(parent_first_forks, tg_data$task),path_weight])
-    tg[to=first_forks, from=parent_first_forks, attr='weight'] <- -as.numeric(tg_data[match(parent_first_forks, tg_data$task),path_weight])
+    temp <- as.numeric(tg_data[match(parent_first_forks, tg_data$task),path_weight])
+    tg[to=first_forks, from=parent_first_forks, attr=path_weight] <- temp
+    tg[to=first_forks, from=parent_first_forks, attr='weight'] <- -temp
 }
 if(parsed$timing) toc("Connect parent to first fork")
 
@@ -181,10 +175,11 @@ if(!parsed$tree)
     leaf_join_nodes <- join_nodes[match(leaf_tasks, tg_data$task)]
     tg[from=leaf_tasks, to=leaf_join_nodes, attr='kind'] <- 'sync'
     tg[from=leaf_tasks, to=leaf_join_nodes, attr='color'] <- sync_edge_color
-    if(!is.na(path_weight)
+    if(!is.na(path_weight))
     {
-        tg[from=leaf_tasks, to=leaf_join_nodes, attr=path_weight] <- as.numeric(tg_data[match(leaf_tasks, tg_data$task),path_weight])
-        tg[from=leaf_tasks, to=leaf_join_nodes, attr='weight'] <- -as.numeric(tg_data[match(leaf_tasks, tg_data$task),path_weight])
+        temp <- as.numeric(tg_data[match(leaf_tasks, tg_data$task),path_weight])
+        tg[from=leaf_tasks, to=leaf_join_nodes, attr=path_weight] <- temp
+        tg[from=leaf_tasks, to=leaf_join_nodes, attr='weight'] <- -temp
     }
     if(parsed$timing) toc("Connect leaf task to join")
 
@@ -324,15 +319,28 @@ if(parsed$timing) tic(type="elapsed")
 # Constants
 tg <- set.vertex.attribute(tg, name='color', index=task_index, value=task_color)
 # Scale attributes to color
-attrib_color_scaled <- c("mem_fp", "compute_int", "PAPI_RES_STL_sum", "mem_hier_util", "work_deviation", "overhead_deviation", "parallel_benefit")
+# "-" in attribute name implies higher is better
+attrib_color_scaled <- c("mem_fp", "-compute_int", "PAPI_RES_STL_sum", "-mem_hier_util", "work_deviation", "overhead_deviation", "-parallel_benefit", "-min_shape_contrib", "-max_shape_contrib","-median_shape_contrib")
 for(attrib in attrib_color_scaled)
 {
+    invert_colors <- F
+    if(substring(attrib, 1, 1) == "-")
+    {
+        invert_colors <- T
+        attrib <- substring(attrib, 2, length(attrib))
+    }
     if(attrib %in% colnames(tg_data))
     {
         # Set color in proportion to attrib
         attrib_unique <- unique(tg_data[,attrib])
-        if(length(attrib_unique) == 1) p_task_color <- task_color_pal[1]
-        else p_task_color <- task_color_pal[as.numeric(cut(tg_data[,attrib], task_color_bins))]
+        if(invert_colors)
+        {
+            if(length(attrib_unique) == 1) p_task_color <- task_color_pal[task_color_bins]
+            else p_task_color <- task_color_pal[task_color_bins - as.numeric(cut(tg_data[,attrib], task_color_bins))]
+        } else {
+            if(length(attrib_unique) == 1) p_task_color <- task_color_pal[1]
+            else p_task_color <- task_color_pal[as.numeric(cut(tg_data[,attrib], task_color_bins))]
+        }
         annot_name <- paste(attrib, "_to_color", sep="")
         tg <- set.vertex.attribute(tg, name=annot_name, index=task_index, value=p_task_color)
         # Write colors for reference
@@ -535,11 +543,11 @@ if(!parsed$tree)
 
 # Set edge attributes
 if(parsed$timing) tic(type="elapsed")
-if("ins_count" %in% colnames(tg_data))
-if(!is.na(path_weight)
+browser()
+if(!is.na(path_weight))
 {
     tg <- set.edge.attribute(tg, name="weight", index=which(is.na(E(tg)$weight)), value=0)
-    tg <- set.edge.attribute(tg, name=path_weight, index=which(is.na(E(tg)[,path_weight])), value=0)
+    tg <- set.edge.attribute(tg, name=path_weight, index=which(is.na(get.edge.attribute(tg, name=path_weight, index=E(tg)))), value=0)
 }
 if(parsed$timing) toc("Edge attribute setting")
 
@@ -590,6 +598,7 @@ if(!is.na(path_weight) && !parsed$tree)
       sp <- shortest.paths(tg, v=start_index, to=end_index, mode="out")
       lpl <- -as.numeric(sp)
     } else {
+      # TODO: Make variable names in this block meaningfull.
       lntg <- length(V(tg))
       pb <- txtProgressBar(min = 0, max = lntg, style = 3)
       ctr <- 0
@@ -606,7 +615,7 @@ if(!is.na(path_weight) && !parsed$tree)
       {
         # Get distance from node's predecessors
         ni <- incident(tg, node, mode="in")
-        w <- E(tg)[ni,path_weight]
+        w <- -E(tg)[ni]$weight
         # Get distance from root to node's predecessors
         nn <- neighbors(tg, node, mode="in")
         d <- vgdf$rdist[nn]
@@ -661,7 +670,7 @@ if(!is.na(path_weight) && !parsed$tree)
         tg_df <- get.data.frame(tg, what="vertices")
         tg_df <- tg_df[!is.na(as.numeric(tg_df$label)),]
         #tg_shape_interval_width <- work/(length(unique(tg_data$cpu_id))*mean(tg_data[,path_weight]))
-        tg_shape_interval_width <- median(tg_vertices_df$exec_cycles)
+        tg_shape_interval_width <- median(as.numeric(tg_df[,path_weight], na.rm=T))
         stopifnot(tg_shape_interval_width > 0)
         tg_shape_breaks <- seq(0, max(tg_df$rdist) + 1 + tg_shape_interval_width, by=tg_shape_interval_width)
         tg_shape <- hist(tg_df$rdist, breaks=tg_shape_breaks, plot=F)
