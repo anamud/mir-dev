@@ -356,20 +356,25 @@ void GOMP_parallel_start (void (*fn) (void *), void * data, unsigned num_threads
     // Create thread team.
     mir_create();
 
-#ifdef GCC_PRE_4_9
     MIR_RECORDER_STATE_BEGIN(MIR_STATE_TCREATE);
 
     // Create task
     struct mir_task_t* task = mir_task_create_common((mir_tfunc_t) fn, data, 0, 0, NULL, "GOMP_parallel_task");
     MIR_ASSERT(task != NULL);
 
+    // Older GCCs force us to create a dummy task for the outline function
+    // which is called from the master thread. Newer GCCs force us to
+    // create an extra task that we schedule here.
+
+#ifndef GCC_PRE_4_9
+    mir_task_schedule_on_worker(task, -1);
+#endif
+
     MIR_RECORDER_STATE_END(NULL, 0);
 
+#ifdef GCC_PRE_4_9
     // Start profiling and book-keeping for parallel task
     mir_task_execute_prolog(task);
-#else
-    // Schedule on this worker.
-    mir_task_create_on_worker((mir_tfunc_t) fn, data, 0, 0, NULL, "GOMP_parallel_task", -1);
 #endif
 }/*}}}*/
 
