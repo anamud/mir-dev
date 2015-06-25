@@ -176,7 +176,7 @@ struct mir_task_t* mir_task_create_common(mir_tfunc_t tfunc, void* data, size_t 
     return task;
 }/*}}}*/
 
-static inline void mir_task_schedule_on_worker(struct mir_task_t* task, int workerid)
+void mir_task_schedule_on_worker(struct mir_task_t* task, int workerid)
 {/*{{{*/
     MIR_ASSERT(workerid < runtime->num_workers);
     MIR_ASSERT(task != NULL);

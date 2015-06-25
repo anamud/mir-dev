@@ -133,6 +133,9 @@ struct mir_task_t* mir_task_create_common(mir_tfunc_t tfunc, void* data, size_t 
 
 /*LIBINT*/ void mir_task_create_on_worker(mir_tfunc_t tfunc, void* data, size_t data_size, unsigned int num_data_footprints, struct mir_data_footprint_t* data_footprints, const char* name, struct mir_omp_team_t *myteam, int target);
 
+// TODO: Differentiate with mir_task_create_on_worker().
+void mir_task_schedule_on_worker(struct mir_task_t* task, int workerid);
+
 /*LIBINT*/ void mir_loop_task_create(mir_tfunc_t tfunc, void* data, struct mir_loop_des_t* loops, int num_loops, const char* name);
 
 void mir_task_execute_prolog(struct mir_task_t* task);
