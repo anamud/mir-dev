@@ -932,6 +932,81 @@ if(parsed$analyze)
         if(parsed$verbose) print(paste("Wrote file:", tg_out_file))
     }
 
+    # Shape contribution problem (median)
+    if("median_shape_contrib" %in% colnames(tg_data))
+    {
+        prob_tg <- base_tg
+        shape_contrib_thresh <- length(unique(tg_data$cpu_id))
+        prob_task <- subset(tg_data, median_shape_contrib <= shape_contrib_thresh, select=task)
+        sink(tg_analysis_out_file, append=T)
+        print(paste(length(prob_task$task), "tasks have median_shape_contrib <=", shape_contrib_thresh))
+        sink()
+        if(!parsed$cplengthonly)
+        {
+            prob_task_critical <- subset(tg_df, median_shape_contrib <= shape_contrib_thresh & on_crit_path == 1, select=task)
+            sink(tg_analysis_out_file, append=T)
+            print(paste(length(prob_task_critical$task), "tasks have median_shape_contrib <=", shape_contrib_thresh))
+            sink()
+        }
+        prob_task_index <- match(as.character(prob_task$task), V(prob_tg)$name)
+        prob_task_color <- get.vertex.attribute(prob_tg, name='median_shape_contrib_to_color', index=prob_task_index)
+        prob_tg <- set.vertex.attribute(prob_tg, name='color', index=prob_task_index, value=prob_task_color)
+        prob_tg <- set.vertex.attribute(prob_tg, name='problematic', index=prob_task_index, value=1)
+        tg_out_file <- paste(gsub(". $", "", parsed$out), "-problem-median-shape-contrib.graphml", sep="")
+        res <- write.graph(prob_tg, file=tg_out_file, format="graphml")
+        if(parsed$verbose) print(paste("Wrote file:", tg_out_file))
+    }
+
+    # Shape contribution problem (min)
+    if("min_shape_contrib" %in% colnames(tg_data))
+    {
+        prob_tg <- base_tg
+        shape_contrib_thresh <- length(unique(tg_data$cpu_id))
+        prob_task <- subset(tg_data, min_shape_contrib <= shape_contrib_thresh, select=task)
+        sink(tg_analysis_out_file, append=T)
+        print(paste(length(prob_task$task), "tasks have min_shape_contrib <=", shape_contrib_thresh))
+        sink()
+        if(!parsed$cplengthonly)
+        {
+            prob_task_critical <- subset(tg_df, min_shape_contrib <= shape_contrib_thresh & on_crit_path == 1, select=task)
+            sink(tg_analysis_out_file, append=T)
+            print(paste(length(prob_task_critical$task), "tasks have min_shape_contrib <=", shape_contrib_thresh))
+            sink()
+        }
+        prob_task_index <- match(as.character(prob_task$task), V(prob_tg)$name)
+        prob_task_color <- get.vertex.attribute(prob_tg, name='min_shape_contrib_to_color', index=prob_task_index)
+        prob_tg <- set.vertex.attribute(prob_tg, name='color', index=prob_task_index, value=prob_task_color)
+        prob_tg <- set.vertex.attribute(prob_tg, name='problematic', index=prob_task_index, value=1)
+        tg_out_file <- paste(gsub(". $", "", parsed$out), "-problem-median-shape-contrib.graphml", sep="")
+        res <- write.graph(prob_tg, file=tg_out_file, format="graphml")
+        if(parsed$verbose) print(paste("Wrote file:", tg_out_file))
+    }
+
+    # Shape contribution problem (min)
+    if("max_shape_contrib" %in% colnames(tg_data))
+    {
+        prob_tg <- base_tg
+        shape_contrib_thresh <- length(unique(tg_data$cpu_id))
+        prob_task <- subset(tg_data, max_shape_contrib <= shape_contrib_thresh, select=task)
+        sink(tg_analysis_out_file, append=T)
+        print(paste(length(prob_task$task), "tasks have max_shape_contrib <=", shape_contrib_thresh))
+        sink()
+        if(!parsed$cplengthonly)
+        {
+            prob_task_critical <- subset(tg_df, max_shape_contrib <= shape_contrib_thresh & on_crit_path == 1, select=task)
+            sink(tg_analysis_out_file, append=T)
+            print(paste(length(prob_task_critical$task), "tasks have max_shape_contrib <=", shape_contrib_thresh))
+            sink()
+        }
+        prob_task_index <- match(as.character(prob_task$task), V(prob_tg)$name)
+        prob_task_color <- get.vertex.attribute(prob_tg, name='max_shape_contrib_to_color', index=prob_task_index)
+        prob_tg <- set.vertex.attribute(prob_tg, name='color', index=prob_task_index, value=prob_task_color)
+        prob_tg <- set.vertex.attribute(prob_tg, name='problematic', index=prob_task_index, value=1)
+        tg_out_file <- paste(gsub(". $", "", parsed$out), "-problem-median-shape-contrib.graphml", sep="")
+        res <- write.graph(prob_tg, file=tg_out_file, format="graphml")
+        if(parsed$verbose) print(paste("Wrote file:", tg_out_file))
+    }
+
     ## THIS IS A MEANINGLESS FEATURE. TODO: Remove.
     ## Parallelism problem (based on depth)
     #if(!parsed$cplengthonly && !parsed$tree)
