@@ -18,6 +18,11 @@
 void GOMP_barrier (void)
 {/*{{{*/
     MIR_DEBUG(MIR_DEBUG_STR "Note: GOMP_barrier is not tested rigorously.\n");
+    struct mir_worker_t* worker = mir_worker_get_context();
+    if (worker->current_task)
+    {
+        runtime->omp_barrier->count_per_worker[worker->id]++;
+    }
     mir_task_wait_int(runtime->omp_barrier);
 }/*}}}*/
 
