@@ -369,9 +369,7 @@ void GOMP_parallel_start (void (*fn) (void *), void * data, unsigned num_threads
     mir_task_execute_prolog(task);
 #else
     // Schedule on this worker.
-    struct mir_worker_t* worker = mir_worker_get_context(); 
-    MIR_ASSERT(worker != NULL);
-    mir_task_create_on_worker((mir_tfunc_t) fn, data, 0, 0, NULL, "GOMP_parallel_task", worker->id);
+    mir_task_create_on_worker((mir_tfunc_t) fn, data, 0, 0, NULL, "GOMP_parallel_task", -1);
 #endif
 }/*}}}*/
 
