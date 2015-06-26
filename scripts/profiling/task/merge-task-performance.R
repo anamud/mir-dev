@@ -118,7 +118,7 @@ if(parsed$timing) toc("Merge")
 # Write out csv
 if(parsed$timing) tic(type="elapsed")
 write.csv(dmerge, parsed$out, row.names=FALSE)
-if(parsed$verbose) my_print(paste("Wrote file:", parsed$out))
+my_print(paste("Wrote file:", parsed$out))
 if(parsed$timing) toc("Write output")
 
 # Warn
