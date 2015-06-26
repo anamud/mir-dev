@@ -19,11 +19,13 @@ void GOMP_barrier (void)
 {/*{{{*/
     MIR_DEBUG(MIR_DEBUG_STR "Note: GOMP_barrier is not tested rigorously.\n");
     struct mir_worker_t* worker = mir_worker_get_context();
-    if (worker->current_task)
+    struct mir_omp_team_t* team;
+    team = worker->current_task ? worker->current_task->team : NULL;
+    if (team)
     {
-        runtime->omp_barrier->count_per_worker[worker->id]++;
+        team->barrier->count_per_worker[worker->id]++;
+        mir_task_wait_int(team->barrier);
     }
-    mir_task_wait_int(runtime->omp_barrier);
 }/*}}}*/
 
 /* critical.c */
@@ -450,9 +452,11 @@ bool GOMP_single_start (void)
     // Return true for all tasks executing outline functions but avoid
     // returning true for the non-task in the starting thread.
     struct mir_worker_t* worker = mir_worker_get_context();
-    if (worker->current_task)
+    struct mir_omp_team_t* team;
+    team = worker->current_task ? worker->current_task->team : NULL;
+    if (team)
     {
-        __sync_fetch_and_add(&(runtime->omp_barrier->count), 1);
+        __sync_fetch_and_add(&(team->barrier->count), 1);
         return true;
     }
     else

@@ -51,7 +51,6 @@ static void mir_preconfig_init()
     mir_lock_create(&runtime->omp_critsec_lock);
     runtime->omp_for_schedule = OFS_STATIC;
     runtime->omp_for_chunk_size = 0;
-    runtime->omp_barrier = mir_twc_create();
     GOMP_parse_schedule();
 
     // Flags

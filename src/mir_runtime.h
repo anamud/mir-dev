@@ -35,7 +35,6 @@ struct mir_runtime_t
     struct mir_lock_t omp_critsec_lock;
     enum omp_for_schedule_t omp_for_schedule;
     long omp_for_chunk_size;
-    struct mir_twc_t* omp_barrier;
 
     // Flags
     int sig_dying;

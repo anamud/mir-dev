@@ -7,6 +7,7 @@ BEGIN_C_DECLS
 struct mir_omp_team_t
 {/*{{{*/
     struct mir_omp_team_t *prev;
+    struct mir_twc_t* barrier;
 };/*}}}*/
 /*LIBINT_BASE_DECL_END*/
 
