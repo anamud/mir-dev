@@ -113,7 +113,7 @@ out_file <- paste(gsub(". $", "", parsed$data), ".processed", sep="")
 sink(out_file)
 write.csv(ts_data, out_file, row.names=F)
 sink()
-if(parsed$verbose) my_print(paste("Wrote file:", out_file))
+my_print(paste("Wrote file:", out_file))
 
 # Warn
 wa <- warnings()
