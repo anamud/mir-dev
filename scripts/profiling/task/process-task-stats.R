@@ -16,25 +16,25 @@ make_option(c("--quiet"), action="store_false", dest="verbose", help="Print litt
 parsed <- parse_args(OptionParser(option_list = option_list), args = commandArgs(TRUE))
 if(!exists("data", where=parsed))
 {
-    print("Error: Invalid arguments. Check help (-h).")
+    my_print("Error: Invalid arguments. Check help (-h).")
     quit("no", 1)
 }
 
 # Read data
-if(parsed$verbose) print(paste("Reading file", parsed$data))
+if(parsed$verbose) my_print(paste("Reading file", parsed$data))
 ts_data <- read.csv(parsed$data, header=TRUE)
 
 # Process
 if(parsed$timing) tic(type="elapsed")
-if(parsed$verbose) print("Processing ...")
+if(parsed$verbose) my_print("Processing ...")
 
 # Remove non-sense data
-if(parsed$verbose) print("Removing non-sense data ...")
+if(parsed$verbose) my_print("Removing non-sense data ...")
 # Remove background task 
 ts_data <- ts_data[!is.na(ts_data$parent),]
 
 ## Find task executed last per worker
-if(parsed$verbose) print("Calculating last tasks to finish ...")
+if(parsed$verbose) my_print("Calculating last tasks to finish ...")
 max_exec_end <- ts_data %>% group_by(cpu_id) %>% filter(exec_end_instant == max(exec_end_instant))
 ts_data["last_to_finish"] <- F
 for(task in max_exec_end$task)
@@ -43,18 +43,18 @@ for(task in max_exec_end$task)
 }
 
 ## Mark leaf tasks
-if(parsed$verbose) print("Marking leaf tasks ...")
+if(parsed$verbose) my_print("Marking leaf tasks ...")
 ts_data["leaf"] <- F
 ts_data$leaf[ts_data$num_children == 0] <- T
 
 ## Calc work cycles
 ### Work is the amount of computation by a task excluding runtime system calls.
-if(parsed$verbose) print("Calculating work cycles ...")
+if(parsed$verbose) my_print("Calculating work cycles ...")
 ts_data$work_cycles <- ts_data$exec_cycles - ts_data$overhead_cycles
 
 ## Calc parallel benefit
 ### Parallel benefit is the ratio of work done by a task to the average overhead incurred by its parent.
-if(parsed$verbose) print("Calculating parallel benefit ...")
+if(parsed$verbose) my_print("Calculating parallel benefit ...")
 calc_parallel_benefit <- function(t)
 {
     i <- which(ts_data$task == t)
@@ -71,14 +71,14 @@ ts_data["parallel_benefit"] <- parallel_benefit
 ### Memory hierarchy utilization
 if("PAPI_RES_STL_sum" %in% colnames(ts_data))
 {
-    if(parsed$verbose) print("Calculating memory hierarchy utilization ...")
+    if(parsed$verbose) my_print("Calculating memory hierarchy utilization ...")
     ts_data$mem_hier_util <- ts_data$PAPI_RES_STL_sum/ts_data$work_cycles
 }
 
 ### Compute intensity
 if("ins_count" %in% colnames(ts_data) & "mem_fp" %in% colnames(ts_data))
 {
-    if(parsed$verbose) print("Calculating compute intensity ...")
+    if(parsed$verbose) my_print("Calculating compute intensity ...")
     ts_data$compute_int <- ts_data$ins_count/ts_data$mem_fp
 }
 
@@ -86,7 +86,7 @@ if("ins_count" %in% colnames(ts_data) & "mem_fp" %in% colnames(ts_data))
 if(parsed$lineage)
 {
     # Lineage = child number chain
-    if(parsed$verbose) print("Calculating lineage ...")
+    if(parsed$verbose) my_print("Calculating lineage ...")
     ts_data <- ts_data[order(ts_data$task),]
     ts_data["lineage"] <- "NA"
     for(task in ts_data$task)
@@ -102,7 +102,7 @@ if(parsed$lineage)
     # Sanity check
     if(anyDuplicated(ts_data$lineage))
     {
-        print("Error: Duplicate lineages exist. Aborting!")
+        my_print("Error: Duplicate lineages exist. Aborting!")
         quit("no", 1)
     }
 }
@@ -113,10 +113,10 @@ out_file <- paste(gsub(". $", "", parsed$data), ".processed", sep="")
 sink(out_file)
 write.csv(ts_data, out_file, row.names=F)
 sink()
-if(parsed$verbose) print(paste("Wrote file:", out_file))
+if(parsed$verbose) my_print(paste("Wrote file:", out_file))
 
 # Warn
 wa <- warnings()
 if(class(wa) != "NULL")
-    print(wa)
+    my_print(wa)
 

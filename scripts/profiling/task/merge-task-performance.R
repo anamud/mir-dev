@@ -19,37 +19,36 @@ make_option(c("-c","--common"), default="prompt", help = "How to treat common co
 parsed <- parse_args(OptionParser(option_list = option_list), args = commandArgs(TRUE))
 if(!exists("left", where=parsed) | !exists("right", where=parsed) | !exists("key", where=parsed))
 {
-    print("Error: Invalid arguments. Check help (-h)")
+    my_print("Error: Invalid arguments. Check help (-h)")
     quit("no", 1)
 }
 
 # Read data
-if(parsed$verbose) print("Reading data ...")
+if(parsed$verbose) my_print("Reading data ...")
 if(parsed$timing) tic(type="elapsed")
 dleft <- read.csv(parsed$left, header=TRUE)
 dright <- read.csv(parsed$right, header=TRUE)
 if(parsed$timing) toc("Read data ")
 
 # Sanity check for key
-if(parsed$verbose) print("Running sanity checks ...")
+if(parsed$verbose) my_print("Running sanity checks ...")
 if(parsed$timing) tic(type="elapsed")
 if(!(parsed$key %in% colnames(dleft)) | !(parsed$key %in% colnames(dright)))
 {
-    print("Error: Key not found in tables. Aborting!")
+    my_print("Error: Key not found in tables. Aborting!")
     quit("no", 1)
 }
 
 # Merge while checking for common columns
-if(parsed$verbose) print("Merging ...")
+if(parsed$verbose) my_print("Merging ...")
 common <- intersect(colnames(dleft)[colnames(dleft) != parsed$key], colnames(dright)[colnames(dright) != parsed$key])
 if(length(common) > 0)
 {
-    print("Tables contain common columns: ")
-    print(common)
+    my_print(paste("Tables contain common columns: ", common))
     if(parsed$common == "prompt")
     {
-        print("Merging common columns:  prompt ")
-        print("Enter choice for merging common columns: both [b], all from left [l], all from right [r], avoid [a] or make selection [s].")
+        my_print("Merging common columns:  prompt ")
+        my_print("Enter choice for merging common columns: both [b], all from left [l], all from right [r], avoid [a] or make selection [s].")
         mc <- scan(file = "stdin", what=character(), n=1, quiet=T)
         if(mc == 'b') {
         } else if(mc == 'l') {
@@ -62,7 +61,7 @@ if(length(common) > 0)
         } else if(mc == 's') {
             for(c in common)
             {
-                print(paste("Enter choice for merging column <", c, ">: both [b], left [l], right [r] or avoid [a]."))
+                my_print(paste("Enter choice for merging column <", c, ">: both [b], left [l], right [r] or avoid [a]."))
                 mcs <- scan(file = "stdin", what=character(), n=1, quiet=T)
                 if(mcs == 'b') {
                 } else if(mcs == 'l') {
@@ -73,28 +72,28 @@ if(length(common) > 0)
                     dright <- subset(dright, select=(setdiff(colnames(dright), c)))
                     dleft <- subset(dleft, select=(setdiff(colnames(dleft), c)))
                 } else {
-                    print("Error: Invalid choice. Aborting!")
+                    my_print("Error: Invalid choice. Aborting!")
                     quit("no", 1)
                 }
             }
         } else {
-            print("Error: Invalid choice. Aborting!")
+            my_print("Error: Invalid choice. Aborting!")
             quit("no", 1)
         }
     } else if (parsed$common == "both") {
-        print("Merging common columns: both")
+        my_print("Merging common columns: both")
     } else if (parsed$common == "left") {
-        print("Merging common columns:  all from left")
+        my_print("Merging common columns:  all from left")
         dright <- subset(dright, select=(setdiff(colnames(dright), common)))
     } else if (parsed$common == "right") {
-        print("Merging common columns: all from right")
+        my_print("Merging common columns: all from right")
         dleft <- subset(dleft, select=(setdiff(colnames(dleft), common)))
     } else if (parsed$common == "avoid") {
-        print("Merging common columns: avoid")
+        my_print("Merging common columns: avoid")
         dleft <- subset(dleft, select=(setdiff(colnames(dleft), common)))
         dright <- subset(dright, select=(setdiff(colnames(dright), common)))
     } else {
-        print("Error: Invalid --common/-c input. Check help (-h)")
+        my_print("Error: Invalid --common/-c input. Check help (-h)")
         quit("no", 1)
     }
 
@@ -107,23 +106,23 @@ if(length(common) > 0)
 dmerge.mod <- dmerge[!is.na(dmerge$parent),]
 
 # Handle NAs
-if(parsed$verbose) print("Checking for NAs ...")
+if(parsed$verbose) my_print("Checking for NAs ...")
 row.has.na <- apply(dmerge.mod, 1, function(x){any(is.na(x))})
 sum.row.has.na <- sum(row.has.na)
 if(sum.row.has.na > 0)
 {
-    print(sprintf("Warning: %d rows contained NAs in the merged table", sum.row.has.na ))
+    my_print(sprintf("Warning: %d rows contained NAs in the merged table", sum.row.has.na ))
 }
 if(parsed$timing) toc("Merge")
 
 # Write out csv
 if(parsed$timing) tic(type="elapsed")
 write.csv(dmerge, parsed$out, row.names=FALSE)
-if(parsed$verbose) print(paste("Wrote file:", parsed$out))
+if(parsed$verbose) my_print(paste("Wrote file:", parsed$out))
 if(parsed$timing) toc("Write output")
 
 # Warn
 wa <- warnings()
 if(class(wa) != "NULL")
-    print(wa)
+    my_print(wa)
 

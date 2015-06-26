@@ -29,7 +29,7 @@ if(running_outside_rstudio)
     parsed <- parse_args(OptionParser(option_list = option_list), args = commandArgs(TRUE))
     if(!exists("data", where=parsed))
     {
-        print("Error: Invalid arguments. Check help (-h)")
+        my_print("Error: Invalid arguments. Check help (-h)")
         quit("no", 1)
     }
 
@@ -52,7 +52,7 @@ if(running_outside_rstudio)
 # Read data
 if(arg_timing) tic(type="elapsed")
 tg_file_in <- arg_data
-if(arg_verbose) print(paste("Reading file:", tg_file_in, sep=" "))
+if(arg_verbose) my_print(paste("Reading file:", tg_file_in, sep=" "))
 tg_data <- fread(tg_file_in, header=TRUE)
 if(arg_timing) toc("Read data")
 
@@ -151,7 +151,7 @@ compute_fragment_duration <- function(task, wait, exec_cycles, choice)
 {
     # Each task has breaks at these instants: (execution start, child creation, child wait, execution end)
     # A fragments executes upto the next break.
-    wait_instants <- as.numeric(unlist(strsplit(substring(wait, 2, nchar(wait)-1), ";", fixed = TRUE)))
+    wait_instants <- as.numeric(unlist(strsplit(wait, ";", fixed = TRUE)))
     create_instants <- as.numeric(tg_data$create_instant[tg_data$parent == task])
     instants <- c(wait_instants, create_instants, 1, 1 + exec_cycles)
     # Sort to line up breaks.
@@ -193,7 +193,7 @@ tg <- set.vertex.attribute(tg, name="scaled_exec_cycles", index=V(tg), value=sca
 if(arg_timing) toc("Assign execution cycles [step 3]")
 
 # Calculate critical path
-if(arg_verbose) print("Calculating critical path ...")
+if(arg_verbose) my_print("Calculating critical path ...")
 if(arg_timing) tic(type="elapsed")
 #Rprof("profile-critpathcalc.out")
 # Progress bar
@@ -251,15 +251,15 @@ ctr <- ctr + 1; setTxtProgressBar(pb, ctr);
 close(pb)
 #Rprof(NULL)
 # Print critical path info
-print("Cilk Theory Parallelism (Unit = Cycles)")
-print("Span (critical path)")
-print(lpl)
-print("Work")
+my_print("Cilk Theory Parallelism (Unit = Cycles)")
+my_print("Span (critical path)")
+my_print(lpl)
+my_print("Work")
 total_work <- sum(as.numeric(tg_data$exec_cycles))
-print(total_work)
-print("Parallelism")
+my_print(total_work)
+my_print("Parallelism")
 parallelism <- total_work/lpl
-print(parallelism)
+my_print(parallelism)
 # Clear rpath since dot/table writing complains
 tg <- remove.vertex.attribute(tg,"rpath")
 if(arg_timing) toc("Critical path calculation")
@@ -312,11 +312,11 @@ plot(tg_shape, xlab="Distance from START in execution cycles", ylab="Fragments",
 abline(h = length(unique(tg_data$cpu_id)), col = "blue", lty=2)
 abline(h = parallelism , col = "red", lty=1)
 write_res <- dev.off()
-if(arg_verbose) print(paste("Wrote file:", tg_file_out))
+if(arg_verbose) my_print(paste("Wrote file:", tg_file_out))
 # Write shape raw data to file
 tg_file_out <- paste(gsub(". $", "", arg_outfileprefix), "-shape.csv", sep="")
 write_res <- write.csv(overlaps, file=tg_file_out, row.names=F)
-if(arg_verbose) print(paste("Wrote file:", tg_file_out))
+if(arg_verbose) my_print(paste("Wrote file:", tg_file_out))
 
 # Task shape contribution
 if(arg_timing) tic(type="elapsed")
@@ -332,9 +332,9 @@ if(arg_timing) toc("Shape calculation [Step 5]")
 # Write shape contribution to file
 tg_file_out <- paste(gsub(". $", "", arg_outfileprefix), "-shape-contrib.csv", sep="")
 write_res <- write.csv(overlaps_agg, file=tg_file_out, row.names=F)
-if(arg_verbose) print(paste("Wrote file:", tg_file_out))
+if(arg_verbose) my_print(paste("Wrote file:", tg_file_out))
 
 # Write task graph to file
 tg_file_out <- paste(gsub(". $", "", arg_outfileprefix), ".graphml", sep="")
 write_res <- write.graph(tg, file=tg_file_out, format="graphml")
-if(arg_verbose) print(paste("Wrote file:", tg_file_out))
+if(arg_verbose) my_print(paste("Wrote file:", tg_file_out))

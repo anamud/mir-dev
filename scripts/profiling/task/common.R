@@ -22,12 +22,13 @@ toc <- function(message)
   type <- get(".type", envir=baseenv())
   toc <- proc.time()[type]
   tic <- get(".tic", envir=baseenv())
-  print(sprintf("%s: %f sec", message, toc - tic))
+  cat(sprintf("%s: %f sec\n", message, toc - tic))
   invisible(toc)
 }
 
 # Useful functions
 as.numeric.factor <- function(x) {as.numeric(levels(x))[x]}
+my_print <- function(x) {cat(paste(x, "\n", sep=""))}
 
 # Plotting helpers
 common_theme <- theme(
