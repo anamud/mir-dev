@@ -35,7 +35,7 @@ bool g_shmat_done = false;
 int g_shmid;
 char* g_shm;
 
-//std::vector<std::string> &split(const std::string &s, char delim, std::vector<std::string> &elems)
+//std::vector<std::string> &split(const std::string &s, char delim, std::vector<std::string> &elems) 
 //{
     //std::stringstream ss(s);
     //std::string item;
@@ -151,14 +151,14 @@ VOID MIROutlineFunctionEntry(VOID* name)
     {
         g_shmat_done = true;
 
-        if ((g_shmid = shmget(MIR_SHM_KEY, MIR_SHM_SIZE, 0666)) < 0)
+        if ((g_shmid = shmget(MIR_SHM_KEY, MIR_SHM_SIZE, 0666)) < 0) 
         {
             std::cerr << "Call to shmget failed!" << std::endl;
             exit(1);
         }
 
         g_shm = (char*) shmat(g_shmid, NULL, 0);
-        if (g_shm == NULL)
+        if (g_shm == NULL) 
         {
             std::cerr << "No shared memory. Call to shmat returned NULL!" << std::endl;
             exit(1);
@@ -182,7 +182,7 @@ VOID MIROutlineFunctionEntry(VOID* name)
     stat->mem_read = 0;
     stat->mem_write = 0;
     memcpy(stat->name, name, sizeof(char) * NAME_SIZE);
-#ifdef GET_INS_MIX
+#ifdef GET_INS_MIX 
     memset(&stat->ins_mix, 0, sizeof(UINT64) * XED_CATEGORY_LAST);
 #endif
     stat->next = g_stat_list;
@@ -204,7 +204,7 @@ VOID MIROutlineFunctionExit()
         g_current_stat->mem_fp_sz = g_current_stat->mem_fp.size();
         g_current_stat->mem_fp.clear();
     }
-
+    
     // Restore context
     g_stat_stack.pop();
     if(!g_stat_stack.empty())
@@ -273,7 +273,7 @@ VOID Image(IMG img, VOID *v)
                 if(INS_IsStackWrite(ins))
                     INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)MIROutlineFunctionUpdateStackWrite, IARG_END);
 
-#ifdef EXCLUDE_STACK_INS_FROM_MEM_FP
+#ifdef EXCLUDE_STACK_INS_FROM_MEM_FP 
                 if(!INS_IsStackRead(ins) && !INS_IsStackWrite(ins))
                 {
 #endif
@@ -291,7 +291,7 @@ VOID Image(IMG img, VOID *v)
                                 //IARG_REG_VALUE, REG_STACK_PTR,
                                 IARG_END);
                         }
-                        // Note that in some architectures a single memory operand can be
+                        // Note that in some architectures a single memory operand can be 
                         // both read and written (for instance incl (%eax) on IA-32)
                         // In that case we instrument it once for read and once for write.
                         if (INS_MemoryOperandIsWritten(ins, memOp))
@@ -304,7 +304,7 @@ VOID Image(IMG img, VOID *v)
                                 IARG_END);
                         }
                     }
-#ifdef EXCLUDE_STACK_INS_FROM_MEM_FP
+#ifdef EXCLUDE_STACK_INS_FROM_MEM_FP 
                 }
 #endif
             }
@@ -344,7 +344,7 @@ VOID Image(IMG img, VOID *v)
                 if(INS_IsStackWrite(ins))
                     INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)MIROutlineFunctionUpdateStackWrite, IARG_END);
 
-#ifdef EXCLUDE_STACK_INS_FROM_MEM_FP
+#ifdef EXCLUDE_STACK_INS_FROM_MEM_FP 
                 if(!INS_IsStackRead(ins) && !INS_IsStackWrite(ins))
                 {
 #endif
@@ -362,7 +362,7 @@ VOID Image(IMG img, VOID *v)
                                 //IARG_REG_VALUE, REG_STACK_PTR,
                                 IARG_END);
                         }
-                        // Note that in some architectures a single memory operand can be
+                        // Note that in some architectures a single memory operand can be 
                         // both read and written (for instance incl (%eax) on IA-32)
                         // In that case we instrument it once for read and once for write.
                         if (INS_MemoryOperandIsWritten(ins, memOp))
@@ -375,7 +375,7 @@ VOID Image(IMG img, VOID *v)
                                 IARG_END);
                         }
                     }
-#ifdef EXCLUDE_STACK_INS_FROM_MEM_FP
+#ifdef EXCLUDE_STACK_INS_FROM_MEM_FP 
                 }
 #endif
             }
@@ -384,7 +384,7 @@ VOID Image(IMG img, VOID *v)
         }/*}}}*/
     }
 
-    // Task create
+    // Task create 
     RTN mirTaskCreateRtn = RTN_FindByName(img, "mir_task_create");
     if (RTN_Valid(mirTaskCreateRtn))
     {
@@ -393,7 +393,7 @@ VOID Image(IMG img, VOID *v)
         RTN_InsertCall(mirTaskCreateRtn, IPOINT_BEFORE, (AFUNPTR)MIRTaskCreateBefore, IARG_END);
         RTN_Close(mirTaskCreateRtn);
     }
-
+    
     // Task wait
     RTN mirTaskWaitRtn = RTN_FindByName(img, "mir_task_wait");
     if (RTN_Valid(mirTaskWaitRtn))
@@ -533,7 +533,7 @@ VOID Fini(INT32 code, VOID *v)
 #endif
     for (MIR_FUNCTION_STAT* stat = g_stat_list; stat; stat = stat->next)
     {
-        out << stat->id << ","
+        out << stat->id << "," 
             << stat->ins_count << ","
             << stat->stack_read<< ","
             << stat->stack_write<< ","
@@ -545,7 +545,7 @@ VOID Fini(INT32 code, VOID *v)
             << stat->mem_read << ","
             << stat->mem_write << ","
             << stat->name;
-#ifdef GET_INS_MIX
+#ifdef GET_INS_MIX 
         out << ",";
         for(int c=0; c<XED_CATEGORY_LAST; c++)
         {
@@ -640,13 +640,13 @@ int main(int argc, char *argv[])
     {
         return Usage();
     }
-
+    
     // Register Image to be called to instrument functions.
     IMG_AddInstrumentFunction(Image, 0);
     PIN_AddFiniFunction(Fini, 0);
 
     // Never returns
     PIN_StartProgram();
-
+    
     return 0;
 }/*}}}*/
