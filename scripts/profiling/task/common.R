@@ -28,7 +28,7 @@ toc <- function(message)
 
 # Useful functions
 as.numeric.factor <- function(x) {as.numeric(levels(x))[x]}
-my_print <- function(x) {cat(paste(x, "\n", sep=""))}
+my_print <- function(x="") {cat(paste(x, "\n", sep=""))}
 
 # Plotting helpers
 common_theme <- theme(
