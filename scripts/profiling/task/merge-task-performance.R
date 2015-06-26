@@ -102,7 +102,7 @@ if(length(common) > 0)
     dmerge <- merge(dleft, dright, by=parsed$key, all=T, suffixes=c(".left", ".right"))
 }
 
-# Remove background task 
+# Remove background task
 dmerge.mod <- dmerge[!is.na(dmerge$parent),]
 
 # Handle NAs
