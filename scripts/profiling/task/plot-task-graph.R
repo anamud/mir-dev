@@ -430,7 +430,7 @@ if("exec_cycles" %in% colnames(tg_data))
 
     sink(tg_info_out_file, append=T)
     my_print("Load balance among siblings = max(exec_cycles)/mean(exec_cycles):")
-    summary(fork_bal_ec)
+    print(summary(fork_bal_ec))
     sink()
     tg_info_plot_file <- paste(gsub(". $", "", parsed$out), "-sibling-balance-ec-plot.pdf", sep="")
     pdf(tg_info_plot_file)
@@ -471,7 +471,7 @@ if("work_cycles" %in% colnames(tg_data))
 
     sink(tg_info_out_file, append=T)
     my_print("Load balance among siblings = max(work_cycles)/mean(work_cycles):")
-    summary(fork_bal_wc)
+    print(summary(fork_bal_wc))
     sink()
     tg_info_plot_file <- paste(gsub(". $", "", parsed$out), "-sibling-balance-wc-plot.pdf", sep="")
     pdf(tg_info_plot_file)
@@ -519,7 +519,7 @@ if("cpu_id" %in% colnames(tg_data))
 
     sink(tg_info_out_file, append=T)
     my_print("Scatter among siblings = median(scatter):")
-    summary(fork_scatter)
+    print(summary(fork_scatter))
     sink()
     tg_info_plot_file <- paste(gsub(". $", "", parsed$out), "-fork-scatter-plot.pdf", sep="")
     pdf(tg_info_plot_file)
@@ -652,12 +652,12 @@ if(!is.na(path_weight) && !parsed$tree)
     sink(tg_info_out_file, append=T)
     my_print("Unit = Instructions")
     my_print("span (critical path)")
-    lpl
+    my_print(lpl)
     my_print("work")
     work <- sum(as.numeric(tg_data[,path_weight]))
-    work
+    my_print(work)
     my_print("parallelism")
-    work/lpl
+    my_print(work/lpl)
     sink()
 
     if(!parsed$cplengthonly)
@@ -1150,6 +1150,8 @@ if(parsed$analyze)
     if(parsed$verbose) my_print(paste("Wrote file:", tg_analysis_out_file))
     if(parsed$timing) toc("Analyzing graph for problems")
 }
+
+if(parsed$verbose) my_print(paste("Wrote file:", tg_info_out_file))
 
 # Warn
 wa <- warnings()
