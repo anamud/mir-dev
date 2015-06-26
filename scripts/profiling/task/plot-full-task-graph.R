@@ -198,8 +198,10 @@ if(arg_timing) tic(type="elapsed")
 #Rprof("profile-critpathcalc.out")
 # Progress bar
 lntg <- length(V(tg))
-pb <- txtProgressBar(min = 0, max = lntg, style = 3)
-ctr <- 0
+if(arg_verbose) {
+    pb <- txtProgressBar(min = 0, max = lntg, style = 3)
+    ctr <- 0
+}
 # Topological sort
 tsg <- topological.sort(tg)
 # Set root path attributes
@@ -232,7 +234,10 @@ for(node in tsg[-1])
     # Set node's depth as one greater than the largest depth its predecessors
     tg_vertices_df$depth[node] <- max(tg_vertices_df$depth[nn]) + 1
     # Progress report
-    ctr <- ctr + 1; setTxtProgressBar(pb, ctr);
+    if(arg_verbose) {
+        ctr <- ctr + 1;
+        setTxtProgressBar(pb, ctr);
+    }
 }
 # Longest path is the largest root distance
 lpl <- max(tg_vertices_df$rdist)
@@ -247,8 +252,11 @@ tg <- set.vertex.attribute(tg, name="depth", index=V(tg), value=tg_vertices_df$d
 critical_edges <- E(tg)[V(tg)[on_crit_path==1] %--% V(tg)[on_crit_path==1]]
 tg <- set.edge.attribute(tg, name="on_crit_path", index=critical_edges, value=1)
 # Progress report
-ctr <- ctr + 1; setTxtProgressBar(pb, ctr);
-close(pb)
+if(arg_verbose) {
+    ctr <- ctr + 1;
+    setTxtProgressBar(pb, ctr);
+    close(pb)
+}
 #Rprof(NULL)
 # Print critical path info
 tg_file_out <- paste(gsub(". $", "", arg_outfileprefix), ".info", sep="")
@@ -263,7 +271,7 @@ my_print("Parallelism (Work/Span):")
 parallelism <- total_work/lpl
 my_print(parallelism)
 sink()
-if(arg_verbose) my_print(paste("Wrote file:", tg_file_out))
+my_print(paste("Wrote file:", tg_file_out))
 # Clear rpath since dot/table writing complains
 tg <- remove.vertex.attribute(tg,"rpath")
 if(arg_timing) toc("Critical path calculation")
@@ -316,11 +324,11 @@ plot(tg_shape, xlab="Distance from START in execution cycles", ylab="Fragments",
 abline(h = length(unique(tg_data$cpu_id)), col = "blue", lty=2)
 abline(h = parallelism , col = "red", lty=1)
 write_res <- dev.off()
-if(arg_verbose) my_print(paste("Wrote file:", tg_file_out))
+my_print(paste("Wrote file:", tg_file_out))
 # Write shape raw data to file
 tg_file_out <- paste(gsub(". $", "", arg_outfileprefix), "-shape.csv", sep="")
 write_res <- write.csv(overlaps, file=tg_file_out, row.names=F)
-if(arg_verbose) my_print(paste("Wrote file:", tg_file_out))
+my_print(paste("Wrote file:", tg_file_out))
 
 # Task shape contribution
 if(arg_timing) tic(type="elapsed")
@@ -336,9 +344,9 @@ if(arg_timing) toc("Shape calculation [Step 5]")
 # Write shape contribution to file
 tg_file_out <- paste(gsub(". $", "", arg_outfileprefix), "-shape-contrib.csv", sep="")
 write_res <- write.csv(overlaps_agg, file=tg_file_out, row.names=F)
-if(arg_verbose) my_print(paste("Wrote file:", tg_file_out))
+my_print(paste("Wrote file:", tg_file_out))
 
 # Write task graph to file
 tg_file_out <- paste(gsub(". $", "", arg_outfileprefix), ".graphml", sep="")
 write_res <- write.graph(tg, file=tg_file_out, format="graphml")
-if(arg_verbose) my_print(paste("Wrote file:", tg_file_out))
+my_print(paste("Wrote file:", tg_file_out))
