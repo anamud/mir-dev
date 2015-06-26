@@ -537,7 +537,7 @@ void mir_task_wait()
 
 void mir_task_stats_write_header_to_file(FILE* file)
 {/*{{{*/
-    fprintf(file, "task,parent,joins_at,cpu_id,child_number,num_children,exec_cycles,overhead_cycles,queue_size,create,exec_end,tag,[wait]\n");
+    fprintf(file, "task,parent,joins_at,cpu_id,child_number,num_children,exec_cycles,overhead_cycles,queue_size,create_instant,exec_end_instant,tag,wait_instants\n");
 }/*}}}*/
 
 void mir_task_stats_write_to_file(struct mir_task_list_t* list, FILE* file)
