@@ -602,8 +602,10 @@ if(!is.na(path_weight) && !parsed$tree)
     } else {
       # TODO: Make variable names in this block meaningfull.
       lntg <- length(V(tg))
-      pb <- txtProgressBar(min = 0, max = lntg, style = 3)
-      ctr <- 0
+      if(parsed$verbose) {
+        pb <- txtProgressBar(min = 0, max = lntg, style = 3)
+        ctr <- 0
+      }
       # Topological sort
       tsg <- topological.sort(tg)
       # Set root path attributes
@@ -632,7 +634,10 @@ if(!is.na(path_weight) && !parsed$tree)
         vgdf$rpath[node] <- nrp
         # Set node's depth as one greater than the largest depth its predecessors
         vgdf$depth[node] <- max(vgdf$depth[nn]) + 1
-        if(parsed$verbose) {ctr <- ctr + 1; setTxtProgressBar(pb, ctr);}
+        if(parsed$verbose) {
+            ctr <- ctr + 1
+            setTxtProgressBar(pb, ctr)
+        }
       }
       ## Longest path is the largest root distance
       lpl <- max(vgdf$rdist)
@@ -646,8 +651,11 @@ if(!is.na(path_weight) && !parsed$tree)
       tg <- set.vertex.attribute(tg, name="depth", index=V(tg), value=vgdf$depth)
       critical_edges <- E(tg)[V(tg)[on_crit_path==1] %--% V(tg)[on_crit_path==1]]
       tg <- set.edge.attribute(tg, name="on_crit_path", index=critical_edges, value=1)
-      if(parsed$verbose) {ctr <- ctr + 1; setTxtProgressBar(pb, ctr);}
-      close(pb)
+      if(parsed$verbose) {
+          ctr <- ctr + 1
+          setTxtProgressBar(pb, ctr)
+          close(pb)
+      }
     }
     #Rprof(NULL)
 
