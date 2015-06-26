@@ -13,7 +13,7 @@
 #include "mir_utils.h"
 #include "mir_loop.h"
 
-BEGIN_C_DECLS 
+BEGIN_C_DECLS
 
 // For task statistics collection
 // FIXME: Naming, extra indirection
@@ -25,7 +25,7 @@ struct mir_task_list_t
 };
 
 /*LIBINT_BASE_DECL_BEGIN*/
-enum mir_data_access_t 
+enum mir_data_access_t
 {
     MIR_DATA_ACCESS_READ = 0,
     MIR_DATA_ACCESS_WRITE,
@@ -63,9 +63,9 @@ static inline void data_footprint_copy(struct mir_data_footprint_t* dest, const 
     dest->part_of = src->part_of;
 }/*}}}*/
 
-END_C_DECLS 
+END_C_DECLS
 
-BEGIN_C_DECLS 
+BEGIN_C_DECLS
 
 // The task function pointer type
 /*LIBINT*/ typedef void* (*mir_tfunc_t)(void*);
@@ -74,7 +74,7 @@ BEGIN_C_DECLS
 struct mir_task_t;
 
 // The task wait counter
-struct mir_twc_t 
+struct mir_twc_t
 {/*{{{*/
     unsigned long count;
     unsigned long num_passes;
@@ -102,7 +102,7 @@ struct mir_task_t
     char name[MIR_SHORT_NAME_LEN];
     struct mir_task_t* parent;
     struct mir_task_t* predecessor;
-    uint16_t cpu_id; 
+    uint16_t cpu_id;
     uint64_t create_instant;
     uint64_t exec_resume_instant;
     uint64_t exec_end_instant;
@@ -122,7 +122,7 @@ struct mir_task_t
 };/*}}}*/
 
 #ifdef MIR_TASK_DEBUG
-static void T_DBG(char*msg, struct mir_task_t *t) 
+static void T_DBG(char*msg, struct mir_task_t *t)
 {/*{{{*/
     fprintf(stderr, "%lu\t#%p task %" MIR_FORMSPEC_UL " id %u done\t: %s\n",                    (unsigned long) pthread_self(),
                     t, t->id.uid, t->done,
