@@ -171,8 +171,8 @@ summarize_task_stats <- function(df1, df2, df.l=c("left", "right"), plot_title="
   # Last tasks to finish
   if("last_to_finish" %in% colnames(df1) & "last_to_finish" %in% colnames(df2))
   {
-      last1 <- subset(df1, last_to_finish == T, select=c(cpu_id, exec_end))
-      last2 <- subset(df2, last_to_finish == T, select=c(cpu_id, exec_end))
+      last1 <- subset(df1, last_to_finish == T, select=c(cpu_id, exec_end_instant))
+      last2 <- subset(df2, last_to_finish == T, select=c(cpu_id, exec_end_instant))
       last12 <- merge(last1, last2, by="cpu_id", all=T)
       bar_2_plotter(last12, xt="Core", yt="Instant last executed task ended (cycles)", mt=plot_title, lt=df.l, tilt=T, tilt_angle=90)
   }

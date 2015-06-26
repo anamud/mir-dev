@@ -35,7 +35,7 @@ ts.data <- ts.data[!is.na(ts.data$parent),]
 
 ## Find task executed last per worker
 if(parsed$verbose) print("Calculating last tasks to finish ...")
-max.exec.end <- ts.data %>% group_by(cpu_id) %>% filter(exec_end == max(exec_end))
+max.exec.end <- ts.data %>% group_by(cpu_id) %>% filter(exec_end_instant == max(exec_end_instant))
 ts.data["last_to_finish"] <- F
 for(task in max.exec.end$task)
 {

@@ -156,7 +156,7 @@ summarize_task_stats <- function(df, plot_title=" ")
 
   # Last tasks to finish
   if("last_to_finish" %in% colnames(df))
-      bar_plotter(subset(df, last_to_finish == T, select=c(cpu_id, exec_end)), xt="Core", yt="Instant last executed task ended (cycles)", mt=plot_title)
+      bar_plotter(subset(df, last_to_finish == T, select=c(cpu_id, exec_end_instant)), xt="Core", yt="Instant last executed task ended (cycles)", mt=plot_title)
 
   # Deviation
   if("work_deviation" %in% colnames(df))

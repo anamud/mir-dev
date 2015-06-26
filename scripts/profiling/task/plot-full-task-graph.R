@@ -152,7 +152,7 @@ compute_fragment_duration <- function(task, wait, exec_cycles, choice)
     # Each task has breaks at these instants: (execution start, child creation, child wait, execution end)
     # A fragments executes upto the next break.
     wait_instants <- as.numeric(unlist(strsplit(substring(wait, 2, nchar(wait)-1), ";", fixed = TRUE)))
-    create_instants <- as.numeric(tg_data$create[tg_data$parent == task])
+    create_instants <- as.numeric(tg_data$create_instant[tg_data$parent == task])
     instants <- c(wait_instants, create_instants, 1, 1 + exec_cycles)
     # Sort to line up breaks.
     instants <- sort(instants)
@@ -174,12 +174,12 @@ compute_fragment_duration <- function(task, wait, exec_cycles, choice)
 if(arg_timing) tic(type="elapsed")
 fd <- data.table(fragment=unlist(mapply(compute_fragment_duration,
                                         task=tg_data$task,
-                                        wait=tg_data$"[wait]",
+                                        wait=tg_data$wait_instants,
                                         exec_cycles=tg_data$exec_cycles,
                                         choice=1)),
                  duration=unlist(mapply(compute_fragment_duration,
                                         task=tg_data$task,
-                                        wait=tg_data$"[wait]",
+                                        wait=tg_data$wait_instants,
                                         exec_cycles=tg_data$exec_cycles,
                                         choice=2)))
 if(arg_timing) toc("Assign execution cycles [step 1]")
