@@ -41,6 +41,12 @@ struct mir_sbuf_t
     uint16_t size;
 };/*}}}*/
 
+struct mir_time_list_t
+{/*{{{*/
+    uint64_t time;
+    struct mir_time_list_t* next;
+};/*}}}*/
+
 END_C_DECLS 
 
 #endif   

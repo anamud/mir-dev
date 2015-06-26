@@ -36,6 +36,12 @@ static inline unsigned int mir_twc_reduce(struct mir_twc_t* twc)
         return 1; // sum == twc->count
 }/*}}}*/
 
+static inline uint64_t elapsed_execution_time(struct mir_task_t* task)
+{/*{{{*/
+    MIR_ASSERT(task != NULL);
+    return task->exec_cycles + (mir_get_cycles() - task->exec_resume_instant);
+}/*}}}*/
+
 static inline int inline_necessary()
 {/*{{{*/
     if(runtime->task_inlining_limit == 0)
@@ -169,6 +175,11 @@ struct mir_task_t* mir_task_create_common(mir_tfunc_t tfunc, void* data, size_t 
 
     // Overhead measurement
     if(worker->current_task) worker->current_task->overhead_cycles += (mir_get_cycles() - start_instant);
+
+    // Record creation instant
+    task->create_instant = 0;
+    if(worker->current_task)
+        task->create_instant = elapsed_execution_time(worker->current_task);
 
     // Task is now created
     T_DBG("Cr", task);
@@ -489,7 +500,15 @@ void mir_task_wait_int(struct mir_twc_t* twc)
         mir_worker_do_work(worker, MIR_WORKER_BACKOFF_DURING_SYNC);
     }
 
-    // Update num times passed
+    // Record when passed and update num times passed
+    // TODO: Should time update be locked?
+    if(worker->current_task)
+        twc->pass_time->time = elapsed_execution_time(worker->current_task);
+    struct mir_time_list_t* tl = (struct mir_time_list_t*) mir_malloc_int (sizeof(struct mir_time_list_t));
+    MIR_ASSERT(tl != NULL);
+    tl->time = 0; // 0 => Not passed.
+    tl->next = twc->pass_time;
+    twc->pass_time = tl;
     __sync_fetch_and_add(&(twc->num_passes), 1);
 
     // Reset counts
@@ -516,12 +535,12 @@ void mir_task_wait()
     return;
 }/*}}}*/
 
-void mir_task_list_write_header_to_file(FILE* file)
+void mir_task_stats_write_header_to_file(FILE* file)
 {/*{{{*/
-    fprintf(file, "task,parent,joins_at,cpu_id,child_number,num_children,exec_cycles,overhead_cycles,queue_size,exec_end,tag\n");
+    fprintf(file, "task,parent,joins_at,cpu_id,child_number,num_children,exec_cycles,overhead_cycles,queue_size,create,exec_end,tag,[wait]\n");
 }/*}}}*/
 
-void mir_task_list_write_to_file(struct mir_task_list_t* list, FILE* file)
+void mir_task_stats_write_to_file(struct mir_task_list_t* list, FILE* file)
 {/*{{{*/
     struct mir_task_list_t* temp = list;
     while(temp != NULL)
@@ -531,7 +550,7 @@ void mir_task_list_write_to_file(struct mir_task_list_t* list, FILE* file)
         if(temp->task->parent)
             task_parent.uid = temp->task->parent->id.uid;
 
-        fprintf(file, "%" MIR_FORMSPEC_UL ",%" MIR_FORMSPEC_UL ",%lu,%u,%u,%u,%" MIR_FORMSPEC_UL ",%" MIR_FORMSPEC_UL ",%u,%" MIR_FORMSPEC_UL ",%s\n",
+        fprintf(file, "%" MIR_FORMSPEC_UL ",%" MIR_FORMSPEC_UL ",%lu,%u,%u,%u,%" MIR_FORMSPEC_UL ",%" MIR_FORMSPEC_UL ",%u,%" MIR_FORMSPEC_UL ",%" MIR_FORMSPEC_UL ",%s,[",
                 temp->task->id.uid,
                 task_parent.uid,
                 temp->task->sync_pass,
@@ -541,8 +560,20 @@ void mir_task_list_write_to_file(struct mir_task_list_t* list, FILE* file)
                 temp->task->exec_cycles,
                 temp->task->overhead_cycles,
                 temp->task->queue_size_at_pop,
+                temp->task->create_instant,
                 temp->task->exec_end_instant,
                 temp->task->name);
+
+        struct mir_time_list_t* tl = temp->task->ctwc->pass_time;
+        fprintf(file, "%" MIR_FORMSPEC_UL, tl->time);
+        tl = tl->next;
+        while (tl != NULL)
+        {
+            fprintf(file, ";%" MIR_FORMSPEC_UL, tl->time);
+            tl = tl->next;
+        };
+
+        fprintf(file, "]\n");
 
         temp = temp->next;
     }
