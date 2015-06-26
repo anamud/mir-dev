@@ -67,7 +67,6 @@ if(parsed$timing) tic(type="elapsed")
 tg_data <- tg_data[!is.na(tg_data$parent),]
 if(parsed$timing) toc("Removing non-sense data")
 
-browser()
 # Critical path calculation weight
 if("ins_count" %in% colnames(tg_data)) {
     path_weight <- "ins_count"
@@ -544,7 +543,6 @@ if(!parsed$tree)
 
 # Set edge attributes
 if(parsed$timing) tic(type="elapsed")
-browser()
 if(!is.na(path_weight))
 {
     tg <- set.edge.attribute(tg, name="weight", index=which(is.na(E(tg)$weight)), value=0)
