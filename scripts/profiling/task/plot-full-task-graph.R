@@ -350,3 +350,8 @@ my_print(paste("Wrote file:", tg_file_out))
 tg_file_out <- paste(gsub(". $", "", arg_outfileprefix), ".graphml", sep="")
 write_res <- write.graph(tg, file=tg_file_out, format="graphml")
 my_print(paste("Wrote file:", tg_file_out))
+
+# Warn
+wa <- warnings()
+if(class(wa) != "NULL")
+    print(wa)
