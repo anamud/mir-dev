@@ -458,22 +458,6 @@ struct mir_mem_node_dist_t* mir_task_get_mem_node_dist(struct mir_task_t* task, 
 }/*}}}*/
 #endif
 
-struct mir_twc_t* mir_twc_create()
-{/*{{{*/
-    struct mir_twc_t* twc = mir_malloc_int (sizeof(struct mir_twc_t));
-    MIR_ASSERT(twc != NULL);
-
-    // Book-keeping
-    for(int i=0; i<runtime->num_workers; i++)
-       twc->count_per_worker[i] = 0;
-    twc->count = 0;
-
-    // Reset num times passed
-    twc->num_passes = 0;
-
-    return twc;
-}/*}}}*/
-
 void mir_task_wait_int(struct mir_twc_t* twc)
 {/*{{{*/
     MIR_RECORDER_STATE_BEGIN(MIR_STATE_TSYNC);

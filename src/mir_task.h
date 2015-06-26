@@ -13,6 +13,7 @@
 #include "mir_utils.h"
 #include "mir_loop.h"
 #include "mir_team.h"
+#include "mir_twc.h"
 
 BEGIN_C_DECLS
 
@@ -70,14 +71,6 @@ BEGIN_C_DECLS
 
 // The task function pointer type
 /*LIBINT*/ typedef void* (*mir_tfunc_t)(void*);
-
-// The task wait counter
-struct mir_twc_t
-{/*{{{*/
-    unsigned long count;
-    unsigned long num_passes;
-    unsigned int count_per_worker[MIR_WORKER_MAX_COUNT];
-};/*}}}*/
 
 // The task
 struct mir_task_t
@@ -147,8 +140,6 @@ void mir_task_execute(struct mir_task_t* task);
 #ifdef MIR_MEM_POL_ENABLE
 struct mir_mem_node_dist_t* mir_task_get_mem_node_dist(struct mir_task_t* task, mir_data_access_t access);
 #endif
-
-struct mir_twc_t* mir_twc_create();
 
 void mir_task_wait_int(struct mir_twc_t* twc);
 
