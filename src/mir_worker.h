@@ -17,9 +17,6 @@ BEGIN_C_DECLS
 extern uint32_t g_worker_status_board;
 extern uint32_t g_num_tasks_waiting;
 
-//struct mir_recorder_t;
-//struct mir_lock_t;
-
 struct mir_worker_statistics_t
 {
     uint16_t id;
