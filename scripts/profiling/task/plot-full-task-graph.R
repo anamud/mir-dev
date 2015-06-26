@@ -15,7 +15,7 @@ library(igraph, quietly=TRUE)
 
 # Parse arguments
 # TODO: Understand how to capture if not running inside RStudio.
-running_outside_rstudio <- 0
+running_outside_rstudio <- 1
 if(running_outside_rstudio)
 {
     library(optparse, quietly=TRUE)
