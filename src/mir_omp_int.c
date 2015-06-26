@@ -391,7 +391,7 @@ void GOMP_parallel_start (void (*fn) (void *), void * data, unsigned num_threads
 
 void GOMP_parallel_end (void)
 {/*{{{*/
-    struct mir_worker_t* worker = pthread_getspecific (runtime->worker_index);
+    struct mir_worker_t* worker = mir_worker_get_context();
     struct mir_omp_team_t *team;
     team = worker->current_task ? worker->current_task->team : NULL;
 
