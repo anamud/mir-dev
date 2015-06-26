@@ -151,7 +151,7 @@ compute_fragment_duration <- function(task, wait, exec_cycles, choice)
 {
     # Each task has breaks at these instants: (execution start, child creation, child wait, execution end)
     # A fragments executes upto the next break.
-    wait_instants <- as.numeric(unlist(strsplit(wait, ";", fixed = TRUE)))
+    wait_instants <- as.numeric(unlist(strsplit(substring(wait, 2, nchar(wait)-1), ";", fixed = TRUE)))
     create_instants <- as.numeric(tg_data$create_instant[tg_data$parent == task])
     instants <- c(wait_instants, create_instants, 1, 1 + exec_cycles)
     # Sort to line up breaks.
