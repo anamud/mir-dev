@@ -251,6 +251,8 @@ ctr <- ctr + 1; setTxtProgressBar(pb, ctr);
 close(pb)
 #Rprof(NULL)
 # Print critical path info
+tg_file_out <- paste(gsub(". $", "", arg_outfileprefix), ".info", sep="")
+sink(tg_file_out)
 my_print("Cilk Theory Parallelism (Unit = Cycles)")
 my_print("Span (critical path)")
 my_print(lpl)
@@ -260,6 +262,8 @@ my_print(total_work)
 my_print("Parallelism")
 parallelism <- total_work/lpl
 my_print(parallelism)
+sink()
+if(arg_verbose) my_print(paste("Wrote file:", tg_file_out))
 # Clear rpath since dot/table writing complains
 tg <- remove.vertex.attribute(tg,"rpath")
 if(arg_timing) toc("Critical path calculation")
