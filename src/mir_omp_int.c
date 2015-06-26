@@ -391,11 +391,11 @@ void GOMP_parallel_start (void (*fn) (void *), void * data, unsigned num_threads
 
 void GOMP_parallel_end (void)
 {/*{{{*/
-    mir_task_wait();
-
     struct mir_worker_t* worker = pthread_getspecific (runtime->worker_index);
     struct mir_omp_team_t *team;
     team = worker->current_task ? worker->current_task->team : NULL;
+
+    GOMP_barrier();
 
 #ifdef GCC_PRE_4_9
     // Stop profiling and book-keeping for parallel task
