@@ -118,5 +118,5 @@ my_print(paste("Wrote file:", out_file))
 # Warn
 wa <- warnings()
 if(class(wa) != "NULL")
-    my_print(wa)
+    print(wa)
 

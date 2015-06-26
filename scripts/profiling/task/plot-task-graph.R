@@ -1168,4 +1168,4 @@ my_print(paste("Wrote file:", tg_info_out_file))
 # Warn
 wa <- warnings()
 if(class(wa) != "NULL")
-    my_print(wa)
+    print(wa)

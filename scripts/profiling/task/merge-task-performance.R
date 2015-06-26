@@ -124,5 +124,5 @@ if(parsed$timing) toc("Write output")
 # Warn
 wa <- warnings()
 if(class(wa) != "NULL")
-    my_print(wa)
+    print(wa)
 
