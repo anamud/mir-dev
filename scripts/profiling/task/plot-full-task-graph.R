@@ -29,7 +29,7 @@ if(running_outside_rstudio)
     parsed <- parse_args(OptionParser(option_list = option_list), args = commandArgs(TRUE))
     if(!exists("data", where=parsed))
     {
-        my_print("Error: Invalid arguments. Check help (-h)")
+        my_print("Error: Data argument missing. Check help (-h)")
         quit("no", 1)
     }
 
