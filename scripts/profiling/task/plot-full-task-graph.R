@@ -22,7 +22,7 @@ if(running_outside_rstudio)
     option_list <- list(
                         make_option(c("-d","--data"), help = "Task performance data file.", metavar="FILE"),
                         make_option(c("-p","--palette"), default="color", help = "Color palette for graph elements [default \"%default\"]."),
-                        make_option(c("-o","--out"), default="task-graph", help = "Output file prefix [default \"%default\"].", metavar="STRING"),
+                        make_option(c("-o","--out"), default="full-task-graph", help = "Output file prefix [default \"%default\"].", metavar="STRING"),
                         make_option(c("--verbose"), action="store_true", default=TRUE, help="Print output [default]."),
                         make_option(c("--quiet"), action="store_false", dest="verbose", help="Print little output."),
                         make_option(c("--timing"), action="store_true", default=FALSE, help="Print processing time."))
