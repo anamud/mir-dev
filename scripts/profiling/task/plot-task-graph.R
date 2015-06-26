@@ -650,13 +650,13 @@ if(!is.na(path_weight) && !parsed$tree)
 
     # Calculate and write info
     sink(tg_info_out_file, append=T)
-    my_print("Unit = Instructions")
-    my_print("span (critical path)")
+    my_print(paste("Cilk Theory Parallelism (Unit = ", path_weight, "):", sep=""))
+    my_print("Span (critical path):")
     my_print(lpl)
-    my_print("work")
+    my_print("Work:")
     work <- sum(as.numeric(tg_data[,path_weight]))
     my_print(work)
-    my_print("parallelism")
+    my_print("Parallelism (Work/Span):")
     my_print(work/lpl)
     sink()
 
