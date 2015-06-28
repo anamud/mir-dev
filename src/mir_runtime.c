@@ -16,6 +16,12 @@ struct mir_runtime_t* runtime = NULL;
 // FIXME: Make this per-worker
 uint32_t g_sig_worker_alive = 0;
 
+// Extern global data.
+extern uint64_t g_tasks_uidc;
+extern uint32_t g_num_tasks_waiting;
+extern uint32_t g_worker_status_board;
+extern uint64_t g_total_allocated_memory;
+
 static void mir_preconfig_init()
 {
     /*{{{*/
@@ -495,6 +501,14 @@ dead:
 
     // Report allocated memory (unfreed memory)
     MIR_DEBUG(MIR_DEBUG_STR "Total unfreed memory=%" MIR_FORMSPEC_UL " bytes\n", mir_get_allocated_memory());
+
+    // Reset global data.
+    runtime = NULL;
+    g_sig_worker_alive = 0;
+    g_num_tasks_waiting = 0;
+    g_tasks_uidc = MIR_TASK_ID_START + 1;
+    g_worker_status_board = 0;
+    g_total_allocated_memory = 0;
 
 shutdown:
     MIR_DEBUG(MIR_DEBUG_STR "Shutdown complete!\n");
