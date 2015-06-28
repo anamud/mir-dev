@@ -23,8 +23,7 @@ extern uint32_t g_worker_status_board;
 extern uint64_t g_total_allocated_memory;
 
 static void mir_preconfig_init()
-{
-    /*{{{*/
+{/*{{{*/
     MIR_DEBUG(MIR_DEBUG_STR "Starting initialization ...\n");
 
     // Initialization control
@@ -69,8 +68,7 @@ static void mir_preconfig_init()
 }/*}}}*/
 
 static void mir_postconfig_init()
-{
-    /*{{{*/
+{/*{{{*/
     // Init time
     runtime->init_time = mir_get_cycles();
 
@@ -180,8 +178,7 @@ alive:
 }/*}}}*/
 
 static inline void print_help()
-{
-    /*{{{*/
+{/*{{{*/
     // Here all configuration components
     // ... should define the intention
     // ... of their config symbols
@@ -203,8 +200,7 @@ static inline void print_help()
 }/*}}}*/
 
 static void mir_config()
-{
-    /*{{{*/
+{/*{{{*/
     // Get MIR_CONF environment string
     const char* conf_str = getenv("MIR_CONF");
     if (!conf_str)
@@ -319,8 +315,7 @@ static void mir_config()
 }/*}}}*/
 
 void mir_create()
-{
-    /*{{{*/
+{/*{{{*/
     // Create only if first call
     if (runtime != NULL)
     {
@@ -355,15 +350,13 @@ void mir_create()
     Call @mir_destroy@ for proper destruction.
 */
 void mir_soft_destroy()
-{
-    /*{{{*/
+{/*{{{*/
     MIR_ASSERT(runtime->init_count > 0);
     __sync_fetch_and_sub(&(runtime->init_count), 1);
 }/*}}}*/
 
 void mir_destroy()
-{
-    /*{{{*/
+{/*{{{*/
     // Destroy only once. Multiple calls happen if the user inserts 
     // explicit calls to mir_destroy() in the program.
     //MIR_ASSERT(runtime->destroyed == 0);
