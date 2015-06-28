@@ -495,6 +495,7 @@ dead:
     // Report allocated memory (unfreed memory)
     MIR_DEBUG(MIR_DEBUG_STR "Total unfreed memory=%" MIR_FORMSPEC_UL " bytes\n", mir_get_allocated_memory());
 
+shutdown:
     // Reset global data.
     runtime = NULL;
     g_sig_worker_alive = 0;
@@ -503,7 +504,6 @@ dead:
     g_worker_status_board = 0;
     g_total_allocated_memory = 0;
 
-shutdown:
     MIR_DEBUG(MIR_DEBUG_STR "Shutdown complete!\n");
     return;
 }/*}}}*/
