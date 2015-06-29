@@ -478,7 +478,7 @@ void mir_task_wait_int(struct mir_twc_t* twc)
     {
         // TODO: Report this!
         // MIR_ASSERT(twc->count > 0);
-        return;
+        goto exit;
     }
 
     // Wait and do useful work
@@ -497,6 +497,7 @@ void mir_task_wait_int(struct mir_twc_t* twc)
     for(int i=0; i<runtime->num_workers; i++)
        twc->count_per_worker[i] = 0;
 
+ exit:
     MIR_RECORDER_STATE_END(NULL, 0);
 
     return;
