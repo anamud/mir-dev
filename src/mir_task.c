@@ -466,7 +466,7 @@ struct mir_mem_node_dist_t* mir_task_get_mem_node_dist(struct mir_task_t* task, 
 }/*}}}*/
 #endif
 
-void mir_task_wait_int(struct mir_twc_t* twc)
+void mir_task_wait_int(struct mir_twc_t* twc, int newval)
 {/*{{{*/
     MIR_RECORDER_STATE_BEGIN(MIR_STATE_TSYNC);
 
@@ -493,7 +493,7 @@ void mir_task_wait_int(struct mir_twc_t* twc)
     __sync_fetch_and_add(&(twc->num_passes), 1);
 
     // Reset counts
-    twc->count = 0;
+    twc->count = newval;
     for(int i=0; i<runtime->num_workers; i++)
        twc->count_per_worker[i] = 0;
 
@@ -512,7 +512,7 @@ void mir_task_wait()
     else
         twc = runtime->ctwc;
 
-    mir_task_wait_int(twc);
+    mir_task_wait_int(twc, 0);
 
     return;
 }/*}}}*/

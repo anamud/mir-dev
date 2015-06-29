@@ -143,7 +143,7 @@ void mir_task_execute(struct mir_task_t* task);
 struct mir_mem_node_dist_t* mir_task_get_mem_node_dist(struct mir_task_t* task, mir_data_access_t access);
 #endif
 
-void mir_task_wait_int(struct mir_twc_t* twc);
+void mir_task_wait_int(struct mir_twc_t* twc, int newval);
 
 /*LIBINT*/ void mir_task_wait();
 
