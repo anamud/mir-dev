@@ -24,7 +24,7 @@ void GOMP_barrier (void)
     if (team)
     {
         team->barrier->count_per_worker[worker->id]++;
-        mir_task_wait_int(team->barrier);
+        mir_task_wait_int(team->barrier, team->num_threads);
     }
 }/*}}}*/
 
@@ -367,6 +367,10 @@ void GOMP_parallel_start (void (*fn) (void *), void * data, unsigned num_threads
 
     // Create task
     struct mir_worker_t* worker = mir_worker_get_context();
+
+    // Workaround our lack of proper OpenMP-handling of num_threads.
+    num_threads = num_threads == 0 ? runtime->num_workers : num_threads;
+
     struct mir_omp_team_t *prevteam;
     prevteam = worker->current_task ? worker->current_task->team : NULL;
     struct mir_omp_team_t *team = mir_new_omp_team(prevteam, num_threads);
@@ -393,9 +397,12 @@ void GOMP_parallel_end (void)
 {/*{{{*/
     mir_task_wait();
 
-    struct mir_worker_t* worker = pthread_getspecific (runtime->worker_index);
+    struct mir_worker_t* worker = mir_worker_get_context();
     struct mir_omp_team_t *team;
     team = worker->current_task ? worker->current_task->team : NULL;
+
+    // TODO: Confirm if disaling the barrier is correct.
+    //GOMP_barrier();
 
 #ifdef GCC_PRE_4_9
     // Stop profiling and book-keeping for parallel task
@@ -449,20 +456,19 @@ void GOMP_taskwait (void)
 
 bool GOMP_single_start (void)
 {/*{{{*/
-    // Return true for all tasks executing outline functions but avoid
-    // returning true for the non-task in the starting thread.
     struct mir_worker_t* worker = mir_worker_get_context();
     struct mir_omp_team_t* team;
     team = worker->current_task ? worker->current_task->team : NULL;
-    if (team)
-    {
-        __sync_fetch_and_add(&(team->barrier->count), 1);
+
+    if (team == NULL)
         return true;
+
+    int sc = __sync_fetch_and_sub(&team->single_count, 1);
+    if (sc == 1) {
+        __sync_bool_compare_and_swap (&team->single_count, 0,
+                                      team->num_threads);
     }
-    else
-    {
-        return false;
-    }
+    return sc == team->num_threads;
 }/*}}}*/
 
 int omp_get_thread_num (void)

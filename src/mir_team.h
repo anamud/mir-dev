@@ -8,6 +8,8 @@ struct mir_omp_team_t
 {/*{{{*/
     struct mir_omp_team_t *prev;
     struct mir_twc_t* barrier;
+    int num_threads;
+    int single_count;
 };/*}}}*/
 /*LIBINT_BASE_DECL_END*/
 
