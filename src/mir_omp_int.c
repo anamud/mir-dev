@@ -24,7 +24,7 @@ void GOMP_barrier (void)
     if (team)
     {
         team->barrier->count_per_worker[worker->id]++;
-        mir_task_wait_int(team->barrier);
+        mir_task_wait_int(team->barrier, team->num_threads);
     }
 }/*}}}*/
 
