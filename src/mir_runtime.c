@@ -183,18 +183,18 @@ static inline void print_help()
     // ... of their config symbols
 
     MIR_INFORM(MIR_INFORM_STR "Valid options in MIR_CONF environment variable ...\n"
-                              "-h print this help message\n"
+                              "-h (--help) print this help message\n"
                               "-w <int> (--workers) number of workers\n"
-                              "-s <str> task scheduling policy. Choose among central, central-stack, ws, ws-de and numa.\n"
-                              "-m=<str> memory allocation policy. Choose among coarse, fine and system.\n"
+                              "-s <str> (--schedule) task scheduling policy. Choose among central, central-stack, ws, ws-de and numa.\n"
+                              "-m <str> (--memory-policy) memory allocation policy. Choose among coarse, fine and system.\n"
                               "--inlining-limit=<int> task inlining limit based on number of tasks per worker.\n"
                               "--stack-size=<int> worker stack size in MB\n"
                               "--queue-size=<int> task queue capacity\n"
                               "--numa-footprint=<int> for numa scheduling policy. Indicates data footprint size in bytes below which task is dealt to worker's private queue.\n"
                               "--worker-stats collect worker statistics\n"
                               "--task-stats collect task statistics\n"
-                              "-r enable worker recorder\n"
-                              "-p enable communication with Outline Function Profiler [Note: Supported only for a single worker!]\n");
+                              "-r (--recorder) enable worker recorder\n"
+                              "-p (--profiler) enable communication with Outline Function Profiler [Note: Supported only for a single worker!]\n");
 } /*}}}*/
 
 static void mir_config()
