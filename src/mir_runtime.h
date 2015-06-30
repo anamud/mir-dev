@@ -11,8 +11,7 @@
 
 BEGIN_C_DECLS
 
-struct mir_runtime_t
-{/*{{{*/
+struct mir_runtime_t { /*{{{*/
     // Data
     uint16_t num_workers;
     uint16_t* worker_cpu_map;
@@ -42,7 +41,7 @@ struct mir_runtime_t
     int enable_task_stats;
     int enable_recorder;
     int enable_ofp_handshake;
-};/*}}}*/
+}; /*}}}*/
 
 extern struct mir_runtime_t* runtime;
 
