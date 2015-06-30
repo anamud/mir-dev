@@ -9,38 +9,36 @@
 #include <errno.h>
 
 int mir_pstack_set_size(size_t sz)
-{/*{{{*/
+{ /*{{{*/
     struct rlimit rl;
 
     int result = getrlimit(RLIMIT_STACK, &rl);
-    if(result == 0)
-    {
-        if(rl.rlim_cur < sz)
-        {
+    if (result == 0) {
+        if (rl.rlim_cur < sz) {
             rl.rlim_cur = sz;
             result = setrlimit(RLIMIT_STACK, &rl);
         }
     }
 
     return result;
-}/*}}}*/
+} /*}}}*/
 
 int mir_get_num_threads()
-{/*{{{*/
+{ /*{{{*/
     return runtime->num_workers;
-}/*}}}*/
+} /*}}}*/
 
 int mir_get_threadid()
-{/*{{{*/
+{ /*{{{*/
     struct mir_worker_t* worker = mir_worker_get_context();
     return worker->id;
-}/*}}}*/
+} /*}}}*/
 
 void mir_sleep_ms(uint32_t msec)
-{/*{{{*/
+{ /*{{{*/
 #ifdef __tile__
 #include <unistd.h>
-    usleep(msec*1000);
+    usleep(msec * 1000);
 #else // x86 Linux
     struct timespec timeout0;
     struct timespec timeout1;
@@ -51,17 +49,16 @@ void mir_sleep_ms(uint32_t msec)
     t0->tv_sec = msec / 1000;
     t0->tv_nsec = (msec % 1000) * (1000 * 1000);
 
-    while ((nanosleep(t0, t1) == (-1)) && (errno == EINTR))
-    {
+    while ((nanosleep(t0, t1) == (-1)) && (errno == EINTR)) {
         tmp = t0;
         t0 = t1;
         t1 = tmp;
     }
 #endif
-}/*}}}*/
+} /*}}}*/
 
 void mir_sleep_us(uint32_t usec)
-{/*{{{*/
+{ /*{{{*/
 #ifdef __tile__
 #include <unistd.h>
     usleep(usec);
@@ -76,26 +73,26 @@ void mir_sleep_us(uint32_t usec)
     t0->tv_sec = usec / (1000 * 1000);
     t0->tv_nsec = (usec % (1000 * 1000)) * (1000);
 
-    while ((nanosleep(t0, t1) == (-1)) && (errno == EINTR))
-    {
+    while ((nanosleep(t0, t1) == (-1)) && (errno == EINTR)) {
         tmp = t0;
         t0 = t1;
         t1 = tmp;
     }
 #endif
-}/*}}}*/
+} /*}}}*/
 
 #ifdef __tile__
 #include <arch/cycle.h>
 uint64_t mir_get_cycles()
-{/*{{{*/
+{ /*{{{*/
     return get_cycle_count();
-}/*}}}*/
+} /*}}}*/
 #else
 uint64_t mir_get_cycles()
-{/*{{{*/
+{ /*{{{*/
     unsigned a, d;
-    __asm__ volatile("rdtsc" : "=a" (a), "=d" (d));
+    __asm__ volatile("rdtsc"
+                     : "=a"(a), "=d"(d));
     return ((uint64_t)a) | (((uint64_t)d) << 32);
-}/*}}}*/
+} /*}}}*/
 #endif
