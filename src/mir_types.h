@@ -1,5 +1,5 @@
-#ifndef  MIR_TYPES_H
-#define  MIR_TYPES_H
+#ifndef MIR_TYPES_H
+#define MIR_TYPES_H
 
 #include <stdint.h>
 #include <inttypes.h>
@@ -19,34 +19,31 @@
 #undef BEGIN_C_DECLS
 #undef END_C_DECLS
 #ifdef __cplusplus
-# define BEGIN_C_DECLS extern "C" {
-# define END_C_DECLS }
+#define BEGIN_C_DECLS extern "C" {
+#define END_C_DECLS }
 #else
-# define BEGIN_C_DECLS /* empty */
-# define END_C_DECLS /* empty */
+#define BEGIN_C_DECLS /* empty */
+#define END_C_DECLS   /* empty */
 #endif
 
-BEGIN_C_DECLS 
+BEGIN_C_DECLS
 
 // A generic id type
-struct mir_id_t
-{/*{{{*/
+struct mir_id_t { /*{{{*/
     uint64_t uid;
-};/*}}}*/
+}; /*}}}*/
 typedef struct mir_id_t mir_id_t;
 
-struct mir_sbuf_t 
-{/*{{{*/
+struct mir_sbuf_t { /*{{{*/
     int32_t buf[MIR_SBUF_SIZE];
     uint16_t size;
-};/*}}}*/
+}; /*}}}*/
 
-struct mir_time_list_t
-{/*{{{*/
+struct mir_time_list_t { /*{{{*/
     uint64_t time;
     struct mir_time_list_t* next;
-};/*}}}*/
+}; /*}}}*/
 
-END_C_DECLS 
+END_C_DECLS
 
-#endif   
+#endif
