@@ -194,7 +194,7 @@ static inline void print_help()
                               "--worker-stats collect worker statistics\n"
                               "--task-stats collect task statistics\n"
                               "-r (--recorder) enable worker recorder\n"
-                              "-p (--profiler) enable communication with Outline Function Profiler [Note: Supported only for a single worker!]\n");
+                              "-p (--profiler) enable communication with Outline Function Profiler. Note: This option is supported only for single-worker execution!\n");
 } /*}}}*/
 
 static void mir_config()
