@@ -13,15 +13,15 @@
 #include <sys/shm.h>
 
 KNOB<string> KnobOutputFileSuffix(KNOB_MODE_WRITEONCE, "pintool",
-    "o", "mir-ofp", "specify output file suffix");
+    "pr", "mir-ofp", "specify output file prefix");
 KNOB<BOOL> KnobPid(KNOB_MODE_WRITEONCE, "pintool",
-    "i", "0", "append pid to output");
+    "pi", "0", "append pid to output");
 KNOB<string> KnobFunctionNames(KNOB_MODE_WRITEONCE, "pintool",
-    "s", "", "specify outline functions (csv)");
+    "of", "", "specify outline functions (csv)");
 KNOB<string> KnobCalledFunctionNames(KNOB_MODE_WRITEONCE, "pintool",
-    "c", "", "specify functions called (csv) from outline functions");
+    "cf", "", "specify functions called (csv) from outline functions");
 KNOB<BOOL> KnobCalcMemShare(KNOB_MODE_WRITEONCE, "pintool",
-    "m", "0", "calculate memory sharing (NOTE: a time consuming process!)");
+    "ds", "0", "calculate data sharing (NOTE: a time consuming process!)");
 
 #define EXCLUDE_STACK_INS_FROM_MEM_FP 1
 #define GET_INS_MIX 1
