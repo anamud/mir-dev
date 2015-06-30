@@ -9,20 +9,20 @@
 #define MIR_WORKER_EXP_BOFF_ROOF 128
 // Set to 0 for no backoff
 #define MIR_WORKER_BACKOFF_DURING_SYNC 1
-#define MIR_WORKER_EXPLICIT_BIND 
+#define MIR_WORKER_EXPLICIT_BIND
 
 // Task
-//#define MIR_TASK_DEBUG 
+//#define MIR_TASK_DEBUG
 #define MIR_TASK_DEFAULT_NAME "NO_NAME"
-//#define MIR_TASK_ALLOCATE_ON_STACK 
+//#define MIR_TASK_ALLOCATE_ON_STACK
 #define MIR_TASK_ID_START 0
 #define MIR_TASKWAIT_ID_START 0
 #define MIR_TASK_FIXED_DATA_SIZE
 // Uncomment below define statement only if MIR_TASK_FIXED_DATA_SIZE is also defined
-#define MIR_TASK_DATA_MAX_SIZE 256 
+#define MIR_TASK_DATA_MAX_SIZE 256
 
 // Queue
-//#define MIR_QUEUE_DEBUG 
+//#define MIR_QUEUE_DEBUG
 //#define MIR_QUEUE_MAX_CAPACITY 8192
 #define MIR_QUEUE_MAX_CAPACITY 32768
 //#define MIR_QUEUE_MAX_CAPACITY 65536
@@ -42,11 +42,11 @@
 #define MIR_TASK_STATS_FILE_NAME "mir-task-stats"
 
 // Memory allocator
-#define MIR_MEMORY_ALLOCATOR_DEBUG 
+#define MIR_MEMORY_ALLOCATOR_DEBUG
 #define MIR_PAGE_ALIGNMENT 64
 
 // Recorder
-#define MIR_RECORDER_BUFFER_MAX_SIZE (1*1024*256)
+#define MIR_RECORDER_BUFFER_MAX_SIZE (1 * 1024 * 256)
 #define MIR_RECORDER_STACK_MAX_SIZE MIR_RECORDER_BUFFER_MAX_SIZE
 #define MIR_RECORDER_STATE_META_DATA_MAX_SIZE MIR_SBUF_SIZE
 #define MIR_RECORDER_EVENT_META_DATA_MAX_SIZE MIR_SBUF_SIZE
@@ -56,19 +56,19 @@
 #define MIR_SCHED_POL_DEFAULT "central-stack"
 
 // Dynamic inlining
-#define MIR_INLINE_TASK_IF_QUEUE_FULL 
+#define MIR_INLINE_TASK_IF_QUEUE_FULL
 // Creation inline: 0 = never, 1 = always, >1 = inlined if num tasks waiting per worker exceeds
 #define MIR_INLINE_TASK_DURING_CREATION 0
 
 // Memory allocation policy
-#define MIR_MEM_POL_CACHE_NODES 
-#define MIR_MEM_POL_RESTRICT 
-//#define MIR_MEM_POL_FAULT_IN_PAGES 
-//#define MIR_MEM_POL_LOCK_PAGES 
+#define MIR_MEM_POL_CACHE_NODES
+#define MIR_MEM_POL_RESTRICT
+//#define MIR_MEM_POL_FAULT_IN_PAGES
+//#define MIR_MEM_POL_LOCK_PAGES
 // TILEPro64 specifc
-//#define MIR_PAGE_NO_LOCAL_CACHING 
+//#define MIR_PAGE_NO_LOCAL_CACHING
 //#define MIR_PAGE_NO_L1_CACHING
-//#define MIR_PAGE_NO_L2_CACHING 
+//#define MIR_PAGE_NO_L2_CACHING
 
 // Shared memory
 #define MIR_OFP_SHM_SIZE 16
