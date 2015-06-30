@@ -12,13 +12,12 @@
 #include "mir_task.h"
 #include "mir_types.h"
 
-BEGIN_C_DECLS 
+BEGIN_C_DECLS
 
 extern uint32_t g_worker_status_board;
 extern uint32_t g_num_tasks_waiting;
 
-struct mir_worker_statistics_t
-{
+struct mir_worker_statistics_t {
     uint16_t id;
     uint32_t num_tasks_created;
     // FIXME: Owned? Think of a better word. Well, owned is opposite of stolen.
@@ -33,8 +32,7 @@ struct mir_worker_statistics_t
     uint32_t* num_comm_tasks_stolen_by_diameter;
 };
 
-struct mir_worker_t
-{
+struct mir_worker_t {
     pthread_t pthread;
     uint16_t id;
     uint16_t cpu_id;
@@ -47,7 +45,7 @@ struct mir_worker_t
     struct mir_recorder_t* recorder;
     //For dedicated tasks
     struct mir_queue_t* private_queue;
-    // For task statistics 
+    // For task statistics
     struct mir_task_list_t* task_list;
 };
 
@@ -78,4 +76,4 @@ void mir_worker_update_task_list(struct mir_worker_t* worker, struct mir_task_t*
 void mir_worker_push(struct mir_worker_t* worker, struct mir_task_t* task);
 
 END_C_DECLS
-#endif 
+#endif
