@@ -20,43 +20,6 @@
 extern uint32_t g_num_tasks_waiting;
 extern struct mir_runtime_t* runtime;
 
-void config_ws_de_node (const char* conf_str)
-{/*{{{*/
-    char str[MIR_LONG_NAME_LEN];
-    strcpy(str, conf_str);
-
-    struct mir_sched_pol_t* sp = runtime->sched_pol;
-    MIR_ASSERT(NULL != sp);
-
-    char* tok = strtok(str, " ");
-    while(tok)
-    {
-        if(tok[0] == '-')
-        {
-            char c = tok[1];
-            switch(c)
-            {
-                case 'q':
-                    if(tok[2] == '=')
-                    {
-                        char* s = tok+3;
-                        sp->queue_capacity = atoi(s);
-                        MIR_ASSERT(sp->queue_capacity > 0);
-                        //MIR_INFORM(MIR_INFORM_STR "Setting queue capacity to %d\n", sp->queue_capacity);
-                    }
-                    else
-                    {
-                        MIR_ABORT(MIR_ERROR_STR "Incorrect MIR_CONF parameter [%c]\n", c);
-                    }
-                    break;
-                default:
-                    break;
-            }
-        }
-        tok = strtok(NULL, " ");
-    }
-}/*}}}*/
-
 void create_ws_de_node ()
 {/*{{{*/
     struct mir_sched_pol_t* sp = runtime->sched_pol;
@@ -313,7 +276,6 @@ struct mir_sched_pol_t policy_ws_de_node =
     .queues = NULL,
     .alt_queues = NULL,
     .name = "ws-de-node",
-    .config = config_ws_de_node,
     .create = create_ws_de_node,
     .destroy = destroy_ws_de_node,
     .push = push_ws_de_node,

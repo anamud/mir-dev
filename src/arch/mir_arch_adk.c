@@ -2,11 +2,6 @@
 #include "mir_types.h"
 #include "mir_utils.h"
 
-void config_adk(const char* conf_str)
-{/*{{{*/
-    return;
-}/*}}}*/
-
 void create_adk()
 {/*{{{*/
     return;
@@ -80,7 +75,6 @@ struct mir_arch_t arch_adk =
     .num_cores = 4,
     .diameter = 0,
     .llc_size_KB = 4096,
-    .config = config_adk,
     .create = create_adk,
     .destroy = destroy_adk,
     .sys_cpu_of = sys_cpu_of_adk,

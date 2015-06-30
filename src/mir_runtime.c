@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <pthread.h>
+#include <getopt.h>
 #include <sys/shm.h>
 
 #include "mir_runtime.h"
@@ -21,6 +22,7 @@ extern uint64_t g_tasks_uidc;
 extern uint32_t g_num_tasks_waiting;
 extern uint32_t g_worker_status_board;
 extern uint64_t g_total_allocated_memory;
+extern uint64_t g_numa_schedule_footprint_config;
 
 static void mir_preconfig_init()
 {/*{{{*/
@@ -113,6 +115,7 @@ static void mir_postconfig_init()
     }/*}}}*/
 
     // Workers
+    MIR_DEBUG(MIR_DEBUG_STR "Number of workers set to %d.\n", runtime->num_workers);
     __sync_fetch_and_add(&g_sig_worker_alive, runtime->num_workers - 1);
 #ifdef __tile__
     __asm__ __volatile__ ("mf;"::);
@@ -184,20 +187,19 @@ static inline void print_help()
     // ... of their config symbols
 
     MIR_INFORM(MIR_INFORM_STR "Valid options in MIR_CONF environment variable ...\n"
-               "-h print this help message\n"
-               "-w=<int> number of workers\n"
-               "-s=<str> task scheduling policy. Choose among central, central-stack, ws, ws-de and numa.\n"
-               "-r enable worker recorder\n"
-               "-x=<int> task inlining limit based on num tasks per worker.\n"
-               "-i collect worker statistics\n"
-               "-l=<int> worker stack size in MB\n"
-               "-q=<int> task queue capacity\n"
-               "-m=<str> memory allocation policy. Choose among coarse, fine and system.\n"
-               "-y=<csv> schedule policy specific parameters. Policy numa: data size in bytes below which task is dealt to worker's private queue.\n"
-               "-g collect task statistics\n"
-               "-p enable handshake with Outline Function Profiler [Note: Supported only for a single worker!]\n"
-              );
-}/*}}}*/
+                              "-h print this help message\n"
+                              "-w <int> (--workers) number of workers\n"
+                              "-s <str> task scheduling policy. Choose among central, central-stack, ws, ws-de and numa.\n"
+                              "-m=<str> memory allocation policy. Choose among coarse, fine and system.\n"
+                              "--inlining-limit=<int> task inlining limit based on number of tasks per worker.\n"
+                              "--stack-size=<int> worker stack size in MB\n"
+                              "--queue-size=<int> task queue capacity\n"
+                              "--numa-footprint=<int> for numa scheduling policy. Indicates data footprint size in bytes below which task is dealt to worker's private queue.\n"
+                              "--worker-stats collect worker statistics\n"
+                              "--task-stats collect task statistics\n"
+                              "-r enable worker recorder\n"
+                              "-p enable communication with Outline Function Profiler [Note: Supported only for a single worker!]\n");
+} /*}}}*/
 
 static void mir_config()
 {/*{{{*/
@@ -210,109 +212,149 @@ static void mir_config()
         return;
 
     // Copy to buffer
-    char str[MIR_LONG_NAME_LEN];
-    strcpy(str, getenv("MIR_CONF"));
+    char* tmp_buf = strdup(getenv("MIR_CONF"));
 
-    // Parse tokens
-    char* tok = strtok(str, " ");
+    // Parse arguments using GNU getopt
+    int conf_argc = 1;
+    char* conf_argv[MIR_SBUF_SIZE];
+    conf_argv[0] = "MIR_CONF";
+    char* tok = strtok(tmp_buf, " ");
     while (tok)
     {
-        if (tok[0] == '-')
-        {
-            char c = tok[1];
-            switch (c)
-            {
-            /*{{{*/
-            case 'h':
-                print_help();
-                break;
-            case 'w':
-                if (tok[2] == '=')
-                {
-                    char* s = tok + 3;
-                    runtime->num_workers = atoi(s);
-                    if (runtime->num_workers > runtime->arch->num_cores)
-                        MIR_ABORT(MIR_ERROR_STR "Cannot configure more workers (%d) than number of cores (%d) !\n", runtime->num_workers, runtime->arch->num_cores);
-                }
-                else
-                {
-                    MIR_ABORT(MIR_ERROR_STR "Incorrect MIR_CONF parameter [%c]\n", c);
-                }
-                break;
-            case 's':
-                if (tok[2] == '=')
-                {
-                    char* s = tok + 3;
-                    runtime->sched_pol = mir_sched_pol_get_by_name(s);
-                    if (runtime->sched_pol == NULL)
-                        MIR_ABORT(MIR_ERROR_STR "Cannot select %s scheduling policy!\n", s);
-                }
-                else
-                {
-                    MIR_ABORT(MIR_ERROR_STR "Incorrect MIR_CONF parameter [%c]\n", c);
-                }
-                break;
-            case 'g':
-                runtime->enable_task_stats = 1;
-                MIR_DEBUG(MIR_DEBUG_STR "Task statistics collection is enabled!\n");
-                break;
-            case 'r':
-                runtime->enable_recorder = 1;
-                MIR_DEBUG(MIR_DEBUG_STR "Recorder is enabled!\n");
-                break;
-            case 'i':
-                runtime->enable_worker_stats = 1;
-                MIR_DEBUG(MIR_DEBUG_STR "Worker statistics collection is enabled!\n");
-                break;
-            case 'x':
-                if (tok[2] == '=')
-                {
-                    char* s = tok + 3;
-                    runtime->task_inlining_limit = atoi(s);
-                    MIR_DEBUG(MIR_DEBUG_STR "Task inlining limit set to %u\n", runtime->task_inlining_limit);
-                }
-                else
-                {
-                    MIR_ABORT(MIR_ERROR_STR "Incorrect MIR_CONF parameter [%c]\n", c);
-                }
-                break;
-            case 'l':
-                if (tok[2] == '=')
-                {
-                    char* s = tok + 3;
-                    int ps_sz = atoi(s) * 1024 * 1024;
-                    MIR_ASSERT(ps_sz > 0);
-                    MIR_ASSERT(0 == mir_pstack_set_size(ps_sz));
-                    MIR_DEBUG(MIR_DEBUG_STR "Process stack size set to %d bytes\n", ps_sz);
-                }
-                else
-                {
-                    MIR_ABORT(MIR_ERROR_STR "Incorrect MIR_CONF parameter [%c]\n", c);
-                }
-                break;
-            case 'p':
-                if (runtime->num_workers == 1)
-                {
-                    runtime->enable_ofp_handshake = 1;
-                    MIR_DEBUG(MIR_DEBUG_STR "OFP handshake mode is enabled!\n");
-                }
-                else
-                {
-                    MIR_ABORT(MIR_ERROR_STR "Number of workers = %d != 1. Cannot enable OFP handshake mode!\n", runtime->num_workers);
-                }
-                break;
-            default:
-                break;
-            }/*}}}*/
-        }
+        conf_argc++;
+        MIR_ASSERT(conf_argc <= MIR_SBUF_SIZE);
+        // Copy to buffer
+        conf_argv[conf_argc - 1] = strdup(tok);
         tok = strtok(NULL, " ");
     }
+    int c;
+    while (1)
+    {
+        static struct option long_options[] =
+        {
+            { "workers", required_argument, 0, 'w' },
+            { "schedule", required_argument, 0, 's' },
+            { "memory-policy", required_argument, 0, 'm' },
+            { "stack-size", required_argument, 0, 0 },
+            { "inline-limit", required_argument, 0, 0 },
+            { "numa-footprint", required_argument, 0, 0 },
+            { "queue-size", required_argument, 0, 0 },
+            { "profiling", no_argument, 0, 'p' },
+            { "recorder", no_argument, 0, 'r' },
+            { "worker-stats", no_argument, 0, 0 },
+            { "task-stats", no_argument, 0, 0 },
+            { 0, 0, 0, 0 }
+        };
 
-    // Pass token string to other configurable components
-    mir_mem_pol_config(conf_str);
-    runtime->sched_pol->config(conf_str);
-    runtime->arch->config(conf_str);
-}/*}}}*/
+        int option_index = 0;
+
+        c = getopt_long(conf_argc, conf_argv, "w:s:m:pr",
+            long_options, &option_index);
+
+        if (c == -1)
+            break;
+
+        switch (c)
+        {
+        case 0:
+            if(0 == strcmp(long_options[option_index].name, "inlining-limit"))
+            {
+                runtime->task_inlining_limit = atoi(optarg);
+                MIR_DEBUG(MIR_DEBUG_STR "Task inlining limit set to %u.\n", runtime->task_inlining_limit);
+            }
+            else if(0 == strcmp(long_options[option_index].name, "stack-size"))
+            {
+                int ps_sz = atoi(optarg) * 1024 * 1024;
+                MIR_ASSERT(ps_sz > 0);
+                MIR_ASSERT(0 == mir_pstack_set_size(ps_sz));
+                MIR_DEBUG(MIR_DEBUG_STR "Process stack size set to %d bytes.\n", ps_sz);
+            }
+            else if(0 == strcmp(long_options[option_index].name, "worker-stats"))
+            {
+                runtime->enable_worker_stats = 1;
+                MIR_DEBUG(MIR_DEBUG_STR "Worker statistics collection is enabled.\n");
+            }
+            else if(0 == strcmp(long_options[option_index].name, "task-stats"))
+            {
+                runtime->enable_task_stats = 1;
+                MIR_DEBUG(MIR_DEBUG_STR "Task statistics collection is enabled.\n");
+            }
+            else if(0 == strcmp(long_options[option_index].name, "queue-size"))
+            {
+                runtime->sched_pol->queue_capacity = atoi(optarg);
+                MIR_ASSERT(runtime->sched_pol->queue_capacity > 0);
+                MIR_DEBUG(MIR_DEBUG_STR "Task queue capacity set to %d.\n", runtime->sched_pol->queue_capacity);
+            }
+            else if(0 == strcmp(long_options[option_index].name, "numa-footprint"))
+            {
+                g_numa_schedule_footprint_config = atoi(optarg);
+                MIR_ASSERT(g_numa_schedule_footprint_config > 0);
+                MIR_DEBUG(MIR_DEBUG_STR "Footprint limit for numa scheduling policy set to %zd.\n", g_numa_schedule_footprint_config);
+            }
+            else
+            {
+                MIR_DEBUG(MIR_DEBUG_STR "Unrecognized option: %s!\n", long_options[option_index].name);
+            }
+            break;
+
+        case '1':
+        case '2':
+            MIR_ABORT(MIR_ERROR_STR "Unknown MIR_CONF parameter %c!\n", c);
+            break;
+
+        case 'w':
+            runtime->num_workers = atoi(optarg);
+            if (runtime->num_workers > runtime->arch->num_cores)
+                MIR_ABORT(MIR_ERROR_STR "Cannot configure more workers (%d) than number of cores (%d)!\n",
+                runtime->num_workers, runtime->arch->num_cores);
+            break;
+
+        case 's':
+            runtime->sched_pol = mir_sched_pol_get_by_name(optarg);
+            if (runtime->sched_pol == NULL)
+                MIR_ABORT(MIR_ERROR_STR "Cannot select %s scheduling policy!\n", optarg);
+            break;
+
+        case 'm':
+            mir_mem_pol_config(optarg);
+            break;
+
+        case 'p':
+            runtime->enable_ofp_handshake = 1;
+            MIR_DEBUG(MIR_DEBUG_STR "OFP handshake mode is enabled.\n");
+            break;
+
+        case 'r':
+            runtime->enable_recorder = 1;
+            MIR_DEBUG(MIR_DEBUG_STR "Recorder is enabled.\n");
+            break;
+
+        case 'h':
+            print_help();
+            break;
+
+        case '?':
+            // Add a MIR_ABORT here if unrecognized options are fatal.
+            break;
+
+        default:
+            MIR_ABORT(MIR_ERROR_STR "Incorrect MIR_CONF parameter %c!\n", c);
+            break;
+        }
+    }
+
+    // Free string buffers.
+    free(tmp_buf);
+    while (conf_argc != 1)
+    {
+        free(conf_argv[conf_argc - 1]);
+        conf_argc--;
+    }
+
+    // Check if arguments are vaild.
+    if (runtime->num_workers != 1 && runtime->enable_ofp_handshake == 1)
+        MIR_ABORT(MIR_ERROR_STR "Cannot enable OFP handshake mode when number of workers (%d) != 1!\n", runtime->num_workers);
+} /*}}}*/
 
 void mir_create()
 {/*{{{*/

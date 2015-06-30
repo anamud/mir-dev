@@ -2,11 +2,6 @@
 #include "mir_types.h"
 #include "mir_utils.h"
 
-void config_gothmog(const char* conf_str)
-{/*{{{*/
-    return;
-}/*}}}*/
-
 void create_gothmog()
 {/*{{{*/
     return;
@@ -391,7 +386,6 @@ struct mir_arch_t arch_gothmog =
     .num_cores = 48,
     .diameter = 3,
     .llc_size_KB = 5000,
-    .config = config_gothmog,
     .create = create_gothmog,
     .destroy = destroy_gothmog,
     .sys_cpu_of = sys_cpu_of_gothmog,

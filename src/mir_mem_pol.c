@@ -548,59 +548,38 @@ static void reset_coarse()
     reset_node();
 }/*}}}*/
 
-void mir_mem_pol_config (const char* conf_str)
+void mir_mem_pol_config (const char* pol_name)
 {/*{{{*/
-    MIR_ASSERT(conf_str != NULL);
-    char str[MIR_LONG_NAME_LEN];
-    strcpy(str, conf_str);
+    MIR_ASSERT(pol_name != NULL);
+    MIR_ASSERT(strlen(pol_name) > 0);
 
-    char* tok = strtok(str, " ");
-    while(tok)
+    if(0 == strcmp(pol_name, "fine"))
     {
-        if(tok[0] == '-')
-        {
-            char c = tok[1];
-            switch(c)
-            {/*{{{*/
-                case 'm':
-                    if(tok[2] == '=')
-                    {
-                        char* pol = tok+3;
-                        if(0 == strcmp(pol, "fine"))
-                        {
-                            mem_pol->allocate = allocate_fine;
-                            mem_pol->release = release_fine;
-                        }
-                        else if(0 == strcmp(pol, "coarse"))
-                        {
-                            mem_pol->allocate = allocate_coarse;
-                            mem_pol->release = release_coarse;
-                            mem_pol->reset = reset_coarse;
-                        }
-                        else if(0 == strcmp(pol, "system"))
-                        {
-                            mem_pol->allocate = allocate_system;
-                            mem_pol->release = release_system;
-                        }
-                        else if(0 == strcmp(pol, "local"))
-                        {
-                            mem_pol->allocate = allocate_local;
-                            mem_pol->release = release_local;
-                        }
-                        else
-                        {
-                            MIR_ABORT(MIR_ERROR_STR "Incorrect MIR_CONF parameter [%c]\n", c);
-                        }
-
-                        MIR_DEBUG(MIR_DEBUG_STR "Memory allocation policy changed to %s\n", pol);
-                    }
-                    break;
-                default:
-                    break;
-            }/*}}}*/
-        }
-        tok = strtok(NULL, " ");
+        mem_pol->allocate = allocate_fine;
+        mem_pol->release = release_fine;
     }
+    else if(0 == strcmp(pol_name, "coarse"))
+    {
+        mem_pol->allocate = allocate_coarse;
+        mem_pol->release = release_coarse;
+        mem_pol->reset = reset_coarse;
+    }
+    else if(0 == strcmp(pol_name, "system"))
+    {
+        mem_pol->allocate = allocate_system;
+        mem_pol->release = release_system;
+    }
+    else if(0 == strcmp(pol_name, "local"))
+    {
+        mem_pol->allocate = allocate_local;
+        mem_pol->release = release_local;
+    }
+    else
+    {
+        MIR_ABORT(MIR_ERROR_STR "Invalid MIR_CONF memory allocation policy %s!\n", pol_name);
+    }
+
+    MIR_DEBUG(MIR_DEBUG_STR "Memory allocation policy changed to %s\n", pol_name);
 }/*}}}*/
 
 void mir_mem_pol_create ()

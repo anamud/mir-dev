@@ -12,9 +12,6 @@ def write_pretext(fil):
 #include "mir_types.h"
 #include "mir_utils.h"
 
-void config_this(const char* conf_str)
-{ return; }
-
 void create_this()
 { return; }
 
@@ -64,7 +61,6 @@ struct mir_arch_t arch_this =
     .num_cores = {},
     .diameter = 0,
     .llc_size_KB = 1,
-    .config = config_this,
     .create = create_this,
     .destroy = destroy_this,
     .sys_cpu_of = sys_cpu_of_this,

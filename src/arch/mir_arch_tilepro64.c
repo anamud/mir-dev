@@ -2,11 +2,6 @@
 #include "mir_types.h"
 #include "mir_utils.h"
 
-void config_tilepro64(const char* conf_str)
-{/*{{{*/
-    return;
-}/*}}}*/
-
 void create_tilepro64()
 {/*{{{*/
     return;
@@ -70,7 +65,6 @@ struct mir_arch_t arch_tilepro64 =
     .num_cores = 64,
     .diameter = 14,
     .llc_size_KB = 64,
-    .config = config_tilepro64,
     .create = create_tilepro64,
     .destroy = destroy_tilepro64,
     .sys_cpu_of = sys_cpu_of_tilepro64,

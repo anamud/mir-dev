@@ -19,56 +19,7 @@
 extern uint32_t g_num_tasks_waiting;
 extern struct mir_runtime_t* runtime;
 
-static size_t schedule_cutoff_config = 0;
-
-void config_numa (const char* conf_str)
-{/*{{{*/
-    char str[MIR_LONG_NAME_LEN];
-    strcpy(str, conf_str);
-
-    struct mir_sched_pol_t* sp = runtime->sched_pol;
-    MIR_ASSERT(NULL != sp);
-
-    char* tok = strtok(str, " ");
-    while(tok)
-    {
-        if(tok[0] == '-')
-        {
-            char c = tok[1];
-            switch(c)
-            {/*{{{*/
-                case 'q':
-                    if(tok[2] == '=')
-                    {
-                        char* s = tok+3;
-                        sp->queue_capacity = atoi(s);
-                        MIR_ASSERT(sp->queue_capacity > 0);
-                        //MIR_INFORM(MIR_INFORM_STR "Setting queue capacity to %d\n", sp->queue_capacity);
-                    }
-                    else
-                    {
-                        MIR_ABORT(MIR_ERROR_STR "Incorrect MIR_CONF parameter [%c]\n", c);
-                    }
-                    break;
-                case 'y':
-                    if(tok[2] == '=')
-                    {
-                        char* s = tok+3;
-                        schedule_cutoff_config = atoi(s);
-                        MIR_ASSERT(schedule_cutoff_config > 0);
-                    }
-                    else
-                    {
-                        MIR_ABORT(MIR_ERROR_STR "Incorrect MIR_CONF parameter [%c]\n", c);
-                    }
-                    break;
-                default:
-                    break;
-            }/*}}}*/
-        }
-        tok = strtok(NULL, " ");
-    }
-}/*}}}*/
+size_t g_numa_schedule_footprint_config = 0;
 
 void create_numa ()
 {/*{{{*/
@@ -131,8 +82,8 @@ static inline int is_data_dist_significant(struct mir_mem_node_dist_t* dist)
 {/*{{{*/
     // Lower limit by default is the L3 cache available per core
     size_t low_limit = (runtime->arch->llc_size_KB * 1024) / (runtime->arch->num_cores / runtime->arch->num_nodes);
-    if(schedule_cutoff_config > 0)
-        low_limit = schedule_cutoff_config;
+    if(g_numa_schedule_footprint_config > 0)
+        low_limit = g_numa_schedule_footprint_config;
 
     // Get dist stats
     struct mir_mem_node_dist_stat_t stat;
@@ -444,7 +395,6 @@ struct mir_sched_pol_t policy_numa =
     .queues = NULL,
     .alt_queues = NULL,
     .name = "numa",
-    .config = config_numa,
     .create = create_numa,
     .destroy = destroy_numa,
     .push = push_numa,

@@ -2,11 +2,6 @@
 #include "mir_types.h"
 #include "mir_utils.h"
 
-void config_firenze(const char* conf_str)
-{/*{{{*/
-    return;
-}/*}}}*/
-
 void create_firenze()
 {/*{{{*/
     return;
@@ -76,7 +71,6 @@ struct mir_arch_t arch_firenze =
     .num_cores = 2,
     .diameter = 0,
     .llc_size_KB = 3072,
-    .config = config_firenze,
     .create = create_firenze,
     .destroy = destroy_firenze,
     .sys_cpu_of = sys_cpu_of_firenze,
