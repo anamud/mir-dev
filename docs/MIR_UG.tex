@@ -11,10 +11,10 @@
 \lstdefinestyle{MyInputStyle}{
 	language=bash,
 	basicstyle=\small\sffamily,
-	commentstyle=\color{black},    
-	numberstyle=\tiny\color{black}, 
-	keywordstyle=\color{black},       
-	extendedchars=true,              
+	commentstyle=\color{black},
+	numberstyle=\tiny\color{black},
+	keywordstyle=\color{black},
+	extendedchars=true,
 	numbers=none,
 	numbersep=3pt,
 	frame=none,
@@ -22,25 +22,25 @@
 	backgroundcolor=\color{gray!10},
 	linewidth=\linewidth,
 	breaklines=true,
-	breakatwhitespace=false,           
+	breakatwhitespace=false,
 	showspaces=false,
-	keepspaces=true,                 
-	captionpos=b,                    
-	showspaces=false,                
-	showstringspaces=false,          
-	showtabs=false,                  
-	tabsize=2,                       
-	aboveskip=\bigskipamount, 
+	keepspaces=true,
+	captionpos=b,
+	showspaces=false,
+	showstringspaces=false,
+	showtabs=false,
+	tabsize=2,
+	aboveskip=\bigskipamount,
 	belowskip=\bigskipamount,
 }
 
 \lstdefinestyle{MyCStyle}{
 	language=c,
 	basicstyle=\small\sffamily,
-	commentstyle=\color{black},    
-	numberstyle=\tiny\color{black}, 
-	keywordstyle=\color{black},       
-	extendedchars=true,              
+	commentstyle=\color{black},
+	numberstyle=\tiny\color{black},
+	keywordstyle=\color{black},
+	extendedchars=true,
 	numbers=none,
 	numbersep=3pt,
 	frame=none,
@@ -48,15 +48,15 @@
 	backgroundcolor=\color{gray!10},
 	linewidth=\linewidth,
 	breaklines=true,
-	breakatwhitespace=false,           
+	breakatwhitespace=false,
 	showspaces=false,
-	keepspaces=true,                 
-	captionpos=b,                    
-	showspaces=false,                
-	showstringspaces=false,          
-	showtabs=false,                  
-	tabsize=2,                       
-	aboveskip=\bigskipamount, 
+	keepspaces=true,
+	captionpos=b,
+	showspaces=false,
+	showstringspaces=false,
+	showtabs=false,
+	tabsize=2,
+	aboveskip=\bigskipamount,
 	belowskip=\bigskipamount,
 }
 
@@ -85,9 +85,9 @@ MIR is intended to be used by advanced task-based programmers. Knowledge of comp
   \item Binutils.
   \item Scons build system.
   \item R (for executing scripts)
-  \item R packages 
+  \item R packages
   \begin{itemize}
-      \item data.table (for data structure transformations) 
+      \item data.table (for data structure transformations)
   \end{itemize}
 \end{itemize}
 
@@ -124,11 +124,11 @@ The source repository is easy to navigate. Files and directories have purpose-or
 |__docs : documentation
 |__src : runtime system sources
     |__scheduling : scheduling policies
-    |__arch : architecture specific sources 
-|__scripts 
+    |__arch : architecture specific sources
+|__scripts
     |__helpers : helpful scripts, dirty hacks
     |__profiling : all things related to profiling
-        |__task 
+        |__task
         |__thread
 |__programs : test programs, benchmarks
     |__common : build scripts
@@ -212,7 +212,7 @@ Note: A dedicated test suite will be added soon, so watch out for that!
 
 \subsection{OpenMP 3.0 Tasks Interface}\label{openmp-3.0-tasks-interface}
 
-A restricted subset of OpenMP 3.0 tasks --- the \texttt{task} and \texttt{taskwait} constructs --- is supported. Although minimal, the subset is sufficient for writing most task-based programs.  
+A restricted subset of OpenMP 3.0 tasks --- the \texttt{task} and \texttt{taskwait} constructs --- is supported. Although minimal, the subset is sufficient for writing most task-based programs.
 
 \begin{framed}
 \begin{quote}
@@ -228,7 +228,7 @@ Note: OpenMP tasks are supported by intercepting GCC translated calls to GNU lib
         \item Use the \texttt{task} construct to parallelize work.
         \item Use clauses \texttt{shared}, \texttt{firstprivate} and \texttt{private} to indicate the data environment.
         \item Use \texttt{taskwait} to synchronize tasks.
-        \item Use taskwait explicitly. Do not expect implicit taskwaits at the end of task blocks. 
+        \item Use taskwait explicitly. Do not expect implicit taskwaits at the end of task blocks.
     \end{itemize}
     \item Do not think in terms of threads.
     \begin{itemize}
@@ -266,7 +266,7 @@ int main(int argc, char *argv[])
 #pragma omp task
 {
     // Now parallelize the work involved
-    // Work in this case: create as many tasks 
+    // Work in this case: create as many tasks
     // ... as there are threads
     int num_workers = mir_get_num_threads();
     for(int i=0; i<num_workers; i++)
@@ -274,7 +274,7 @@ int main(int argc, char *argv[])
         #pragma omp task firstprivate(i)
             foo(i);
     }
-        
+
     // Wait for tasks to finish
     #pragma omp taskwait
 }
@@ -289,7 +289,7 @@ int main(int argc, char *argv[])
 
 \subsection{Native Interface}\label{native-interface}
 
-Look at mir\_public\_int.h in MIR\_ROOT/src for interface details and programs in MIR\_ROOT/programs/native for interface usage examples. A simple program using the native interface is shown\\below.  
+Look at mir\_public\_int.h in MIR\_ROOT/src for interface details and programs in MIR\_ROOT/programs/native for interface usage examples. A simple program using the native interface is shown\\below.
 
 \begin{lstlisting}[style=MyCStyle]
 #include "mir_public_int.h"
@@ -322,12 +322,12 @@ int main(int argc, char *argv[])
     {
         struct foo_wrapper_arg_t arg;
         arg.id = i;
-        mir_task_create((mir_tfunc_t) foo_wrapper, 
-                        &arg, 
-                        sizeof(struct foo_wrapper_arg_t), 
+        mir_task_create((mir_tfunc_t) foo_wrapper,
+                        &arg,
+                        sizeof(struct foo_wrapper_arg_t),
                         0, NULL, NULL);
     }
-        
+
     // Wait for tasks to finish
     mir_task_wait();
 
@@ -348,7 +348,7 @@ MIR has several runtime configurable options which can be set using the environm
 
 \begin{lstlisting}[style=MyInputStyle]
 $ cd $MIR_ROOT/test/fib
-$ scons 
+$ scons
 $ MIR_CONF="-h" ./fib-opt 3
 MIR_INFO: Valid options in MIR_CONF environment variable ...
 -h print this help message
@@ -377,7 +377,7 @@ $ cat /proc/cpuinfo | grep -c Core
 4
 $ export MIR_WORKER_CORE_MAP="0,2,3,1"
 $ cd $MIR_ROOT/programs/native/fib
-$ scons 
+$ scons
 $ ./fib-debug 10 3
 MIR_DBG: Starting initialization ...
 MIR_DBG: Architecture set to firenze
@@ -415,11 +415,11 @@ MIR contains a \texttt{recorder} which produces execution traces. Use the \textt
 \begin{lstlisting}[style=MyInputStyle]
 $ MIR_CONF="-r" ./fib-opt
 $ $MIR_ROOT/scripts/profiling/thread/rec2paraver.py \
-mir-recorder-trace-config.rec 
+mir-recorder-trace-config.rec
 $ wxparaver mir-recorder-trace.prv
 \end{lstlisting}
 
-A set of \texttt{mir-recorder-state-time-*.rec} files are also created when \texttt{-r} is set. These files contain thread state duration information which can be accumulated for analysis without Paraver.  
+A set of \texttt{mir-recorder-state-time-*.rec} files are also created when \texttt{-r} is set. These files contain thread state duration information which can be accumulated for analysis without Paraver.
 
 \begin{lstlisting}[style=MyInputStyle]
 $ $MIR_ROOT/scripts/profiling/thread/get-states.sh \
@@ -553,7 +553,7 @@ The profiler requires outline function names under the argument \texttt{-s}. The
 \item Information from the profiler becomes meaningful when correlated with task statistics information. Provide \texttt{-g} in MIR\_CONF while profiling.
 
 \item Create a handy shell function for invoking the profiler and to enable task statistics collection.
-  
+
 \begin{lstlisting}[style=MyInputStyle]
 function mir-inst-prof()
 {
@@ -562,11 +562,11 @@ function mir-inst-prof()
 \end{lstlisting}
 \end{itemize}
 
-The profiler produces following outputs: 
+The profiler produces following outputs:
 \begin{itemize}
     \item Per-task instructions in a CSV file called \texttt{mir-ofp-instructions}. Example contents of the file are shown below.  TODO: Add file contents.  Each line shows instruction and code properties of a distinct task executed by the program. Properties are described below.
         \begin{itemize}
-            \item task: Identifier of the task.       
+            \item task: Identifier of the task.
             \item ins\_count: Total number of instructions executed by the task excluding instructions of system calls, dynamically linked functions and runtime system functions.
             \item stack\_read: Number of read accesses to the stack while executing instructions.
             \item stack\_write: Number of write accesses to the stack while executing instructions.
@@ -576,24 +576,24 @@ The profiler produces following outputs:
             \item mem\_write: Number of write accesses to memory (excluding stack) while executing instructions.
             \item outl\_func: Name of the outline function of the task.
         \end{itemize}
-    \item Per-task events in a file called \texttt{mir-ofp-events}. Example contents of the file are shown below. 
+    \item Per-task events in a file called \texttt{mir-ofp-events}. Example contents of the file are shown below.
 \begin{lstlisting}[style=MyInputStyle]
 task,ins_count,[create],[wait]
 14,446,[],[]
 15,278,[],[]
 10,60,[32,43,],[47,]
 \end{lstlisting}
-        Each line in the file shows events for a distinct task executed by the program. Event occurance is indicated in terms of instruction count. Events currently supported are: 
+        Each line in the file shows events for a distinct task executed by the program. Event occurance is indicated in terms of instruction count. Events currently supported are:
         \begin{itemize}
             \item \texttt{create}: Indicates when child tasks were created. Example: [32,43] indicates the task 10 created its first child at instruction 32 and second child at 43. Tasks 14 and 15 did not create children tasks.
-            \item \texttt{wait}: Indicates when child tasks were synchronized. Example: [47,] indicates the task 10 synchronized with all children created prior at instruction 47. 
+            \item \texttt{wait}: Indicates when child tasks were synchronized. Example: [47,] indicates the task 10 synchronized with all children created prior at instruction 47.
         \end{itemize}
     \item Program memory map in a file called \texttt{mir-ofp-mem-map}. This is a copy of the memory map file of the program from the /proc filesystem.
 \end{itemize}
 
 \subsubsection{Visualization}
 
-MIR has a nice graph plotter which can transform task-based profiling data into task graphs. The generated graph can be visualized on tools such as Graphviz, yEd and Cytoscape.  To plot the fork-join task graph using task statistics from the runtime system: 
+MIR has a nice graph plotter which can transform task-based profiling data into task graphs. The generated graph can be visualized on tools such as Graphviz, yEd and Cytoscape.  To plot the fork-join task graph using task statistics from the runtime system:
 
 \begin{lstlisting}[style=MyInputStyle]
 $ Rscript ${MIR_ROOT}/scripts/profiling/task/plot-task-graph.R -d mir-task-stats.processed -p color
@@ -615,13 +615,13 @@ $ Rscript ${MIR_ROOT}/scripts/profiling/task/plot-task-graph.R -d mir-task-perf 
 
 \subsection{Profiling Case Study: Fibonacci}
 
-The Fibonacci program is found in MIR\_ROOT/programs/native/fib. The program takes two arguments --- the number n and the depth cutoff for recursive task creation. Let us see how to profile the program for task-based performance information.  
+The Fibonacci program is found in MIR\_ROOT/programs/native/fib. The program takes two arguments --- the number n and the depth cutoff for recursive task creation. Let us see how to profile the program for task-based performance information.
 
-Compile the program for profiling ---  remove aggressive optimizations and disable inlining so that outline functions representing tasks are visible to the Pin-based instruction profiler. Running scons in the program directory builds the profiler-friendly executable called \texttt{fib-prof}.  
+Compile the program for profiling ---  remove aggressive optimizations and disable inlining so that outline functions representing tasks are visible to the Pin-based instruction profiler. Running scons in the program directory builds the profiler-friendly executable called \texttt{fib-prof}.
 
 \begin{lstlisting}[style=MyInputStyle]
 $ cd $MIR_ROOT/programs/native/fib
-$ scons 
+$ scons
 scons: Reading SConscript files ...
 scons: done reading SConscript files.
 scons: Building targets ...
@@ -631,7 +631,7 @@ gcc -o prof-build/fib.o -c -std=c99 -Wall -Werror -Wno-unused-function -Wno-unus
 ...
 gcc -o fib-prof prof-build/fib.o -L/home/ananya/mir-dev/src -lpthread -lm -lmir-opt
 \end{lstlisting}
-    
+
 \begin{framed}
 \begin{quote}
 Tip: Look at the \texttt{SConstruct} file in MIR\_ROOT/test/fib and build output to understand how the profiling-friendly build is done.
@@ -655,13 +655,13 @@ Expert Tip: Ensure that functions listed by CHECKME\_OUTLINE\_FUNCTIONS are thos
 \end{quote}
 \end{framed}
 
-The functions in the \texttt{CHECKME\_CALLED\_FUNCTIONS} list should be treated as functions potentially called within task contexts.  Inspect program sources and exclude those which are not called within tasks.  By looking at Fibonacci program sources, we can exclude \texttt{main} and \texttt{get\_usecs} from \texttt{CHECKME\_CALLED\_FUNCTIONS}. 
-    
+The functions in the \texttt{CHECKME\_CALLED\_FUNCTIONS} list should be treated as functions potentially called within task contexts.  Inspect program sources and exclude those which are not called within tasks.  By looking at Fibonacci program sources, we can exclude \texttt{main} and \texttt{get\_usecs} from \texttt{CHECKME\_CALLED\_FUNCTIONS}.
+
 \begin{framed}
 \begin{quote}
-Tip: If in doubt or when sources are not available, use the entire \texttt{CHECKME\_CALLED\_FUNCTIONS} list. 
+Tip: If in doubt or when sources are not available, use the entire \texttt{CHECKME\_CALLED\_FUNCTIONS} list.
 
-Expert Tip: Identifying functions called by tasks is necessary because the instruction count of these functions are added to the calling task's instruction count. 
+Expert Tip: Identifying functions called by tasks is necessary because the instruction count of these functions are added to the calling task's instruction count.
 \end{quote}
 \end{framed}
 
@@ -676,7 +676,7 @@ $ mir-inst-prof \
 
 \begin{framed}
 \begin{quote}
-    Tip: If you plan to use the entire \texttt{CHECKME\_CALLED\_FUNCTIONS} and \texttt{CHECKME\_OUTLINE\_FUNCTIONS} lists, then you can use them as arguments to \texttt{mir-inst-prof} in the following manner: 
+    Tip: If you plan to use the entire \texttt{CHECKME\_CALLED\_FUNCTIONS} and \texttt{CHECKME\_OUTLINE\_FUNCTIONS} lists, then you can use them as arguments to \texttt{mir-inst-prof} in the following manner:
 
 \begin{lstlisting}[style=MyInputStyle]
 $ `$MIR_ROOT/scripts/profiling/task/of_finder.py -e prof-build/*.o`
@@ -690,7 +690,7 @@ The \texttt{-e} option of \texttt{of\_finder.py} outputs outline and called func
 \end{quote}
 \end{framed}
 
-Inspect instruction profiler output. 
+Inspect instruction profiler output.
 
 \begin{lstlisting}[style=MyInputStyle]
 $ head mir-ofp-instructions
