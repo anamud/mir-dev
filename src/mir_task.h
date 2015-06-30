@@ -20,15 +20,13 @@ BEGIN_C_DECLS
 // For task statistics collection
 // FIXME: Naming, extra indirection
 struct mir_task_list_t;
-struct mir_task_list_t
-{
+struct mir_task_list_t {
     struct mir_task_t* task;
     struct mir_task_list_t* next;
 };
 
 /*LIBINT_BASE_DECL_BEGIN*/
-enum mir_data_access_t
-{
+enum mir_data_access_t {
     MIR_DATA_ACCESS_READ = 0,
     MIR_DATA_ACCESS_WRITE,
     MIR_DATA_ACCESS_NUM_TYPES
@@ -37,8 +35,7 @@ typedef enum mir_data_access_t mir_data_access_t;
 /*LIBINT_BASE_DECL_END*/
 
 /*LIBINT_DECL_BEGIN*/
-struct mir_data_footprint_t
-{
+struct mir_data_footprint_t {
     void* base;
     size_t type;
     uint64_t start;
@@ -50,7 +47,7 @@ struct mir_data_footprint_t
 /*LIBINT_DECL_END*/
 
 static inline void data_footprint_copy(struct mir_data_footprint_t* dest, const struct mir_data_footprint_t* src)
-{/*{{{*/
+{ /*{{{*/
     // Check
     MIR_ASSERT(src != NULL);
     MIR_ASSERT(dest != NULL);
@@ -63,18 +60,17 @@ static inline void data_footprint_copy(struct mir_data_footprint_t* dest, const 
     dest->row_sz = src->row_sz;
     dest->data_access = src->data_access;
     dest->part_of = src->part_of;
-}/*}}}*/
+} /*}}}*/
 
 END_C_DECLS
 
 BEGIN_C_DECLS
 
-// The task function pointer type
-/*LIBINT*/ typedef void* (*mir_tfunc_t)(void*);
+    // The task function pointer type
+    /*LIBINT*/ typedef void* (*mir_tfunc_t)(void*);
 
 // The task
-struct mir_task_t
-{/*{{{*/
+struct mir_task_t { /*{{{*/
     mir_tfunc_t func;
 #ifdef MIR_TASK_FIXED_DATA_SIZE
     char data_buf[MIR_TASK_DATA_MAX_SIZE];
@@ -109,25 +105,24 @@ struct mir_task_t
     struct mir_data_footprint_t* data_footprints;
     uint32_t num_data_footprints;
     struct mir_mem_node_dist_t* dist_by_access_type[MIR_DATA_ACCESS_NUM_TYPES];
-};/*}}}*/
+}; /*}}}*/
 
 #ifdef MIR_TASK_DEBUG
-static void T_DBG(char*msg, struct mir_task_t *t)
-{/*{{{*/
-    fprintf(stderr, "%lu\t#%p task %" MIR_FORMSPEC_UL " id %u done\t: %s\n",                    (unsigned long) pthread_self(),
-                    t, t->id.uid, t->done,
-                    msg
-                    );
-}/*}}}*/
+static void T_DBG(char* msg, struct mir_task_t* t)
+{ /*{{{*/
+    fprintf(stderr, "%lu\t#%p task %" MIR_FORMSPEC_UL " id %u done\t: %s\n", (unsigned long)pthread_self(),
+        t, t->id.uid, t->done,
+        msg);
+} /*}}}*/
 #else
-#define T_DBG(x,y)
+#define T_DBG(x, y)
 #endif
 
 /*LIBINT*/ void mir_task_create(mir_tfunc_t tfunc, void* data, size_t data_size, unsigned int num_data_footprints, struct mir_data_footprint_t* data_footprints, const char* name);
 
-struct mir_task_t* mir_task_create_common(mir_tfunc_t tfunc, void* data, size_t data_size, unsigned int num_data_footprints, const struct mir_data_footprint_t* data_footprints, const char* name, struct mir_omp_team_t *myteam);
+struct mir_task_t* mir_task_create_common(mir_tfunc_t tfunc, void* data, size_t data_size, unsigned int num_data_footprints, const struct mir_data_footprint_t* data_footprints, const char* name, struct mir_omp_team_t* myteam);
 
-/*LIBINT*/ void mir_task_create_on_worker(mir_tfunc_t tfunc, void* data, size_t data_size, unsigned int num_data_footprints, struct mir_data_footprint_t* data_footprints, const char* name, struct mir_omp_team_t *myteam, int target);
+/*LIBINT*/ void mir_task_create_on_worker(mir_tfunc_t tfunc, void* data, size_t data_size, unsigned int num_data_footprints, struct mir_data_footprint_t* data_footprints, const char* name, struct mir_omp_team_t* myteam, int target);
 
 // TODO: Differentiate with mir_task_create_on_worker().
 void mir_task_schedule_on_worker(struct mir_task_t* task, int workerid);
