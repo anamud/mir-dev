@@ -4,8 +4,7 @@
 #include "mir_lock.h"
 
 /*LIBINT_DECL_BEGIN*/
-struct mir_loop_des_t 
-{
+struct mir_loop_des_t {
     long end;
     long incr;
     long chunk_size;
