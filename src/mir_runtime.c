@@ -232,6 +232,7 @@ static void mir_config()
             { "inline-limit", required_argument, 0, 0 },
             { "numa-footprint", required_argument, 0, 0 },
             { "queue-size", required_argument, 0, 0 },
+            { "help", no_argument, 0, 'h' },
             { "profiling", no_argument, 0, 'p' },
             { "recorder", no_argument, 0, 'r' },
             { "worker-stats", no_argument, 0, 0 },
@@ -241,7 +242,7 @@ static void mir_config()
 
         int option_index = 0;
 
-        c = getopt_long(conf_argc, conf_argv, "w:s:m:pr",
+        c = getopt_long(conf_argc, conf_argv, "w:s:m:hpr",
             long_options, &option_index);
 
         if (c == -1)
