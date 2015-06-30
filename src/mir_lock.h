@@ -1,5 +1,5 @@
-#ifndef  MIR_LOCK_H
-#define  MIR_LOCK_H 1
+#ifndef MIR_LOCK_H
+#define MIR_LOCK_H 1
 
 #include "mir_types.h"
 
@@ -20,18 +20,17 @@
 #endif
 /*LIBINT_INC_END*/
 
-BEGIN_C_DECLS 
+BEGIN_C_DECLS
 
 /*LIBINT_BASE_DECL_BEGIN*/
-struct mir_lock_t
-{/*{{{*/
+struct mir_lock_t { /*{{{*/
 #ifdef __tile__
     //tmc_sync_mutex_t m;
     tmc_spin_mutex_t m;
 #else
     pthread_mutex_t m;
 #endif
-};/*}}}*/
+}; /*}}}*/
 /*LIBINT_BASE_DECL_END*/
 
 /*LIBINT_BEGIN*/
@@ -46,7 +45,7 @@ void mir_lock_unset(struct mir_lock_t* lock);
 int mir_lock_tryset(struct mir_lock_t* lock);
 /*LIBINT_END*/
 
-END_C_DECLS 
+END_C_DECLS
 
 #endif
 
