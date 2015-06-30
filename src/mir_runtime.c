@@ -25,7 +25,7 @@ extern uint64_t g_total_allocated_memory;
 extern uint64_t g_numa_schedule_footprint_config;
 
 static void mir_preconfig_init()
-{/*{{{*/
+{ /*{{{*/
     MIR_DEBUG(MIR_DEBUG_STR "Starting initialization ...\n");
 
     // Initialization control
@@ -35,7 +35,7 @@ static void mir_preconfig_init()
     // Arch
     runtime->arch = mir_arch_create_by_query();
     MIR_ASSERT(runtime->arch != NULL);
-    MIR_DEBUG(MIR_DEBUG_STR "Architecture set to %s\n", runtime->arch->name);
+    MIR_DEBUG(MIR_DEBUG_STR "Architecture set to %s.\n", runtime->arch->name);
 
     // Scheduling policy
     runtime->sched_pol = mir_sched_pol_get_by_name(MIR_SCHED_POL_DEFAULT);
@@ -50,8 +50,8 @@ static void mir_preconfig_init()
     MIR_ASSERT(runtime->worker_cpu_map != NULL);
     for (int i = 0; i < runtime->num_workers; i++)
         runtime->worker_cpu_map[i] = i;
-    int rval = pthread_key_create(&runtime->worker_index, NULL);
-    MIR_ASSERT(rval == 0);
+    int ret_val = pthread_key_create(&runtime->worker_index, NULL);
+    MIR_ASSERT(ret_val == 0);
 
     // OpenMP support
     // This is the unnamed critical section lock
@@ -67,10 +67,10 @@ static void mir_preconfig_init()
     runtime->enable_recorder = 0;
     runtime->enable_ofp_handshake = 0;
     runtime->task_inlining_limit = MIR_INLINE_TASK_DURING_CREATION;
-}/*}}}*/
+} /*}}}*/
 
 static void mir_postconfig_init()
-{/*{{{*/
+{ /*{{{*/
     // Init time
     runtime->init_time = mir_get_cycles();
 
@@ -79,54 +79,51 @@ static void mir_postconfig_init()
     MIR_DEBUG(MIR_DEBUG_STR "Task scheduling policy set to %s\n", runtime->sched_pol->name);
 
     // Enable communication between outline function profiler and MIR
-    if (runtime->enable_ofp_handshake == 1)
-    {
+    if (runtime->enable_ofp_handshake == 1) {
         /*{{{*/
         // Create shared memory
         runtime->ofp_shmid = shmget(MIR_OFP_SHM_KEY, MIR_OFP_SHM_SIZE, IPC_CREAT | 0666);
-        if (runtime->ofp_shmid < 0) MIR_ABORT(MIR_ERROR_STR "shmget failed [%d]!\n", runtime->ofp_shmid);
+        if (runtime->ofp_shmid < 0)
+            MIR_ABORT(MIR_ERROR_STR "shmget failed [%d]!\n", runtime->ofp_shmid);
 
         // Attach
         runtime->ofp_shm = shmat(runtime->ofp_shmid, NULL, 0);
         MIR_ASSERT(runtime->ofp_shm != NULL);
-    }/*}}}*/
-    else
-    {
+    } /*}}}*/
+    else {
         /*{{{*/
         runtime->ofp_shmid = -1;
         runtime->ofp_shm = NULL;
-    }/*}}}*/
+    } /*}}}*/
 
     // Recorder
-    if (runtime->enable_recorder == 1)
-    {
-        /*{{{*/
+    if (runtime->enable_recorder == 1) {
+/*{{{*/
 #ifdef MIR_RECORDER_USE_HW_PERF_COUNTERS
 #ifndef __tile__
         // PAPI
-        int retval = PAPI_library_init( PAPI_VER_CURRENT );
-        if ( retval != PAPI_VER_CURRENT )
+        int retval = PAPI_library_init(PAPI_VER_CURRENT);
+        if (retval != PAPI_VER_CURRENT)
             MIR_ABORT(MIR_ERROR_STR "PAPI_library_init failed [%d != %d]!\n", retval, PAPI_VER_CURRENT);
         retval = PAPI_thread_init(pthread_self);
-        if ( retval != PAPI_OK )
+        if (retval != PAPI_OK)
             MIR_ABORT(MIR_ERROR_STR "PAPI_thread_init failed [%d]!\n", retval);
 #endif
 #endif
-    }/*}}}*/
+    } /*}}}*/
 
     // Workers
     MIR_DEBUG(MIR_DEBUG_STR "Number of workers set to %d.\n", runtime->num_workers);
     __sync_fetch_and_add(&g_sig_worker_alive, runtime->num_workers - 1);
 #ifdef __tile__
-    __asm__ __volatile__ ("mf;"::);
+    __asm__ __volatile__("mf;" ::);
 #else
     __sync_synchronize();
 #endif
 #ifdef MIR_WORKER_EXPLICIT_BIND
     const char* worker_cpu_map_str = getenv("MIR_WORKER_CPU_MAP");
     if (worker_cpu_map_str)
-        if (strlen(worker_cpu_map_str) > 0)
-        {
+        if (strlen(worker_cpu_map_str) > 0) {
             MIR_DEBUG(MIR_DEBUG_STR "Reading worker to cpu map ...\n");
 
             // Copy to buf
@@ -135,21 +132,19 @@ static void mir_postconfig_init()
 
             // Parse for cpu ids
             uint16_t tok_cnt = 0;
-            char* tok = strtok (str, ",");
-            while (tok != NULL && tok_cnt < runtime->num_workers)
-            {
+            char* tok = strtok(str, ",");
+            while (tok != NULL && tok_cnt < runtime->num_workers) {
                 int id;
-                sscanf (tok, "%d", &id);
+                sscanf(tok, "%d", &id);
                 //MIR_DEBUG(MIR_DEBUG_STR "Read token %d ...\n", id);
-                runtime->worker_cpu_map[tok_cnt] = (uint16_t) id;
+                runtime->worker_cpu_map[tok_cnt] = (uint16_t)id;
                 tok_cnt++;
-                tok = strtok (NULL, ",");
+                tok = strtok(NULL, ",");
             }
             MIR_ASSERT(tok_cnt == runtime->num_workers);
         }
 #endif
-    for (uint32_t i = 0; i < runtime->num_workers; i++)
-    {
+    for (uint32_t i = 0; i < runtime->num_workers; i++) {
         // FIXME: Master thread stack size, how to set?
         struct mir_worker_t* worker = &runtime->workers[i];
         worker->id = i;
@@ -163,7 +158,8 @@ static void mir_postconfig_init()
     // Wait for workers to signal alive
     MIR_ASSERT(g_sig_worker_alive < runtime->num_workers);
 wait_alive:
-    if (g_sig_worker_alive == 0) goto alive;
+    if (g_sig_worker_alive == 0)
+        goto alive;
     __sync_synchronize();
     goto wait_alive;
 alive:
@@ -178,10 +174,10 @@ alive:
     mir_mem_pol_init();
 
     MIR_DEBUG(MIR_DEBUG_STR "Initialization complete!\n");
-}/*}}}*/
+} /*}}}*/
 
 static inline void print_help()
-{/*{{{*/
+{ /*{{{*/
     // Here all configuration components
     // ... should define the intention
     // ... of their config symbols
@@ -202,7 +198,7 @@ static inline void print_help()
 } /*}}}*/
 
 static void mir_config()
-{/*{{{*/
+{ /*{{{*/
     // Get MIR_CONF environment string
     const char* conf_str = getenv("MIR_CONF");
     if (!conf_str)
@@ -219,8 +215,7 @@ static void mir_config()
     char* conf_argv[MIR_SBUF_SIZE];
     conf_argv[0] = "MIR_CONF";
     char* tok = strtok(tmp_buf, " ");
-    while (tok)
-    {
+    while (tok) {
         conf_argc++;
         MIR_ASSERT(conf_argc <= MIR_SBUF_SIZE);
         // Copy to buffer
@@ -228,10 +223,8 @@ static void mir_config()
         tok = strtok(NULL, " ");
     }
     int c;
-    while (1)
-    {
-        static struct option long_options[] =
-        {
+    while (1) {
+        static struct option long_options[] = {
             { "workers", required_argument, 0, 'w' },
             { "schedule", required_argument, 0, 's' },
             { "memory-policy", required_argument, 0, 'm' },
@@ -254,45 +247,37 @@ static void mir_config()
         if (c == -1)
             break;
 
-        switch (c)
-        {
+        switch (c) {
         case 0:
-            if(0 == strcmp(long_options[option_index].name, "inlining-limit"))
-            {
+            if (0 == strcmp(long_options[option_index].name, "inlining-limit")) {
                 runtime->task_inlining_limit = atoi(optarg);
                 MIR_DEBUG(MIR_DEBUG_STR "Task inlining limit set to %u.\n", runtime->task_inlining_limit);
             }
-            else if(0 == strcmp(long_options[option_index].name, "stack-size"))
-            {
+            else if (0 == strcmp(long_options[option_index].name, "stack-size")) {
                 int ps_sz = atoi(optarg) * 1024 * 1024;
                 MIR_ASSERT(ps_sz > 0);
                 MIR_ASSERT(0 == mir_pstack_set_size(ps_sz));
                 MIR_DEBUG(MIR_DEBUG_STR "Process stack size set to %d bytes.\n", ps_sz);
             }
-            else if(0 == strcmp(long_options[option_index].name, "worker-stats"))
-            {
+            else if (0 == strcmp(long_options[option_index].name, "worker-stats")) {
                 runtime->enable_worker_stats = 1;
                 MIR_DEBUG(MIR_DEBUG_STR "Worker statistics collection is enabled.\n");
             }
-            else if(0 == strcmp(long_options[option_index].name, "task-stats"))
-            {
+            else if (0 == strcmp(long_options[option_index].name, "task-stats")) {
                 runtime->enable_task_stats = 1;
                 MIR_DEBUG(MIR_DEBUG_STR "Task statistics collection is enabled.\n");
             }
-            else if(0 == strcmp(long_options[option_index].name, "queue-size"))
-            {
+            else if (0 == strcmp(long_options[option_index].name, "queue-size")) {
                 runtime->sched_pol->queue_capacity = atoi(optarg);
                 MIR_ASSERT(runtime->sched_pol->queue_capacity > 0);
                 MIR_DEBUG(MIR_DEBUG_STR "Task queue capacity set to %d.\n", runtime->sched_pol->queue_capacity);
             }
-            else if(0 == strcmp(long_options[option_index].name, "numa-footprint"))
-            {
+            else if (0 == strcmp(long_options[option_index].name, "numa-footprint")) {
                 g_numa_schedule_footprint_config = atoi(optarg);
                 MIR_ASSERT(g_numa_schedule_footprint_config > 0);
                 MIR_DEBUG(MIR_DEBUG_STR "Footprint limit for numa scheduling policy set to %zd.\n", g_numa_schedule_footprint_config);
             }
-            else
-            {
+            else {
                 MIR_DEBUG(MIR_DEBUG_STR "Unrecognized option: %s!\n", long_options[option_index].name);
             }
             break;
@@ -306,7 +291,7 @@ static void mir_config()
             runtime->num_workers = atoi(optarg);
             if (runtime->num_workers > runtime->arch->num_cores)
                 MIR_ABORT(MIR_ERROR_STR "Cannot configure more workers (%d) than number of cores (%d)!\n",
-                runtime->num_workers, runtime->arch->num_cores);
+                    runtime->num_workers, runtime->arch->num_cores);
             break;
 
         case 's':
@@ -345,8 +330,7 @@ static void mir_config()
 
     // Free string buffers.
     free(tmp_buf);
-    while (conf_argc != 1)
-    {
+    while (conf_argc != 1) {
         free(conf_argv[conf_argc - 1]);
         conf_argc--;
     }
@@ -357,10 +341,9 @@ static void mir_config()
 } /*}}}*/
 
 void mir_create()
-{/*{{{*/
+{ /*{{{*/
     // Create only if first call
-    if (runtime != NULL)
-    {
+    if (runtime != NULL) {
         MIR_ASSERT(runtime->destroyed == 0);
         __sync_fetch_and_add(&(runtime->init_count), 1);
         return;
@@ -368,7 +351,7 @@ void mir_create()
 
     // Create the global runtime
     runtime = mir_malloc_int(sizeof(struct mir_runtime_t));
-    if ( NULL == runtime )
+    if (NULL == runtime)
         MIR_ABORT(MIR_ERROR_STR "Unable to create the runtime!\n");
 
     // Set defaults and other stuff
@@ -384,7 +367,7 @@ void mir_create()
 
     // Set a marking event
     MIR_RECORDER_EVENT(NULL, 0);
-}/*}}}*/
+} /*}}}*/
 
 /**
     Reduces the nesting level counter but leaves the RTS mostly alive.
@@ -392,17 +375,19 @@ void mir_create()
     Call @mir_destroy@ for proper destruction.
 */
 void mir_soft_destroy()
-{/*{{{*/
+{ /*{{{*/
     MIR_ASSERT(runtime->init_count > 0);
     __sync_fetch_and_sub(&(runtime->init_count), 1);
-}/*}}}*/
+} /*}}}*/
 
 void mir_destroy()
-{/*{{{*/
+{ /*{{{*/
     // Destroy only once. Multiple calls happen if the user inserts
     // explicit calls to mir_destroy() in the program.
+    if (runtime == NULL)
+        return;
     //MIR_ASSERT(runtime->destroyed == 0);
-    if(runtime->destroyed == 1)
+    if (runtime->destroyed == 1)
         return;
 
     // Destory only if corresponding to first call to mir_create
@@ -433,20 +418,17 @@ void mir_destroy()
     //MIR_INFORM(MIR_INFORM_STR "Workers are done. Sent die signal.\n");
 
     // Shutdown recorders
-    if (runtime->enable_recorder == 1)
-    {
+    if (runtime->enable_recorder == 1) {
         /*{{{*/
         MIR_DEBUG(MIR_DEBUG_STR "Shutting down recorders ...\n");
-        for (int i = 0; i < runtime->num_workers; i++)
-        {
+        for (int i = 0; i < runtime->num_workers; i++) {
             mir_recorder_write_to_file(runtime->workers[i].recorder);
             mir_recorder_destroy(runtime->workers[i].recorder);
         }
-    }/*}}}*/
+    } /*}}}*/
 
     // Dump worker statistics
-    if (runtime->enable_worker_stats == 1)
-    {
+    if (runtime->enable_worker_stats == 1) {
         /*{{{*/
         MIR_DEBUG(MIR_DEBUG_STR "Dumping worker stats ...\n");
         // Open stats file
@@ -458,8 +440,7 @@ void mir_destroy()
         // Write header
         mir_worker_statistics_write_header_to_file(stats_file);
         // Write all worker statistics counters to stats file
-        for (int i = 0; i < runtime->num_workers; i++)
-        {
+        for (int i = 0; i < runtime->num_workers; i++) {
             struct mir_worker_statistics_t* statistics = runtime->workers[i].statistics;
             mir_worker_statistics_write_to_file(statistics, stats_file);
             // FIXME: Maybe this should be done by the worker
@@ -468,11 +449,10 @@ void mir_destroy()
 
         // Close stats file
         fclose(stats_file);
-    }/*}}}*/
+    } /*}}}*/
 
     // Dump task statistics
-    if (runtime->enable_task_stats == 1)
-    {
+    if (runtime->enable_task_stats == 1) {
         /*{{{*/
         MIR_DEBUG(MIR_DEBUG_STR "Dumping task statistics ...\n");
         // Open stats file
@@ -484,8 +464,7 @@ void mir_destroy()
         // Write header
         mir_task_stats_write_header_to_file(task_statistics_file);
         // Write per-worker task statistics to file
-        for (int i = 0; i < runtime->num_workers; i++)
-        {
+        for (int i = 0; i < runtime->num_workers; i++) {
             struct mir_task_list_t* list = runtime->workers[i].task_list;
             mir_task_stats_write_to_file(list, task_statistics_file);
             mir_task_list_destroy(list);
@@ -493,22 +472,22 @@ void mir_destroy()
 
         // Close task_statistics file
         fclose(task_statistics_file);
-    }/*}}}*/
+    } /*}}}*/
 
     // Kill workers
     MIR_DEBUG(MIR_DEBUG_STR "Killing workers ...\n");
     __sync_fetch_and_add(&g_sig_worker_alive, runtime->num_workers - 1);
-    for (int i = 0; i < runtime->num_workers; i++)
-    {
+    for (int i = 0; i < runtime->num_workers; i++) {
         struct mir_worker_t* worker = &runtime->workers[i];
         mir_lock_unset(&worker->sig_die);
         __sync_synchronize();
     }
-    // Wait for workers to signal dead
-    //MIR_INFORM(MIR_INFORM_STR "Waiting until workers are dead ...\n");
+// Wait for workers to signal dead
+//MIR_INFORM(MIR_INFORM_STR "Waiting until workers are dead ...\n");
 wait_dead:
     MIR_ASSERT(g_sig_worker_alive < runtime->num_workers);
-    if (g_sig_worker_alive == 0) goto dead;
+    if (g_sig_worker_alive == 0)
+        goto dead;
     __sync_synchronize();
     goto wait_dead;
 dead:
@@ -548,5 +527,5 @@ shutdown:
 
     MIR_DEBUG(MIR_DEBUG_STR "Shutdown complete!\n");
     return;
-}/*}}}*/
+} /*}}}*/
 
