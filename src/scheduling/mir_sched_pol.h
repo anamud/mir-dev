@@ -9,10 +9,9 @@
 #include "mir_queue.h"
 #include "mir_types.h"
 
-BEGIN_C_DECLS 
+BEGIN_C_DECLS
 
-struct mir_sched_pol_t
-{
+struct mir_sched_pol_t {
     // Data structures
     struct mir_queue_t** queues;
     struct mir_queue_t** alt_queues;
@@ -21,15 +20,15 @@ struct mir_sched_pol_t
     const char* name;
 
     // Interfaces
-    void (*config) (const char* conf_str);
-    void (*create) ();
-    void (*destroy) ();
-    int (*push) (struct mir_worker_t*, struct mir_task_t* );
-    int (*pop) (struct mir_task_t**);
+    void (*config)(const char* conf_str);
+    void (*create)();
+    void (*destroy)();
+    int (*push)(struct mir_worker_t*, struct mir_task_t*);
+    int (*pop)(struct mir_task_t**);
 };
 
 struct mir_sched_pol_t* mir_sched_pol_get_by_name(const char* name);
 
-END_C_DECLS 
+END_C_DECLS
 
-#endif 
+#endif
