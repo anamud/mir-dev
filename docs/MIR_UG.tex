@@ -41,7 +41,7 @@
 	numberstyle=\tiny\color{black},
 	keywordstyle=\color{black},
 	extendedchars=true,
-	numbers=none,
+	numbers=left,
 	numbersep=3pt,
 	frame=none,
 	columns=fullflexible,
@@ -68,42 +68,47 @@
 
 \section{Introduction}\label{introduction}
 
-MIR is a task-based runtime system library written using C99 that supports detailed thread-based and task-based performance profiling. MIR scales well for medium-grained task-based programs. MIR supports subset of the OpenMP 3.0 tasks interface and a low level native interface for writing task-based programs. MIR allows the user to experiment with memory distribution policies and different scheduling policies. Example: Locality-aware scheduling and data distribution on NUMA systems.
+MIR is an experimental task-based runtime system library written using C99. Prominent features of MIR include:
+\begin{itemize}
+    \item Detailed per-task performance profiling and visualization.
+    \item Flexible, high performance task scheduling and data distribution policies. Example: Locality-aware scheduling and data distribution on NUMA systems, work-stealing scheduling for multicore systems.
+    \item Supports for a capable subset of the OpenMP 3.0 tasks interface.
+    \item Competitive performance for medium-grained task-based programs.
+\end{itemize}
 
 \section{Intended Audience}\label{intended-audience}
 
-MIR is intended to be used by advanced task-based programmers. Knowledge of compilation and runtime system role in task-based programming is required to use and appreciate MIR.
+MIR is intended to be used by advanced task-based programmers. Knowledge of OpenMP compilation and role of runtime system in task-based programming is required to use and appreciate MIR.
 
 \section{Installation}\label{installation}
 
-\subsection{Mandatory Requirements}\label{mandatory-requirements}
+MIR is built and tested on modern (2012+) Linux-based systems. 
+
+In order to build and use MIR for task-based program execution, you will minimally require:
 
 \begin{itemize}
-  \item Machine with x86 architecture.
+  \item A machine with x86 architecture.
   \item Linux kernel later than January 2012.
   \item GCC.
-  \item Binutils.
+  \item Python (for executing scripts)
+  \item GNU Binutils.
   \item Scons build system.
   \item R (for executing scripts)
-  \item R packages
+  \item These R packages:
   \begin{itemize}
       \item data.table (for data structure transformations)
   \end{itemize}
 \end{itemize}
 
-\subsection{Optional Requirements}\label{optional-requirements}
-
-Enabling extended features such as profiling, locality-aware scheduling
-and data distribution requires:
+Enabling core features such as per-task profiling and NUMA-specialized execution requires:
 
 \begin{itemize}
-\item libnuma and numactl (for data distribution and locality-aware scheduling on NUMA systems)
+\item Libraries libnuma and numactl (for data distribution and locality-aware scheduling on NUMA systems)
 \item GCC with OpenMP support (for linking task-based OpenMP programs)
 \item PAPI (for reading hardware performance counters during profiling)
 \item Paraver (for visualizing thread execution traces)
-\item Python 2.X and 3.X (for executing various scripts)
 \item Intel Pin sources (for profiling instructions executed by tasks)
-\item R packages:
+\item These R packages:
   \begin{itemize}
   \item optparse (for parsing data)
   \item igraph (for task graph processing)
@@ -117,27 +122,29 @@ and data distribution requires:
 
 \subsection{Source Structure}\label{source-structure}
 
-The source repository is easy to navigate. Files and directories have purpose-oriented names.
+The MIR source repository is easy to navigate. Files and directories have familiar, purpose-oriented names. The directory structure of MIR is as follows :
 
 \begin{lstlisting}[style=MyInputStyle]
 . : MIR_ROOT
 |__docs : documentation
 |__src : runtime system sources
     |__scheduling : scheduling policies
-    |__arch : architecture specific sources
+    |__arch : architecture specific code
 |__scripts
-    |__helpers : helpful scripts, dirty hacks
+    |__helpers : helpful scripts, one-time hacks
     |__profiling : all things related to profiling
         |__task
         |__thread
+|__tests : test programs
 |__programs : test programs, benchmarks
     |__common : build scripts
     |__native : native interface programs
-        |__fib
+        |__fib : Fibonacci program
             |__helpers : testing scripts
-    |__bots : BOTS port
+        |__bots : BOTS port
     |__omp : OpenMP interface programs
         |__fib
+        |__bots
 \end{lstlisting}
 
 \subsection{Build}\label{build}
@@ -223,16 +230,17 @@ Note: OpenMP tasks are supported by intercepting GCC translated calls to GNU lib
 \subsubsection{Tips for writing MIR-supported OpenMP programs}\label{tips-for-writing-mir-supported-openmp-programs}
 
 \begin{itemize}
-    \item Think solely in terms of tasks.
+    \item Think solely in terms of OpenMP 3.0 tasks.
     \begin{itemize}
         \item Use the \texttt{task} construct to parallelize work.
         \item Use clauses \texttt{shared}, \texttt{firstprivate} and \texttt{private} to indicate the data environment.
         \item Use \texttt{taskwait} to synchronize tasks.
-        \item Use taskwait explicitly. Do not expect implicit taskwaits at the end of task blocks.
+        \item Use taskwait explicitly. Do not expect implicit taskwaits within thread barriers.
     \end{itemize}
-    \item Do not think in terms of threads.
+    \item Fully avoid thinking in terms of threads.
     \begin{itemize}
         \item Use the \texttt{parallel} construct only to create a team of threads.
+        \item Do not specify the number of threads using either the \texttt{num\_threads} clause or the \texttt(OMP\_NUM\_THREADS) environment variable.
         \item Do not use the \texttt{parallel} construct to share work.
         \item Do not use barriers to synchronize threads. Do not expect implicit barriers at the end parallel blocks.
     \end{itemize}
@@ -243,17 +251,16 @@ Note: OpenMP tasks are supported by intercepting GCC translated calls to GNU lib
 A simple set of steps for producing MIR-supported OpenMP programs is given below:
 
 \begin{enumerate}
-\item When parallel execution is required, create a \texttt{parallel}  block with \texttt{default(none)} followed immediately by a \texttt{single} block. The \texttt{default(none)} clause avoids incorrect execution due to assumed sharing rules.
+\item When parallel execution is required, create a \texttt{parallel}  block followed immediately by a \texttt{single} block.
 \item Use the \texttt{task} construct within the \texttt{single} block to parallelize work.
 \item Synchronize tasks using the \texttt{taskwait} construct explicitly. Do not rely on implicit barriers and taskwaits.
 \item It is strongly recommended to parallelize work inside a master task context. This simplifies interpreting MIR profiling results.
-\item Compile and link with the native OpenMP implementation (preferably libgomp) and check if the program runs correctly.
-\item Include \texttt{mir\_public\_int.h}.
-\item Ensure that parallel block do not share work and that all tasks are synchronized explicitly.
+\item Compile and link with the native GCC OpenMP implementation. Ensure the program runs correctly.
+\item Ensure that \texttt{parallel} block do not share work and that all tasks are synchronized explicitly.
 \item Compile and link with the appropriate MIR library (opt/debug). The program is now ready.
 \end{enumerate}
 
-The native interface example rewritten using above steps is shown below.
+An example program built using above steps follows.
 
 \begin{lstlisting}[style=MyCStyle]
 int main(int argc, char *argv[])
@@ -265,11 +272,10 @@ int main(int argc, char *argv[])
 // Create master task
 #pragma omp task
 {
-    // Now parallelize the work involved
-    // Work in this case: create as many tasks
-    // ... as there are threads
-    int num_workers = mir_get_num_threads();
-    for(int i=0; i<num_workers; i++)
+    // Now parallelize the work.
+    // For example, lets say the work is to
+    // ... create a 1000 parallel instances of the fuction foo.
+    for(int i=0; i<1000; i++)
     {
         #pragma omp task firstprivate(i)
             foo(i);
@@ -289,26 +295,49 @@ int main(int argc, char *argv[])
 
 \subsection{Native Interface}\label{native-interface}
 
-Look at mir\_public\_int.h in MIR\_ROOT/src for interface details and programs in MIR\_ROOT/programs/native for interface usage examples. A simple program using the native interface is shown\\below.
+The MIR library interface can also be directly used to compose task-based programs. Look at mir\_public\_int.h in MIR\_ROOT/src for interface details and programs in MIR\_ROOT/programs/native for interface usage examples. A simple program using the native interface is shown\\below.
 
 \begin{lstlisting}[style=MyCStyle]
 #include "mir_public_int.h"
 void foo(int id)
 {
-printf(stderr, "Hello from task %d\n", id);
+    printf(stderr, "Hello from task %d\n", id);
 }
 
-// Task outline function argument
-struct foo_wrapper_arg_t
+// Outline function for foo.
+struct foo_of_arg_t
 {
-int id;
+    int id;
 };
-
-// Task outline function
-void foo_wrapper(void* arg)
+void foo_of(void* arg)
 {
-    struct foo_wrapper_arg_t* farg = (struct foo_wrapper_arg_t*)(arg);
+    struct foo_of_arg_t* farg = (struct foo_of_arg_t*)(arg);
     foo(farg->id);
+}
+
+// The master task
+// Having a master task helps to interpret profiling results
+void master_task()
+{
+    // Create a 1000 instance of foo.
+    for(int i=0; i<1000; i++)
+    {
+        struct foo_of_arg_t arg;
+        arg.id = i;
+        mir_task_create((mir_tfunc_t) foo_of,
+                        &arg,
+                        sizeof(struct foo_of_arg_t),
+                        0, NULL, NULL);
+    }
+
+    // Wait for tasks to finish
+    mir_task_wait();
+}
+
+// Outline function for the master task
+void master_task_of(void* arg)
+{
+    master_task();
 }
 
 int main(int argc, char *argv[])
@@ -316,19 +345,13 @@ int main(int argc, char *argv[])
     // Initialize the runtime system
     mir_create();
 
-    // Create as many tasks as there are threads
-    int num_workers = mir_get_num_threads();
-    for(int i=0; i<num_workers; i++)
-    {
-        struct foo_wrapper_arg_t arg;
-        arg.id = i;
-        mir_task_create((mir_tfunc_t) foo_wrapper,
-                        &arg,
-                        sizeof(struct foo_wrapper_arg_t),
-                        0, NULL, NULL);
-    }
+    // Create master task
+    mir_task_create((mir_tfunc_t) master_task_of,
+                    NULL,
+                    0,
+                    0, NULL, NULL);
 
-    // Wait for tasks to finish
+    // Wait for master task to finish
     mir_task_wait();
 
     // Release runtime system resources
@@ -351,18 +374,18 @@ $ cd $MIR_ROOT/test/fib
 $ scons
 $ MIR_CONF="-h" ./fib-opt 3
 MIR_INFO: Valid options in MIR_CONF environment variable ...
--h print this help message
--w=<int> number of workers
--s=<str> task scheduling policy. Choose among central, central-stack, ws, ws-de and numa.
--r enable worker recorder
--x=<int> task inlining limit based on num tasks per worker
--i collect worker statistics
--l=<int> worker stack size in MB
--q=<int> task queue capacity
--m=<str> memory allocation policy. Choose among coarse, fine and system.
--y=<csv> schedule policy specific parameters. Policy numa: data size in bytes below which task is dealt to private worker queue.
--g collect task statistics
--p enable handshake with Outline Function Profiler [Note: Supported only for a single worker}]
+-h (--help) print this help message
+-w <int> (--workers) number of workers
+-s <str> (--schedule) task scheduling policy. Choose among central, central-stack, ws, ws-de and numa.
+-m <str> (--memory-policy) memory allocation policy. Choose among coarse, fine and system.
+--inlining-limit=<int> task inlining limit based on number of tasks per worker.
+--stack-size=<int> worker stack size in MB
+--queue-size=<int> task queue capacity
+--numa-footprint=<int> for numa scheduling policy. Indicates data footprint size in bytes below which task is dealt to worker's private queue.
+--worker-stats collect worker statistics
+--task-stats collect task statistics
+-r (--recorder) enable worker recorder
+-p (--profiler) enable communication with Outline Function Profiler. Note: This option is supported only for single-worker execution!]
 \end{lstlisting}
 
 \subsubsection{Binding workers to cores}\label{binding-workers-to-cores}
@@ -395,16 +418,16 @@ MIR_DBG: Binding worker 1 to core 1
 
 \section{Profiling}\label{profiling}
 
-MIR supports extensive thread-based and task-based profiling.
+MIR supports extensive and detailed thread-based and task-based profiling.
 
 \subsection{Thread-based Profiling}\label{thread-based-profiling}
 
 Thread states and events are the main performance indicators in thread-based profiling.
 
-Enable the \texttt{-i} flag to get basic load-balance information in a CSV file called \texttt{mir-worker-stats}.
+Enable the \texttt{--worker-stats} flag to get basic load-balance information in a CSV file called \texttt{mir-worker-stats}.
 
 \begin{lstlisting}[style=MyInputStyle]
-$ MIR_CONF="-i" ./fib-opt
+$ MIR_CONF="--worker-stats" ./fib-opt
 $ cat mir-worker-stats
 \end{lstlisting}
 
@@ -431,7 +454,8 @@ TODO: Explain file contents.
 
 \subsubsection{Enabling hardware performance counters}\label{enabling-hardware-performance-counters}
 
-MIR can read hardware performance counters through PAPI during task execution events i.e., at the beginning and end of task execution.
+MIR can read hardware performance counters through PAPI during task execution events. Events currently supported are the beginning and end of task execution.
+Hardware performance counters are not read during during a task switch event.
 
 \begin{itemize}
 \item Install PAPI.
@@ -479,16 +503,16 @@ TODO: Explain file contents.
 
 Task are first-class citizens in task-based profiling.
 
-Enable the \texttt{-g} flag to collect task statistics in a CSV file called \texttt{mir-task-stats}. Inspect the file manually or plot and visualize the fork-join task graph.
+Enable the \texttt{--task-stats} flag to collect task statistics in a CSV file called \texttt{mir-task-stats}. Inspect the file manually or plot and visualize the fork-join task graph.
 
 \begin{lstlisting}[style=MyInputStyle]
-$ MIR_CONF="-g" ./fib-opt
+$ MIR_CONF="--task-stats" ./fib-opt
 $ Rscript ${MIR_ROOT}/scripts/profiling/task/plot-task-graph.R -d mir-task-stats
 \end{lstlisting}
 
 TODO: Explain file contents.
 
-The \texttt{mir-task-stats} file can be further processed for additional information such as number of tasks and task lineage (UID for tasks). Processed information can also be used to visualize the fork-join task graph.
+The \texttt{mir-task-stats} file can be further processed for additional information such as number of tasks and task lineage (run-independent unique identifier for tasks). Processed information can also be used to visualize the fork-join task graph.
 
 \begin{lstlisting}[style=MyInputStyle]
 $ Rscript ${MIR_ROOT}/scripts/profiling/task/process-task-stats.R -d mir-task-stats --lineage
@@ -512,7 +536,8 @@ TODO: Explain file contents.
 
 \subsubsection{Instruction-level task profiling}\label{instruction-level-task-profiling}
 
-MIR provides a Pin-based instruction profiler that traces instructions executed by tasks. Technically, the profiler traces instructions executed within outline functions of tasks in programs compiled using GCC. Instructions of dynamically linked functions and system calls called within the outline function are not traced. Read paper \textit{Characterizing task-based OpenMP programs} (DOI: 10.1371/journal.pone.0123545) for more details.
+MIR provides a Pin-based instruction profiler for tasks called the \textit{Outline Function Profiler}.
+The profiler traces instructions executed within outline functions of tasks in programs compiled with GCC. Instructions of dynamically linked functions and system calls called within the outline function are not traced. Read paper \textit{Characterizing task-based OpenMP programs} (DOI: 10.1371/journal.pone.0123545) for more details.
 
 Follow below steps to build and use the profiler.
 
@@ -538,26 +563,26 @@ $ make PIN_ROOT=$PIN_ROOT
 \begin{lstlisting}[style=MyInputStyle]
 $ $PIN_ROOT/intel64/bin/pinbin -t $MIR_ROOT/scripts/profiling/task/obj-intel64/mir_of_profiler.so -h -- /usr/bin/echo
 ...
--s  specify outline functions (csv)
--c  specify functions called (csv) from outline functions
--o  [default mir-ofp] specify output file suffix
+-of specify outline functions (csv)
+-cf specify functions called (csv) from outline functions
+-pr output file prefix [default mir-ofp]
 ...
 \end{lstlisting}
 
-The profiler requires outline function names under the argument \texttt{-s}. The argument \texttt{-c} accepts names of functions which are called within tasks. The argument \texttt{--} separates profiled program invocation from profiler arguments.
+The profiler requires outline function names under the argument \texttt{-of}. The argument \texttt{-cf} accepts names of functions which are called within tasks. The argument \texttt{--} separates profiled program invocation from profiler arguments.
 
 \item The profiler requires handshaking with the runtime system. To enable handshaking, enable the \texttt{-p} flag in MIR\_CONF.
 
-\item The profiler requires single-threaded execution of the profiled program. Provide \texttt{-w=1} in MIR\_CONF while profiling.
+\item The profiler requires single-threaded execution of the profiled program. Provide \texttt{-w 1} in MIR\_CONF while profiling.
 
-\item Information from the profiler becomes meaningful when correlated with task statistics information. Provide \texttt{-g} in MIR\_CONF while profiling.
+\item Information from the profiler becomes more meaningful when correlated with task statistics information. Provide \texttt{--task-stats} in MIR\_CONF while profiling.
 
 \item Create a handy shell function for invoking the profiler and to enable task statistics collection.
 
 \begin{lstlisting}[style=MyInputStyle]
 function mir-inst-prof()
 {
-    MIR_CONF='-w=1 -p -g' ${PIN_ROOT}/intel64/bin/pinbin -t ${MIR_ROOT}/scripts/profiling/task/obj-intel64/mir_of_profiler.so "$@"
+    MIR_CONF='-w 1 -p --task-stats' ${PIN_ROOT}/intel64/bin/pinbin -t ${MIR_ROOT}/scripts/profiling/task/obj-intel64/mir_of_profiler.so "$@"
 }
 \end{lstlisting}
 \end{itemize}
@@ -613,11 +638,13 @@ $ Rscript ${MIR_ROOT}/scripts/profiling/task/merge-task-performance.R -l mir-tas
 $ Rscript ${MIR_ROOT}/scripts/profiling/task/plot-task-graph.R -d mir-task-perf -p color
 \end{lstlisting}
 
+TODO: Instructions to use the full task graph profiler.
+
 \subsection{Profiling Case Study: Fibonacci}
 
-The Fibonacci program is found in MIR\_ROOT/programs/native/fib. The program takes two arguments --- the number n and the depth cutoff for recursive task creation. Let us see how to profile the program for task-based performance information.
+The Fibonacci program is found in MIR\_ROOT/programs/native/fib. The program takes two arguments -- the number n and the depth cutoff for recursive task creation. Let us see how to profile the program for task-based performance information.
 
-Compile the program for profiling ---  remove aggressive optimizations and disable inlining so that outline functions representing tasks are visible to the Pin-based instruction profiler. Running scons in the program directory builds the profiler-friendly executable called \texttt{fib-prof}.
+Compile the program for profiling -- remove aggressive optimizations and disable inlining so that outline functions representing tasks are visible to the Pin-based instruction profiler. Running scons in the program directory builds the profiler-friendly executable called \texttt{fib-prof}.
 
 \begin{lstlisting}[style=MyInputStyle]
 $ cd $MIR_ROOT/programs/native/fib
@@ -655,7 +682,7 @@ Expert Tip: Ensure that functions listed by CHECKME\_OUTLINE\_FUNCTIONS are thos
 \end{quote}
 \end{framed}
 
-The functions in the \texttt{CHECKME\_CALLED\_FUNCTIONS} list should be treated as functions potentially called within task contexts.  Inspect program sources and exclude those which are not called within tasks.  By looking at Fibonacci program sources, we can exclude \texttt{main} and \texttt{get\_usecs} from \texttt{CHECKME\_CALLED\_FUNCTIONS}.
+The functions in the \texttt{CHECKME\_CALLED\_FUNCTIONS} list should be treated as functions potentially called within task contexts.  Inspect program sources and exclude those which are not called within tasks.  By looking at Fibonacci program sources, we can exclude \texttt{main} and \texttt{get\_usecs} from the called function list in \texttt{CHECKME\_CALLED\_FUNCTIONS}.
 
 \begin{framed}
 \begin{quote}
@@ -669,8 +696,8 @@ Start the instruction profiler with appropriate arguments to profile \texttt{fib
 
 \begin{lstlisting}[style=MyInputStyle]
 $ mir-inst-prof \
-    -s ol_fib_0,ol_fib_1,ol_fib_2 \
-    -c fib,fib_seq \
+    -of ol_fib_0,ol_fib_1,ol_fib_2 \
+    -cf fib,fib_seq \
     -- ./fib-prof 10 4
 \end{lstlisting}
 
@@ -681,8 +708,8 @@ $ mir-inst-prof \
 \begin{lstlisting}[style=MyInputStyle]
 $ `$MIR_ROOT/scripts/profiling/task/of_finder.py -e prof-build/*.o`
 $ mir-inst-prof \
-    -s $CHECKME_OUTLINE_FUNCTIONS
-    -c $CHECKME_CALLED_FUNCTIONS
+    -of $CHECKME_OUTLINE_FUNCTIONS
+    -cf $CHECKME_CALLED_FUNCTIONS
     -- ./fib-prof 10 4
 \end{lstlisting}
 
@@ -718,11 +745,19 @@ Combine the instruction-level information produced by the instruction profiler w
 $ Rscript ${MIR_ROOT}/scripts/profiling/task/merge-task-performance.R -l mir-task-stats.processed -r mir-ofp-instructions -k "task" -o mir-task-perf
 \end{lstlisting}
 
-Plot task graph using combined performance information and view on YEd.
+Plot task graph using combined performance information and view on the yEd graph viewer.
 
 \begin{lstlisting}[style=MyInputStyle]
 $ Rscript ${MIR_ROOT}/scripts/profiling/task/plot-task-graph.R -d mir-task-perf -p color
 $ yed task-graph.graphml
 \end{lstlisting}
+
+\begin{framed}
+\begin{quote}
+Tip: Import task graph property mapping settings in MIR\_ROOT/scripts/profiling/task/yed-mir-task-graph-settings.cnfx into yEd.
+\end{quote}
+\end{framed}
+
+TODO: Demonstrate automatic analysis of task performance problems using \texttt{analyze} option of the task graph plotter.
 
 \end{document}
