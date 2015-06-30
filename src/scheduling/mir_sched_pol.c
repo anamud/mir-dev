@@ -15,22 +15,22 @@ extern struct mir_sched_pol_t policy_ws_de;
 extern struct mir_sched_pol_t policy_ws_de_node;
 
 struct mir_sched_pol_t* mir_sched_pol_get_by_name(const char* name)
-{/*{{{*/
-    if(0 == strcmp(name, "central"))
+{ /*{{{*/
+    if (0 == strcmp(name, "central"))
         return &policy_central;
-    else if(0 == strcmp(name, "ws"))
+    else if (0 == strcmp(name, "ws"))
         return &policy_ws;
 #ifdef MIR_MEM_POL_ENABLE
-    else if(0 == strcmp(name, "numa"))
+    else if (0 == strcmp(name, "numa"))
         return &policy_numa;
 #endif
-    else if(0 == strcmp(name, "central-stack"))
+    else if (0 == strcmp(name, "central-stack"))
         return &policy_central_stack;
-    else if(0 == strcmp(name, "ws-de"))
+    else if (0 == strcmp(name, "ws-de"))
         return &policy_ws_de;
-    else if(0 == strcmp(name, "ws-de-node"))
+    else if (0 == strcmp(name, "ws-de-node"))
         return &policy_ws_de_node;
     else
         return NULL;
-}/*}}}*/
+} /*}}}*/
 
