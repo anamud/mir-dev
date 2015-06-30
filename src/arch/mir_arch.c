@@ -7,25 +7,24 @@
 #include <stdlib.h>
 #include <string.h>
 
-extern struct mir_arch_t arch_this; // 1
-extern struct mir_arch_t arch_adk; // 2
-extern struct mir_arch_t arch_firenze; // 3
-extern struct mir_arch_t arch_gothmog; // 4
+extern struct mir_arch_t arch_this;      // 1
+extern struct mir_arch_t arch_adk;       // 2
+extern struct mir_arch_t arch_firenze;   // 3
+extern struct mir_arch_t arch_gothmog;   // 4
 extern struct mir_arch_t arch_tilepro64; // 5 = MIR_ARCH_NUM_PREDEF
 
 // WARNING and NOTE: Make sure predef architecture count == num entries in predef architecture struct
 #define MIR_ARCH_NUM_PREDEF 5
-static struct mir_arch_t* mir_arch_predef[MIR_ARCH_NUM_PREDEF] = 
-{/*{{{*/
+static struct mir_arch_t* mir_arch_predef[MIR_ARCH_NUM_PREDEF] = { /*{{{*/
     &arch_this,
     &arch_adk,
     &arch_firenze,
     &arch_gothmog,
     &arch_tilepro64
-};/*}}}*/
+}; /*}}}*/
 
 struct mir_arch_t* mir_arch_create_by_query()
-{/*{{{*/
+{ /*{{{*/
     struct mir_arch_t* arch = &arch_this;
 
 #ifdef __tile__
@@ -39,20 +38,18 @@ struct mir_arch_t* mir_arch_create_by_query()
     // Get node name into buffer and strip it of the newline at end
     char arch_name[MIR_SHORT_NAME_LEN];
     MIR_ASSERT(fgets(arch_name, MIR_SHORT_NAME_LEN, fpipe) != NULL);
-    for(int i=0; i<MIR_SHORT_NAME_LEN; i++)
-        if(arch_name[i] == '\n')
+    for (int i = 0; i < MIR_SHORT_NAME_LEN; i++)
+        if (arch_name[i] == '\n')
             arch_name[i] = '\0';
 
-    // Compare node name with known architectures 
+    // Compare node name with known architectures
     // and set architecture
-    for(int i=0; i<MIR_ARCH_NUM_PREDEF; i++)
-    {
-        if(0 == strcmp(arch_name, mir_arch_predef[i]->name))
+    for (int i = 0; i < MIR_ARCH_NUM_PREDEF; i++) {
+        if (0 == strcmp(arch_name, mir_arch_predef[i]->name))
             arch = mir_arch_predef[i];
     }
 #endif
 
     return arch;
-}/*}}}*/
-
+} /*}}}*/
 
