@@ -66,8 +66,8 @@ END_C_DECLS
 
 BEGIN_C_DECLS
 
-    // The task function pointer type
-    /*LIBINT*/ typedef void* (*mir_tfunc_t)(void*);
+// The task function pointer type
+/*LIBINT*/ typedef void* (*mir_tfunc_t)(void*);
 
 // The task
 struct mir_task_t { /*{{{*/
