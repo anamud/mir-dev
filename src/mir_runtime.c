@@ -22,7 +22,6 @@ extern uint64_t g_tasks_uidc;
 extern uint32_t g_num_tasks_waiting;
 extern uint32_t g_worker_status_board;
 extern uint64_t g_total_allocated_memory;
-extern size_t g_numa_schedule_footprint_config;
 
 static void mir_preconfig_init()
 { /*{{{*/
@@ -274,9 +273,13 @@ static void mir_config()
                 MIR_DEBUG(MIR_DEBUG_STR "Task queue capacity set to %d.\n", runtime->sched_pol->queue_capacity);
             }
             else if (0 == strcmp(long_options[option_index].name, "numa-footprint")) {
+#ifdef MIR_MEM_POL_ENABLE
                 g_numa_schedule_footprint_config = atoi(optarg);
                 MIR_ASSERT(g_numa_schedule_footprint_config > 0);
                 MIR_DEBUG(MIR_DEBUG_STR "Footprint limit for numa scheduling policy set to %zd.\n", g_numa_schedule_footprint_config);
+#else
+                MIR_ABORT(MIR_ERROR_STR "MIR built without HAVE_LIBNUMA enabled.\n");
+#endif
             }
             else {
                 MIR_DEBUG(MIR_DEBUG_STR "Unrecognized option: %s!\n", long_options[option_index].name);

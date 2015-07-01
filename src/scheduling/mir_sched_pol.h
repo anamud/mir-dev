@@ -11,6 +11,10 @@
 
 BEGIN_C_DECLS
 
+#ifdef MIR_MEM_POL_ENABLE
+extern size_t g_numa_schedule_footprint_config;
+#endif
+
 struct mir_sched_pol_t {
     // Data structures
     struct mir_queue_t** queues;
