@@ -22,7 +22,7 @@ extern uint64_t g_tasks_uidc;
 extern uint32_t g_num_tasks_waiting;
 extern uint32_t g_worker_status_board;
 extern uint64_t g_total_allocated_memory;
-extern uint64_t g_numa_schedule_footprint_config;
+extern size_t g_numa_schedule_footprint_config;
 
 static void mir_preconfig_init()
 { /*{{{*/
