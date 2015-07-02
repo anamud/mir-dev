@@ -12,6 +12,7 @@
 #include "mir_lock.h"
 #include "mir_recorder.h"
 #include "mir_team.h"
+#include "mir_barrier.h"
 
 /* barrier.c */
 
@@ -22,8 +23,7 @@ void GOMP_barrier(void)
     struct mir_omp_team_t* team;
     team = worker->current_task ? worker->current_task->team : NULL;
     if (team) {
-        team->barrier->count_per_worker[worker->id]++;
-        mir_task_wait_int(team->barrier, team->num_threads);
+        mir_barrier_wait(&team->barrier);
     }
 } /*}}}*/
 
@@ -363,7 +363,12 @@ void GOMP_parallel_start(void (*fn)(void*), void* data, unsigned num_threads)
     struct mir_worker_t* worker = mir_worker_get_context();
 
     // Workaround our lack of proper OpenMP-handling of num_threads.
+#if 0
     num_threads = num_threads == 0 ? runtime->num_workers : num_threads;
+#else
+    // FIXME: Temporary barrier workaround.
+    num_threads = 1;
+#endif
 
     struct mir_omp_team_t* prevteam;
     prevteam = worker->current_task ? worker->current_task->team : NULL;

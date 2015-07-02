@@ -1,6 +1,8 @@
 #ifndef MIR_TEAM_H
 #define MIR_TEAM_H 1
 
+#include "mir_barrier.h"
+
 BEGIN_C_DECLS
 
 /*LIBINT_BASE_DECL_BEGIN*/
@@ -9,7 +11,7 @@ typedef struct mir_omp_team_t mir_omp_team_t;
 
 struct mir_omp_team_t { /*{{{*/
     struct mir_omp_team_t* prev;
-    struct mir_twc_t* barrier;
+    pthread_barrier_t barrier;
     int num_threads;
     int single_count;
 }; /*}}}*/
