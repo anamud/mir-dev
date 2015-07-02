@@ -486,7 +486,7 @@ void mir_task_wait_int(struct mir_twc_t* twc, int newval)
     // TODO: Should time update be locked?
     if (worker->current_task)
         twc->pass_time->time = elapsed_execution_time(worker->current_task);
-    struct mir_time_list_t* tl = (struct mir_time_list_t*)mir_malloc_int(sizeof(struct mir_time_list_t));
+    struct mir_time_list_t* tl = mir_malloc_int(sizeof(struct mir_time_list_t));
     MIR_ASSERT(tl != NULL);
     tl->time = 0; // 0 => Not passed.
     tl->next = twc->pass_time;

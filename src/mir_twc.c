@@ -15,7 +15,7 @@ struct mir_twc_t* mir_twc_create()
 
     // Reset num times passed
     twc->num_passes = 0;
-    twc->pass_time = (struct mir_time_list_t*)mir_malloc_int(sizeof(struct mir_time_list_t));
+    twc->pass_time = mir_malloc_int(sizeof(struct mir_time_list_t));
     MIR_ASSERT(twc->pass_time != NULL);
     twc->pass_time->time = 0; // 0 => Not passed.
     twc->pass_time->next = NULL;
