@@ -43,6 +43,7 @@ if(len(compiler) == 0):
 # Base environment
 env = Environment()
 env['CC'] = [compiler[0]]
+# -D_XOPEN_SOURCE=600 needed for exposing pthread_barrier_t on recent Linux.
 env['CCFLAGS'] = Split("""
 -Wall 
 -Werror 
@@ -51,7 +52,8 @@ env['CCFLAGS'] = Split("""
 -Wno-unused-label
 -fPIC 
 -std=c99 
--D_GNU_SOURCE 
+-D_GNU_SOURCE
+-D_XOPEN_SOURCE=600
 """)
 
 env['CCFLAGS'] += ['-I' + MIR_ROOT+'/src']
