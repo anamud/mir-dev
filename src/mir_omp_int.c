@@ -115,6 +115,13 @@ void GOMP_parallel_loop_dynamic(void (*fn)(void*), void* data, unsigned num_thre
     mir_task_wait();
 } /*}}}*/
 
+void GOMP_parallel_loop_runtime_start(void (*fn) (void *), void *data,
+                                      unsigned num_threads, long start,
+                                      long end, long incr)
+{ /*{{{*/
+    MIR_ABORT("GOMP_parallel_loop_runtime_start not implemented");
+} /*}}}*/
+
 static int GOMP_loop_static_next_int(long* pstart, long* pend)
 { /*{{{*/
     unsigned long nthreads = runtime->num_workers;
