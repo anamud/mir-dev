@@ -7,14 +7,15 @@
 START_TEST(omp_parallel_plain)
 {
     int a = 0;
+    int num_threads;
 
 #pragma omp parallel shared(a)
     {
         __sync_fetch_and_add(&a, 1);
+        num_threads = omp_get_num_threads();
     }
 
-    /* Only one thread executes the parallel block in MIR */
-    ck_assert_int_eq(a, 1);
+    ck_assert_int_eq(a, num_threads);
 }
 END_TEST
 

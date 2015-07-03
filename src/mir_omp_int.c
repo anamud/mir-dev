@@ -364,7 +364,7 @@ void GOMP_parallel_start(void (*fn)(void*), void* data, unsigned num_threads)
     struct mir_worker_t* worker = mir_worker_get_context();
 
     // Workaround our lack of proper OpenMP-handling of num_threads.
-#if 0
+#if 1
     num_threads = num_threads == 0 ? runtime->num_workers : num_threads;
 #else
     // FIXME: Temporary barrier workaround.
@@ -376,6 +376,12 @@ void GOMP_parallel_start(void (*fn)(void*), void* data, unsigned num_threads)
     struct mir_omp_team_t* team = mir_new_omp_team(prevteam, num_threads);
     struct mir_task_t* task = mir_task_create_common((mir_tfunc_t)fn, data, 0, 0, NULL, "GOMP_parallel_task", team);
     MIR_ASSERT(task != NULL);
+
+    for (int i = 0; i < num_threads; i++) {
+        if(i == worker->id)
+            continue;
+        mir_task_create_on_worker((mir_tfunc_t)fn, data, 0, 0, NULL, "GOMP_parallel_task", team, i);
+    }
 
 // Older GCCs force us to create a dummy task for the outline function
 // which is called from the master thread. Newer GCCs force us to
