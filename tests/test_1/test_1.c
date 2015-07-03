@@ -32,7 +32,6 @@ START_TEST(omp_parallel_single)
         }
     }
 
-    /* Only one thread executes the parallel block and gets access to the single section in MIR */
     ck_assert_int_eq(a, 1);
 }
 END_TEST
@@ -51,8 +50,6 @@ START_TEST(omp_nested_parallel)
         }
     }
 
-    /* Only one thread executes the parallel block in MIR.
-     * Nested parallel blocks are also executed on one thread. */
     ck_assert_int_eq(a, 2);
 }
 END_TEST
@@ -75,8 +72,6 @@ START_TEST(omp_nested_parallel_single)
         }
     }
 
-    /* Only one thread executes the parallel block in MIR.
-     * Nested parallel blocks are also executed on one thread. */
     ck_assert_int_eq(a, 2);
 }
 END_TEST
@@ -114,8 +109,6 @@ START_TEST(omp_nested_sequential_parallel)
         }
     }
 
-    /* Only one thread executes the parallel block in MIR.
-     * Nested parallel blocks are also executed on one thread. */
     ck_assert_int_eq(a, 2);
 
 #pragma omp parallel shared(a)
@@ -123,7 +116,6 @@ START_TEST(omp_nested_sequential_parallel)
         __sync_fetch_and_add(&a, 1);
     }
 
-    /* Only one thread executes the parallel block in MIR. */
     ck_assert_int_eq(a, 3);
 }
 END_TEST
