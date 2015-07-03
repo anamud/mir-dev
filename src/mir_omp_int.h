@@ -34,6 +34,8 @@ void GOMP_critical_end(void);
 
 bool GOMP_loop_dynamic_next(long* istart, long* iend);
 void GOMP_parallel_loop_dynamic(void (*fn)(void*), void* data, unsigned num_threads, long start, long end, long incr, long chunk_size, unsigned flags);
+bool GOMP_loop_runtime_start (long start, long end, long incr, long *istart, long *iend);
+bool GOMP_loop_dynamic_start (long start, long end, long incr, long chunk_size, long *istart, long *iend);
 void GOMP_parallel_loop_runtime_start(void (*fn) (void *), void *data,
                                       unsigned num_threads, long start,
                                       long end, long incr);

@@ -115,6 +115,16 @@ void GOMP_parallel_loop_dynamic(void (*fn)(void*), void* data, unsigned num_thre
     mir_task_wait();
 } /*}}}*/
 
+bool GOMP_loop_runtime_start (long start, long end, long incr, long *istart, long *iend)
+{
+    MIR_ABORT("GOMP_loop_runtime_start not implemented");
+}
+
+bool GOMP_loop_dynamic_start (long start, long end, long incr, long chunk_size, long *istart, long *iend)
+{
+    MIR_ABORT("GOMP_loop_dynamic_start not implemented");
+}
+
 void GOMP_parallel_loop_runtime_start(void (*fn) (void *), void *data,
                                       unsigned num_threads, long start,
                                       long end, long incr)
