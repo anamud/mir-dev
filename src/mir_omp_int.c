@@ -94,6 +94,9 @@ bool GOMP_loop_dynamic_next(long* istart, long* iend)
 
 void GOMP_parallel_loop_dynamic(void (*fn)(void*), void* data, unsigned num_threads, long start, long end, long incr, long chunk_size, unsigned flags)
 { /*{{{*/
+    // Create thread team.
+    mir_create();
+
     // Save loop description
     struct mir_loop_des_t* loop = mir_malloc_int(sizeof(struct mir_loop_des_t));
     MIR_ASSERT(loop != NULL);
@@ -110,6 +113,9 @@ void GOMP_parallel_loop_dynamic(void (*fn)(void*), void* data, unsigned num_thre
 
     // Wait for workers to finish
     mir_task_wait();
+
+    // Corresponding call to destroy runtime.
+    mir_soft_destroy();
 } /*}}}*/
 
 bool GOMP_loop_runtime_start (long start, long end, long incr, long *istart, long *iend)
@@ -230,6 +236,9 @@ bool GOMP_loop_static_next(long* istart, long* iend)
 
 void GOMP_parallel_loop_static(void (*fn)(void*), void* data, unsigned num_threads, long start, long end, long incr, long chunk_size, unsigned flags)
 { /*{{{*/
+    // Create thread team.
+    mir_create();
+
     // Save loop description
     int num_workers = runtime->num_workers;
     struct mir_loop_des_t* loops = mir_malloc_int(num_workers * sizeof(struct mir_loop_des_t));
@@ -249,6 +258,9 @@ void GOMP_parallel_loop_static(void (*fn)(void*), void* data, unsigned num_threa
 
     // Wait for workers to finish
     mir_task_wait();
+
+    // Corresponding call to destroy runtime.
+    mir_soft_destroy();
 } /*}}}*/
 
 void GOMP_parse_schedule(void)
@@ -369,14 +381,11 @@ bool GOMP_loop_runtime_next(long* istart, long* iend)
 
 void GOMP_parallel_loop_runtime(void (*fn)(void*), void* data, unsigned num_threads, long start, long end, long incr, unsigned flags)
 { /*{{{*/
-    // Create thread team.
-    mir_create();
-
-    switch (runtime->omp_for_schedule) {
+    switch (parse_omp_schedule()) {
     case OFS_STATIC:
-        return GOMP_parallel_loop_static(fn, data, num_threads, start, end, incr, runtime->omp_for_chunk_size, flags);
+        return GOMP_parallel_loop_static(fn, data, num_threads, start, end, incr, parse_omp_schedule_chunk_size(), flags);
     case OFS_DYNAMIC:
-        return GOMP_parallel_loop_dynamic(fn, data, num_threads, start, end, incr, runtime->omp_for_chunk_size, flags);
+        return GOMP_parallel_loop_dynamic(fn, data, num_threads, start, end, incr, parse_omp_schedule_chunk_size(), flags);
     case OFS_AUTO:
     case OFS_GUIDED:
     default:
@@ -391,7 +400,7 @@ void GOMP_loop_end(void)
 
 void GOMP_loop_end_nowait(void)
 { /*{{{*/
-    mir_soft_destroy();
+    return;
 } /*}}}*/
 
 /* parallel.c */
