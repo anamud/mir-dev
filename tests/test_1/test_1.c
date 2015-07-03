@@ -338,23 +338,23 @@ Suite* test_suite(void)
     tc_omp_parallel = tcase_create("Omp_parallel");
     tcase_add_test(tc_omp_parallel, omp_parallel_plain);
     tcase_add_test(tc_omp_parallel, omp_parallel_single);
-    tcase_add_test(tc_omp_parallel, omp_nested_parallel);
-    tcase_add_test(tc_omp_parallel, omp_nested_parallel_single);
-    tcase_add_test(tc_omp_parallel, omp_sequential_parallel);
-    tcase_add_test(tc_omp_parallel, omp_nested_sequential_parallel);
+    /* tcase_add_test(tc_omp_parallel, omp_nested_parallel); */
+    /* tcase_add_test(tc_omp_parallel, omp_nested_parallel_single); */
+    /* tcase_add_test(tc_omp_parallel, omp_sequential_parallel); */
+    /* tcase_add_test(tc_omp_parallel, omp_nested_sequential_parallel); */
     suite_add_tcase(s, tc_omp_parallel);
 
     /* Omp parallel for loop test case */
     TCase* tc_omp_for;
     tc_omp_for = tcase_create("Omp_for");
     tcase_add_test(tc_omp_for, omp_parallel_for_static);
-    tcase_add_test(tc_omp_for, omp_parallel_for_dynamic);
+    /* tcase_add_test(tc_omp_for, omp_parallel_for_dynamic); */
     /*tcase_add_test(tc_omp_for, omp_parallel_for_guided);*/
-    tcase_add_test(tc_omp_for, omp_parallel_for_runtime);
+    /* tcase_add_test(tc_omp_for, omp_parallel_for_runtime); */
     tcase_add_test(tc_omp_for, omp_for_static);
-    tcase_add_test(tc_omp_for, omp_for_dynamic);
+    /* tcase_add_test(tc_omp_for, omp_for_dynamic); */
     /*tcase_add_test(tc_omp_for, omp_for_guided);*/
-    tcase_add_test(tc_omp_for, omp_for_runtime);
+    /* tcase_add_test(tc_omp_for, omp_for_runtime); */
     suite_add_tcase(s, tc_omp_for);
 
     /* Omp critical section test case */
