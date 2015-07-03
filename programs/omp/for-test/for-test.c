@@ -37,21 +37,12 @@ int main(int argc, char **argv)
     PMSG("Running %s %d ... \n", argv[0], num);
 
     long par_time_start = get_usecs();
-// OMP parallel in MIR is creates a singleton team of threads, and executes the parallel block on one thread.
-#pragma omp parallel
-{
-// OMP single in MIR is dummy
-#pragma omp single
-{
-// OMP parallel for does not create a team of threads in any case. It works only inside a parallel block.
 #pragma omp parallel for schedule(runtime)
     for (int i = 0; i < 1024; ++i)
     {
         int result = fib_seq(num);
         fprintf(stderr, "iteration %d thread %d result %d \n", i, mir_get_threadid(), result);
     }
-}
-}
     long par_time_end = get_usecs();
     double par_time = (double)( par_time_end - par_time_start) / 1000000;
 
