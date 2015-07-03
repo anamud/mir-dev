@@ -20,8 +20,5 @@ struct mir_twc_t* mir_twc_create()
     twc->pass_time->time = 0; // 0 => Not passed.
     twc->pass_time->next = NULL;
 
-    // Set parent context
-    twc->parent = mir_worker_get_context()->current_task;
-
     return twc;
 } /*}}}*/
