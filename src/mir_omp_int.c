@@ -363,13 +363,8 @@ void GOMP_parallel_start(void (*fn)(void*), void* data, unsigned num_threads)
     // Create task
     struct mir_worker_t* worker = mir_worker_get_context();
 
-    // Workaround our lack of proper OpenMP-handling of num_threads.
-#if 1
+    // Workaround for our lack of proper OpenMP-handling of num_threads.
     num_threads = num_threads == 0 ? runtime->num_workers : num_threads;
-#else
-    // FIXME: Temporary barrier workaround.
-    num_threads = 1;
-#endif
 
     struct mir_omp_team_t* prevteam;
     prevteam = worker->current_task ? worker->current_task->team : NULL;
