@@ -253,21 +253,28 @@ void GOMP_parallel_loop_static(void (*fn)(void*), void* data, unsigned num_threa
 
 void GOMP_parse_schedule(void)
 { /*{{{*/
+    runtime->omp_for_schedule = parse_omp_schedule();
+    runtime->omp_for_chunk_size = parse_omp_schedule_chunk_size();
+} /*}}}*/
+
+int parse_omp_schedule_chunk_size(void)
+{ /*{{{*/
     char* env, *end;
     unsigned long value;
+    enum omp_for_schedule_t omp_for_schedule;
 
     env = getenv("OMP_SCHEDULE");
     if (env == NULL)
-        return;
+        return 0;
 
     while (isspace(*env))
         ++env;
     if (strncasecmp(env, "static", 6) == 0) {
-        runtime->omp_for_schedule = OFS_STATIC;
+        omp_for_schedule = OFS_STATIC;
         env += 6;
     }
     else if (strncasecmp(env, "dynamic", 7) == 0) {
-        runtime->omp_for_schedule = OFS_DYNAMIC;
+        omp_for_schedule = OFS_DYNAMIC;
         env += 7;
     }
     else
@@ -276,9 +283,8 @@ void GOMP_parse_schedule(void)
     while (isspace(*env))
         ++env;
     if (*env == '\0') {
-        runtime->omp_for_chunk_size
-            = runtime->omp_for_schedule != OFS_STATIC;
-        return;
+        omp_for_schedule = omp_for_schedule != OFS_STATIC;
+        return 0;
     }
     if (*env++ != ',')
         goto unknown;
@@ -300,16 +306,51 @@ void GOMP_parse_schedule(void)
     if ((int)value != value)
         goto invalid;
 
-    if (value == 0 && runtime->omp_for_schedule != OFS_STATIC)
+    if (value == 0 && omp_for_schedule != OFS_STATIC)
         value = 1;
-    runtime->omp_for_chunk_size = value;
-    return;
+    return value;
 
 unknown:
     MIR_ABORT(MIR_ERROR_STR "Unknown value for OMP_SCHEDULE.\n");
 
 invalid:
     MIR_ABORT(MIR_ERROR_STR "Invalid value for chunk size in OMP_SCHEDULE.\n");
+} /*}}}*/
+
+enum omp_for_schedule_t parse_omp_schedule(void)
+{ /*{{{*/
+    char* env, *end;
+    unsigned long value;
+    enum omp_for_schedule_t omp_for_schedule;
+
+    env = getenv("OMP_SCHEDULE");
+    if (env == NULL)
+        return OFS_STATIC;
+
+    while (isspace(*env))
+        ++env;
+    if (strncasecmp(env, "static", 6) == 0) {
+        omp_for_schedule = OFS_STATIC;
+        env += 6;
+    }
+    else if (strncasecmp(env, "dynamic", 7) == 0) {
+        omp_for_schedule = OFS_DYNAMIC;
+        env += 7;
+    }
+    else
+        goto unknown;
+
+    while (isspace(*env))
+        ++env;
+    if (*env == '\0') {
+        omp_for_schedule = omp_for_schedule != OFS_STATIC;
+        return omp_for_schedule;
+    }
+
+    return omp_for_schedule;
+
+unknown:
+    MIR_ABORT(MIR_ERROR_STR "Unknown value for OMP_SCHEDULE.\n");
 } /*}}}*/
 
 bool GOMP_loop_runtime_next(long* istart, long* iend)

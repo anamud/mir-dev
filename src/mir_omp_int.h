@@ -20,6 +20,8 @@ enum omp_for_schedule_t {
 
 /* env.c */
 void GOMP_parse_schedule(void);
+int parse_omp_schedule_chunk_size(void);
+enum omp_for_schedule_t parse_omp_schedule(void);
 
 /* barrier.c */
 
