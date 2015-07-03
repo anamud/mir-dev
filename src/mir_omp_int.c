@@ -395,14 +395,16 @@ void GOMP_parallel_start(void (*fn)(void*), void* data, unsigned num_threads)
 
 void GOMP_parallel_end(void)
 { /*{{{*/
-    mir_task_wait();
-
     struct mir_worker_t* worker = mir_worker_get_context();
     struct mir_omp_team_t* team;
     team = worker->current_task ? worker->current_task->team : NULL;
 
-// TODO: Confirm if disaling the barrier is correct.
-//GOMP_barrier();
+#ifndef GCC_PRE_4_9
+    // Ensure the parallel block task is done.
+    mir_task_wait();
+#endif
+
+    GOMP_barrier();
 
 #ifdef GCC_PRE_4_9
     // Stop profiling and book-keeping for parallel task
