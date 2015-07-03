@@ -84,18 +84,19 @@ END_TEST
 START_TEST(omp_sequential_parallel)
 {
     int a = 0;
+    int num_threads;
 
 #pragma omp parallel shared(a)
     {
         __sync_fetch_and_add(&a, 1);
+        num_threads = omp_get_num_threads();
     }
 #pragma omp parallel shared(a)
     {
         __sync_fetch_and_add(&a, 1);
     }
 
-    /* Only one thread executes the parallel block in MIR. */
-    ck_assert_int_eq(a, 2);
+    ck_assert_int_eq(a, 2*num_threads);
 }
 END_TEST
 
@@ -340,7 +341,7 @@ Suite* test_suite(void)
     tcase_add_test(tc_omp_parallel, omp_parallel_single);
     /* tcase_add_test(tc_omp_parallel, omp_nested_parallel); */
     /* tcase_add_test(tc_omp_parallel, omp_nested_parallel_single); */
-    /* tcase_add_test(tc_omp_parallel, omp_sequential_parallel); */
+    tcase_add_test(tc_omp_parallel, omp_sequential_parallel);
     /* tcase_add_test(tc_omp_parallel, omp_nested_sequential_parallel); */
     suite_add_tcase(s, tc_omp_parallel);
 
