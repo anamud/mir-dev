@@ -323,6 +323,8 @@ bool GOMP_loop_runtime_next(long* istart, long* iend)
 
 void GOMP_parallel_loop_runtime(void (*fn)(void*), void* data, unsigned num_threads, long start, long end, long incr, unsigned flags)
 { /*{{{*/
+    GOMP_parallel_start(fn, data, num_threads);
+
     switch (runtime->omp_for_schedule) {
     case OFS_STATIC:
         return GOMP_parallel_loop_static(fn, data, num_threads, start, end, incr, runtime->omp_for_chunk_size, flags);
@@ -337,8 +339,7 @@ void GOMP_parallel_loop_runtime(void (*fn)(void*), void* data, unsigned num_thre
 
 void GOMP_loop_end(void)
 { /*{{{*/
-    MIR_DEBUG(MIR_DEBUG_STR "Note: GOMP_loop_end is dummy.\n");
-    return;
+    GOMP_barrier();
 } /*}}}*/
 
 void GOMP_loop_end_nowait(void)
