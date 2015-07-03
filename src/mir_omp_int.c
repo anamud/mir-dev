@@ -18,7 +18,6 @@
 
 void GOMP_barrier(void)
 { /*{{{*/
-    MIR_DEBUG(MIR_DEBUG_STR "Note: GOMP_barrier is not tested rigorously.\n");
     struct mir_worker_t* worker = mir_worker_get_context();
     struct mir_omp_team_t* team;
     team = worker->current_task ? worker->current_task->team : NULL;
@@ -95,8 +94,6 @@ bool GOMP_loop_dynamic_next(long* istart, long* iend)
 
 void GOMP_parallel_loop_dynamic(void (*fn)(void*), void* data, unsigned num_threads, long start, long end, long incr, long chunk_size, unsigned flags)
 { /*{{{*/
-    MIR_DEBUG(MIR_DEBUG_STR "Note: GOMP_parallel_loop_dynamic does not create worker threads. Create a team of threads by calling GOMP_parallel prior.\n");
-
     // Save loop description
     struct mir_loop_des_t* loop = mir_malloc_int(sizeof(struct mir_loop_des_t));
     MIR_ASSERT(loop != NULL);
@@ -233,8 +230,6 @@ bool GOMP_loop_static_next(long* istart, long* iend)
 
 void GOMP_parallel_loop_static(void (*fn)(void*), void* data, unsigned num_threads, long start, long end, long incr, long chunk_size, unsigned flags)
 { /*{{{*/
-    MIR_DEBUG(MIR_DEBUG_STR "Note: GOMP_parallel_loop_static does not create worker threads. Create a team of threads by calling GOMP_parallel prior.\n");
-
     // Save loop description
     int num_workers = runtime->num_workers;
     struct mir_loop_des_t* loops = mir_malloc_int(num_workers * sizeof(struct mir_loop_des_t));
@@ -362,9 +357,6 @@ void GOMP_loop_end_nowait(void)
 
 void GOMP_parallel_start(void (*fn)(void*), void* data, unsigned num_threads)
 { /*{{{*/
-    MIR_DEBUG(MIR_DEBUG_STR "Note: GOMP_parallel_start implementation ignores num_threads argument. Use MIR_CONF to set number of threads.\n");
-    MIR_DEBUG(MIR_DEBUG_STR "Note: GOMP_parallel_start executes the parallel block only on current worker.\n");
-
     // Create thread team.
     mir_create();
 
