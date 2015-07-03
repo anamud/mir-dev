@@ -343,7 +343,7 @@ Suite* test_suite(void)
     tcase_add_test(tc_omp_for, omp_parallel_for_static);
     /* tcase_add_test(tc_omp_for, omp_parallel_for_dynamic); */
     /*tcase_add_test(tc_omp_for, omp_parallel_for_guided);*/
-    /* tcase_add_test(tc_omp_for, omp_parallel_for_runtime); */
+    tcase_add_test(tc_omp_for, omp_parallel_for_runtime);
     tcase_add_test(tc_omp_for, omp_for_static);
     /* tcase_add_test(tc_omp_for, omp_for_dynamic); */
     /*tcase_add_test(tc_omp_for, omp_for_guided);*/

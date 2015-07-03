@@ -328,7 +328,8 @@ bool GOMP_loop_runtime_next(long* istart, long* iend)
 
 void GOMP_parallel_loop_runtime(void (*fn)(void*), void* data, unsigned num_threads, long start, long end, long incr, unsigned flags)
 { /*{{{*/
-    GOMP_parallel_start(fn, data, num_threads);
+    // Create thread team.
+    mir_create();
 
     switch (runtime->omp_for_schedule) {
     case OFS_STATIC:
@@ -349,8 +350,7 @@ void GOMP_loop_end(void)
 
 void GOMP_loop_end_nowait(void)
 { /*{{{*/
-    MIR_DEBUG(MIR_DEBUG_STR "Note: GOMP_loop_end_nowait is dummy.\n");
-    return;
+    mir_soft_destroy();
 } /*}}}*/
 
 /* parallel.c */
