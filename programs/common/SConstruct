@@ -23,8 +23,12 @@ import mir_utils
 if os.path.isfile(MIR_ROOT+'/src/HAVE_PAPI'):
     PAPI_ROOT = os.environ.get('PAPI_ROOT')
     if(PAPI_ROOT == None):
-        print('PAPI_ROOT is not defined. Aborting!')
-        Exit(2)
+        if os.path.isfile('/usr/include/papi.h'):
+            print('PAPI_ROOT not defined. Using /usr as PAPI_ROOT.')
+            PAPI_ROOT="/usr"
+        else:
+            print('PAPI_ROOT is not defined and papi.h can not be found. Aborting!')
+            Exit(2)
 
 # For icc, use -openmp in both CC and LINK flags. Also comment out prof build.
 compilers = ['gcc','icc']
