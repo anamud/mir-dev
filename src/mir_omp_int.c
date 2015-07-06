@@ -92,24 +92,75 @@ bool GOMP_loop_dynamic_next(long* istart, long* iend)
     return ret;
 } /*}}}*/
 
+bool GOMP_loop_dynamic_start (long start, long end, long incr, long chunk_size, long *istart, long *iend)
+{ /*{{{*/
+    struct mir_worker_t* worker = mir_worker_get_context();
+    MIR_ASSERT(worker != NULL);
+    MIR_ASSERT(worker->current_task != NULL);
+    MIR_ASSERT(worker->current_task->loop != NULL);
+
+    struct mir_loop_des_t* loop = worker->current_task->loop;
+
+    // Set loop parameters if this is the frist thread encountering the loop task.
+    mir_lock_set(&(loop->lock));
+    if(loop->init == 0)
+    {
+        loop->incr = incr;
+        loop->next = start;
+        loop->end = ((incr > 0 && start > end) || (incr < 0 && start < end)) ? start : end;
+        loop->chunk_size = chunk_size;
+        loop->chunk_size *= incr;
+        loop->static_trip = 0;
+        loop->init = 1;
+    }
+    mir_lock_unset(&(loop->lock));
+
+    // Rename task.
+    const char* name = "GOMP_for_dynamic_task";
+    MIR_ASSERT(strlen(name) < MIR_SHORT_NAME_LEN);
+    strcpy(worker->current_task->name, name);
+
+    return GOMP_loop_dynamic_next(istart, iend);
+} /*}}}*/
+
 void GOMP_parallel_loop_dynamic(void (*fn)(void*), void* data, unsigned num_threads, long start, long end, long incr, long chunk_size, unsigned flags)
 { /*{{{*/
     // Create thread team.
     mir_create();
 
-    // Save loop description
+    // Keep loop description in a common structure.
     struct mir_loop_des_t* loop = mir_malloc_int(sizeof(struct mir_loop_des_t));
     MIR_ASSERT(loop != NULL);
     loop->incr = incr;
     loop->next = start;
     loop->end = ((incr > 0 && start > end) || (incr < 0 && start < end)) ? start : end;
     loop->chunk_size = chunk_size;
-    loop->chunk_size *= incr;
     loop->static_trip = 0;
     mir_lock_create(&(loop->lock));
+    loop->init = 1;
 
     // Create loop task on all workers
-    mir_loop_task_create((mir_tfunc_t)fn, data, loop, 1, "GOMP_for_dynamic_task");
+    MIR_RECORDER_STATE_BEGIN(MIR_STATE_TCREATE);
+
+    struct mir_worker_t* worker = mir_worker_get_context();
+    struct mir_omp_team_t* team;
+    team = worker->current_task ? worker->current_task->team : NULL;
+    int num_workers = runtime->num_workers;
+
+    for (int i = 0; i < num_workers; i++) {
+        // Create task
+        struct mir_task_t* task = mir_task_create_common((mir_tfunc_t) fn, data, 0, 0, NULL, "GOMP_for_dynamic_task", team);
+        MIR_ASSERT(task != NULL);
+
+        // Point task to common structure.
+        mir_free_int(task->loop, sizeof(struct mir_loop_des_t));
+        task->loop = loop;
+
+        // Schedule on worker
+        mir_task_schedule_on_worker(task, i);
+    }
+
+    MIR_RECORDER_STATE_END(NULL, 0);
 
     // Wait for workers to finish
     mir_task_wait();
@@ -121,11 +172,6 @@ void GOMP_parallel_loop_dynamic(void (*fn)(void*), void* data, unsigned num_thre
 bool GOMP_loop_runtime_start (long start, long end, long incr, long *istart, long *iend)
 {
     MIR_ABORT(MIR_ERROR_STR "GOMP_loop_runtime_start not implemented!\n");
-}
-
-bool GOMP_loop_dynamic_start (long start, long end, long incr, long chunk_size, long *istart, long *iend)
-{
-    MIR_ABORT(MIR_ERROR_STR "GOMP_loop_dynamic_start not implemented!\n");
 }
 
 void GOMP_parallel_loop_runtime_start(void (*fn) (void *), void *data,
@@ -234,27 +280,67 @@ bool GOMP_loop_static_next(long* istart, long* iend)
     return !GOMP_loop_static_next_int(istart, iend);
 } /*}}}*/
 
+bool GOMP_loop_static_start (long start, long end, long incr, long chunk_size, long *istart, long *iend)
+{ /*{{{*/
+    struct mir_worker_t* worker = mir_worker_get_context();
+    MIR_ASSERT(worker != NULL);
+    MIR_ASSERT(worker->current_task != NULL);
+    MIR_ASSERT(worker->current_task->loop != NULL);
+
+    struct mir_loop_des_t* loop = worker->current_task->loop;
+
+    // Set loop parameters.
+    if(loop->init == 0)
+    {
+        loop->incr = incr;
+        loop->next = start;
+        loop->end = ((incr > 0 && start > end) || (incr < 0 && start < end)) ? start : end;
+        loop->chunk_size = chunk_size;
+        loop->chunk_size *= incr;
+        loop->static_trip = 0;
+        loop->init = 1;
+    }
+
+    // Rename task.
+    const char* name = "GOMP_for_static_task";
+    MIR_ASSERT(strlen(name) < MIR_SHORT_NAME_LEN);
+    strcpy(worker->current_task->name, name);
+
+    return GOMP_loop_static_next(istart, iend);
+} /*}}}*/
+
 void GOMP_parallel_loop_static(void (*fn)(void*), void* data, unsigned num_threads, long start, long end, long incr, long chunk_size, unsigned flags)
 { /*{{{*/
     // Create thread team.
     mir_create();
 
-    // Save loop description
+    // Create loop task on all workers
+    MIR_RECORDER_STATE_BEGIN(MIR_STATE_TCREATE);
+
+    struct mir_worker_t* worker = mir_worker_get_context();
+    struct mir_omp_team_t* team;
+    team = worker->current_task ? worker->current_task->team : NULL;
     int num_workers = runtime->num_workers;
-    struct mir_loop_des_t* loops = mir_malloc_int(num_workers * sizeof(struct mir_loop_des_t));
-    MIR_ASSERT(loops != NULL);
-    for (int i = 0; i < num_workers; ++i) {
-        struct mir_loop_des_t* loop = &loops[i];
-        loop->incr = incr;
-        loop->next = start;
-        loop->end = ((incr > 0 && start > end) || (incr < 0 && start < end)) ? start : end;
-        loop->chunk_size = chunk_size;
-        loop->static_trip = 0;
-        mir_lock_create(&(loop->lock));
+
+    for (int i = 0; i < num_workers; i++) {
+        // Create task
+        struct mir_task_t* task = mir_task_create_common((mir_tfunc_t) fn, data, 0, 0, NULL, "GOMP_for_static_task", team);
+        MIR_ASSERT(task != NULL);
+
+        // Set loop parameters.
+        task->loop->incr = incr;
+        task->loop->next = start;
+        task->loop->end = ((incr > 0 && start > end) || (incr < 0 && start < end)) ? start : end;
+        task->loop->chunk_size = chunk_size;
+        task->loop->chunk_size *= incr;
+        task->loop->static_trip = 0;
+        task->loop->init = 1;
+
+        // Schedule on worker
+        mir_task_schedule_on_worker(task, i);
     }
 
-    // Create loop task on all workers
-    mir_loop_task_create((mir_tfunc_t)fn, data, loops, num_workers, "GOMP_for_static_task");
+    MIR_RECORDER_STATE_END(NULL, 0);
 
     // Wait for workers to finish
     mir_task_wait();
