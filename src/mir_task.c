@@ -165,8 +165,12 @@ struct mir_task_t* mir_task_create_common(mir_tfunc_t tfunc, void* data, size_t 
     task->done = 0;
     task->taken = 0;
 
-    // Loop
-    task->loop = NULL;
+    // Create loop structure to support GOMP_loop_*_start.
+    struct mir_loop_des_t* loop = mir_malloc_int(sizeof(struct mir_loop_des_t));
+    MIR_ASSERT(loop != NULL);
+    mir_lock_create(&(loop->lock));
+    loop->init = 0;
+    task->loop = loop;
 
     // Overhead measurement
     if (worker->current_task)
@@ -247,32 +251,6 @@ void mir_task_create_on_worker(mir_tfunc_t tfunc, void* data, size_t data_size, 
 
     // Schedule task
     mir_task_schedule_on_worker(task, workerid);
-
-    MIR_RECORDER_STATE_END(NULL, 0);
-} /*}}}*/
-
-void mir_loop_task_create(mir_tfunc_t tfunc, void* data, struct mir_loop_des_t* loops, int num_loops, const char* name)
-{ /*{{{*/
-    // Create the task
-    MIR_RECORDER_STATE_BEGIN(MIR_STATE_TCREATE);
-
-    struct mir_worker_t* worker = mir_worker_get_context();
-    struct mir_omp_team_t* team;
-    team = worker->current_task ? worker->current_task->team : NULL;
-
-    // Create task on all workers
-    int num_workers = runtime->num_workers;
-    for (int i = 0; i < num_workers; i++) {
-        // Create task
-        struct mir_task_t* task = mir_task_create_common(tfunc, data, 0, 0, NULL, name, team);
-        MIR_ASSERT(task != NULL);
-
-        // Set loop
-        task->loop = &loops[num_loops == 1 ? 0 : i];
-
-        // Schedule on worker
-        mir_task_schedule_on_worker(task, i);
-    }
 
     MIR_RECORDER_STATE_END(NULL, 0);
 } /*}}}*/
