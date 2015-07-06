@@ -263,13 +263,7 @@ void GOMP_parallel_loop_static(void (*fn)(void*), void* data, unsigned num_threa
     mir_soft_destroy();
 } /*}}}*/
 
-void GOMP_parse_schedule(void)
-{ /*{{{*/
-    runtime->omp_for_schedule = parse_omp_schedule();
-    runtime->omp_for_chunk_size = parse_omp_schedule_chunk_size();
-} /*}}}*/
-
-int parse_omp_schedule_chunk_size(void)
+static int parse_omp_schedule_chunk_size(void)
 { /*{{{*/
     char* env, *end;
     unsigned long value;
@@ -329,7 +323,7 @@ invalid:
     MIR_ABORT(MIR_ERROR_STR "Invalid value for chunk size in OMP_SCHEDULE.\n");
 } /*}}}*/
 
-enum omp_for_schedule_t parse_omp_schedule(void)
+static enum omp_for_schedule_t parse_omp_schedule_name(void)
 { /*{{{*/
     char* env, *end;
     unsigned long value;
@@ -365,6 +359,12 @@ unknown:
     MIR_ABORT(MIR_ERROR_STR "Unknown value for OMP_SCHEDULE.\n");
 } /*}}}*/
 
+void parse_omp_schedule(void)
+{ /*{{{*/
+    runtime->omp_for_schedule = parse_omp_schedule_name();
+    runtime->omp_for_chunk_size = parse_omp_schedule_chunk_size();
+} /*}}}*/
+
 bool GOMP_loop_runtime_next(long* istart, long* iend)
 { /*{{{*/
     switch (runtime->omp_for_schedule) {
@@ -381,7 +381,7 @@ bool GOMP_loop_runtime_next(long* istart, long* iend)
 
 void GOMP_parallel_loop_runtime(void (*fn)(void*), void* data, unsigned num_threads, long start, long end, long incr, unsigned flags)
 { /*{{{*/
-    switch (parse_omp_schedule()) {
+    switch (parse_omp_schedule_name()) {
     case OFS_STATIC:
         return GOMP_parallel_loop_static(fn, data, num_threads, start, end, incr, parse_omp_schedule_chunk_size(), flags);
     case OFS_DYNAMIC:

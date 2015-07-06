@@ -19,9 +19,7 @@ enum omp_for_schedule_t {
 // FIXME: Warning!! Fragile!! Potential version mismatch when linked with different libgomp on system. Add a check!
 
 /* env.c */
-void GOMP_parse_schedule(void);
-int parse_omp_schedule_chunk_size(void);
-enum omp_for_schedule_t parse_omp_schedule(void);
+void parse_omp_schedule(void);
 
 /* barrier.c */
 
