@@ -92,6 +92,11 @@ bool GOMP_loop_dynamic_next(long* istart, long* iend)
     return ret;
 } /*}}}*/
 
+void GOMP_parallel_loop_dynamic_start (void (*fn) (void *), void *data, unsigned num_threads, long start, long end, long incr, long chunk_size)
+{ /*{{{*/
+    GOMP_parallel_loop_dynamic(fn, data, num_threads, start, end, incr, chunk_size, 0);
+} /*}}}*/
+
 bool GOMP_loop_dynamic_start (long start, long end, long incr, long chunk_size, long *istart, long *iend)
 { /*{{{*/
     struct mir_worker_t* worker = mir_worker_get_context();
@@ -295,6 +300,11 @@ bool GOMP_loop_static_start (long start, long end, long incr, long chunk_size, l
     strcpy(worker->current_task->name, name);
 
     return GOMP_loop_static_next(istart, iend);
+} /*}}}*/
+
+void GOMP_parallel_loop_static_start (void (*fn) (void *), void *data, unsigned num_threads, long start, long end, long incr, long chunk_size)
+{ /*{{{*/
+    GOMP_parallel_loop_static(fn, data, num_threads, start, end, incr, chunk_size, 0);
 } /*}}}*/
 
 void GOMP_parallel_loop_static(void (*fn)(void*), void* data, unsigned num_threads, long start, long end, long incr, long chunk_size, unsigned flags)
