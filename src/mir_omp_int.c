@@ -169,18 +169,6 @@ void GOMP_parallel_loop_dynamic(void (*fn)(void*), void* data, unsigned num_thre
     mir_soft_destroy();
 } /*}}}*/
 
-bool GOMP_loop_runtime_start (long start, long end, long incr, long *istart, long *iend)
-{
-    MIR_ABORT(MIR_ERROR_STR "GOMP_loop_runtime_start not implemented!\n");
-}
-
-void GOMP_parallel_loop_runtime_start(void (*fn) (void *), void *data,
-                                      unsigned num_threads, long start,
-                                      long end, long incr)
-{ /*{{{*/
-    MIR_ABORT(MIR_ERROR_STR "GOMP_parallel_loop_runtime_start not implemented!\n");
-} /*}}}*/
-
 static int GOMP_loop_static_next_int(long* pstart, long* pend)
 { /*{{{*/
     unsigned long nthreads = runtime->num_workers;
@@ -463,6 +451,18 @@ bool GOMP_loop_runtime_next(long* istart, long* iend)
     default:
         MIR_ABORT(MIR_ERROR_STR "OMP_SCHEDULE is unsupported.\n");
     }
+} /*}}}*/
+
+bool GOMP_loop_runtime_start (long start, long end, long incr, long *istart, long *iend)
+{ /*{{{*/
+    MIR_ABORT(MIR_ERROR_STR "GOMP_loop_runtime_start not implemented!\n");
+} /*}}}*/
+
+void GOMP_parallel_loop_runtime_start(void (*fn) (void *), void *data,
+                                      unsigned num_threads, long start,
+                                      long end, long incr)
+{ /*{{{*/
+    MIR_ABORT(MIR_ERROR_STR "GOMP_parallel_loop_runtime_start not implemented!\n");
 } /*}}}*/
 
 void GOMP_parallel_loop_runtime(void (*fn)(void*), void* data, unsigned num_threads, long start, long end, long incr, unsigned flags)
