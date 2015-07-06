@@ -455,23 +455,35 @@ bool GOMP_loop_runtime_next(long* istart, long* iend)
 
 bool GOMP_loop_runtime_start (long start, long end, long incr, long *istart, long *iend)
 { /*{{{*/
-    MIR_ABORT(MIR_ERROR_STR "GOMP_loop_runtime_start not implemented!\n");
+    switch (parse_omp_schedule_name()) {
+    case OFS_STATIC:
+        return GOMP_loop_static_start(start, end, incr, parse_omp_schedule_chunk_size(), istart, iend);
+    case OFS_DYNAMIC:
+        return GOMP_loop_dynamic_start(start, end, incr, parse_omp_schedule_chunk_size(), istart, iend);
+    case OFS_AUTO:
+    case OFS_GUIDED:
+    default:
+        MIR_ABORT(MIR_ERROR_STR "OMP_SCHEDULE is unsupported.\n");
+    }
+    return false;
 } /*}}}*/
 
 void GOMP_parallel_loop_runtime_start(void (*fn) (void *), void *data,
                                       unsigned num_threads, long start,
                                       long end, long incr)
 { /*{{{*/
-    MIR_ABORT(MIR_ERROR_STR "GOMP_parallel_loop_runtime_start not implemented!\n");
+    GOMP_parallel_loop_runtime(fn, data, num_threads, start, end, incr, 0);
 } /*}}}*/
 
 void GOMP_parallel_loop_runtime(void (*fn)(void*), void* data, unsigned num_threads, long start, long end, long incr, unsigned flags)
 { /*{{{*/
     switch (parse_omp_schedule_name()) {
     case OFS_STATIC:
-        return GOMP_parallel_loop_static(fn, data, num_threads, start, end, incr, parse_omp_schedule_chunk_size(), flags);
+        GOMP_parallel_loop_static(fn, data, num_threads, start, end, incr, parse_omp_schedule_chunk_size(), flags);
+        break;
     case OFS_DYNAMIC:
-        return GOMP_parallel_loop_dynamic(fn, data, num_threads, start, end, incr, parse_omp_schedule_chunk_size(), flags);
+        GOMP_parallel_loop_dynamic(fn, data, num_threads, start, end, incr, parse_omp_schedule_chunk_size(), flags);
+        break;
     case OFS_AUTO:
     case OFS_GUIDED:
     default:
