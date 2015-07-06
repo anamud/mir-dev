@@ -120,19 +120,19 @@ void GOMP_parallel_loop_dynamic(void (*fn)(void*), void* data, unsigned num_thre
 
 bool GOMP_loop_runtime_start (long start, long end, long incr, long *istart, long *iend)
 {
-    MIR_ABORT("GOMP_loop_runtime_start not implemented");
+    MIR_ABORT(MIR_ERROR_STR "GOMP_loop_runtime_start not implemented!\n");
 }
 
 bool GOMP_loop_dynamic_start (long start, long end, long incr, long chunk_size, long *istart, long *iend)
 {
-    MIR_ABORT("GOMP_loop_dynamic_start not implemented");
+    MIR_ABORT(MIR_ERROR_STR "GOMP_loop_dynamic_start not implemented!\n");
 }
 
 void GOMP_parallel_loop_runtime_start(void (*fn) (void *), void *data,
                                       unsigned num_threads, long start,
                                       long end, long incr)
 { /*{{{*/
-    MIR_ABORT("GOMP_parallel_loop_runtime_start not implemented");
+    MIR_ABORT(MIR_ERROR_STR "GOMP_parallel_loop_runtime_start not implemented!\n");
 } /*}}}*/
 
 static int GOMP_loop_static_next_int(long* pstart, long* pend)
