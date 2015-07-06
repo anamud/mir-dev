@@ -5,6 +5,7 @@
 
 /*LIBINT_DECL_BEGIN*/
 struct mir_loop_des_t {
+    int init;
     long end;
     long incr;
     long chunk_size;
