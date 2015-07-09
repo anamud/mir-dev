@@ -12,8 +12,9 @@ if(os.path.isfile('NOT_SUPPORTED')):
 
 MIR_ROOT = os.environ.get('MIR_ROOT')
 if(MIR_ROOT == None):
-    print('MIR_ROOT is not defined. Aborting!')
-    Exit(2)
+    # Use the parent directory of the directory this SConstruct resides in.
+    this_sconscript_file = (lambda x:x).func_code.co_filename
+    MIR_ROOT=File(this_sconscript_file).Dir("../..").abspath
 
 sys.path.append(MIR_ROOT + '/scripts')
 import mir_utils
@@ -21,8 +22,12 @@ import mir_utils
 if os.path.isfile(MIR_ROOT+'/src/HAVE_PAPI'):
     PAPI_ROOT = os.environ.get('PAPI_ROOT')
     if(PAPI_ROOT == None):
-        print('PAPI_ROOT is not defined. Aborting!')
-        Exit(2)
+        if os.path.isfile('/usr/include/papi.h'):
+            print('PAPI_ROOT not defined. Using /usr as PAPI_ROOT.')
+            PAPI_ROOT="/usr"
+        else:
+            print('PAPI_ROOT is not defined and papi.h can not be found. Aborting!')
+            Exit(2)
 
 # Don't use ICC since OpenMP support is only enabled for GCC.
 compilers = ['gcc']
