@@ -14,8 +14,9 @@ if(os.path.isfile('NOT_SUPPORTED')):
 
 MIR_ROOT = os.environ.get('MIR_ROOT')
 if(MIR_ROOT == None):
-    print('MIR_ROOT is not defined. Aborting!')
-    Exit(2)
+    # Use the parent directory of the directory this SConstruct resides in.
+    this_sconscript_file = (lambda x:x).func_code.co_filename
+    MIR_ROOT=File(this_sconscript_file).Dir("../../..").abspath
 
 sys.path.append(MIR_ROOT + '/scripts')
 import mir_utils
