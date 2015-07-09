@@ -1,7 +1,6 @@
 #include <stdlib.h>
 #include <check.h>
 #include <omp.h>
-#include "mir_public_int.h"
 
 /* OpenMP parallel and single test cases */
 START_TEST(omp_parallel_plain)
