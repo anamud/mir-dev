@@ -152,6 +152,7 @@ void GOMP_parallel_loop_dynamic(void (*fn)(void*), void* data, unsigned num_thre
     struct mir_worker_t* worker = mir_worker_get_context();
     struct mir_omp_team_t* team;
     team = worker->current_task ? worker->current_task->team : NULL;
+    // TODO: Decide on proper source for number of workers. Should it come from the current team?
     int num_workers = runtime->num_workers;
 
     for (int i = 0; i < num_workers; i++) {
@@ -178,6 +179,7 @@ void GOMP_parallel_loop_dynamic(void (*fn)(void*), void* data, unsigned num_thre
 
 static int GOMP_loop_static_next_int(long* pstart, long* pend)
 { /*{{{*/
+    // TODO: Decide on proper source for number of workers. Should it come from the current team?
     unsigned long nthreads = runtime->num_workers;
 
     struct mir_worker_t* worker = mir_worker_get_context();
@@ -322,6 +324,7 @@ void GOMP_parallel_loop_static(void (*fn)(void*), void* data, unsigned num_threa
     struct mir_worker_t* worker = mir_worker_get_context();
     struct mir_omp_team_t* team;
     team = worker->current_task ? worker->current_task->team : NULL;
+    // TODO: Decide on proper source for number of workers. Should it come from the current team?
     int num_workers = runtime->num_workers;
 
     for (int i = 0; i < num_workers; i++) {
@@ -528,6 +531,7 @@ void GOMP_parallel_start(void (*fn)(void*), void* data, unsigned num_threads)
     struct mir_worker_t* worker = mir_worker_get_context();
 
     // Workaround for our lack of proper OpenMP-handling of num_threads.
+    // TODO: Decide on proper source for number of workers. Should it come from the current team?
     num_threads = num_threads == 0 ? runtime->num_workers : num_threads;
 
     struct mir_omp_team_t* prevteam;
@@ -646,5 +650,6 @@ int omp_get_thread_num(void)
 
 int omp_get_num_threads(void)
 { /*{{{*/
+    // TODO: Decide on proper source for number of workers. Should it come from the current team?
     return runtime ? runtime->num_workers : 1;
 } /*}}}*/
