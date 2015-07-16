@@ -120,3 +120,13 @@ prof.VariantDir('prof-build', '.', duplicate=0)
 prof_src = prof.Glob('prof-build/*.c')
 prof.Program(app_name +'-prof', source = prof_src)
 Clean('.','prof-build')
+
+###############
+# Test target #
+###############
+
+test = Command(target = 'test',
+               source = './' + app_name + '-opt',
+               action = [ './' + app_name + '-opt' + ' > test.result',
+                          'cat test.result'])
+AlwaysBuild(test)
