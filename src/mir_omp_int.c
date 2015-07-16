@@ -136,6 +136,7 @@ void GOMP_parallel_loop_dynamic(void (*fn)(void*), void* data, unsigned num_thre
     mir_create();
 
     // Keep loop description in a common structure.
+    // Tasks spawned in GOMP_parallel_loop_dynamic have a singe shared loop iteration allocator which assigns non-overlapping loop iterations on demand when GOMP_loop_dynamic_next_int is called.
     struct mir_loop_des_t* loop = mir_malloc_int(sizeof(struct mir_loop_des_t));
     MIR_ASSERT(loop != NULL);
     loop->incr = incr;
@@ -333,6 +334,7 @@ void GOMP_parallel_loop_static(void (*fn)(void*), void* data, unsigned num_threa
         MIR_ASSERT(task != NULL);
 
         // Set loop parameters.
+        // Tasks spawned in GOMP_parallel_loop_static have their own local loop iteration allocators which assign pre-decided, non-overlapping loop iterations when GOMP_loop_static_next_int is called.
         task->loop->incr = incr;
         task->loop->next = start;
         task->loop->end = ((incr > 0 && start > end) || (incr < 0 && start < end)) ? start : end;
