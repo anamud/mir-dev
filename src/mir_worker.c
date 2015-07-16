@@ -28,7 +28,6 @@ static void* mir_worker_loop(void* arg)
 
     // Initialize worker data
     mir_worker_local_init(worker);
-    MIR_DEBUG(MIR_DEBUG_STR "Worker %d is initialized!\n", worker->id);
 
     // Signal runtime
     __sync_fetch_and_add(&g_sig_worker_alive, -1);

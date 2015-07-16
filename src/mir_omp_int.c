@@ -563,9 +563,8 @@ void GOMP_parallel_end(void)
 #ifndef GCC_PRE_4_9
     // Ensure the parallel block task is done.
     mir_task_wait();
-#endif
-
     GOMP_barrier();
+#endif
 
 #ifdef GCC_PRE_4_9
     // Stop profiling and book-keeping for parallel task
