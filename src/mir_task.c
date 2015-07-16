@@ -166,11 +166,7 @@ struct mir_task_t* mir_task_create_common(mir_tfunc_t tfunc, void* data, size_t 
     task->taken = 0;
 
     // Create loop structure to support GOMP_loop_*_start.
-    struct mir_loop_des_t* loop = mir_malloc_int(sizeof(struct mir_loop_des_t));
-    MIR_ASSERT(loop != NULL);
-    mir_lock_create(&(loop->lock));
-    loop->init = 0;
-    task->loop = loop;
+    task->loop = mir_new_omp_loop_desc();
 
     // Overhead measurement
     if (worker->current_task)
