@@ -113,8 +113,7 @@ bool GOMP_loop_dynamic_start (long start, long end, long incr, long chunk_size, 
         loop->incr = incr;
         loop->next = start;
         loop->end = ((incr > 0 && start > end) || (incr < 0 && start < end)) ? start : end;
-        loop->chunk_size = chunk_size;
-        loop->chunk_size *= incr;
+        loop->chunk_size = chunk_size * incr;
         loop->static_trip = 0;
         loop->init = 1;
     }
@@ -293,8 +292,7 @@ bool GOMP_loop_static_start (long start, long end, long incr, long chunk_size, l
         loop->incr = incr;
         loop->next = start;
         loop->end = ((incr > 0 && start > end) || (incr < 0 && start < end)) ? start : end;
-        loop->chunk_size = chunk_size;
-        loop->chunk_size *= incr;
+        loop->chunk_size = chunk_size * incr;
         loop->static_trip = 0;
         loop->init = 1;
     }
@@ -338,8 +336,7 @@ void GOMP_parallel_loop_static(void (*fn)(void*), void* data, unsigned num_threa
         task->loop->incr = incr;
         task->loop->next = start;
         task->loop->end = ((incr > 0 && start > end) || (incr < 0 && start < end)) ? start : end;
-        task->loop->chunk_size = chunk_size;
-        task->loop->chunk_size *= incr;
+        task->loop->chunk_size = chunk_size * incr;
         task->loop->static_trip = 0;
         task->loop->init = 1;
 
