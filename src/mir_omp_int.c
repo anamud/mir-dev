@@ -559,16 +559,18 @@ void GOMP_parallel_end(void)
     struct mir_omp_team_t* team;
     team = worker->current_task ? worker->current_task->team : NULL;
 
-#ifndef GCC_PRE_4_9
-    // Ensure the parallel block task is done.
-    mir_task_wait();
-    GOMP_barrier();
-#endif
-
 #ifdef GCC_PRE_4_9
     // Stop profiling and book-keeping for parallel task
     MIR_ASSERT(worker->current_task != NULL);
     mir_task_execute_epilog(worker->current_task);
+#endif
+
+    // Ensure the parallel block task is done. This needs to happen
+    // after the fake task is done with gcc < 4.9.
+    mir_task_wait();
+
+#ifndef GCC_PRE_4_9
+    GOMP_barrier();
 #endif
 
     // Last task so unlink team.
