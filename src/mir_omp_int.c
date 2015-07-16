@@ -121,10 +121,6 @@ bool GOMP_loop_dynamic_start (long start, long end, long incr, long chunk_size, 
 
     // TODO: This task is called GOMP_parallel_task.
     // Assign a special name to this task since it also executes a parallel for loop.
-    /* // Rename task. */
-    /* const char* name = "GOMP_for_dynamic_task"; */
-    /* MIR_ASSERT(strlen(name) < MIR_SHORT_NAME_LEN); */
-    /* strcpy(worker->current_task->name, name); */
 
     return GOMP_loop_dynamic_next(istart, iend);
 } /*}}}*/
@@ -299,10 +295,6 @@ bool GOMP_loop_static_start (long start, long end, long incr, long chunk_size, l
 
     // TODO: This task is called GOMP_parallel_task.
     // Assign a special name to this task since it also executes a parallel for loop.
-    /* // Rename task. */
-    /* const char* name = "GOMP_for_static_task"; */
-    /* MIR_ASSERT(strlen(name) < MIR_SHORT_NAME_LEN); */
-    /* strcpy(worker->current_task->name, name); */
 
     return GOMP_loop_static_next(istart, iend);
 } /*}}}*/
