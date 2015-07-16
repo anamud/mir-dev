@@ -125,13 +125,17 @@ bool GOMP_loop_dynamic_start (long start, long end, long incr, long chunk_size, 
     return GOMP_loop_dynamic_next(istart, iend);
 } /*}}}*/
 
+// Tasks spawned in GOMP_parallel_loop_dynamic have a single shared
+// loop iteration allocator which assigns non-overlapping loop iterations
+// on demand when GOMP_loop_dynamic_next_int is called. This is
+// different from GOMP_parallel_loop_static.
+
 void GOMP_parallel_loop_dynamic(void (*fn)(void*), void* data, unsigned num_threads, long start, long end, long incr, long chunk_size, unsigned flags)
 { /*{{{*/
     // Create thread team.
     mir_create();
 
     // Keep loop description in a common structure.
-    // Tasks spawned in GOMP_parallel_loop_dynamic have a singe shared loop iteration allocator which assigns non-overlapping loop iterations on demand when GOMP_loop_dynamic_next_int is called.
     struct mir_loop_des_t* loop = mir_malloc_int(sizeof(struct mir_loop_des_t));
     MIR_ASSERT(loop != NULL);
     loop->incr = incr;
@@ -304,6 +308,11 @@ void GOMP_parallel_loop_static_start (void (*fn) (void *), void *data, unsigned 
     GOMP_parallel_loop_static(fn, data, num_threads, start, end, incr, chunk_size, 0);
 } /*}}}*/
 
+// Tasks spawned in GOMP_parallel_loop_static have their own local
+// loop iteration allocators which assign pre-decided, non-overlapping
+// loop iterations when GOMP_loop_static_next_int is called. This is
+// different from GOMP_parallel_loop_dynamic.
+
 void GOMP_parallel_loop_static(void (*fn)(void*), void* data, unsigned num_threads, long start, long end, long incr, long chunk_size, unsigned flags)
 { /*{{{*/
     // Create thread team.
@@ -324,7 +333,6 @@ void GOMP_parallel_loop_static(void (*fn)(void*), void* data, unsigned num_threa
         MIR_ASSERT(task != NULL);
 
         // Set loop parameters.
-        // Tasks spawned in GOMP_parallel_loop_static have their own local loop iteration allocators which assign pre-decided, non-overlapping loop iterations when GOMP_loop_static_next_int is called.
         task->loop->incr = incr;
         task->loop->next = start;
         task->loop->end = ((incr > 0 && start > end) || (incr < 0 && start < end)) ? start : end;
@@ -537,9 +545,9 @@ void GOMP_parallel_start(void (*fn)(void*), void* data, unsigned num_threads)
         mir_task_create_on_worker((mir_tfunc_t)fn, data, 0, 0, NULL, "GOMP_parallel_task", team, i);
     }
 
-// Older GCCs force us to create a dummy task for the outline function
-// which is called from the master thread. Newer GCCs force us to
-// create an extra task that we schedule here.
+    // Older GCCs force us to create a dummy task for the outline function
+    // which is called from the master thread. Newer GCCs force us to
+    // create an extra task that we schedule here.
 
 #ifndef GCC_PRE_4_9
     mir_task_schedule_on_worker(task, -1);
