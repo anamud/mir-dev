@@ -327,9 +327,7 @@ void mir_task_execute_epilog(struct mir_task_t* task)
 
     // Record sync point
     // NOTE: All sibling tasks will have the same sync point
-    task->sync_pass = 0;
-    if (task->twc)
-        task->sync_pass = task->twc->num_passes;
+    task->sync_pass = task->twc->num_passes;
 
     // Add to task list
     if (runtime->enable_task_stats == 1)
@@ -357,8 +355,7 @@ void mir_task_execute_epilog(struct mir_task_t* task)
     task->done = 1;
 
     // Update task wait counter
-    if (task->twc)
-        task->twc->count_per_worker[worker->id]++;
+    task->twc->count_per_worker[worker->id]++;
 
     // Signal
     T_DBG("Ex", task);
