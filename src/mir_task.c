@@ -62,7 +62,7 @@ static inline int inline_necessary()
     return 0;
 } /*}}}*/
 
-struct mir_task_t* mir_task_create_common(mir_tfunc_t tfunc, void* data, size_t data_size, unsigned int num_data_footprints, const struct mir_data_footprint_t* data_footprints, const char* name, struct mir_omp_team_t* myteam)
+struct mir_task_t* mir_task_create_common(mir_tfunc_t tfunc, void* data, size_t data_size, unsigned int num_data_footprints, const struct mir_data_footprint_t* data_footprints, const char* name, struct mir_omp_team_t* myteam, struct mir_loop_des_t* loopdes)
 { /*{{{*/
     MIR_ASSERT(tfunc != NULL);
 
@@ -166,7 +166,7 @@ struct mir_task_t* mir_task_create_common(mir_tfunc_t tfunc, void* data, size_t 
     task->taken = 0;
 
     // Create loop structure to support GOMP_loop_*_start.
-    task->loop = mir_new_omp_loop_desc();
+    task->loop = loopdes;
 
     // Overhead measurement
     if (worker->current_task)
@@ -221,10 +221,10 @@ void mir_task_create(mir_tfunc_t tfunc, void* data, size_t data_size, unsigned i
     MIR_ASSERT(tfunc != NULL);
 
     mir_task_create_on_worker(tfunc, data, data_size, num_data_footprints,
-        data_footprints, name, NULL, -1);
+                              data_footprints, name, NULL, NULL, -1);
 } /*}}}*/
 
-void mir_task_create_on_worker(mir_tfunc_t tfunc, void* data, size_t data_size, unsigned int num_data_footprints, struct mir_data_footprint_t* data_footprints, const char* name, struct mir_omp_team_t* myteam, int workerid)
+void mir_task_create_on_worker(mir_tfunc_t tfunc, void* data, size_t data_size, unsigned int num_data_footprints, struct mir_data_footprint_t* data_footprints, const char* name, struct mir_omp_team_t* myteam, struct mir_loop_des_t* loopdes, int workerid)
 { /*{{{*/
     // To inline or not to line, that is the grand question!
     if (workerid < 0 && inline_necessary() == 1) {
@@ -242,7 +242,7 @@ void mir_task_create_on_worker(mir_tfunc_t tfunc, void* data, size_t data_size, 
     MIR_RECORDER_STATE_BEGIN(MIR_STATE_TCREATE);
 
     // Create task
-    struct mir_task_t* task = mir_task_create_common(tfunc, data, data_size, num_data_footprints, data_footprints, name, myteam);
+    struct mir_task_t* task = mir_task_create_common(tfunc, data, data_size, num_data_footprints, data_footprints, name, myteam, loopdes);
     MIR_ASSERT(task != NULL);
 
     // Schedule task

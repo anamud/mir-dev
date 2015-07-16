@@ -162,12 +162,8 @@ void GOMP_parallel_loop_dynamic(void (*fn)(void*), void* data, unsigned num_thre
 #endif
 
         // Create task
-        struct mir_task_t* task = mir_task_create_common((mir_tfunc_t) fn, data, 0, 0, NULL, "GOMP_for_dynamic_task", team);
+        struct mir_task_t* task = mir_task_create_common((mir_tfunc_t) fn, data, 0, 0, NULL, "GOMP_for_dynamic_task", team, loop);
         MIR_ASSERT(task != NULL);
-
-        // Point task to common structure.
-        mir_free_int(task->loop, sizeof(struct mir_loop_des_t));
-        task->loop = loop;
 
         // Schedule on worker
         mir_task_schedule_on_worker(task, i);
@@ -176,16 +172,9 @@ void GOMP_parallel_loop_dynamic(void (*fn)(void*), void* data, unsigned num_thre
     MIR_RECORDER_STATE_END(NULL, 0);
 
 #ifdef GCC_PRE_4_9
-    // FIXME: Remove duplicated code once mir_task_create_common() has
-    // the new loop descriptor interface.
-
     // Create task
-    struct mir_task_t* task = mir_task_create_common((mir_tfunc_t) fn, data, 0, 0, NULL, "GOMP_for_dynamic_task", team);
+    struct mir_task_t* task = mir_task_create_common((mir_tfunc_t) fn, data, 0, 0, NULL, "GOMP_for_dynamic_task", team, loop);
     MIR_ASSERT(task != NULL);
-
-    // Point task to common structure.
-    mir_free_int(task->loop, sizeof(struct mir_loop_des_t));
-    task->loop = loop;
 
     // Start profiling and book-keeping for parallel task
     mir_task_execute_prolog(task);
@@ -360,7 +349,7 @@ void GOMP_parallel_loop_static(void (*fn)(void*), void* data, unsigned num_threa
 #endif
 
         // Create task
-        struct mir_task_t* task = mir_task_create_common((mir_tfunc_t) fn, data, 0, 0, NULL, "GOMP_for_static_task", team);
+        struct mir_task_t* task = mir_task_create_common((mir_tfunc_t) fn, data, 0, 0, NULL, "GOMP_for_static_task", team, mir_new_omp_loop_desc());
         MIR_ASSERT(task != NULL);
 
         // Set loop parameters.
@@ -382,7 +371,7 @@ void GOMP_parallel_loop_static(void (*fn)(void*), void* data, unsigned num_threa
     // the new loop descriptor interface.
 
     // Create task
-    struct mir_task_t* task = mir_task_create_common((mir_tfunc_t) fn, data, 0, 0, NULL, "GOMP_for_static_task", team);
+    struct mir_task_t* task = mir_task_create_common((mir_tfunc_t) fn, data, 0, 0, NULL, "GOMP_for_static_task", team, mir_new_omp_loop_desc());
     MIR_ASSERT(task != NULL);
 
     // Set loop parameters.
@@ -592,13 +581,13 @@ void GOMP_parallel_start(void (*fn)(void*), void* data, unsigned num_threads)
     struct mir_omp_team_t* prevteam;
     prevteam = worker->current_task ? worker->current_task->team : NULL;
     struct mir_omp_team_t* team = mir_new_omp_team(prevteam, num_threads);
-    struct mir_task_t* task = mir_task_create_common((mir_tfunc_t)fn, data, 0, 0, NULL, "GOMP_parallel_task", team);
+    struct mir_task_t* task = mir_task_create_common((mir_tfunc_t)fn, data, 0, 0, NULL, "GOMP_parallel_task", team, mir_new_omp_loop_desc());
     MIR_ASSERT(task != NULL);
 
     for (int i = 0; i < num_threads; i++) {
         if(i == worker->id)
             continue;
-        mir_task_create_on_worker((mir_tfunc_t)fn, data, 0, 0, NULL, "GOMP_parallel_task", team, i);
+        mir_task_create_on_worker((mir_tfunc_t)fn, data, 0, 0, NULL, "GOMP_parallel_task", team, mir_new_omp_loop_desc(), i);
     }
 
     // Older GCCs force us to create a dummy task for the outline function
@@ -667,10 +656,10 @@ void GOMP_task(void (*fn)(void*), void* data, void (*copyfn)(void*, void*), long
         char* buf = mir_malloc_int(sizeof(char) * arg_size);
         MIR_ASSERT(buf != NULL);
         copyfn(buf, data);
-        mir_task_create_on_worker((mir_tfunc_t)fn, buf, (size_t)(arg_size), 0, NULL, task_name, team, -1);
+        mir_task_create_on_worker((mir_tfunc_t)fn, buf, (size_t)(arg_size), 0, NULL, task_name, team, mir_new_omp_loop_desc(), -1);
     }
     else
-        mir_task_create_on_worker((mir_tfunc_t)fn, data, (size_t)(arg_size), 0, NULL, task_name, team, -1);
+        mir_task_create_on_worker((mir_tfunc_t)fn, data, (size_t)(arg_size), 0, NULL, task_name, team, mir_new_omp_loop_desc(), -1);
 } /*}}}*/
 
 void GOMP_taskwait(void)
