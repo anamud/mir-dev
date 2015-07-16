@@ -328,6 +328,11 @@ void GOMP_parallel_loop_static(void (*fn)(void*), void* data, unsigned num_threa
     int num_workers = runtime->num_workers;
 
     for (int i = 0; i < num_workers; i++) {
+#ifdef GCC_PRE_4_9
+        if(i == worker->id)
+            continue;
+#endif
+
         // Create task
         struct mir_task_t* task = mir_task_create_common((mir_tfunc_t) fn, data, 0, 0, NULL, "GOMP_for_static_task", team);
         MIR_ASSERT(task != NULL);
@@ -346,11 +351,36 @@ void GOMP_parallel_loop_static(void (*fn)(void*), void* data, unsigned num_threa
 
     MIR_RECORDER_STATE_END(NULL, 0);
 
+#ifdef GCC_PRE_4_9
+    // FIXME: Remove duplicated code once mir_task_create_common() has
+    // the new loop descriptor interface.
+
+    // Create task
+    struct mir_task_t* task = mir_task_create_common((mir_tfunc_t) fn, data, 0, 0, NULL, "GOMP_for_static_task", team);
+    MIR_ASSERT(task != NULL);
+
+    // Set loop parameters.
+    task->loop->incr = incr;
+    task->loop->next = start;
+    task->loop->end = ((incr > 0 && start > end) || (incr < 0 && start < end)) ? start : end;
+    task->loop->chunk_size = chunk_size * incr;
+    task->loop->static_trip = 0;
+    task->loop->init = 1;
+
+    // Start profiling and book-keeping for parallel task
+    mir_task_execute_prolog(task);
+#endif
+
     // Wait for workers to finish
     mir_task_wait();
 
+#ifndef GCC_PRE_4_9
+    // FIXME: Triggers an assert for calling mir_soft_destroy() too many times
+    //        with gcc < 4.9.
+
     // Corresponding call to destroy runtime.
     mir_soft_destroy();
+#endif
 } /*}}}*/
 
 static int parse_omp_schedule_chunk_size(void)
