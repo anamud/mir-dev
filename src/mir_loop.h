@@ -3,6 +3,8 @@
 
 #include "mir_lock.h"
 
+BEGIN_C_DECLS
+
 /*LIBINT_DECL_BEGIN*/
 struct mir_loop_des_t {
     int init;
@@ -17,4 +19,5 @@ struct mir_loop_des_t {
 
 /*LIBINT*/ struct mir_loop_des_t* mir_new_omp_loop_desc();
 
+END_C_DECLS
 #endif
