@@ -20,6 +20,20 @@ START_TEST(omp_parallel_plain)
 }
 END_TEST
 
+START_TEST(omp_parallel_num_threads_small)
+{
+    int a = 0;
+    int num_threads_reqd = 2;
+
+#pragma omp parallel shared(a) num_threads(num_threads_reqd)
+    {
+        __sync_fetch_and_add(&a, 1);
+    }
+
+    ck_assert_int_eq(a, num_threads_reqd);
+}
+END_TEST
+
 START_TEST(omp_parallel_single)
 {
     int a = 0;
@@ -140,6 +154,30 @@ START_TEST(omp_parallel_for_static)
 }
 END_TEST
 
+START_TEST(omp_parallel_for_static_num_threads_small)
+{
+    int a[128] = {0};
+    int num_threads_reqd = 2;
+    int num_threads;
+
+#pragma omp parallel for shared(a) schedule(static) num_threads(num_threads_reqd)
+    for(int i=0; i<128; i++)
+    {
+        a[i] = i;
+        num_threads = omp_get_num_threads();
+    }
+
+    /* Check if the sum of array elements is (128)*(128-1)/2 */
+    int sum = 0;
+    for(int i=0; i<128; i++)
+        sum += a[i];
+    ck_assert_int_eq(sum, (128)*(128-1)/2);
+
+    /* Check if num_threads are as specified */
+    ck_assert_int_eq(num_threads, num_threads_reqd);
+}
+END_TEST
+
 START_TEST(omp_parallel_for_dynamic)
 {
     int a[128] = {0};
@@ -155,6 +193,30 @@ START_TEST(omp_parallel_for_dynamic)
     for(int i=0; i<128; i++)
         sum += a[i];
     ck_assert_int_eq(sum, (128)*(128-1)/2);
+}
+END_TEST
+
+START_TEST(omp_parallel_for_dynamic_num_threads_small)
+{
+    int a[128] = {0};
+    int num_threads_reqd = 2;
+    int num_threads;
+
+#pragma omp parallel for shared(a) schedule(dynamic) num_threads(num_threads_reqd)
+    for(int i=0; i<128; i++)
+    {
+        a[i] = i;
+        num_threads = omp_get_num_threads();
+    }
+
+    /* Check if the sum of array elements is (128)*(128-1)/2 */
+    int sum = 0;
+    for(int i=0; i<128; i++)
+        sum += a[i];
+    ck_assert_int_eq(sum, (128)*(128-1)/2);
+
+    /* Check if num_threads are as specified */
+    ck_assert_int_eq(num_threads, num_threads_reqd);
 }
 END_TEST
 
@@ -215,6 +277,33 @@ START_TEST(omp_for_static)
 }
 END_TEST
 
+START_TEST(omp_for_static_num_threads_small)
+{
+    int a[128] = {0};
+    int num_threads_reqd = 2;
+    int num_threads;
+
+#pragma omp parallel shared(a) num_threads(num_threads_reqd)
+    {
+        num_threads = omp_get_num_threads();
+#pragma omp for schedule(static)
+        for(int i=0; i<128; i++)
+        {
+            a[i] = i;
+        }
+    }
+
+    /* Check if the sum of array elements is (128)*(128-1)/2 */
+    int sum = 0;
+    for(int i=0; i<128; i++)
+        sum += a[i];
+    ck_assert_int_eq(sum, (128)*(128-1)/2);
+
+    /* Check if num_threads are as specified */
+    ck_assert_int_eq(num_threads, num_threads_reqd);
+}
+END_TEST
+
 START_TEST(omp_for_dynamic)
 {
     int a[128] = {0};
@@ -233,6 +322,33 @@ START_TEST(omp_for_dynamic)
     for(int i=0; i<128; i++)
         sum += a[i];
     ck_assert_int_eq(sum, (128)*(128-1)/2);
+}
+END_TEST
+
+START_TEST(omp_for_dynamic_num_threads_small)
+{
+    int a[128] = {0};
+    int num_threads_reqd = 2;
+    int num_threads;
+
+#pragma omp parallel shared(a) num_threads(num_threads_reqd)
+    {
+        num_threads = omp_get_num_threads();
+#pragma omp for schedule(dynamic)
+        for(int i=0; i<128; i++)
+        {
+            a[i] = i;
+        }
+    }
+
+    /* Check if the sum of array elements is (128)*(128-1)/2 */
+    int sum = 0;
+    for(int i=0; i<128; i++)
+        sum += a[i];
+    ck_assert_int_eq(sum, (128)*(128-1)/2);
+
+    /* Check if num_threads are as specified */
+    ck_assert_int_eq(num_threads, num_threads_reqd);
 }
 END_TEST
 
@@ -331,6 +447,7 @@ Suite* test_suite(void)
     TCase* tc_omp_parallel;
     tc_omp_parallel = tcase_create("Omp_parallel");
     tcase_add_test(tc_omp_parallel, omp_parallel_plain);
+    tcase_add_test(tc_omp_parallel, omp_parallel_num_threads_small);
     tcase_add_test(tc_omp_parallel, omp_parallel_single);
     /* tcase_add_test(tc_omp_parallel, omp_nested_parallel); */
     /* tcase_add_test(tc_omp_parallel, omp_nested_parallel_single); */
@@ -342,11 +459,15 @@ Suite* test_suite(void)
     TCase* tc_omp_for;
     tc_omp_for = tcase_create("Omp_for");
     tcase_add_test(tc_omp_for, omp_parallel_for_static);
+    tcase_add_test(tc_omp_for, omp_parallel_for_static_num_threads_small);
     tcase_add_test(tc_omp_for, omp_parallel_for_dynamic);
+    tcase_add_test(tc_omp_for, omp_parallel_for_dynamic_num_threads_small);
     /*tcase_add_test(tc_omp_for, omp_parallel_for_guided);*/
     tcase_add_test(tc_omp_for, omp_parallel_for_runtime);
     tcase_add_test(tc_omp_for, omp_for_static);
+    tcase_add_test(tc_omp_for, omp_for_static_num_threads_small);
     tcase_add_test(tc_omp_for, omp_for_dynamic);
+    tcase_add_test(tc_omp_for, omp_for_dynamic_num_threads_small);
     /*tcase_add_test(tc_omp_for, omp_for_guided);*/
     tcase_add_test(tc_omp_for, omp_for_runtime);
     suite_add_tcase(s, tc_omp_for);
