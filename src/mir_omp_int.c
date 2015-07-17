@@ -137,20 +137,21 @@ void GOMP_parallel_loop_dynamic(void (*fn)(void*), void* data, unsigned num_thre
     // Create loop task on all workers
     MIR_RECORDER_STATE_BEGIN(MIR_STATE_TCREATE);
 
+    // Number of threads is either specified by the program or the number of threads created by the runtime system.
+    num_threads = num_threads == 0 ? runtime->num_workers : num_threads;
     struct mir_worker_t* worker = mir_worker_get_context();
-    struct mir_omp_team_t* team;
-    team = worker->current_task ? worker->current_task->team : NULL;
-    // TODO: Decide on proper source for number of workers. Should it come from the current team?
-    int num_workers = runtime->num_workers;
+    struct mir_omp_team_t* prevteam;
+    prevteam = worker->current_task ? worker->current_task->team : NULL;
+    struct mir_omp_team_t* team = mir_new_omp_team(prevteam, num_threads);
 
-    for (int i = 0; i < num_workers; i++) {
+    for (int i = 0; i < num_threads; i++) {
 #ifdef GCC_PRE_4_9
         if(i == worker->id)
             continue;
 #endif
 
         // Create task
-        mir_task_create_on_worker((mir_tfunc_t) fn, data, 0, 0, NULL, "GOMP_for_dynamic_task", team, loop, i);
+        mir_task_create_on_worker((mir_tfunc_t) fn, data, 0, 0, NULL, "GOMP_for_dynamic_task", team, loop, i%runtime->num_workers);
     }
 
     MIR_RECORDER_STATE_END(NULL, 0);
@@ -320,13 +321,14 @@ void GOMP_parallel_loop_static(void (*fn)(void*), void* data, unsigned num_threa
     // Create loop task on all workers
     MIR_RECORDER_STATE_BEGIN(MIR_STATE_TCREATE);
 
+    // Number of threads is either specified by the program or the number of threads created by the runtime system.
+    num_threads = num_threads == 0 ? runtime->num_workers : num_threads;
     struct mir_worker_t* worker = mir_worker_get_context();
-    struct mir_omp_team_t* team;
-    team = worker->current_task ? worker->current_task->team : NULL;
-    // TODO: Decide on proper source for number of workers. Should it come from the current team?
-    int num_workers = runtime->num_workers;
+    struct mir_omp_team_t* prevteam;
+    prevteam = worker->current_task ? worker->current_task->team : NULL;
+    struct mir_omp_team_t* team = mir_new_omp_team(prevteam, num_threads);
 
-    for (int i = 0; i < num_workers; i++) {
+    for (int i = 0; i < num_threads; i++) {
 #ifdef GCC_PRE_4_9
         if(i == worker->id)
             continue;
@@ -337,7 +339,7 @@ void GOMP_parallel_loop_static(void (*fn)(void*), void* data, unsigned num_threa
         loop = mir_new_omp_loop_desc_init(start, end, incr, chunk_size*incr);
 
         // Create task
-        mir_task_create_on_worker((mir_tfunc_t) fn, data, 0, 0, NULL, "GOMP_for_static_task", team, loop, i);
+        mir_task_create_on_worker((mir_tfunc_t) fn, data, 0, 0, NULL, "GOMP_for_static_task", team, loop, i%runtime->num_workers);
     }
 
     MIR_RECORDER_STATE_END(NULL, 0);
