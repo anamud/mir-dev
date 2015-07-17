@@ -62,5 +62,10 @@ void GOMP_taskwait(void);
 
 bool GOMP_single_start(void);
 
+/* omp.h */
+
+int omp_get_thread_num(void);
+int omp_get_num_threads(void);
+
 END_C_DECLS
 #endif
