@@ -564,7 +564,7 @@ void GOMP_parallel_start(void (*fn)(void*), void* data, unsigned num_threads)
     // create an extra task that we schedule here.
 
 #ifndef GCC_PRE_4_9
-    mir_task_schedule_on_worker(task, -1);
+    mir_task_schedule_on_worker(task, worker->id);
 #endif
 
     MIR_RECORDER_STATE_END(NULL, 0);
