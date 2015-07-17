@@ -220,6 +220,9 @@ static inline int mir_worker_pop(struct mir_worker_t* worker, struct mir_task_t*
         __sync_fetch_and_sub(&g_num_tasks_waiting, 1);
         T_DBG("Dq", *task);
 
+        // Update stats
+        if (runtime->enable_worker_stats == 1)
+            worker->statistics->num_tasks_owned++;
         found = 1;
     }
 
