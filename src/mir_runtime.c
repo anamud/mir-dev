@@ -148,10 +148,10 @@ static void mir_postconfig_init()
         struct mir_worker_t* worker = &runtime->workers[i];
         worker->id = i;
         worker->cpu_id = runtime->worker_cpu_map[i];
-        if (worker->id != 0)
-            mir_worker_master_init(worker);
         if (worker->id == 0)
             mir_worker_local_init(worker);
+        else
+            mir_worker_master_init(worker);
     }
 
     // Wait for workers to signal alive
