@@ -667,6 +667,10 @@ int omp_get_thread_num(void)
 
 int omp_get_num_threads(void)
 { /*{{{*/
-    // TODO: Decide on proper source for number of workers. Should it come from the current team?
-    return runtime ? runtime->num_workers : 1;
+    if(runtime == NULL)
+        return 1;
+
+    struct mir_worker_t* worker = mir_worker_get_context();
+    struct mir_omp_team_t* team = worker->current_task ? worker->current_task->team : NULL;
+    return team ? team->num_threads : 1;
 } /*}}}*/
