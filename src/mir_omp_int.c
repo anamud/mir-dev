@@ -348,17 +348,18 @@ void GOMP_parallel_loop_static(void (*fn)(void*), void* data, unsigned num_threa
             continue;
 #endif
 
-        // Create task
-        struct mir_task_t* task = mir_task_create_common((mir_tfunc_t) fn, data, 0, 0, NULL, "GOMP_for_static_task", team, mir_new_omp_loop_desc());
-        MIR_ASSERT(task != NULL);
-
         // Set loop parameters.
-        task->loop->incr = incr;
-        task->loop->next = start;
-        task->loop->end = ((incr > 0 && start > end) || (incr < 0 && start < end)) ? start : end;
-        task->loop->chunk_size = chunk_size * incr;
-        task->loop->static_trip = 0;
-        task->loop->init = 1;
+        struct mir_loop_des_t* loop = mir_new_omp_loop_desc();
+        loop->incr = incr;
+        loop->next = start;
+        loop->end = ((incr > 0 && start > end) || (incr < 0 && start < end)) ? start : end;
+        loop->chunk_size = chunk_size * incr;
+        loop->static_trip = 0;
+        loop->init = 1;
+
+        // Create task
+        struct mir_task_t* task = mir_task_create_common((mir_tfunc_t) fn, data, 0, 0, NULL, "GOMP_for_static_task", team, loop);
+        MIR_ASSERT(task != NULL);
 
         // Schedule on worker
         mir_task_schedule_on_worker(task, i);
@@ -367,20 +368,18 @@ void GOMP_parallel_loop_static(void (*fn)(void*), void* data, unsigned num_threa
     MIR_RECORDER_STATE_END(NULL, 0);
 
 #ifdef GCC_PRE_4_9
-    // FIXME: Remove duplicated code once mir_task_create_common() has
-    // the new loop descriptor interface.
+    // Set loop parameters.
+    struct mir_loop_des_t* loop = mir_new_omp_loop_desc();
+    loop->incr = incr;
+    loop->next = start;
+    loop->end = ((incr > 0 && start > end) || (incr < 0 && start < end)) ? start : end;
+    loop->chunk_size = chunk_size * incr;
+    loop->static_trip = 0;
+    loop->init = 1;
 
     // Create task
-    struct mir_task_t* task = mir_task_create_common((mir_tfunc_t) fn, data, 0, 0, NULL, "GOMP_for_static_task", team, mir_new_omp_loop_desc());
+    struct mir_task_t* task = mir_task_create_common((mir_tfunc_t) fn, data, 0, 0, NULL, "GOMP_for_static_task", team, loop);
     MIR_ASSERT(task != NULL);
-
-    // Set loop parameters.
-    task->loop->incr = incr;
-    task->loop->next = start;
-    task->loop->end = ((incr > 0 && start > end) || (incr < 0 && start < end)) ? start : end;
-    task->loop->chunk_size = chunk_size * incr;
-    task->loop->static_trip = 0;
-    task->loop->init = 1;
 
     // Start profiling and book-keeping for parallel task
     mir_task_execute_prolog(task);
