@@ -18,6 +18,8 @@ struct mir_loop_des_t {
 /*LIBINT_DECL_END*/
 
 /*LIBINT*/ struct mir_loop_des_t* mir_new_omp_loop_desc();
+/*LIBINT*/ struct mir_loop_des_t*
+mir_new_omp_loop_desc_init(long start, long end, long incr, long chunk_size);
 
 END_C_DECLS
 #endif
