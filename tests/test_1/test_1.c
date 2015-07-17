@@ -1,6 +1,8 @@
 #include <stdlib.h>
 #include <check.h>
 #include <omp.h>
+// This header is not used. It is placed here to catch compile time errors.
+#include "mir_public_int.h"
 
 /* OpenMP parallel and single test cases */
 START_TEST(omp_parallel_plain)
