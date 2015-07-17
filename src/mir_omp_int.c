@@ -110,12 +110,7 @@ bool GOMP_loop_dynamic_start (long start, long end, long incr, long chunk_size, 
     mir_lock_set(&(loop->lock));
     if(loop->init == 0)
     {
-        loop->incr = incr;
-        loop->next = start;
-        loop->end = ((incr > 0 && start > end) || (incr < 0 && start < end)) ? start : end;
-        loop->chunk_size = chunk_size * incr;
-        loop->static_trip = 0;
-        loop->init = 1;
+        mir_populate_loop_desc(loop, start, end, incr, chunk_size * incr);
     }
     mir_lock_unset(&(loop->lock));
 
