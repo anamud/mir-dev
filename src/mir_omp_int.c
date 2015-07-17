@@ -556,7 +556,7 @@ void GOMP_parallel_start(void (*fn)(void*), void* data, unsigned num_threads)
     for (int i = 0; i < num_threads; i++) {
         if(i == worker->id)
             continue;
-        mir_task_create_on_worker((mir_tfunc_t)fn, data, 0, 0, NULL, "GOMP_parallel_task", team, mir_new_omp_loop_desc(), i);
+        mir_task_create_on_worker((mir_tfunc_t)fn, data, 0, 0, NULL, "GOMP_parallel_task", team, mir_new_omp_loop_desc(), i%runtime->num_workers);
     }
 
     // Older GCCs force us to create a dummy task for the outline function
