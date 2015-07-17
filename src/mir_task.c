@@ -191,20 +191,21 @@ void mir_task_schedule_on_worker(struct mir_task_t* task, int workerid)
     // Overhead measurement
     uint64_t start_instant = mir_get_cycles();
 
-    struct mir_worker_t* worker;
+    // Worker is this worker.
+    struct mir_worker_t* worker = mir_worker_get_context();
+    MIR_ASSERT(worker != NULL);
+
     int pushed;
 
     if (workerid < 0) {
-        worker = mir_worker_get_context();
-        MIR_ASSERT(worker != NULL);
         // Push task to the scheduling policy
         pushed = runtime->sched_pol->push(worker, task);
     }
     else {
-        worker = &runtime->workers[workerid];
-        MIR_ASSERT(worker != NULL);
+        struct mir_worker_t* to_worker = &runtime->workers[workerid];
+        MIR_ASSERT(to_worker != NULL);
         // Push task to specific worker
-        mir_worker_push(worker, task);
+        mir_worker_push(to_worker, task);
         pushed = 1;
     }
 

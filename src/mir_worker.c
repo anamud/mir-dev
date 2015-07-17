@@ -187,6 +187,7 @@ static inline void mir_worker_backoff(struct mir_worker_t* worker)
 
 void mir_worker_push(struct mir_worker_t* worker, struct mir_task_t* task)
 { /*{{{*/
+    // Worker is the target worker.
     MIR_ASSERT(worker != NULL);
     MIR_ASSERT(task != NULL);
 
@@ -194,9 +195,14 @@ void mir_worker_push(struct mir_worker_t* worker, struct mir_task_t* task)
         MIR_ABORT(MIR_ERROR_STR "Cannot enque task into private queue. Increase queue capacity using MIR_CONF.\n");
 
     __sync_fetch_and_add(&g_num_tasks_waiting, 1);
-    // Update stats
+
+    // Update worker stats
     if (runtime->enable_worker_stats == 1)
-        worker->statistics->num_tasks_created++;
+    {
+        struct mir_worker_t* this_worker = mir_worker_get_context();
+        MIR_ASSERT(this_worker != NULL);
+        this_worker->statistics->num_tasks_created++;
+    }
 } /*}}}*/
 
 static inline int mir_worker_pop(struct mir_worker_t* worker, struct mir_task_t** task)
