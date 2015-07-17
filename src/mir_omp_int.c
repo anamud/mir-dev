@@ -162,11 +162,7 @@ void GOMP_parallel_loop_dynamic(void (*fn)(void*), void* data, unsigned num_thre
 #endif
 
         // Create task
-        struct mir_task_t* task = mir_task_create_common((mir_tfunc_t) fn, data, 0, 0, NULL, "GOMP_for_dynamic_task", team, loop);
-        MIR_ASSERT(task != NULL);
-
-        // Schedule on worker
-        mir_task_schedule_on_worker(task, i);
+        mir_task_create_on_worker((mir_tfunc_t) fn, data, 0, 0, NULL, "GOMP_for_dynamic_task", team, loop, i);
     }
 
     MIR_RECORDER_STATE_END(NULL, 0);
@@ -358,11 +354,7 @@ void GOMP_parallel_loop_static(void (*fn)(void*), void* data, unsigned num_threa
         loop->init = 1;
 
         // Create task
-        struct mir_task_t* task = mir_task_create_common((mir_tfunc_t) fn, data, 0, 0, NULL, "GOMP_for_static_task", team, loop);
-        MIR_ASSERT(task != NULL);
-
-        // Schedule on worker
-        mir_task_schedule_on_worker(task, i);
+        mir_task_create_on_worker((mir_tfunc_t) fn, data, 0, 0, NULL, "GOMP_for_static_task", team, loop, i);
     }
 
     MIR_RECORDER_STATE_END(NULL, 0);
