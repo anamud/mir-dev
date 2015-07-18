@@ -8,7 +8,7 @@
 BEGIN_C_DECLS
 
 void mir_barrier_init(pthread_barrier_t * barrier, int count);
-void mir_barrier_wait(pthread_barrier_t * barrier);
+int mir_barrier_wait(pthread_barrier_t * barrier);
 
 END_C_DECLS
 

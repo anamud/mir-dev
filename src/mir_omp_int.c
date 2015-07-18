@@ -13,6 +13,7 @@
 #include "mir_recorder.h"
 #include "mir_team.h"
 #include "mir_barrier.h"
+#include "mir_defines.h"
 
 /* barrier.c */
 
@@ -22,7 +23,22 @@ void GOMP_barrier(void)
     struct mir_omp_team_t* team;
     team = worker->current_task ? worker->current_task->team : NULL;
     if (team) {
-        mir_barrier_wait(&team->barrier);
+        // Announce impending barrier.
+        __sync_fetch_and_add(&team->barrier_impending_count, 1);
+        while(team->barrier_impending_count < team->num_threads)
+        {
+            // Execute tasks in system until all threads announce impending barrier.
+            mir_worker_do_work(worker, MIR_WORKER_BACKOFF_DURING_BARRIER_WAIT);
+        }
+
+        // Wait for barrier.
+        if(mir_barrier_wait(&team->barrier))
+        {
+            // Only one thread is allowed into this block.
+            // Reset barrier impending count.
+            team->barrier_impending_count = 0;
+        }
+
     }
 } /*}}}*/
 
