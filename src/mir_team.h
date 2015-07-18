@@ -12,6 +12,7 @@ typedef struct mir_omp_team_t mir_omp_team_t;
 struct mir_omp_team_t { /*{{{*/
     struct mir_omp_team_t* prev;
     pthread_barrier_t barrier;
+    int barrier_impending_count;
     int num_threads;
     int single_count;
 }; /*}}}*/

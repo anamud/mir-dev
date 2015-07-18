@@ -13,6 +13,7 @@
 #include "mir_recorder.h"
 #include "mir_team.h"
 #include "mir_barrier.h"
+#include "mir_defines.h"
 
 /* barrier.c */
 
@@ -22,7 +23,22 @@ void GOMP_barrier(void)
     struct mir_omp_team_t* team;
     team = worker->current_task ? worker->current_task->team : NULL;
     if (team) {
-        mir_barrier_wait(&team->barrier);
+        // Announce impending barrier.
+        __sync_fetch_and_add(&team->barrier_impending_count, 1);
+        while(team->barrier_impending_count < team->num_threads)
+        {
+            // Execute tasks in system until all threads announce impending barrier.
+            mir_worker_do_work(worker, MIR_WORKER_BACKOFF_DURING_BARRIER_WAIT);
+        }
+
+        // Wait for barrier.
+        if(mir_barrier_wait(&team->barrier))
+        {
+            // Only one thread is allowed into this block.
+            // Reset barrier impending count.
+            team->barrier_impending_count = 0;
+        }
+
     }
 } /*}}}*/
 
@@ -30,6 +46,10 @@ void GOMP_barrier(void)
 
 void GOMP_critical_start(void)
 { /*{{{*/
+    // A single global (whole program, not restricted to current team) critical section is supported.
+    // From OpenMP 4.0 specification:
+    // The binding thread set for a critical region is all threads in the contention group. Region execution is restricted to a single thread at a time among all threads in the contention group, without regard to the team(s) to which the threads belong.
+    // The critical construct enforces exclusive access with respect to all critical constructs with the same name in all threads in the contention group, not just those threads in the current team.
     mir_lock_set(&runtime->omp_critsec_lock);
 } /*}}}*/
 
