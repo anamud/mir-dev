@@ -437,7 +437,8 @@ void mir_task_wait_int(struct mir_twc_t* twc, int newval)
 { /*{{{*/
     MIR_RECORDER_STATE_BEGIN(MIR_STATE_TSYNC);
 
-    struct mir_worker_t* worker = pthread_getspecific(runtime->worker_index);
+    struct mir_worker_t* worker = mir_worker_get_context();
+    MIR_ASSERT(worker != NULL);
 
     // Prevent empty synchronizations
     // This upsets finding next forks in the task graph plotter
