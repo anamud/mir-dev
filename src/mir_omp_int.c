@@ -30,6 +30,10 @@ void GOMP_barrier(void)
 
 void GOMP_critical_start(void)
 { /*{{{*/
+    // A single global (whole program, not restricted to current team) critical section is supported.
+    // From OpenMP 4.0 specification:
+    // The binding thread set for a critical region is all threads in the contention group. Region execution is restricted to a single thread at a time among all threads in the contention group, without regard to the team(s) to which the threads belong.
+    // The critical construct enforces exclusive access with respect to all critical constructs with the same name in all threads in the contention group, not just those threads in the current team.
     mir_lock_set(&runtime->omp_critsec_lock);
 } /*}}}*/
 
