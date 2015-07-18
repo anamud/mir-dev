@@ -130,6 +130,9 @@ void GOMP_parallel_loop_dynamic(void (*fn)(void*), void* data, unsigned num_thre
     // Create thread team.
     mir_create();
 
+    // Ensure number of required threads is not larger than those available.
+    MIR_ASSERT(num_threads <= runtime->num_workers);
+
     // Keep loop description in a common structure.
     struct mir_loop_des_t* loop;
     loop = mir_new_omp_loop_desc_init(start, end, incr, chunk_size);
@@ -151,7 +154,7 @@ void GOMP_parallel_loop_dynamic(void (*fn)(void*), void* data, unsigned num_thre
 #endif
 
         // Create task
-        mir_task_create_on_worker((mir_tfunc_t) fn, data, 0, 0, NULL, "GOMP_for_dynamic_task", team, loop, i%runtime->num_workers);
+        mir_task_create_on_worker((mir_tfunc_t) fn, data, 0, 0, NULL, "GOMP_for_dynamic_task", team, loop, i);
     }
 
     MIR_RECORDER_STATE_END(NULL, 0);
@@ -317,6 +320,9 @@ void GOMP_parallel_loop_static(void (*fn)(void*), void* data, unsigned num_threa
     // Create thread team.
     mir_create();
 
+    // Ensure number of required threads is not larger than those available.
+    MIR_ASSERT(num_threads <= runtime->num_workers);
+
     // Create loop task on all workers
     MIR_RECORDER_STATE_BEGIN(MIR_STATE_TCREATE);
 
@@ -338,7 +344,7 @@ void GOMP_parallel_loop_static(void (*fn)(void*), void* data, unsigned num_threa
         loop = mir_new_omp_loop_desc_init(start, end, incr, chunk_size*incr);
 
         // Create task
-        mir_task_create_on_worker((mir_tfunc_t) fn, data, 0, 0, NULL, "GOMP_for_static_task", team, loop, i%runtime->num_workers);
+        mir_task_create_on_worker((mir_tfunc_t) fn, data, 0, 0, NULL, "GOMP_for_static_task", team, loop, i);
     }
 
     MIR_RECORDER_STATE_END(NULL, 0);
@@ -539,6 +545,9 @@ void GOMP_parallel_start(void (*fn)(void*), void* data, unsigned num_threads)
     // Create thread team.
     mir_create();
 
+    // Ensure number of required threads is not larger than those available.
+    MIR_ASSERT(num_threads <= runtime->num_workers);
+
     MIR_RECORDER_STATE_BEGIN(MIR_STATE_TCREATE);
 
     // Create task
@@ -556,7 +565,7 @@ void GOMP_parallel_start(void (*fn)(void*), void* data, unsigned num_threads)
     for (int i = 0; i < num_threads; i++) {
         if(i == worker->id)
             continue;
-        mir_task_create_on_worker((mir_tfunc_t)fn, data, 0, 0, NULL, "GOMP_parallel_task", team, mir_new_omp_loop_desc(), i%runtime->num_workers);
+        mir_task_create_on_worker((mir_tfunc_t)fn, data, 0, 0, NULL, "GOMP_parallel_task", team, mir_new_omp_loop_desc(), i);
     }
 
     // Older GCCs force us to create a dummy task for the outline function

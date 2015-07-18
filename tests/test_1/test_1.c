@@ -34,6 +34,10 @@ START_TEST(omp_parallel_num_threads_small)
 }
 END_TEST
 
+// TODO: Add test for teams larger than number of MIR workers.
+// Large teams are unsupported in MIR.
+// The test should therefore pass if MIR throws an assertion.
+
 START_TEST(omp_parallel_single)
 {
     int a = 0;
@@ -177,6 +181,10 @@ START_TEST(omp_parallel_for_static_num_threads_small)
     ck_assert_int_eq(num_threads, num_threads_reqd);
 }
 END_TEST
+
+// TODO: Add test for teams larger than number of MIR workers.
+// Large teams are unsupported in MIR.
+// The test should therefore pass if MIR throws an assertion.
 
 START_TEST(omp_parallel_for_dynamic)
 {
