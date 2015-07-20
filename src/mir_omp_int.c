@@ -621,10 +621,6 @@ void GOMP_parallel_end(void)
     // after the fake task is done with gcc < 4.9.
     mir_task_wait();
 
-#ifndef GCC_PRE_4_9
-    GOMP_barrier();
-#endif
-
     // Last task so unlink team.
     if (team != NULL)
         team->prev = NULL;
