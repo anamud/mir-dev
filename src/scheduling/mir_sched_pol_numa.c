@@ -23,7 +23,7 @@ void create_numa()
 
     // Create node private task queues
     sp->num_queues = runtime->arch->num_nodes;
-    sp->queues = (struct mir_queue_t**)mir_malloc_int(sp->num_queues * sizeof(struct mir_queue_t*));
+    sp->queues = mir_malloc_int(sp->num_queues * sizeof(struct mir_queue_t*));
     MIR_ASSERT(NULL != sp->queues);
 
     for (int i = 0; i < sp->num_queues; i++) {
@@ -32,7 +32,7 @@ void create_numa()
     }
 
     // Create node private alternate task queues
-    sp->alt_queues = (struct mir_queue_t**)mir_malloc_int(sp->num_queues * sizeof(struct mir_queue_t*));
+    sp->alt_queues = mir_malloc_int(sp->num_queues * sizeof(struct mir_queue_t*));
     MIR_ASSERT(NULL != sp->alt_queues);
 
     for (int i = 0; i < sp->num_queues; i++) {

@@ -19,7 +19,7 @@ void create_central()
     MIR_ASSERT(NULL != sp);
 
     // Create queues
-    sp->queues = (struct mir_queue_t**)mir_malloc_int(sp->num_queues * sizeof(struct mir_queue_t*));
+    sp->queues = mir_malloc_int(sp->num_queues * sizeof(struct mir_queue_t*));
     MIR_ASSERT(NULL != sp->queues);
 
     for (int i = 0; i < sp->num_queues; i++) {

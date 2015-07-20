@@ -22,7 +22,7 @@ void create_ws_de_node()
 
     // Create worker private task queues
     sp->num_queues = runtime->num_workers;
-    sp->queues = (struct mir_queue_t**)mir_malloc_int(sp->num_queues * sizeof(mir_dequeue_t*));
+    sp->queues = mir_malloc_int(sp->num_queues * sizeof(mir_dequeue_t*));
     MIR_ASSERT(NULL != sp->queues);
 
     for (int i = 0; i < sp->num_queues; i++) {
