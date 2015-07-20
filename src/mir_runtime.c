@@ -324,7 +324,7 @@ static void mir_config()
             break;
 
         default:
-            MIR_ABORT(MIR_ERROR_STR "Incorrect MIR_CONF parameter %c!\n", c);
+            MIR_ABORT(MIR_ERROR_STR "Unknown MIR_CONF parameter %c!\n", c);
             break;
         }
     }
