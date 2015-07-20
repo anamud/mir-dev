@@ -205,6 +205,9 @@ void mir_worker_push(struct mir_worker_t* worker, struct mir_task_t* task)
     }
 } /*}}}*/
 
+// The function mir_worker_pop() retrieves a task
+// from the private task queue of the worker in FIFO order.
+
 static inline int mir_worker_pop(struct mir_worker_t* worker, struct mir_task_t** task)
 { /*{{{*/
     MIR_ASSERT(worker != NULL);
@@ -214,8 +217,8 @@ static inline int mir_worker_pop(struct mir_worker_t* worker, struct mir_task_t*
     struct mir_queue_t* queue = worker->private_queue;
     MIR_ASSERT(worker->private_queue != NULL);
     if (mir_queue_size(queue) > 0) {
+        // Ensure the queue pops in FIFO order.
         mir_queue_pop(queue, (void**)&(*task));
-        // There is no other popper. This must succeed.
         MIR_ASSERT(*task != NULL);
         __sync_fetch_and_sub(&g_num_tasks_waiting, 1);
         T_DBG("Dq", *task);
@@ -240,6 +243,7 @@ void mir_worker_do_work(struct mir_worker_t* worker, int backoff)
     // Overhead measurement
     uint64_t start_instant = mir_get_cycles();
 
+    // Look for work in private task queue.
     work_available = mir_worker_pop(worker, &task);
 
     // Overhead measurement
@@ -265,6 +269,7 @@ void mir_worker_do_work(struct mir_worker_t* worker, int backoff)
     // Overhead measurement
     start_instant = mir_get_cycles();
 
+    // Look for work in shared task queues.
     work_available = runtime->sched_pol->pop(&task);
 
     // Overhead measurement
