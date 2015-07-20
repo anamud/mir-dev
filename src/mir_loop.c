@@ -6,7 +6,7 @@
 struct mir_loop_des_t* mir_new_omp_loop_desc()
 { /*{{{*/
     struct mir_loop_des_t* loop = mir_malloc_int(sizeof(struct mir_loop_des_t));
-    MIR_ASSERT(loop != NULL);
+    MIR_CHECK_MEM(loop != NULL);
     mir_lock_create(&(loop->lock));
     loop->init = 0;
     return loop;

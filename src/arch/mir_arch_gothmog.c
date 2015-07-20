@@ -136,7 +136,7 @@ uint16_t node_of_gothmog(uint16_t cpuid)
         return 7;
         break;
     default:
-        MIR_ABORT(MIR_ERROR_STR "Node of CPU not found!\n");
+        MIR_LOG_ERR("Node of CPU %d not found.", cpuid);
         break;
     }
 } /*}}}*/
@@ -187,7 +187,7 @@ void cpus_of_gothmog(struct mir_sbuf_t* cpuids, uint16_t nodeid)
             cpuids->buf[i] = basecpu + i;
         break;
     default:
-        MIR_ABORT(MIR_ERROR_STR "CPU of node not found!\n");
+        MIR_LOG_ERR("CPU of node %d not found.", nodeid);
         break;
     }
 } /*}}}*/
@@ -336,7 +336,7 @@ uint16_t vicinity_of_gothmog(uint16_t* neighbors, uint16_t nodeid, uint16_t diam
 /*return 3;*/
 /*break;*/
 /*default:*/
-/*MIR_ABORT(MIR_ERROR_STR "Invalid socket query!");*/
+/*MIR_LOG_ERR("Invalid socket query.");*/
 /*}*/
 /*}[>}}}<]*/
 

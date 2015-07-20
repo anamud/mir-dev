@@ -44,7 +44,7 @@ void* mir_malloc_int(size_t bytes)
     memptr = tmc_alloc_map(&alloc, bytes_p2);
 
 #ifdef MIR_MEMORY_ALLOCATOR_DEBUG
-    MIR_ASSERT(memptr != NULL);
+    MIR_CHECK_MEM(memptr != NULL);
     __sync_fetch_and_add(&g_total_allocated_memory, bytes);
 #endif
 
@@ -72,7 +72,7 @@ void* mir_malloc_int(size_t bytes)
     int rval = posix_memalign(&memptr, MIR_PAGE_ALIGNMENT, bytes_p2);
 
 #ifdef MIR_MEMORY_ALLOCATOR_DEBUG
-    MIR_ASSERT(rval == 0);
+    MIR_CHECK_MEM(rval == 0);
     __sync_fetch_and_add(&g_total_allocated_memory, bytes);
 #endif
 

@@ -33,11 +33,11 @@ struct mir_arch_t* mir_arch_create_by_query()
     // Run uname -n to get node name
     FILE* fpipe;
     fpipe = popen("uname -n", "r");
-    MIR_ASSERT(fpipe != NULL);
+    MIR_CHECK_FILE(fpipe != NULL);
 
     // Get node name into buffer and strip it of the newline at end
     char arch_name[MIR_SHORT_NAME_LEN];
-    MIR_ASSERT(fgets(arch_name, MIR_SHORT_NAME_LEN, fpipe) != NULL);
+    MIR_CHECK_FILE(fgets(arch_name, MIR_SHORT_NAME_LEN, fpipe) != NULL);
     for (int i = 0; i < MIR_SHORT_NAME_LEN; i++)
         if (arch_name[i] == '\n')
             arch_name[i] = '\0';

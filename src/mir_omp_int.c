@@ -151,7 +151,7 @@ void GOMP_parallel_loop_dynamic(void (*fn)(void*), void* data, unsigned num_thre
     mir_create();
 
     // Ensure number of required threads is not larger than those available.
-    MIR_ASSERT(num_threads <= runtime->num_workers);
+    MIR_ASSERT_STR(num_threads <= runtime->num_workers, "Number of OMP threads requested is greater than number of MIR workers.");
 
     // Keep loop description in a common structure.
     struct mir_loop_des_t* loop;
@@ -182,7 +182,7 @@ void GOMP_parallel_loop_dynamic(void (*fn)(void*), void* data, unsigned num_thre
 #ifdef GCC_PRE_4_9
     // Create task
     struct mir_task_t* task = mir_task_create_common((mir_tfunc_t) fn, data, 0, 0, NULL, "GOMP_for_dynamic_task", team, loop);
-    MIR_ASSERT(task != NULL);
+    MIR_CHECK_MEM(task != NULL);
 
     // Start profiling and book-keeping for parallel task
     mir_task_execute_prolog(task);
@@ -341,7 +341,7 @@ void GOMP_parallel_loop_static(void (*fn)(void*), void* data, unsigned num_threa
     mir_create();
 
     // Ensure number of required threads is not larger than those available.
-    MIR_ASSERT(num_threads <= runtime->num_workers);
+    MIR_ASSERT_STR(num_threads <= runtime->num_workers, "Number of OMP threads requested is greater than number of MIR workers.");
 
     // Create loop task on all workers
     MIR_RECORDER_STATE_BEGIN(MIR_STATE_TCREATE);
@@ -376,7 +376,7 @@ void GOMP_parallel_loop_static(void (*fn)(void*), void* data, unsigned num_threa
 
     // Create task
     struct mir_task_t* task = mir_task_create_common((mir_tfunc_t) fn, data, 0, 0, NULL, "GOMP_for_static_task", team, loop);
-    MIR_ASSERT(task != NULL);
+    MIR_CHECK_MEM(task != NULL);
 
     // Start profiling and book-keeping for parallel task
     mir_task_execute_prolog(task);
@@ -448,10 +448,10 @@ static int parse_omp_schedule_chunk_size(void)
     return value;
 
 unknown:
-    MIR_ABORT(MIR_ERROR_STR "Unknown value for OMP_SCHEDULE.\n");
+    MIR_LOG_ERR("Unknown value for OMP_SCHEDULE.");
 
 invalid:
-    MIR_ABORT(MIR_ERROR_STR "Invalid value for chunk size in OMP_SCHEDULE.\n");
+    MIR_LOG_ERR("Invalid value for chunk size in OMP_SCHEDULE.");
 } /*}}}*/
 
 static enum omp_for_schedule_t parse_omp_schedule_name(void)
@@ -487,7 +487,7 @@ static enum omp_for_schedule_t parse_omp_schedule_name(void)
     return omp_for_schedule;
 
 unknown:
-    MIR_ABORT(MIR_ERROR_STR "Unknown value for OMP_SCHEDULE.\n");
+    MIR_LOG_ERR("Unknown value for OMP_SCHEDULE.");
 } /*}}}*/
 
 void parse_omp_schedule(void)
@@ -506,7 +506,7 @@ bool GOMP_loop_runtime_next(long* istart, long* iend)
     case OFS_AUTO:
     case OFS_GUIDED:
     default:
-        MIR_ABORT(MIR_ERROR_STR "OMP_SCHEDULE is unsupported.\n");
+        MIR_LOG_ERR("OMP_SCHEDULE is unsupported.");
     }
 } /*}}}*/
 
@@ -520,7 +520,7 @@ bool GOMP_loop_runtime_start (long start, long end, long incr, long *istart, lon
     case OFS_AUTO:
     case OFS_GUIDED:
     default:
-        MIR_ABORT(MIR_ERROR_STR "OMP_SCHEDULE is unsupported.\n");
+        MIR_LOG_ERR("OMP_SCHEDULE is unsupported.");
     }
     return false;
 } /*}}}*/
@@ -544,7 +544,7 @@ void GOMP_parallel_loop_runtime(void (*fn)(void*), void* data, unsigned num_thre
     case OFS_AUTO:
     case OFS_GUIDED:
     default:
-        MIR_ABORT(MIR_ERROR_STR "OMP_SCHEDULE is unsupported.\n");
+        MIR_LOG_ERR("OMP_SCHEDULE is unsupported.");
     }
 } /*}}}*/
 
@@ -566,7 +566,7 @@ void GOMP_parallel_start(void (*fn)(void*), void* data, unsigned num_threads)
     mir_create();
 
     // Ensure number of required threads is not larger than those available.
-    MIR_ASSERT(num_threads <= runtime->num_workers);
+    MIR_ASSERT_STR(num_threads <= runtime->num_workers, "Number of OMP threads requested is greater than number of MIR workers.");
 
     MIR_RECORDER_STATE_BEGIN(MIR_STATE_TCREATE);
 
@@ -580,7 +580,7 @@ void GOMP_parallel_start(void (*fn)(void*), void* data, unsigned num_threads)
     prevteam = worker->current_task ? worker->current_task->team : NULL;
     struct mir_omp_team_t* team = mir_new_omp_team(prevteam, num_threads);
     struct mir_task_t* task = mir_task_create_common((mir_tfunc_t)fn, data, 0, 0, NULL, "GOMP_parallel_task", team, mir_new_omp_loop_desc());
-    MIR_ASSERT(task != NULL);
+    MIR_CHECK_MEM(task != NULL);
 
     for (int i = 0; i < num_threads; i++) {
         if(i == worker->id)
@@ -653,7 +653,7 @@ void GOMP_task(void (*fn)(void*), void* data, void (*copyfn)(void*, void*), long
 
     if (copyfn) {
         char* buf = mir_malloc_int(sizeof(char) * arg_size);
-        MIR_ASSERT(buf != NULL);
+        MIR_CHECK_MEM(buf != NULL);
         copyfn(buf, data);
         mir_task_create_on_worker((mir_tfunc_t)fn, buf, (size_t)(arg_size), 0, NULL, task_name, team, mir_new_omp_loop_desc(), -1);
     }
