@@ -11,9 +11,15 @@
 
 BEGIN_C_DECLS
 
+extern struct mir_sched_pol_t policy_central;
+extern struct mir_sched_pol_t policy_ws;
 #ifdef MIR_MEM_POL_ENABLE
 extern size_t g_numa_schedule_footprint_config;
+extern struct mir_sched_pol_t policy_numa;
 #endif
+extern struct mir_sched_pol_t policy_central_stack;
+extern struct mir_sched_pol_t policy_ws_de;
+extern struct mir_sched_pol_t policy_ws_de_node;
 
 struct mir_sched_pol_t {
     // Data structures
