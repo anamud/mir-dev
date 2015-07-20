@@ -228,7 +228,7 @@ static void mir_config()
             { "schedule", required_argument, 0, 's' },
             { "memory-policy", required_argument, 0, 'm' },
             { "stack-size", required_argument, 0, 0 },
-            { "inline-limit", required_argument, 0, 0 },
+            { "inlining-limit", required_argument, 0, 0 },
             { "numa-footprint", required_argument, 0, 0 },
             { "queue-size", required_argument, 0, 0 },
             { "help", no_argument, 0, 'h' },
