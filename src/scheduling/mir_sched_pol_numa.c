@@ -16,8 +16,6 @@
 #include <string.h>
 
 #ifdef MIR_MEM_POL_ENABLE
-extern uint32_t g_num_tasks_waiting;
-
 size_t g_numa_schedule_footprint_config = 0;
 
 void create_numa()

@@ -17,8 +17,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-extern uint32_t g_num_tasks_waiting;
-
 void create_ws_de()
 { /*{{{*/
     struct mir_sched_pol_t* sp = runtime->sched_pol;
