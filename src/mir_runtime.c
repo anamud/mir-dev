@@ -404,8 +404,6 @@ void mir_destroy()
     // Set a marking event
     MIR_RECORDER_EVENT(NULL, 0);
 
-    MIR_DEBUG(MIR_DEBUG_STR "Shutting down ...\n");
-
     // Check if workers are free
     MIR_DEBUG(MIR_DEBUG_STR "Checking if workers are done ...\n");
     //MIR_INFORM(MIR_INFORM_STR "Checking if workers are done ...\n");
