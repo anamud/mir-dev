@@ -7,18 +7,13 @@
 #include "mir_memory.h"
 #include "mir_utils.h"
 #include "mir_defines.h"
-#ifdef MIR_MEM_POL_ENABLE
 #include "mir_mem_pol.h"
-#endif
 
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 
 #ifdef MIR_MEM_POL_ENABLE
-extern uint32_t g_num_tasks_waiting;
-extern struct mir_runtime_t* runtime;
-
 size_t g_numa_schedule_footprint_config = 0;
 
 void create_numa()
@@ -28,7 +23,7 @@ void create_numa()
 
     // Create node private task queues
     sp->num_queues = runtime->arch->num_nodes;
-    sp->queues = (struct mir_queue_t**)mir_malloc_int(sp->num_queues * sizeof(struct mir_queue_t*));
+    sp->queues = mir_malloc_int(sp->num_queues * sizeof(struct mir_queue_t*));
     MIR_CHECK_MEM(NULL != sp->queues);
 
     for (int i = 0; i < sp->num_queues; i++) {
@@ -37,7 +32,7 @@ void create_numa()
     }
 
     // Create node private alternate task queues
-    sp->alt_queues = (struct mir_queue_t**)mir_malloc_int(sp->num_queues * sizeof(struct mir_queue_t*));
+    sp->alt_queues = mir_malloc_int(sp->num_queues * sizeof(struct mir_queue_t*));
     MIR_CHECK_MEM(NULL != sp->alt_queues);
 
     for (int i = 0; i < sp->num_queues; i++) {

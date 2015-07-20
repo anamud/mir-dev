@@ -13,16 +13,13 @@
 #include <stdlib.h>
 #include <string.h>
 
-extern uint32_t g_num_tasks_waiting;
-extern struct mir_runtime_t* runtime;
-
 void create_central()
 { /*{{{*/
     struct mir_sched_pol_t* sp = runtime->sched_pol;
     MIR_ASSERT(NULL != sp);
 
     // Create queues
-    sp->queues = (struct mir_queue_t**)mir_malloc_int(sp->num_queues * sizeof(struct mir_queue_t*));
+    sp->queues = mir_malloc_int(sp->num_queues * sizeof(struct mir_queue_t*));
     MIR_CHECK_MEM(NULL != sp->queues);
 
     for (int i = 0; i < sp->num_queues; i++) {

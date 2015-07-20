@@ -200,10 +200,7 @@ static void mir_config()
 { /*{{{*/
     // Get MIR_CONF environment string
     const char* conf_str = getenv("MIR_CONF");
-    if (!conf_str)
-        return;
-
-    if (strlen(conf_str) == 0)
+    if (!conf_str || strlen(conf_str) == 0)
         return;
 
     // Copy to buffer
@@ -228,7 +225,7 @@ static void mir_config()
             { "schedule", required_argument, 0, 's' },
             { "memory-policy", required_argument, 0, 'm' },
             { "stack-size", required_argument, 0, 0 },
-            { "inline-limit", required_argument, 0, 0 },
+            { "inlining-limit", required_argument, 0, 0 },
             { "numa-footprint", required_argument, 0, 0 },
             { "queue-size", required_argument, 0, 0 },
             { "help", no_argument, 0, 'h' },
@@ -288,7 +285,7 @@ static void mir_config()
 
         case '1':
         case '2':
-            MIR_LOG_ERR("Unknown MIR_CONF parameter %c.", c);
+            MIR_LOG_ERR("Incorrect MIR_CONF parameter %c.", c);
             break;
 
         case 'w':
@@ -402,8 +399,6 @@ void mir_destroy()
 
     // Set a marking event
     MIR_RECORDER_EVENT(NULL, 0);
-
-    MIR_DEBUG("Shutting down ...");
 
     // Check if workers are free
     MIR_DEBUG("Checking if workers are done ...");

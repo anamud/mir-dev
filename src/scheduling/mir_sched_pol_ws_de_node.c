@@ -8,17 +8,12 @@
 #include "mir_memory.h"
 #include "mir_utils.h"
 #include "mir_defines.h"
-#ifdef MIR_MEM_POL_ENABLE
 #include "mir_mem_pol.h"
-#endif
 
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
-
-extern uint32_t g_num_tasks_waiting;
-extern struct mir_runtime_t* runtime;
 
 void create_ws_de_node()
 { /*{{{*/
@@ -27,7 +22,7 @@ void create_ws_de_node()
 
     // Create worker private task queues
     sp->num_queues = runtime->num_workers;
-    sp->queues = (struct mir_queue_t**)mir_malloc_int(sp->num_queues * sizeof(mir_dequeue_t*));
+    sp->queues = mir_malloc_int(sp->num_queues * sizeof(mir_dequeue_t*));
     MIR_CHECK_MEM(NULL != sp->queues);
 
     for (int i = 0; i < sp->num_queues; i++) {
