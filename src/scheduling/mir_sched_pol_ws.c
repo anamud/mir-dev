@@ -16,7 +16,6 @@
 #include <string.h>
 
 extern uint32_t g_num_tasks_waiting;
-extern struct mir_runtime_t* runtime;
 
 void create_ws()
 { /*{{{*/

@@ -17,7 +17,6 @@
 
 #ifdef MIR_MEM_POL_ENABLE
 extern uint32_t g_num_tasks_waiting;
-extern struct mir_runtime_t* runtime;
 
 size_t g_numa_schedule_footprint_config = 0;
 
