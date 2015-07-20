@@ -647,6 +647,9 @@ void GOMP_task(void (*fn)(void*), void* data, void (*copyfn)(void*, void*), long
     struct mir_omp_team_t* team;
     team = worker->current_task ? worker->current_task->team : NULL;
 
+    if (team && runtime->num_workers != team->num_threads)
+        MIR_ABORT(MIR_ERROR_STR "Combining tasks and parallel sections specifying num_threads is not supported.\n");
+
     if (copyfn) {
         char* buf = mir_malloc_int(sizeof(char) * arg_size);
         MIR_ASSERT(buf != NULL);
