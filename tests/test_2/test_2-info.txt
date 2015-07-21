@@ -1,0 +1,2 @@
+Test 2 tests the OpenMP task-based implementation of the Fibonacci program for correctness under:
+- default MIR configuration.
