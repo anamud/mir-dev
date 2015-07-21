@@ -148,7 +148,7 @@ bool GOMP_loop_dynamic_start (long start, long end, long incr, long chunk_size, 
 void GOMP_parallel_loop_dynamic(void (*fn)(void*), void* data, unsigned num_threads, long start, long end, long incr, long chunk_size, unsigned flags)
 { /*{{{*/
     // Create thread team.
-    mir_create();
+    mir_create_int(num_threads);
 
     // Ensure number of required threads is not larger than those available.
     MIR_ASSERT_STR(num_threads <= runtime->num_workers, "Number of OMP threads requested is greater than number of MIR workers.");
@@ -338,7 +338,7 @@ void GOMP_parallel_loop_static_start (void (*fn) (void *), void *data, unsigned 
 void GOMP_parallel_loop_static(void (*fn)(void*), void* data, unsigned num_threads, long start, long end, long incr, long chunk_size, unsigned flags)
 { /*{{{*/
     // Create thread team.
-    mir_create();
+    mir_create_int(num_threads);
 
     // Ensure number of required threads is not larger than those available.
     MIR_ASSERT_STR(num_threads <= runtime->num_workers, "Number of OMP threads requested is greater than number of MIR workers.");
@@ -563,7 +563,7 @@ void GOMP_loop_end_nowait(void)
 void GOMP_parallel_start(void (*fn)(void*), void* data, unsigned num_threads)
 { /*{{{*/
     // Create thread team.
-    mir_create();
+    mir_create_int(num_threads);
 
     // Ensure number of required threads is not larger than those available.
     MIR_ASSERT_STR(num_threads <= runtime->num_workers, "Number of OMP threads requested is greater than number of MIR workers.");

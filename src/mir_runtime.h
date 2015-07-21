@@ -45,6 +45,8 @@ struct mir_runtime_t { /*{{{*/
 
 extern struct mir_runtime_t* runtime;
 
+void mir_create_int(int num_threads);
+
 /*LIBINT*/ void mir_create();
 
 /*LIBINT*/ void mir_soft_destroy();

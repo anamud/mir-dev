@@ -23,7 +23,7 @@ extern uint32_t g_num_tasks_waiting;
 extern uint32_t g_worker_status_board;
 extern uint64_t g_total_allocated_memory;
 
-static void mir_preconfig_init()
+static void mir_preconfig_init(int num_workers)
 { /*{{{*/
     MIR_DEBUG("Starting initialization ...");
 
@@ -44,7 +44,8 @@ static void mir_preconfig_init()
     mir_mem_pol_create();
 
     // Workers
-    runtime->num_workers = runtime->arch->num_cores;
+    MIR_ASSERT_STR(num_workers <= runtime->arch->num_cores, "Cannot create more workers than number of available cores.");
+    runtime->num_workers = num_workers == 0 ? runtime->arch->num_cores : num_workers;
     runtime->worker_cpu_map = mir_malloc_int(sizeof(uint16_t) * runtime->arch->num_cores);
     MIR_CHECK_MEM(runtime->worker_cpu_map != NULL);
     for (int i = 0; i < runtime->num_workers; i++)
@@ -341,10 +342,11 @@ static void mir_config()
         MIR_LOG_ERR("Cannot enable OFP handshake mode when number of workers (%d) != 1.", runtime->num_workers);
 } /*}}}*/
 
-void mir_create()
+void mir_create_int(int num_workers)
 { /*{{{*/
     // Create only if first call
     if (runtime != NULL) {
+        MIR_ASSERT_STR(num_workers == runtime->num_workers || num_workers == 0, "Runtime system is already created. Number of workers requested differs from first request.");
         MIR_ASSERT(runtime->destroyed == 0);
         __sync_fetch_and_add(&(runtime->init_count), 1);
         return;
@@ -355,7 +357,7 @@ void mir_create()
     MIR_CHECK_MEM(runtime != NULL);
 
     // Set defaults and other stuff
-    mir_preconfig_init();
+    mir_preconfig_init(num_workers);
 
     // Set configurable parameters from command line
     mir_config();
@@ -367,6 +369,11 @@ void mir_create()
 
     // Set a marking event
     MIR_RECORDER_EVENT(NULL, 0);
+} /*}}}*/
+
+void mir_create()
+{ /*{{{*/
+    mir_create_int(0);
 } /*}}}*/
 
 /**
