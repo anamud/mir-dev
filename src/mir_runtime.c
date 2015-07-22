@@ -57,6 +57,8 @@ static void mir_preconfig_init(int num_workers)
     // OpenMP support
     // This is the unnamed critical section lock
     mir_lock_create(&runtime->omp_critsec_lock);
+    // This is the global atomic lock.
+    mir_lock_create(&runtime->omp_atomic_lock);
     runtime->omp_for_schedule = OFS_STATIC;
     runtime->omp_for_chunk_size = 0;
     parse_omp_schedule();
@@ -509,6 +511,8 @@ dead:
     // OpenMP support
     // Destroy unnamed omp critical lock
     mir_lock_destroy(&runtime->omp_critsec_lock);
+    // Destroy omp atomic lock
+    mir_lock_destroy(&runtime->omp_atomic_lock);
 
     // Release runtime memory
     MIR_DEBUG("Releasing runtime memory ...");

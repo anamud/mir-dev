@@ -58,6 +58,16 @@ void GOMP_critical_end(void)
     mir_lock_unset(&runtime->omp_critsec_lock);
 } /*}}}*/
 
+void GOMP_atomic_start(void)
+{ /*{{{*/
+    mir_lock_set(&runtime->omp_atomic_lock);
+} /*}}}*/
+
+void GOMP_atomic_end(void)
+{ /*{{{*/
+    mir_lock_unset(&runtime->omp_atomic_lock);
+} /*}}}*/
+
 /* loop.c, iter.c, env.c*/
 
 static bool GOMP_loop_dynamic_next_int(long* pstart, long* pend)

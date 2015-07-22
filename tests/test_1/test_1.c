@@ -446,6 +446,33 @@ START_TEST(omp_critical)
 }
 END_TEST
 
+START_TEST(omp_atomic)
+{
+    int a = 42;
+    int a_copy = a;
+
+#pragma omp parallel shared(a)
+    {
+#pragma omp single
+        {
+#pragma omp task shared(a)
+            {
+#pragma omp atomic
+                    a++;
+            }
+#pragma omp task shared(a)
+            {
+#pragma omp atomic
+                    a--;
+            }
+        }
+    }
+
+    /* Since the operations are symmetric and mirrored, the variable should have its original value*/
+    ck_assert_int_eq(a, a_copy);
+}
+END_TEST
+
 Suite* test_suite(void)
 {
     Suite* s;
@@ -484,6 +511,7 @@ Suite* test_suite(void)
     TCase* tc_omp_critical;
     tc_omp_critical = tcase_create("Omp_critical");
     tcase_add_test(tc_omp_critical, omp_critical);
+    tcase_add_test(tc_omp_critical, omp_atomic);
     suite_add_tcase(s, tc_omp_critical);
 
     return s;

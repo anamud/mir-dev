@@ -29,6 +29,8 @@ void GOMP_barrier(void);
 
 void GOMP_critical_start(void);
 void GOMP_critical_end(void);
+void GOMP_atomic_start(void);
+void GOMP_atomic_end(void);
 
 /* loop.c */
 

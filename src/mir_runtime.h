@@ -32,6 +32,7 @@ struct mir_runtime_t { /*{{{*/
 
     // OpenMP support
     struct mir_lock_t omp_critsec_lock;
+    struct mir_lock_t omp_atomic_lock;
     enum omp_for_schedule_t omp_for_schedule;
     long omp_for_chunk_size;
 
