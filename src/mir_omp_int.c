@@ -58,6 +58,28 @@ void GOMP_critical_end(void)
     mir_lock_unset(&runtime->omp_critsec_lock);
 } /*}}}*/
 
+void GOMP_critical_name_start(void **pptr)
+{ /*{{{*/
+    if(*pptr == NULL)
+    {
+        // Create new critical section.
+        struct mir_lock_t* lock = mir_malloc_int(sizeof(struct mir_lock_t));
+        MIR_CHECK_MEM(lock != NULL);
+        mir_lock_create(lock);
+
+        // Pass lock information to caller.
+        *pptr = lock;
+    }
+
+    mir_lock_set((struct mir_lock_t*)(*pptr));
+} /*}}}*/
+
+void GOMP_critical_name_end(void **pptr)
+{ /*{{{*/
+    MIR_ASSERT_STR(*pptr != NULL, "Named critical section lock is corrupted.");
+    mir_lock_unset((struct mir_lock_t*)(*pptr));
+} /*}}}*/
+
 void GOMP_atomic_start(void)
 { /*{{{*/
     mir_lock_set(&runtime->omp_atomic_lock);
