@@ -703,3 +703,8 @@ int omp_get_num_threads(void)
     struct mir_omp_team_t* team = worker->current_task ? worker->current_task->team : NULL;
     return team ? team->num_threads : 1;
 } /*}}}*/
+
+int omp_get_max_threads(void)
+{ /*{{{*/
+    return runtime == NULL ?  mir_arch_create_by_query()->num_cores : runtime->num_workers;
+} /*}}}*/

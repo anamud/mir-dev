@@ -66,6 +66,7 @@ bool GOMP_single_start(void);
 
 int omp_get_thread_num(void);
 int omp_get_num_threads(void);
+int omp_get_max_threads(void);
 
 END_C_DECLS
 #endif
