@@ -34,6 +34,7 @@ static void mir_preconfig_init(int num_workers)
     // Arch
     runtime->arch = mir_arch_create_by_query();
     MIR_ASSERT(runtime->arch != NULL);
+    MIR_ASSERT(runtime->arch->num_cores <= MIR_WORKER_MAX_COUNT);
     MIR_DEBUG("Architecture set to %s.", runtime->arch->name);
 
     // Scheduling policy
