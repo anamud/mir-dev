@@ -20,6 +20,23 @@ START_TEST(omp_parallel_plain)
 }
 END_TEST
 
+START_TEST(omp_parallel_num_threads_shell)
+{
+    int a = 0;
+    int num_threads_reqd = 1;
+    setenv("OMP_NUM_THREADS", "1", 1);
+
+#pragma omp parallel shared(a)
+    {
+        __sync_fetch_and_add(&a, 1);
+    }
+
+    unsetenv("OMP_NUM_THREADS");
+
+    ck_assert_int_eq(a, num_threads_reqd);
+}
+END_TEST
+
 START_TEST(omp_parallel_num_threads_small)
 {
     int a = 0;
@@ -527,6 +544,7 @@ Suite* test_suite(void)
     TCase* tc_omp_parallel;
     tc_omp_parallel = tcase_create("Omp_parallel");
     tcase_add_test(tc_omp_parallel, omp_parallel_plain);
+    tcase_add_test(tc_omp_parallel, omp_parallel_num_threads_shell);
     tcase_add_test(tc_omp_parallel, omp_parallel_num_threads_small);
     tcase_add_test(tc_omp_parallel, omp_parallel_single);
     /* tcase_add_test(tc_omp_parallel, omp_nested_parallel); */

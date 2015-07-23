@@ -202,6 +202,17 @@ static inline void print_help()
 
 static void mir_config()
 { /*{{{*/
+    // OMP config
+    // Get OMP_NUM_THREADS environment variable
+    const char* omp_num_threads_str = getenv("OMP_NUM_THREADS");
+    if (omp_num_threads_str)
+    {
+        runtime->num_workers = atoi(omp_num_threads_str);
+        if (runtime->num_workers > runtime->arch->num_cores)
+            MIR_LOG_ERR("Cannot configure more workers (%d) than number of cores (%d).",
+                runtime->num_workers, runtime->arch->num_cores);
+    }
+
     // Get MIR_CONF environment string
     const char* conf_str = getenv("MIR_CONF");
     if (!conf_str || strlen(conf_str) == 0)
@@ -293,6 +304,8 @@ static void mir_config()
             break;
 
         case 'w':
+            if (omp_num_threads_str)
+                MIR_LOG_WARN("MIR_CONF worker argument takes precedence over OMP_NUM_THREADS.");
             runtime->num_workers = atoi(optarg);
             if (runtime->num_workers > runtime->arch->num_cores)
                 MIR_LOG_ERR("Cannot configure more workers (%d) than number of cores (%d).",
