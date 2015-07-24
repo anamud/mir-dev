@@ -73,13 +73,13 @@ struct _perf_ctr_map perf_ctr_map[MIR_RECORDER_NUM_PAPI_HWPC] = {
 struct mir_recorder_t* mir_recorder_create(uint16_t id)
 { /*{{{*/
     struct mir_recorder_t* recorder = mir_malloc_int(sizeof(struct mir_recorder_t));
-    MIR_ASSERT(recorder != NULL);
+    MIR_CHECK_MEM(recorder != NULL);
 
     // Open buffer file
     char buffer_file_name[MIR_LONG_NAME_LEN];
     sprintf(buffer_file_name, "%s-trace-%d.rec", MIR_RECORDER_FILE_NAME_PREFIX, id);
     recorder->buffer_file = fopen(buffer_file_name, "w");
-    MIR_ASSERT(recorder->buffer_file != NULL);
+    MIR_CHECK_FILE(recorder->buffer_file != NULL);
 
     // Record id
     recorder->id = id;
@@ -130,7 +130,7 @@ struct mir_recorder_t* mir_recorder_create(uint16_t id)
     __insn_mtspr(SPR_AUX_PERF_COUNT_CTL, recorder->tilecounter[2] | (recorder->tilecounter[3] << 16));
 #else
     // Register thread with PAPI
-    //MIR_INFORM(MIR_INFORM_STR "Registering thread %d with PAPI ... \n", id);
+    //MIR_LOG_INFO("Registering thread %d with PAPI ...", id);
     int retval = PAPI_register_thread();
     MIR_ASSERT(retval == PAPI_OK);
 
@@ -143,9 +143,9 @@ struct mir_recorder_t* mir_recorder_create(uint16_t id)
     for (int i = 0; i < MIR_RECORDER_NUM_PAPI_HWPC; i++) {
         int code;
         if ((retval = PAPI_event_name_to_code(perf_ctr_map[i].name, &code)) != PAPI_OK)
-            MIR_ABORT(MIR_ERROR_STR "Recorder %d PAPI_event_name_to_code %s failed [%d]!\n", id, perf_ctr_map[i].name, retval);
+            MIR_LOG_ERR("Recorder %d PAPI_event_name_to_code %s failed [retval = %d].", id, perf_ctr_map[i].name, retval);
         if ((retval = PAPI_add_event(recorder->EventSet, code)) != PAPI_OK)
-            MIR_ABORT(MIR_ERROR_STR "Recorder %d PAPI_add_event %x failed [%d]!\n", id, code, retval);
+            MIR_LOG_ERR("Recorder %d PAPI_add_event %x failed [retval = %d].", id, code, retval);
     }
 
     // Start counting
@@ -170,7 +170,7 @@ void mir_recorder_destroy(struct mir_recorder_t* recorder)
 
     // Open state_time_file
     FILE* state_time_file = fopen(state_time_filename, "w");
-    MIR_ASSERT(state_time_file != NULL);
+    MIR_CHECK_FILE(state_time_file != NULL);
 
     // Write state time
     fprintf(state_time_file, "%d", recorder->id);
@@ -199,7 +199,7 @@ void mir_recorder_destroy(struct mir_recorder_t* recorder)
 
         // Open config file
         FILE* config_file = fopen(config_filename, "w");
-        MIR_ASSERT(config_file != NULL);
+        MIR_CHECK_FILE(config_file != NULL);
 
         // Write to config file
         fprintf(config_file, "creation_cycle=%" MIR_FORMSPEC_UL "\ndestruction_cycle=%" MIR_FORMSPEC_UL "\nnum_workers=%d\n", runtime->init_time, mir_get_cycles(), runtime->num_workers);

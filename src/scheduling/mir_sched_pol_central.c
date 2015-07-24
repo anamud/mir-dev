@@ -13,17 +13,14 @@
 #include <stdlib.h>
 #include <string.h>
 
-extern uint32_t g_num_tasks_waiting;
-extern struct mir_runtime_t* runtime;
-
 void create_central()
 { /*{{{*/
     struct mir_sched_pol_t* sp = runtime->sched_pol;
     MIR_ASSERT(NULL != sp);
 
     // Create queues
-    sp->queues = (struct mir_queue_t**)mir_malloc_int(sp->num_queues * sizeof(struct mir_queue_t*));
-    MIR_ASSERT(NULL != sp->queues);
+    sp->queues = mir_malloc_int(sp->num_queues * sizeof(struct mir_queue_t*));
+    MIR_CHECK_MEM(NULL != sp->queues);
 
     for (int i = 0; i < sp->num_queues; i++) {
         sp->queues[i] = mir_queue_create(sp->queue_capacity);
@@ -66,7 +63,7 @@ int push_central(struct mir_worker_t* worker, struct mir_task_t* task)
         if (runtime->enable_worker_stats == 1)
             worker->statistics->num_tasks_inlined++;
 #else
-        MIR_ABORT(MIR_ERROR_STR "Cannot enqueue task. Increase queue capacity using MIR_CONF.\n");
+        MIR_LOG_ERR("Cannot enqueue task. Increase queue capacity using MIR_CONF.");
 #endif
     }
     else {

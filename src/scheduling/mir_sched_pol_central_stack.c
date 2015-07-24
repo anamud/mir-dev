@@ -7,16 +7,11 @@
 #include "mir_memory.h"
 #include "mir_utils.h"
 #include "mir_defines.h"
-#ifdef MIR_MEM_POL_ENABLE
 #include "mir_mem_pol.h"
-#endif
 
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
-
-extern uint32_t g_num_tasks_waiting;
-extern struct mir_runtime_t* runtime;
 
 void create_central_stack()
 { /*{{{*/
@@ -24,8 +19,8 @@ void create_central_stack()
     MIR_ASSERT(NULL != sp);
 
     // Create queues
-    sp->queues = (struct mir_queue_t**)mir_malloc_int(sp->num_queues * sizeof(struct mir_stack_t*));
-    MIR_ASSERT(NULL != sp->queues);
+    sp->queues = mir_malloc_int(sp->num_queues * sizeof(struct mir_stack_t*));
+    MIR_CHECK_MEM(NULL != sp->queues);
 
     for (int i = 0; i < sp->num_queues; i++) {
         sp->queues[i] = (struct mir_queue_t*)mir_stack_create(sp->queue_capacity);
@@ -68,7 +63,7 @@ int push_central_stack(struct mir_worker_t* worker, struct mir_task_t* task)
         if (runtime->enable_worker_stats == 1)
             worker->statistics->num_tasks_inlined++;
 #else
-        MIR_ABORT(MIR_ERROR_STR "Cannot enque task. Increase queue capacity using MIR_CONF.\n");
+        MIR_LOG_ERR("Cannot enque task. Increase queue capacity using MIR_CONF.");
 #endif
     }
     else {

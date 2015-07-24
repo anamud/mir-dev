@@ -53,7 +53,7 @@ static void* mir_worker_loop(void* arg)
             mir_lock_set(&worker->sig_die);
             MIR_ASSERT(g_sig_worker_alive < runtime->num_workers);
             __sync_fetch_and_add(&g_sig_worker_alive, -1);
-            MIR_DEBUG(MIR_DEBUG_STR "Worker %d is dead!\n", worker->id);
+            MIR_DEBUG("Worker %d is dead.", worker->id);
             break;
         }
     }
@@ -84,13 +84,13 @@ void mir_worker_master_init(struct mir_worker_t* worker)
 
     // Create worker thread
     int rval = pthread_create(&(worker->pthread), &attr, mir_worker_loop, (void*)worker);
-    MIR_ASSERT(rval == 0);
+    MIR_ASSERT_STR(rval == 0, "Call to pthread_create failed.");
 } /*}}}*/
 
 struct mir_worker_t* mir_worker_get_context()
 { /*{{{*/
     struct mir_worker_t* worker = pthread_getspecific(runtime->worker_index);
-    MIR_ASSERT(worker != NULL);
+    MIR_ASSERT_STR(worker != NULL, "Call to pthread_getspecific failed.");
     return worker;
 } /*}}}*/
 
@@ -100,7 +100,7 @@ static int worker_get_cpu_affinity()
     CPU_ZERO(&set);
 
     int ret = sched_getaffinity(0, sizeof(cpu_set_t), &set);
-    MIR_ASSERT(ret != -1);
+    MIR_ASSERT_STR(ret != -1, "Call to sched_getaffinity failed.");
 
     int cpu = -1;
     for (int i = 0; i < CPU_SETSIZE; i++) {
@@ -109,7 +109,7 @@ static int worker_get_cpu_affinity()
             break;
         }
     }
-    MIR_ASSERT(cpu != -1);
+    MIR_ASSERT_STR(cpu != -1, "Worker not bound.");
 
     return cpu;
 } /*}}}*/
@@ -120,7 +120,7 @@ void mir_worker_local_init(struct mir_worker_t* worker)
 
     // Set TLS
     int rval = pthread_setspecific(runtime->worker_index, (void*)worker);
-    MIR_ASSERT(rval == 0);
+    MIR_ASSERT_STR(rval == 0, "Call to pthread_setspecific failed.");
 
     // Set the bias
     worker->bias = worker->id;
@@ -129,10 +129,10 @@ void mir_worker_local_init(struct mir_worker_t* worker)
     worker->backoff_us = MIR_WORKER_EXP_BOFF_RESET;
 
     // Bind the worker
-    MIR_DEBUG(MIR_DEBUG_STR "Binding worker %d to cpu %d\n", worker->id, worker->cpu_id);
+    MIR_DEBUG("Binding worker %d to cpu %d.", worker->id, worker->cpu_id);
 #ifdef __tile__
     int ret = tmc_cpus_set_my_cpu(worker->cpu_id);
-    MIR_ASSERT(ret == 0);
+    MIR_ASSERT_STR(ret == 0, "Call to tmc_cpus_set_my_cpu failed.");
 #else
     cpu_set_t cpu_set;
     CPU_ZERO(&cpu_set);
@@ -145,7 +145,7 @@ void mir_worker_local_init(struct mir_worker_t* worker)
     worker->statistics = NULL;
     if (runtime->enable_worker_stats == 1) {
         worker->statistics = mir_malloc_int(sizeof(struct mir_worker_statistics_t));
-        MIR_ASSERT(worker->statistics != NULL);
+        MIR_CHECK_MEM(worker->statistics != NULL);
         mir_worker_statistics_init(worker->statistics);
     }
 
@@ -170,7 +170,7 @@ void mir_worker_local_init(struct mir_worker_t* worker)
 
     // Create private task queue
     worker->private_queue = mir_queue_create(runtime->sched_pol->queue_capacity);
-    MIR_ASSERT(worker->private_queue != NULL);
+    MIR_CHECK_MEM(worker->private_queue != NULL);
 } /*}}}*/
 
 static inline void mir_worker_backoff_reset(struct mir_worker_t* worker)
@@ -192,7 +192,7 @@ void mir_worker_push(struct mir_worker_t* worker, struct mir_task_t* task)
     MIR_ASSERT(task != NULL);
 
     if (0 == mir_queue_push(worker->private_queue, (void*)task))
-        MIR_ABORT(MIR_ERROR_STR "Cannot enque task into private queue. Increase queue capacity using MIR_CONF.\n");
+        MIR_LOG_ERR("Cannot enque task into private queue. Increase queue capacity using MIR_CONF.");
 
     __sync_fetch_and_add(&g_num_tasks_waiting, 1);
 
@@ -205,6 +205,9 @@ void mir_worker_push(struct mir_worker_t* worker, struct mir_task_t* task)
     }
 } /*}}}*/
 
+// The function mir_worker_pop() retrieves a task
+// from the private task queue of the worker in FIFO order.
+
 static inline int mir_worker_pop(struct mir_worker_t* worker, struct mir_task_t** task)
 { /*{{{*/
     MIR_ASSERT(worker != NULL);
@@ -214,8 +217,8 @@ static inline int mir_worker_pop(struct mir_worker_t* worker, struct mir_task_t*
     struct mir_queue_t* queue = worker->private_queue;
     MIR_ASSERT(worker->private_queue != NULL);
     if (mir_queue_size(queue) > 0) {
+        // Ensure the queue pops in FIFO order.
         mir_queue_pop(queue, (void**)&(*task));
-        // There is no other popper. This must succeed.
         MIR_ASSERT(*task != NULL);
         __sync_fetch_and_sub(&g_num_tasks_waiting, 1);
         T_DBG("Dq", *task);
@@ -240,6 +243,7 @@ void mir_worker_do_work(struct mir_worker_t* worker, int backoff)
     // Overhead measurement
     uint64_t start_instant = mir_get_cycles();
 
+    // Look for work in private task queue.
     work_available = mir_worker_pop(worker, &task);
 
     // Overhead measurement
@@ -265,6 +269,7 @@ void mir_worker_do_work(struct mir_worker_t* worker, int backoff)
     // Overhead measurement
     start_instant = mir_get_cycles();
 
+    // Look for work in shared task queues.
     work_available = runtime->sched_pol->pop(&task);
 
     // Overhead measurement
@@ -308,7 +313,6 @@ void mir_worker_check_done()
         //mir_sleep_ms(300); // Butterfly effect!
         __sync_synchronize();
         // Check if worker is free and no tasks are queued up
-        //MIR_DEBUG(MIR_DEBUG_STR "Tasks waiting = %u Worker status %u \n", g_num_tasks_waiting, g_worker_status_board);
         if (g_num_tasks_waiting == 0 && g_worker_status_board == 0)
             if (g_num_tasks_waiting == 0 && g_worker_status_board == 0)
                 // Rechecking to ensure. Hope compiler does not optimize this away!
@@ -345,7 +349,7 @@ void mir_worker_statistics_init(struct mir_worker_statistics_t* statistics)
 #ifdef MIR_MEM_POL_ENABLE
     if (0 == strcmp(runtime->sched_pol->name, "numa") && runtime->arch->diameter > 0) {
         statistics->num_comm_tasks_stolen_by_diameter = mir_malloc_int(sizeof(uint32_t) * runtime->arch->diameter);
-        MIR_ASSERT(statistics->num_comm_tasks_stolen_by_diameter != NULL);
+        MIR_CHECK_MEM(statistics->num_comm_tasks_stolen_by_diameter != NULL);
         for (uint16_t i = 0; i < runtime->arch->diameter; i++)
             statistics->num_comm_tasks_stolen_by_diameter[i] = 0;
     }

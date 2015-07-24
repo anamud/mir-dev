@@ -29,6 +29,8 @@ void GOMP_barrier(void);
 
 void GOMP_critical_start(void);
 void GOMP_critical_end(void);
+void GOMP_atomic_start(void);
+void GOMP_atomic_end(void);
 
 /* loop.c */
 
@@ -66,6 +68,7 @@ bool GOMP_single_start(void);
 
 int omp_get_thread_num(void);
 int omp_get_num_threads(void);
+int omp_get_max_threads(void);
 
 END_C_DECLS
 #endif

@@ -7,16 +7,11 @@
 #include "mir_memory.h"
 #include "mir_utils.h"
 #include "mir_defines.h"
-#ifdef MIR_MEM_POL_ENABLE
 #include "mir_mem_pol.h"
-#endif
 
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
-
-extern uint32_t g_num_tasks_waiting;
-extern struct mir_runtime_t* runtime;
 
 void create_ws()
 { /*{{{*/
@@ -25,8 +20,8 @@ void create_ws()
 
     // Create worker private task queues
     sp->num_queues = runtime->num_workers;
-    sp->queues = (struct mir_queue_t**)mir_malloc_int(sp->num_queues * sizeof(struct mir_queue_t*));
-    MIR_ASSERT(NULL != sp->queues);
+    sp->queues = mir_malloc_int(sp->num_queues * sizeof(struct mir_queue_t*));
+    MIR_CHECK_MEM(NULL != sp->queues);
 
     for (int i = 0; i < sp->num_queues; i++) {
         sp->queues[i] = mir_queue_create(sp->queue_capacity);
@@ -69,7 +64,7 @@ int push_ws(struct mir_worker_t* worker, struct mir_task_t* task)
         if (runtime->enable_worker_stats == 1)
             worker->statistics->num_tasks_inlined++;
 #else
-        MIR_ABORT(MIR_ERROR_STR "Cannot enqueue task. Increase queue capacity using MIR_CONF.\n");
+        MIR_CHECK_MEM("Cannot enqueue task. Increase queue capacity using MIR_CONF.");
 #endif
     }
     else {
@@ -107,11 +102,6 @@ int pop_ws(struct mir_task_t** task)
 #ifdef MIR_MEM_POL_ENABLE
                 struct mir_mem_node_dist_t* dist = mir_task_get_mem_node_dist(*task, MIR_DATA_ACCESS_READ);
                 if (dist) {
-                    /*MIR_INFORM("Dist for task %" MIR_FORMSPEC_UL ": ", (*task)->id.uid);*/
-                    /*for(int i=0; i<runtime->arch->num_nodes; i++)*/
-                    /*MIR_INFORM("%lu ", dist->buf[i]);*/
-                    /*MIR_INFORM("\n");*/
-
                     (*task)->comm_cost = mir_mem_node_dist_get_comm_cost(dist, node);
                     mir_worker_statistics_update_comm_cost(worker->statistics, (*task)->comm_cost);
                 }
@@ -149,11 +139,6 @@ int pop_ws(struct mir_task_t** task)
 #ifdef MIR_MEM_POL_ENABLE
                     struct mir_mem_node_dist_t* dist = mir_task_get_mem_node_dist(*task, MIR_DATA_ACCESS_READ);
                     if (dist) {
-                        /*MIR_INFORM("Dist for task %" MIR_FORMSPEC_UL ": ", (*task)->id.uid);*/
-                        /*for(int i=0; i<runtime->arch->num_nodes; i++)*/
-                        /*MIR_INFORM("%lu ", dist->buf[i]);*/
-                        /*MIR_INFORM("\n");*/
-
                         (*task)->comm_cost = mir_mem_node_dist_get_comm_cost(dist, node);
                         mir_worker_statistics_update_comm_cost(worker->statistics, (*task)->comm_cost);
                     }

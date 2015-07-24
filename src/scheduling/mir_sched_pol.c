@@ -5,15 +5,6 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-extern struct mir_sched_pol_t policy_central;
-extern struct mir_sched_pol_t policy_ws;
-#ifdef MIR_MEM_POL_ENABLE
-extern struct mir_sched_pol_t policy_numa;
-#endif
-extern struct mir_sched_pol_t policy_central_stack;
-extern struct mir_sched_pol_t policy_ws_de;
-extern struct mir_sched_pol_t policy_ws_de_node;
-
 struct mir_sched_pol_t* mir_sched_pol_get_by_name(const char* name)
 { /*{{{*/
     if (0 == strcmp(name, "central"))

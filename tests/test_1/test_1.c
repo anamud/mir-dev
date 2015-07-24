@@ -20,6 +20,23 @@ START_TEST(omp_parallel_plain)
 }
 END_TEST
 
+START_TEST(omp_parallel_num_threads_shell)
+{
+    int a = 0;
+    int num_threads_reqd = 1;
+    setenv("OMP_NUM_THREADS", "1", 1);
+
+#pragma omp parallel shared(a)
+    {
+        __sync_fetch_and_add(&a, 1);
+    }
+
+    unsetenv("OMP_NUM_THREADS");
+
+    ck_assert_int_eq(a, num_threads_reqd);
+}
+END_TEST
+
 START_TEST(omp_parallel_num_threads_small)
 {
     int a = 0;
@@ -446,6 +463,78 @@ START_TEST(omp_critical)
 }
 END_TEST
 
+START_TEST(omp_critical_named)
+{
+    int a = 42;
+    int a_copy = a;
+
+#pragma omp parallel shared(a)
+    {
+#pragma omp single
+        {
+#pragma omp task shared(a)
+            {
+#pragma omp critical(a_crit_sec)
+                {
+                    a--;
+                    a++;
+                    a--;
+                    a++;
+                    a--;
+                    a--;
+                    a++;
+                    a++;
+                }
+            }
+#pragma omp task shared(a)
+            {
+#pragma omp critical(a_crit_sec)
+                {
+                    a++;
+                    a--;
+                    a++;
+                    a--;
+                    a++;
+                    a++;
+                    a--;
+                    a--;
+                }
+            }
+        }
+    }
+
+    /* Since the operations are symmetric and mirrored, the variable should have its original value*/
+    ck_assert_int_eq(a, a_copy);
+}
+END_TEST
+
+START_TEST(omp_atomic)
+{
+    int a = 42;
+    int a_copy = a;
+
+#pragma omp parallel shared(a)
+    {
+#pragma omp single
+        {
+#pragma omp task shared(a)
+            {
+#pragma omp atomic
+                    a++;
+            }
+#pragma omp task shared(a)
+            {
+#pragma omp atomic
+                    a--;
+            }
+        }
+    }
+
+    /* Since the operations are symmetric and mirrored, the variable should have its original value*/
+    ck_assert_int_eq(a, a_copy);
+}
+END_TEST
+
 Suite* test_suite(void)
 {
     Suite* s;
@@ -455,6 +544,7 @@ Suite* test_suite(void)
     TCase* tc_omp_parallel;
     tc_omp_parallel = tcase_create("Omp_parallel");
     tcase_add_test(tc_omp_parallel, omp_parallel_plain);
+    tcase_add_test(tc_omp_parallel, omp_parallel_num_threads_shell);
     tcase_add_test(tc_omp_parallel, omp_parallel_num_threads_small);
     tcase_add_test(tc_omp_parallel, omp_parallel_single);
     /* tcase_add_test(tc_omp_parallel, omp_nested_parallel); */
@@ -484,6 +574,8 @@ Suite* test_suite(void)
     TCase* tc_omp_critical;
     tc_omp_critical = tcase_create("Omp_critical");
     tcase_add_test(tc_omp_critical, omp_critical);
+    tcase_add_test(tc_omp_critical, omp_critical_named);
+    tcase_add_test(tc_omp_critical, omp_atomic);
     suite_add_tcase(s, tc_omp_critical);
 
     return s;

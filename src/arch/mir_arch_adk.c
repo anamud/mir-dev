@@ -34,7 +34,7 @@ uint16_t node_of_adk(uint16_t cpuid)
         return 0;
         break;
     default:
-        MIR_ABORT(MIR_ERROR_STR "Node of CPU not found!\n");
+        MIR_LOG_ERR("Node of CPU %d not found.", cpuid);
         break;
     }
     return 0;
@@ -51,7 +51,7 @@ void cpus_of_adk(struct mir_sbuf_t* cpuids, uint16_t nodeid)
             cpuids->buf[i] = basecpu + i;
         break;
     default:
-        MIR_ABORT(MIR_ERROR_STR "CPUs of node not found!\n");
+        MIR_LOG_ERR("CPUs of node %d not found.", nodeid);
         break;
     }
 } /*}}}*/

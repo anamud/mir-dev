@@ -33,11 +33,6 @@
 #define MIR_LONG_NAME_LEN 256
 #define MIR_SBUF_SIZE 64
 
-// Utils
-#define MIR_ERROR_STR "MIR_FATAL: "
-#define MIR_DEBUG_STR "MIR_DBG: "
-#define MIR_INFORM_STR "MIR_INFO: "
-
 // Statistics
 #define MIR_WORKER_STATS_FILE_NAME "mir-worker-stats"
 #define MIR_TASK_STATS_FILE_NAME "mir-task-stats"

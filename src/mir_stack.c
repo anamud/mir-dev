@@ -7,11 +7,11 @@
 struct mir_stack_t* mir_stack_create(uint32_t capacity)
 { /*{{{*/
     struct mir_stack_t* stack = mir_cmalloc_int(sizeof(struct mir_stack_t));
-    MIR_ASSERT(stack != NULL);
+    MIR_CHECK_MEM(stack != NULL);
 
     stack->buffer = NULL;
     stack->buffer = mir_cmalloc_int(capacity * sizeof(void*));
-    MIR_ASSERT(stack->buffer != NULL);
+    MIR_CHECK_MEM(stack->buffer != NULL);
 
     stack->capacity = capacity;
     stack->head = 0;

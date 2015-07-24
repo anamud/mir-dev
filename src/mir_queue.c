@@ -9,11 +9,11 @@ struct mir_queue_t* mir_queue_create(uint32_t capacity)
     MIR_ASSERT(capacity > 0);
 
     struct mir_queue_t* queue = mir_cmalloc_int(sizeof(struct mir_queue_t));
-    MIR_ASSERT(queue != NULL);
+    MIR_CHECK_MEM(queue != NULL);
 
     queue->buffer = NULL;
     queue->buffer = mir_cmalloc_int(capacity * sizeof(void*));
-    MIR_ASSERT(queue->buffer != NULL);
+    MIR_CHECK_MEM(queue->buffer != NULL);
 
     queue->capacity = capacity;
     queue->size = 0;

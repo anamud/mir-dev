@@ -1,0 +1,5 @@
+Test 1 tests these OpenMP constructs:
+- parallel.
+- for.
+- critical.
+- atomic.

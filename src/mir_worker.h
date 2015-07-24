@@ -43,7 +43,9 @@ struct mir_worker_t {
     struct mir_task_t* current_task;
     struct mir_worker_statistics_t* statistics;
     struct mir_recorder_t* recorder;
-    //For dedicated tasks
+    // The private task queue holds worker-specific tasks
+    // such as OMP for loop and parallel block tasks.
+    // It is crucial that tasks are retreived in FIFO order from the private task queue.
     struct mir_queue_t* private_queue;
     // For task statistics
     struct mir_task_list_t* task_list;

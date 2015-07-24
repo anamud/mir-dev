@@ -52,6 +52,7 @@ env['CCFLAGS'] = Split("""
 -Wno-maybe-uninitialized
 -fopenmp
 -DLINUX
+-D_XOPEN_SOURCE=600
 """)
 env['CCFLAGS'] += ['-I' + MIR_ROOT+'/src']
 env['LINKFLAGS'] = ['-pthread']

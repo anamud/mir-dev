@@ -7,18 +7,13 @@
 #include "mir_memory.h"
 #include "mir_utils.h"
 #include "mir_defines.h"
-#ifdef MIR_MEM_POL_ENABLE
 #include "mir_mem_pol.h"
-#endif
 
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 
 #ifdef MIR_MEM_POL_ENABLE
-extern uint32_t g_num_tasks_waiting;
-extern struct mir_runtime_t* runtime;
-
 size_t g_numa_schedule_footprint_config = 0;
 
 void create_numa()
@@ -28,8 +23,8 @@ void create_numa()
 
     // Create node private task queues
     sp->num_queues = runtime->arch->num_nodes;
-    sp->queues = (struct mir_queue_t**)mir_malloc_int(sp->num_queues * sizeof(struct mir_queue_t*));
-    MIR_ASSERT(NULL != sp->queues);
+    sp->queues = mir_malloc_int(sp->num_queues * sizeof(struct mir_queue_t*));
+    MIR_CHECK_MEM(NULL != sp->queues);
 
     for (int i = 0; i < sp->num_queues; i++) {
         sp->queues[i] = mir_queue_create(sp->queue_capacity);
@@ -37,8 +32,8 @@ void create_numa()
     }
 
     // Create node private alternate task queues
-    sp->alt_queues = (struct mir_queue_t**)mir_malloc_int(sp->num_queues * sizeof(struct mir_queue_t*));
-    MIR_ASSERT(NULL != sp->alt_queues);
+    sp->alt_queues = mir_malloc_int(sp->num_queues * sizeof(struct mir_queue_t*));
+    MIR_CHECK_MEM(NULL != sp->alt_queues);
 
     for (int i = 0; i < sp->num_queues; i++) {
         sp->alt_queues[i] = mir_queue_create(sp->queue_capacity);
@@ -84,7 +79,7 @@ static inline int is_data_dist_significant(struct mir_mem_node_dist_t* dist)
     // Get dist stats
     struct mir_mem_node_dist_stat_t stat;
     mir_mem_node_dist_get_stat(&stat, dist);
-    MIR_DEBUG("Dist stats: %lu %lu %lu %.3f %.3f [%lu, 0.0]\n", stat.sum, stat.min, stat.max, stat.mean, stat.sd, low_limit);
+    //MIR_DEBUG("Dist stats: %lu %lu %lu %.3f %.3f [%lu, 0.0].", stat.sum, stat.min, stat.max, stat.mean, stat.sd, low_limit);
 
     // Check if data from all node is large enough
     if (stat.sum < low_limit)
@@ -112,18 +107,13 @@ int push_numa(struct mir_worker_t* this_worker, struct mir_task_t* task)
     //struct mir_mem_node_dist_t* dist = mir_task_get_mem_node_dist(task, MIR_DATA_ACCESS_WRITE);
     if (dist) {
         if (is_data_dist_significant(dist) == 0) {
-            /*MIR_INFORM("Task %" MIR_FORMSPEC_UL " ignored!\n", task->id.uid);*/
+            /*MIR_LOG_INFO("Task %" MIR_FORMSPEC_UL " ignored.", task->id.uid);*/
             least_cost_worker = this_worker;
             push_to_alt_queue = 1;
             if (runtime->enable_worker_stats == 1)
                 task->comm_cost = mir_mem_node_dist_get_comm_cost(dist, runtime->arch->node_of(least_cost_worker->cpu_id));
         }
         else {
-            /*MIR_INFORM("Dist for task %" MIR_FORMSPEC_UL ": ", task->id.uid);*/
-            /*for(int i=0; i<runtime->arch->num_nodes; i++)*/
-            /*MIR_INFORM("%lu ", dist->buf[i]);*/
-            /*MIR_INFORM("\n");*/
-
             uint16_t prev_node = runtime->arch->num_nodes + 1;
             unsigned long least_comm_cost = -1;
             int bias = this_worker->bias;
@@ -147,7 +137,7 @@ int push_numa(struct mir_worker_t* this_worker, struct mir_task_t* task)
             if (runtime->enable_worker_stats == 1)
                 task->comm_cost = least_comm_cost;
 
-            /*MIR_INFORM("Task %" MIR_FORMSPEC_UL " scheduled on node %d!\n", task->id.uid, runtime->arch->node_of(least_cost_worker->cpu_id));*/
+            /*MIR_LOG_INFO("Task %" MIR_FORMSPEC_UL " scheduled on node %d.", task->id.uid, runtime->arch->node_of(least_cost_worker->cpu_id));*/
         }
     }
     else {
@@ -170,11 +160,11 @@ int push_numa(struct mir_worker_t* this_worker, struct mir_task_t* task)
         if (runtime->enable_worker_stats == 1)
             this_worker->statistics->num_tasks_inlined++;
 #else
-        MIR_ABORT(MIR_ERROR_STR "Cannot enque task. Increase queue capacity using MIR_CONF.\n");
+        MIR_LOG_ERR("Cannot enque task. Increase queue capacity using MIR_CONF.");
 #endif
     }
     else {
-        //MIR_INFORM(MIR_INFORM_STR "Task scheduled on worker %d\n", least_cost_worker->id);
+        //MIR_LOG_INFO("Task scheduled on worker %d.", least_cost_worker->id);
         __sync_fetch_and_add(&g_num_tasks_waiting, 1);
 
         // Update stats

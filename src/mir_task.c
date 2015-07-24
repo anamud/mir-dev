@@ -75,7 +75,7 @@ struct mir_task_t* mir_task_create_common(mir_tfunc_t tfunc, void* data, size_t 
 #else
     task = mir_malloc_int(sizeof(struct mir_task_t));
 #endif
-    MIR_ASSERT(task != NULL);
+    MIR_CHECK_MEM(task != NULL);
 
     // Task function and argument data
     task->func = tfunc;
@@ -101,7 +101,7 @@ struct mir_task_t* mir_task_create_common(mir_tfunc_t tfunc, void* data, size_t 
     MIR_ASSERT(strlen(MIR_TASK_DEFAULT_NAME) < MIR_SHORT_NAME_LEN);
     strcpy(task->name, MIR_TASK_DEFAULT_NAME);
     if (name) { /*{{{*/
-        MIR_ASSERT(strlen(name) < MIR_SHORT_NAME_LEN);
+        MIR_ASSERT_STR(strlen(name) < MIR_SHORT_NAME_LEN, "Task name cannot be larger than %d characters.", MIR_SHORT_NAME_LEN);
         strcpy(task->name, name);
     } /*}}}*/
 
@@ -122,7 +122,7 @@ struct mir_task_t* mir_task_create_common(mir_tfunc_t tfunc, void* data, size_t 
 #else
         task->data_footprints = mir_malloc_int(num_data_footprints * sizeof(struct mir_data_footprint_t));
 #endif
-        MIR_ASSERT(task->data_footprints != NULL);
+        MIR_CHECK_MEM(task->data_footprints != NULL);
 
         for (int i = 0; i < num_data_footprints; i++)
             data_footprint_copy(&task->data_footprints[i], &data_footprints[i]);
@@ -244,7 +244,7 @@ void mir_task_create_on_worker(mir_tfunc_t tfunc, void* data, size_t data_size, 
 
     // Create task
     struct mir_task_t* task = mir_task_create_common(tfunc, data, data_size, num_data_footprints, data_footprints, name, myteam, loopdes);
-    MIR_ASSERT(task != NULL);
+    MIR_CHECK_MEM(task != NULL);
 
     // Schedule task
     mir_task_schedule_on_worker(task, workerid);
@@ -376,7 +376,7 @@ void mir_task_execute(struct mir_task_t* task)
     mir_task_execute_epilog(task);
 
     // Debugging
-    //MIR_INFORM(MIR_INFORM_STR "Task %" MIR_FORMSPEC_UL " executed on worker %d\n", task->id.uid, worker->id);
+    //MIR_LOG_INFO("Task %" MIR_FORMSPEC_UL " executed on worker %d\n", task->id.uid, worker->id);
 } /*}}}*/
 
 #ifdef MIR_MEM_POL_ENABLE
@@ -393,16 +393,16 @@ static inline void mir_data_footprint_get_mem_node_dist(struct mir_mem_node_dist
             mir_mem_get_mem_node_dist(dist, base,
                 (footprint->end - footprint->start + 1) * footprint->type,
                 footprint->part_of);
-            /*MIR_INFORM("Footprint composed of these addresses:\n");*/
-            /*MIR_INFORM("%p[%lu-%lu]\n", base, footprint->start, footprint->end);*/
+            /*fprintf(stderr, "Footprint composed of these addresses:\n");*/
+            /*fprintf(stderr, "%p[%lu-%lu]\n", base, footprint->start, footprint->end);*/
         }
     }
     else {
         mir_mem_get_mem_node_dist(dist, footprint->base,
             (footprint->end - footprint->start + 1) * footprint->type,
             footprint->part_of);
-        /*MIR_INFORM("Footprint composed of these addresses:\n");*/
-        /*MIR_INFORM("%p[%lu-%lu]\n", footprint->base, footprint->start, footprint->end);*/
+        /*fprintf(stderr, "Footprint composed of these addresses:\n");*/
+        /*fprintf(stderr, "%p[%lu-%lu]\n", base, footprint->start, footprint->end);*/
     }
 } /*}}}*/
 
@@ -421,12 +421,6 @@ struct mir_mem_node_dist_t* mir_task_get_mem_node_dist(struct mir_task_t* task, 
         for (int i = 0; i < task->num_data_footprints; i++)
             if (task->data_footprints[i].data_access == access)
                 mir_data_footprint_get_mem_node_dist(dist, &task->data_footprints[i]);
-
-        // Print dist
-        /*MIR_INFORM("Dist for task %" MIR_FORMSPEC_UL ": ", task->id.uid);*/
-        /*for(int i=0; i<runtime->arch->num_nodes; i++)*/
-        /*MIR_INFORM("%lu ", dist->buf[i]);*/
-        /*MIR_INFORM("\n");*/
     }
 
     return task->dist_by_access_type[access];
@@ -444,7 +438,7 @@ void mir_task_wait_int(struct mir_twc_t* twc, int newval)
     // This upsets finding next forks in the task graph plotter
     if (!(twc->count > 0)) {
         // TODO: Report this!
-        // MIR_ASSERT(twc->count > 0);
+        // MIR_ASSERT_STR(twc->count > 0, "An empty task synchronization occured. Such events upset task graph profiling.");
         goto exit;
     }
 
@@ -460,7 +454,7 @@ void mir_task_wait_int(struct mir_twc_t* twc, int newval)
     if (worker->current_task)
         twc->pass_time->time = elapsed_execution_time(worker->current_task);
     struct mir_time_list_t* tl = mir_malloc_int(sizeof(struct mir_time_list_t));
-    MIR_ASSERT(tl != NULL);
+    MIR_CHECK_MEM(tl != NULL);
     tl->time = 0; // 0 => Not passed.
     tl->next = twc->pass_time;
     twc->pass_time = tl;

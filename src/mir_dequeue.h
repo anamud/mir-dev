@@ -51,7 +51,7 @@ DAMAGE.
 BEGIN_C_DECLS
 
 #define EXTERN_INLINE static inline
-#define barf MIR_ABORT
+#define barf MIR_LOG_ERR
 #define ASSERT MIR_ASSERT
 #define stgMallocBytes(s, m) mir_malloc_int((s))
 #define stgFree(p) mir_free_int((p), 0)

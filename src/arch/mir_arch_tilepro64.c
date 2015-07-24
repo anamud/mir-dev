@@ -20,7 +20,7 @@ uint16_t sys_cpu_of_tilepro64(uint16_t cpuid)
 uint16_t node_of_tilepro64(uint16_t cpuid)
 { /*{{{*/
     if (cpuid > 63)
-        MIR_ABORT(MIR_ERROR_STR "Node of CPU not found!\n");
+        MIR_LOG_ERR("Node of CPU %d not found.", cpuid);
 
     return cpuid;
 } /*}}}*/
@@ -29,7 +29,7 @@ void cpus_of_tilepro64(struct mir_sbuf_t* cpuids, uint16_t nodeid)
 { /*{{{*/
     MIR_ASSERT(cpuids != NULL);
     if (nodeid > 63)
-        MIR_ABORT(MIR_ERROR_STR "CPU of node not found!\n");
+        MIR_LOG_ERR("CPU of node %d not found.", nodeid);
 
     cpuids->size = 1;
     cpuids->buf[0] = nodeid;
