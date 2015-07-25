@@ -98,6 +98,7 @@ static bool GOMP_loop_dynamic_next_int(long* pstart, long* pend)
     MIR_ASSERT(worker != NULL);
     MIR_ASSERT(worker->current_task != NULL);
     MIR_ASSERT(worker->current_task->loop != NULL);
+    MIR_ASSERT(worker->current_task->loop->init == 1);
 
     struct mir_loop_des_t* loop = worker->current_task->loop;
 
@@ -134,6 +135,7 @@ bool GOMP_loop_dynamic_next(long* istart, long* iend)
     MIR_ASSERT(worker != NULL);
     MIR_ASSERT(worker->current_task != NULL);
     MIR_ASSERT(worker->current_task->loop != NULL);
+    MIR_ASSERT(worker->current_task->loop->init == 1);
 
     struct mir_loop_des_t* loop = worker->current_task->loop;
 
@@ -240,6 +242,7 @@ static int GOMP_loop_static_next_int(long* pstart, long* pend)
     MIR_ASSERT(worker != NULL);
     MIR_ASSERT(worker->current_task != NULL);
     MIR_ASSERT(worker->current_task->loop != NULL);
+    MIR_ASSERT(worker->current_task->loop->init == 1);
 
     struct mir_loop_des_t* loop = worker->current_task->loop;
 
