@@ -146,11 +146,6 @@ bool GOMP_loop_dynamic_next(long* istart, long* iend)
     return ret;
 } /*}}}*/
 
-void GOMP_parallel_loop_dynamic_start (void (*fn) (void *), void *data, unsigned num_threads, long start, long end, long incr, long chunk_size)
-{ /*{{{*/
-    GOMP_parallel_loop_dynamic(fn, data, num_threads, start, end, incr, chunk_size, 0);
-} /*}}}*/
-
 bool GOMP_loop_dynamic_start (long start, long end, long incr, long chunk_size, long *istart, long *iend)
 { /*{{{*/
     struct mir_worker_t* worker = mir_worker_get_context();
@@ -168,18 +163,10 @@ bool GOMP_loop_dynamic_start (long start, long end, long incr, long chunk_size, 
     }
     mir_lock_unset(&(loop->lock));
 
-    // TODO: This task is called GOMP_parallel_task.
-    // Assign a special name to this task since it also executes a parallel for loop.
-
     return GOMP_loop_dynamic_next(istart, iend);
 } /*}}}*/
 
-// Tasks spawned in GOMP_parallel_loop_dynamic have a single shared
-// loop iteration allocator which assigns non-overlapping loop iterations
-// on demand when GOMP_loop_dynamic_next_int is called. This is
-// different from GOMP_parallel_loop_static.
-
-void GOMP_parallel_loop_dynamic(void (*fn)(void*), void* data, unsigned num_threads, long start, long end, long incr, long chunk_size, unsigned flags)
+void GOMP_parallel_loop_dynamic_start (void (*fn) (void *), void *data, unsigned num_threads, long start, long end, long incr, long chunk_size)
 { /*{{{*/
     // Create thread team.
     mir_create_int(num_threads);
@@ -191,7 +178,7 @@ void GOMP_parallel_loop_dynamic(void (*fn)(void*), void* data, unsigned num_thre
     struct mir_loop_des_t* loop;
     loop = mir_new_omp_loop_desc_init(start, end, incr, chunk_size);
 
-    // Create loop task on all workers
+    // Create loop task on all workers.
     MIR_RECORDER_STATE_BEGIN(MIR_STATE_TCREATE);
 
     // Number of threads is either specified by the program or the number of threads created by the runtime system.
@@ -202,36 +189,38 @@ void GOMP_parallel_loop_dynamic(void (*fn)(void*), void* data, unsigned num_thre
     struct mir_omp_team_t* team = mir_new_omp_team(prevteam, num_threads);
 
     for (int i = 0; i < num_threads; i++) {
-#ifdef GCC_PRE_4_9
         if(i == worker->id)
             continue;
-#endif
 
-        // Create task
+        // Create and schedule loop tasks on all workers except current.
         mir_task_create_on_worker((mir_tfunc_t) fn, data, 0, 0, NULL, "GOMP_for_dynamic_task", team, loop, i);
     }
 
     MIR_RECORDER_STATE_END(NULL, 0);
 
-#ifdef GCC_PRE_4_9
-    // Create task
+    // Create fake loop task on current worker.
     struct mir_task_t* task = mir_task_create_common((mir_tfunc_t) fn, data, 0, 0, NULL, "GOMP_for_dynamic_task", team, loop);
     MIR_CHECK_MEM(task != NULL);
 
-    // Start profiling and book-keeping for parallel task
+    // Start profiling and book-keeping for fake task.
     mir_task_execute_prolog(task);
-#endif
+} /*}}}*/
 
-    // Wait for workers to finish
-    mir_task_wait();
+// Tasks spawned in GOMP_parallel_loop_dynamic have a single shared
+// loop iteration allocator which assigns non-overlapping loop iterations
+// on demand when GOMP_loop_dynamic_next_int is called. This is
+// different from GOMP_parallel_loop_static.
 
-#ifndef GCC_PRE_4_9
-    // FIXME: Triggers an assert for calling mir_soft_destroy() too many times
-    //        with gcc < 4.9.
+void GOMP_parallel_loop_dynamic(void (*fn)(void*), void* data, unsigned num_threads, long start, long end, long incr, long chunk_size, unsigned flags)
+{ /*{{{*/
+    // Schedule for loop tasks on all workers except current.
+    GOMP_parallel_loop_dynamic_start(fn, data, num_threads, start, end, incr, chunk_size);
 
-    // Corresponding call to destroy runtime.
-    mir_soft_destroy();
-#endif
+    // Execute task.
+    fn(data);
+
+    // Wait for for loop tasks to finish.
+    GOMP_parallel_end();
 } /*}}}*/
 
 static int GOMP_loop_static_next_int(long* pstart, long* pend)
