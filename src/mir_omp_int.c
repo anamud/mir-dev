@@ -176,7 +176,7 @@ void GOMP_parallel_loop_dynamic_start (void (*fn) (void *), void *data, unsigned
 
     // Keep loop description in a common structure.
     struct mir_loop_des_t* loop = mir_new_omp_loop_desc();
-    mir_omp_loop_desc_init(loop, start, end, incr, chunk_size);
+    mir_omp_loop_desc_init(loop, start, end, incr, chunk_size * incr);
 
     // Create loop task on all workers.
     MIR_RECORDER_STATE_BEGIN(MIR_STATE_TCREATE);
