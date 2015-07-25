@@ -159,7 +159,7 @@ bool GOMP_loop_dynamic_start (long start, long end, long incr, long chunk_size, 
     mir_lock_set(&(loop->lock));
     if(loop->init == 0)
     {
-        mir_populate_loop_desc(loop, start, end, incr, chunk_size * incr);
+        mir_omp_loop_desc_init(loop, start, end, incr, chunk_size * incr);
     }
     mir_lock_unset(&(loop->lock));
 
@@ -175,8 +175,8 @@ void GOMP_parallel_loop_dynamic_start (void (*fn) (void *), void *data, unsigned
     MIR_ASSERT_STR(num_threads <= runtime->num_workers, "Number of OMP threads requested is greater than number of MIR workers.");
 
     // Keep loop description in a common structure.
-    struct mir_loop_des_t* loop;
-    loop = mir_new_omp_loop_desc_init(start, end, incr, chunk_size);
+    struct mir_loop_des_t* loop = mir_new_omp_loop_desc();
+    mir_omp_loop_desc_init(loop, start, end, incr, chunk_size);
 
     // Create loop task on all workers.
     MIR_RECORDER_STATE_BEGIN(MIR_STATE_TCREATE);
@@ -384,8 +384,8 @@ void GOMP_parallel_loop_static(void (*fn)(void*), void* data, unsigned num_threa
 #endif
 
         // Set loop parameters.
-        struct mir_loop_des_t* loop;
-        loop = mir_new_omp_loop_desc_init(start, end, incr, chunk_size*incr);
+        struct mir_loop_des_t* loop = mir_new_omp_loop_desc();
+        mir_omp_loop_desc_init(loop, start, end, incr, chunk_size*incr);
 
         // Create task
         mir_task_create_on_worker((mir_tfunc_t) fn, data, 0, 0, NULL, "GOMP_for_static_task", team, loop, i);
@@ -395,8 +395,8 @@ void GOMP_parallel_loop_static(void (*fn)(void*), void* data, unsigned num_threa
 
 #ifdef GCC_PRE_4_9
     // Set loop parameters.
-    struct mir_loop_des_t* loop;
-    loop = mir_new_omp_loop_desc_init(start, end, incr, chunk_size*incr);
+    struct mir_loop_des_t* loop = mir_new_omp_loop_desc();
+    mir_omp_loop_desc_init(loop, start, end, incr, chunk_size*incr);
 
     // Create task
     struct mir_task_t* task = mir_task_create_common((mir_tfunc_t) fn, data, 0, 0, NULL, "GOMP_for_static_task", team, loop);
