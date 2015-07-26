@@ -9,7 +9,6 @@ echo "
 #define MIR_LIB_INT_H
 
 #include \"mir_types.h\"
-#include \"mir_omp_int.h\"
 " > $intf
 
 find . -type f \( -name "*.h" ! -name "mir_lib_int.h" \) -exec sed -n "/\/\*LIBINT_INC_BEGIN\*\//,/\/\*LIBINT_INC_END\*\//p" {} \; >> $intf

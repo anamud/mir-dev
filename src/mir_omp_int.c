@@ -709,3 +709,188 @@ int omp_get_max_threads(void)
 { /*{{{*/
     return runtime == NULL ?  mir_arch_create_by_query()->num_cores : runtime->num_workers;
 } /*}}}*/
+
+void omp_set_num_threads (int n)
+{/*{{{*/
+    MIR_LOG_ERR("omp_set_num_threads() is not supported.");
+}/*}}}*/
+
+void omp_set_dynamic(int val)
+{/*{{{*/
+    MIR_LOG_ERR("omp_set_dynamic() is not supported.");
+}/*}}}*/
+
+int omp_get_dynamic(void)
+{/*{{{*/
+    MIR_LOG_ERR("omp_get_dynamic() is not supported.");
+}/*}}}*/
+
+void omp_set_nested(int val)
+{/*{{{*/
+    MIR_LOG_ERR("omp_set_nested() is not supported.");
+}/*}}}*/
+
+int omp_get_nested (void)
+{/*{{{*/
+    MIR_LOG_ERR("omp_get_nested() is not supported.");
+}/*}}}*/
+
+void omp_set_schedule (omp_sched_t kind, int modifier)
+{/*{{{*/
+    MIR_LOG_ERR("omp_set_schedule() is not supported.");
+}/*}}}*/
+
+void omp_get_schedule (omp_sched_t *kind, int *modifier)
+{/*{{{*/
+    MIR_LOG_ERR("omp_get_schedule() is not supported.");
+}/*}}}*/
+
+int omp_get_thread_limit (void)
+{/*{{{*/
+    MIR_LOG_ERR("omp_get_thread_limit() is not supported.");
+}/*}}}*/
+
+void omp_set_max_active_levels (int max_levels)
+{/*{{{*/
+    MIR_LOG_ERR("omp_set_max_active_levels() is not supported.");
+}/*}}}*/
+
+int omp_get_max_active_levels (void)
+{/*{{{*/
+    MIR_LOG_ERR("omp_get_max_active_levels() is not supported.");
+}/*}}}*/
+
+int omp_get_cancellation (void)
+{/*{{{*/
+    MIR_LOG_ERR("omp_get_cancellation() is not supported.");
+}/*}}}*/
+
+omp_proc_bind_t omp_get_proc_bind (void)
+{/*{{{*/
+    MIR_LOG_ERR("omp_get_proc_bind() is not supported.");
+}/*}}}*/
+
+void omp_set_default_device (int device_num)
+{/*{{{*/
+    MIR_LOG_ERR("omp_set_default_device() is not supported.");
+}/*}}}*/
+
+int omp_get_default_device (void)
+{/*{{{*/
+    MIR_LOG_ERR("omp_get_default_device() is not supported.");
+}/*}}}*/
+
+int omp_get_num_devices (void)
+{/*{{{*/
+    MIR_LOG_ERR("omp_get_num_devices() is not supported.");
+}/*}}}*/
+
+int omp_get_num_teams (void)
+{/*{{{*/
+    MIR_LOG_ERR("omp_get_num_teams() is not supported.");
+}/*}}}*/
+
+int omp_get_team_num (void)
+{/*{{{*/
+    MIR_LOG_ERR("omp_get_team_num() is not supported.");
+}/*}}}*/
+
+int omp_is_initial_device (void)
+{/*{{{*/
+    MIR_LOG_ERR("omp_is_initial_device() is not supported.");
+}/*}}}*/
+
+int omp_get_num_procs (void)
+{/*{{{*/
+    MIR_LOG_ERR("omp_get_num_procs() is not supported.");
+}/*}}}*/
+
+int omp_in_parallel (void)
+{/*{{{*/
+    MIR_LOG_ERR("omp_in_parallel() is not supported.");
+}/*}}}*/
+
+void omp_init_lock (omp_lock_t * lock)
+{/*{{{*/
+    MIR_LOG_ERR("omp_init_lock() is not supported.");
+}/*}}}*/
+
+void omp_destroy_lock (omp_lock_t * lock)
+{/*{{{*/
+    MIR_LOG_ERR("omp_destroy_lock() is not supported.");
+}/*}}}*/
+
+void omp_set_lock (omp_lock_t * lock)
+{/*{{{*/
+    MIR_LOG_ERR("omp_set_lock() is not supported.");
+}/*}}}*/
+
+void omp_unset_lock (omp_lock_t * lock)
+{/*{{{*/
+    MIR_LOG_ERR("omp_unset_lock() is not supported.");
+}/*}}}*/
+
+int omp_test_lock (omp_lock_t * lock)
+{/*{{{*/
+    MIR_LOG_ERR("omp_test_lock() is not supported.");
+}/*}}}*/
+
+void omp_init_nest_lock (omp_nest_lock_t * lock)
+{/*{{{*/
+    MIR_LOG_ERR("omp_init_nest_lock() is not supported.");
+}/*}}}*/
+
+void omp_destroy_nest_lock (omp_nest_lock_t * lock)
+{/*{{{*/
+    MIR_LOG_ERR("omp_destroy_nest_lock() is not supported.");
+}/*}}}*/
+
+void omp_set_nest_lock (omp_nest_lock_t * lock)
+{/*{{{*/
+    MIR_LOG_ERR("omp_set_nest_lock() is not supported.");
+}/*}}}*/
+
+void omp_unset_nest_lock (omp_nest_lock_t * lock)
+{/*{{{*/
+    MIR_LOG_ERR("omp_unset_nest_lock() is not supported.");
+}/*}}}*/
+
+int omp_test_nest_lock (omp_nest_lock_t * lock)
+{/*{{{*/
+    MIR_LOG_ERR("omp_test_nest_lock() is not supported.");
+}/*}}}*/
+
+double omp_get_wtime (void)
+{/*{{{*/
+    MIR_LOG_ERR("omp_get_wtime() is not supported.");
+}/*}}}*/
+
+double omp_get_wtick (void)
+{/*{{{*/
+    MIR_LOG_ERR("omp_get_wtick() is not supported.");
+}/*}}}*/
+
+int omp_get_level (void)
+{/*{{{*/
+    MIR_LOG_ERR("omp_get_level() is not supported.");
+}/*}}}*/
+
+int omp_get_ancestor_thread_num (int level)
+{/*{{{*/
+    MIR_LOG_ERR("omp_get_ancestor_thread_num() is not supported.");
+}/*}}}*/
+
+int omp_get_team_size (int level)
+{/*{{{*/
+    MIR_LOG_ERR("omp_get_team_size() is not supported.");
+}/*}}}*/
+
+int omp_get_active_level (void)
+{/*{{{*/
+    MIR_LOG_ERR("omp_get_active_level() is not supported.");
+}/*}}}*/
+
+int omp_in_final (void)
+{/*{{{*/
+    MIR_LOG_ERR("omp_in_final() is not supported.");
+}/*}}}*/
