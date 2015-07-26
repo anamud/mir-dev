@@ -11,5 +11,7 @@ struct mir_omp_team_t* mir_new_omp_team(struct mir_omp_team_t* pteam, unsigned n
     team->num_threads = nthreads;
     mir_barrier_init(&team->barrier, team->num_threads);
     team->barrier_impending_count = 0;
+    mir_lock_create(&(team->loop_lock));
+    team->loop = NULL;
     return team;
 } /*}}}*/

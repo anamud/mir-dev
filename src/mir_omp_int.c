@@ -151,17 +151,22 @@ bool GOMP_loop_dynamic_start (long start, long end, long incr, long chunk_size, 
     struct mir_worker_t* worker = mir_worker_get_context();
     MIR_ASSERT(worker != NULL);
     MIR_ASSERT(worker->current_task != NULL);
-    MIR_ASSERT(worker->current_task->loop != NULL);
+    MIR_ASSERT_STR(worker->current_task->loop == NULL, "Nested parallel for loops are not supported.");
 
-    struct mir_loop_des_t* loop = worker->current_task->loop;
-
-    // Set loop parameters if this is the frist thread encountering the loop task.
-    mir_lock_set(&(loop->lock));
-    if(loop->init == 0)
+    // Create common loop description within team.
+    struct mir_omp_team_t* team = worker->current_task->team;
+    MIR_ASSERT(team != NULL);
+    mir_lock_set(&team->loop_lock);
+    if(team->loop == NULL)
     {
+        struct mir_loop_des_t* loop = mir_new_omp_loop_desc();
         mir_omp_loop_desc_init(loop, start, end, incr, chunk_size * incr);
+        team->loop = loop;
     }
-    mir_lock_unset(&(loop->lock));
+    mir_lock_unset(&team->loop_lock);
+
+    // Associate task with loop.
+    worker->current_task->loop = team->loop;
 
     return GOMP_loop_dynamic_next(istart, iend);
 } /*}}}*/
@@ -328,15 +333,12 @@ bool GOMP_loop_static_start (long start, long end, long incr, long chunk_size, l
     struct mir_worker_t* worker = mir_worker_get_context();
     MIR_ASSERT(worker != NULL);
     MIR_ASSERT(worker->current_task != NULL);
-    MIR_ASSERT(worker->current_task->loop != NULL);
+    MIR_ASSERT_STR(worker->current_task->loop == NULL, "Nested parallel for loops are not supported.");
 
-    struct mir_loop_des_t* loop = worker->current_task->loop;
-
-    // Set loop parameters.
-    if(loop->init == 0)
-    {
-        mir_omp_loop_desc_init(loop, start, end, incr, chunk_size);
-    }
+    // Create loop description and associate with task.
+    struct mir_loop_des_t* loop = mir_new_omp_loop_desc();
+    mir_omp_loop_desc_init(loop, start, end, incr, chunk_size);
+    worker->current_task->loop = loop;
 
     return GOMP_loop_static_next(istart, iend);
 } /*}}}*/
@@ -555,14 +557,34 @@ void GOMP_parallel_loop_runtime(void (*fn)(void*), void* data, unsigned num_thre
     GOMP_parallel_end();
 } /*}}}*/
 
+void GOMP_loop_end_int()
+{
+    // Wait for all workers to finish executing their loop task.
+    // Waiting is essential since loop description are deleted next.
+    GOMP_barrier();
+
+    // Delete loop description associated with task.
+    struct mir_worker_t* worker = mir_worker_get_context();
+    MIR_ASSERT(worker != NULL);
+    MIR_ASSERT(worker->current_task != NULL);
+    worker->current_task->loop = NULL;
+
+    // Delete loop description associated with team.
+    struct mir_omp_team_t* team = worker->current_task->team;
+    MIR_ASSERT(team != NULL);
+    mir_lock_set(&team->loop_lock);
+    team->loop = NULL;
+    mir_lock_unset(&team->loop_lock);
+}
+
 void GOMP_loop_end(void)
 { /*{{{*/
-    GOMP_barrier();
+    GOMP_loop_end_int();
 } /*}}}*/
 
 void GOMP_loop_end_nowait(void)
 { /*{{{*/
-    return;
+    GOMP_loop_end_int();
 } /*}}}*/
 
 /* parallel.c */
@@ -590,13 +612,13 @@ void GOMP_parallel_start(void (*fn)(void*), void* data, unsigned num_threads)
         if(i == worker->id)
             continue;
         // Schedule parallel block tasks on all workers except current.
-        mir_task_create_on_worker((mir_tfunc_t)fn, data, 0, 0, NULL, "GOMP_parallel_task", team, mir_new_omp_loop_desc(), i);
+        mir_task_create_on_worker((mir_tfunc_t)fn, data, 0, 0, NULL, "GOMP_parallel_task", team, NULL, i);
     }
 
     MIR_RECORDER_STATE_END(NULL, 0);
 
     // Create fake task.
-    struct mir_task_t* task = mir_task_create_common((mir_tfunc_t)fn, data, 0, 0, NULL, "GOMP_parallel_task", team, mir_new_omp_loop_desc());
+    struct mir_task_t* task = mir_task_create_common((mir_tfunc_t)fn, data, 0, 0, NULL, "GOMP_parallel_task", team, NULL);
     MIR_CHECK_MEM(task != NULL);
 
     // Start profiling and book-keeping for parallel task
@@ -655,10 +677,10 @@ void GOMP_task(void (*fn)(void*), void* data, void (*copyfn)(void*, void*), long
         char* buf = mir_malloc_int(sizeof(char) * arg_size);
         MIR_CHECK_MEM(buf != NULL);
         copyfn(buf, data);
-        mir_task_create_on_worker((mir_tfunc_t)fn, buf, (size_t)(arg_size), 0, NULL, task_name, team, mir_new_omp_loop_desc(), -1);
+        mir_task_create_on_worker((mir_tfunc_t)fn, buf, (size_t)(arg_size), 0, NULL, task_name, team, NULL, -1);
     }
     else
-        mir_task_create_on_worker((mir_tfunc_t)fn, data, (size_t)(arg_size), 0, NULL, task_name, team, mir_new_omp_loop_desc(), -1);
+        mir_task_create_on_worker((mir_tfunc_t)fn, data, (size_t)(arg_size), 0, NULL, task_name, team, NULL, -1);
 } /*}}}*/
 
 void GOMP_taskwait(void)

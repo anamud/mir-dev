@@ -2,6 +2,7 @@
 #define MIR_TEAM_H 1
 
 #include "mir_barrier.h"
+#include "mir_lock.h"
 
 BEGIN_C_DECLS
 
@@ -15,6 +16,8 @@ struct mir_omp_team_t { /*{{{*/
     int barrier_impending_count;
     int num_threads;
     int single_count;
+    struct mir_lock_t loop_lock;
+    struct mir_loop_des_t* loop;
 }; /*}}}*/
 
 /*LIBINT*/ struct mir_omp_team_t* mir_new_omp_team(struct mir_omp_team_t*, unsigned);
