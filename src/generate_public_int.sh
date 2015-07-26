@@ -11,14 +11,14 @@ echo "
 #include \"mir_types.h\"
 " > $intf
 
-find . -type f \( -name "*.h" ! -name "mir_public_int.h" \) -exec sed -n "/\/\*LIBINT_INC_BEGIN\*\//,/\/\*LIBINT_INC_END\*\//p" {} \; >> $intf
+find . -type f \( -name "*.h" ! -name "mir_public_int.h" \) -exec sed -n "/\/\*PUB_INT_INC_BEGIN\*\//,/\/\*PUB_INT_INC_END\*\//p" {} \; >> $intf
 echo "
 BEGIN_C_DECLS
 " >> $intf
-find . -type f \( -name "*.h" ! -name "mir_public_int.h" \) -exec sed -n "/\/\*LIBINT_BASE_DECL_BEGIN\*\//,/\/\*LIBINT_BASE_DECL_END\*\//p" {} \; >> $intf
-find . -type f \( -name "*.h" ! -name "mir_public_int.h" \) -exec sed -n "/\/\*LIBINT_DECL_BEGIN\*\//,/\/\*LIBINT_DECL_END\*\//p" {} \; >> $intf
-find . -type f \( -name "*.h" ! -name "mir_public_int.h" \) -exec sed -n "/\/\*LIBINT_BEGIN\*\//,/\/\*LIBINT_END\*\//p" {} \; >> $intf
-find . -type f \( -name "*.h" ! -name "mir_public_int.h" \) -exec sed -n "/\/\*LIBINT\*\//p" {} \; >> $intf
+find . -type f \( -name "*.h" ! -name "mir_public_int.h" \) -exec sed -n "/\/\*PUB_INT_BASE_DECL_BEGIN\*\//,/\/\*PUB_INT_BASE_DECL_END\*\//p" {} \; >> $intf
+find . -type f \( -name "*.h" ! -name "mir_public_int.h" \) -exec sed -n "/\/\*PUB_INT_DECL_BEGIN\*\//,/\/\*PUB_INT_DECL_END\*\//p" {} \; >> $intf
+find . -type f \( -name "*.h" ! -name "mir_public_int.h" \) -exec sed -n "/\/\*PUB_INT_BEGIN\*\//,/\/\*PUB_INT_END\*\//p" {} \; >> $intf
+find . -type f \( -name "*.h" ! -name "mir_public_int.h" \) -exec sed -n "/\/\*PUB_INT\*\//p" {} \; >> $intf
 echo "
 END_C_DECLS
 " >> $intf

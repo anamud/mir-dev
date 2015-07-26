@@ -39,15 +39,15 @@ BEGIN_C_DECLS
 
 int mir_pstack_set_size(size_t sz);
 
-/*LIBINT*/ int mir_get_num_threads();
+/*PUB_INT*/ int mir_get_num_threads();
 
-/*LIBINT*/ int mir_get_threadid();
+/*PUB_INT*/ int mir_get_threadid();
 
-/*LIBINT*/ void mir_sleep_ms(uint32_t msec);
+/*PUB_INT*/ void mir_sleep_ms(uint32_t msec);
 
-/*LIBINT*/ void mir_sleep_us(uint32_t usec);
+/*PUB_INT*/ void mir_sleep_us(uint32_t usec);
 
-/*LIBINT*/ uint64_t mir_get_cycles();
+/*PUB_INT*/ uint64_t mir_get_cycles();
 
 END_C_DECLS
 

@@ -48,11 +48,11 @@ extern struct mir_runtime_t* runtime;
 
 void mir_create_int(int num_workers);
 
-/*LIBINT*/ void mir_create();
+/*PUB_INT*/ void mir_create();
 
-/*LIBINT*/ void mir_soft_destroy();
+/*PUB_INT*/ void mir_soft_destroy();
 
-/*LIBINT*/ void mir_destroy();
+/*PUB_INT*/ void mir_destroy();
 
 END_C_DECLS
 #endif //MIR_RUNTIME_H
