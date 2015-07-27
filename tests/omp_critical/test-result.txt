@@ -1,4 +1,0 @@
-Running suite(s): Test
-100%: Checks: 2, Failures: 0, Errors: 0
-omp_critical/test.c:45:P:omp_critical:omp_critical:0: Passed
-omp_critical/test.c:90:P:omp_critical:omp_critical_named:0: Passed

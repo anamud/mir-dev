@@ -1,6 +1,0 @@
-Running suite(s): Test
-100%: Checks: 4, Failures: 0, Errors: 0
-omp_parallel/test.c:16:P:omp_parallel:omp_parallel_plain:0: Passed
-omp_parallel/test.c:33:P:omp_parallel:omp_parallel_num_threads_shell:0: Passed
-omp_parallel/test.c:47:P:omp_parallel:omp_parallel_num_threads_small:0: Passed
-omp_parallel/test.c:70:P:omp_parallel:omp_sequential_parallel:0: Passed

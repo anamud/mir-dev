@@ -1,3 +1,0 @@
-Running suite(s): Test
-100%: Checks: 1, Failures: 0, Errors: 0
-omp_single/test.c:17:P:omp_single:omp_parallel_single:0: Passed

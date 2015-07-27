@@ -7,7 +7,6 @@ do
     if [ -f test.sh ];
     then
         ./test.sh
-        scons -uc
     fi
     popd
 done

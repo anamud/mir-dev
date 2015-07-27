@@ -1,3 +1,0 @@
-Running suite(s): Test
-100%: Checks: 1, Failures: 0, Errors: 0
-omp_atomic/test.c:28:P:omp_atomic:omp_atomic:0: Passed
