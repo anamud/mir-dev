@@ -8,3 +8,7 @@ echo Running test ...
 if [ ${PIPESTATUS[0]} -ne 0 ];
 then echo Test FAILED.
 fi
+MIR_CONF="--single-task-block" ./test-opt.out | tee test-result.txt
+if [ ${PIPESTATUS[0]} -ne 0 ];
+then echo Test FAILED.
+fi
