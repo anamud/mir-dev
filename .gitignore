@@ -37,6 +37,8 @@
 # Build directories
 debug-build
 opt-build
+prof-build
+check-build
 
 # MIR temps
 mir_arch_this.c
@@ -44,6 +46,8 @@ topology_this
 HAVE_LIBNUMA
 HAVE_PAPI
 mir_public_int.h
+mir-task-stats
+mir-worker-stats
 
 # Misc
 *.BACK
@@ -54,6 +58,7 @@ obj-intel64
 *.log
 sync-with-PaPP-SVN.sh
 *.orig
+test*-result.txt
 
 # R temps
 .Rhistory
