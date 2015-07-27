@@ -1,0 +1,39 @@
+import os
+import sys
+
+# Import environments
+Import('opt','debug','prof','check')
+
+# Make copies of imported environment to keep changes local
+opt = opt.Clone()
+debug = debug.Clone()
+prof = prof.Clone()
+check = check.Clone()
+
+# Program name is prefixed with name of this directory
+this_dir = os.getcwd().split(os.sep)[-1]
+
+# Specialize debug environment
+debug.VariantDir('debug-build', '.', duplicate=0)
+debug_src = debug.Glob('debug-build/*.c')
+debug.Program(this_dir +'-debug.out', source = debug_src)
+Clean('.','debug-build')
+
+# Specialize opt environment
+opt.VariantDir('opt-build', '.', duplicate=0)
+opt_src = opt.Glob('opt-build/*.c')
+opt.Program(this_dir +'-opt.out', source = opt_src)
+Clean('.','opt-build')
+
+# Specialize profiling environment
+prof.VariantDir('prof-build', '.', duplicate=0)
+prof_src = prof.Glob('prof-build/*.c')
+prof.Program(this_dir +'-prof.out', source = prof_src)
+Clean('.','prof-build')
+
+# Specialize check environment
+check.VariantDir('check-build', '.', duplicate=0)
+check_src = check.Glob('check-build/*.c')
+check.Program(this_dir +'-check.out', source = check_src)
+Clean('.','check-build')
+

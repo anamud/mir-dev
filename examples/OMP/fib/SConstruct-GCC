@@ -1,0 +1,28 @@
+env = Environment()
+env['CC'] = ['gcc']
+env['CCFLAGS'] = Split("""
+-std=c99
+-Wall
+-Werror
+-Wno-unused-function
+-Wno-unused-variable
+-Wno-unused-but-set-variable
+-Wno-maybe-uninitialized
+-fopenmp
+-g
+-O3
+-fdump-tree-optimized
+-D_XOPEN_SOURCE
+-D_XOPEN_SOURCE_EXTENDED
+""")
+env['CCFLAGS'] += ['-I../../utils']
+env['LINKFLAGS'] = ['-fopenmp']
+env['LIBS'] = ['m']
+env.VariantDir('GCC-build', '.', duplicate=0)
+env_src = env.Glob('GCC-build/*.c')
+# Program name is prefixed with name of this directory
+import os
+this_dir = os.getcwd().split(os.sep)[-1]
+env.Program(this_dir +'-GCC.out', source = env_src)
+Clean('.','GCC-build')
+
