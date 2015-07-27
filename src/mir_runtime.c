@@ -61,6 +61,7 @@ static void mir_preconfig_init(int num_workers)
     mir_lock_create(&runtime->omp_atomic_lock);
     runtime->omp_for_schedule = OFS_STATIC;
     runtime->omp_for_chunk_size = 0;
+    runtime->single_task_block = 0;
     parse_omp_schedule();
 
     // Flags
@@ -194,6 +195,7 @@ static inline void print_help()
                               "--stack-size=<int> worker stack size in MB\n"
                               "--queue-size=<int> task queue capacity\n"
                               "--numa-footprint=<int> for numa scheduling policy. Indicates data footprint size in bytes below which task is dealt to worker's private queue.\n"
+                              "--single-task-block run parallel blocks with one worker\n"
                               "--worker-stats collect worker statistics\n"
                               "--task-stats collect task statistics\n"
                               "-r (--recorder) enable worker recorder\n"
@@ -241,6 +243,7 @@ static void mir_config()
             { "memory-policy", required_argument, 0, 'm' },
             { "stack-size", required_argument, 0, 0 },
             { "inlining-limit", required_argument, 0, 0 },
+            { "single-task-block", no_argument, 0, 0 },
             { "numa-footprint", required_argument, 0, 0 },
             { "queue-size", required_argument, 0, 0 },
             { "help", no_argument, 0, 'h' },
@@ -264,6 +267,10 @@ static void mir_config()
             if (0 == strcmp(long_options[option_index].name, "inlining-limit")) {
                 runtime->task_inlining_limit = atoi(optarg);
                 MIR_DEBUG("Task inlining limit set to %u.", runtime->task_inlining_limit);
+            }
+            else if (0 == strcmp(long_options[option_index].name, "single-task-block")) {
+                runtime->single_task_block = 1;
+                MIR_DEBUG("Single-task parallel blocks enabled.\n");
             }
             else if (0 == strcmp(long_options[option_index].name, "stack-size")) {
                 int ps_sz = atoi(optarg) * 1024 * 1024;
