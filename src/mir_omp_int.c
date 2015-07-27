@@ -230,7 +230,7 @@ bool GOMP_loop_dynamic_start (long start, long end, long incr, long chunk_size, 
 
 void GOMP_parallel_loop_dynamic_start (void (*fn) (void *), void *data, unsigned num_threads, long start, long end, long incr, long chunk_size)
 { /*{{{*/
-    mir_parallel_start(fn, data, num_threads, start, end, incr, chunk_size, true, false);
+    mir_parallel_start(fn, data, num_threads, start, end, incr, chunk_size * incr, true, false);
 } /*}}}*/
 
 // Tasks spawned in GOMP_parallel_loop_dynamic have a single shared
