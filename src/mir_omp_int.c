@@ -42,7 +42,7 @@ static void mir_parallel_start (void (*fn) (void *), void *data, unsigned num_th
     struct mir_omp_team_t* team = mir_new_omp_team(prevteam, num_threads);
 
     for (int i = 0; i < num_threads; i++) {
-        if(i == worker->id)
+        if(i == worker->id || runtime->single_task_block)
             continue;
 
         // Set loop parameters.
