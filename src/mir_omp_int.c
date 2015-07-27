@@ -52,7 +52,11 @@ static void mir_parallel_start (void (*fn) (void *), void *data, unsigned num_th
         }
 
         // Create and schedule loop tasks on all workers except current.
-        mir_task_create_on_worker((mir_tfunc_t) fn, data, 0, 0, NULL, "GOMP_for_static_task", team, loop, i);
+        mir_task_create_on_worker((mir_tfunc_t) fn, data, 0, 0, NULL,
+           has_loop_desc ? (private_loop_desc ? "GOMP_for_dynamic_task"
+                                              : "GOMP_for_static_task")
+                         : "GOMP_parallel_task",
+           team, loop, i);
     }
 
     MIR_RECORDER_STATE_END(NULL, 0);
@@ -64,7 +68,12 @@ static void mir_parallel_start (void (*fn) (void *), void *data, unsigned num_th
     }
 
     // Create fake loop task on current worker.
-    struct mir_task_t* task = mir_task_create_common((mir_tfunc_t) fn, data, 0, 0, NULL, "GOMP_for_static_task", team, loop);
+    struct mir_task_t* task = mir_task_create_common((mir_tfunc_t) fn, data,
+           0, 0, NULL,
+           has_loop_desc ? (private_loop_desc ? "GOMP_for_dynamic_task"
+                                              : "GOMP_for_static_task")
+                         : "GOMP_parallel_task",
+           team, loop);
     MIR_CHECK_MEM(task != NULL);
 
     // Start profiling and book-keeping for fake task
