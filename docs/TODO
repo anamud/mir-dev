@@ -1,28 +1,23 @@
-=== RUNTIME SYSTEM ===
-Add TILEPro64 support.
-Test on Valaruko.
-Add clang support.
-Improve OpenMP 3.0 support.
-Add support for implicit data dependence resolution.
-Improve documents structure.
-Provide more documentation.
-Improve libgomp OpenMP wrapper.
-Inline functions for speed.
-Add better help system.
-Add better parsing for MIR_CONF.
+# RUNTIME SYSTEM
+- Test on TILEPro64.
+- Test on Valaruko.
+- Improve OpenMP 3.0 support.
+- Rewrite libgomp OpenMP wrapper.
+- Add support for implicit data dependence resolution.
+- Add clang and LLVM support.
+- Inline functions for speed.
 
-=== PROFILING ===
-Support Cilk-like task graph generation.
-Add dependence graph generation support.
-Profile omp for loops.
-Improve output of of_finder
+# PROFILING
+- Add dependence graph generation support.
+- Profile omp for loops.
+- Improve outline function detection of of_finder.py.
 
-=== PROGRAMS ===
-Work on UTS scaling.
-Add benchmarks with data dependences.
+# TESTING
+-Test for structural porperties such as number of tasks and task graph shape.
+-Nightly tests on Gothmog and Valarauko.
 
-=== TESTING ===
-Add a simple testing suite.
+# DOCUMENTS
+- Improve documents structure.
+- Provide more documentation.
+- Add better help system.
 
-=== MISC === 
-Set up github repository.
