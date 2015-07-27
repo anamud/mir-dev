@@ -15,6 +15,60 @@
 #include "mir_barrier.h"
 #include "mir_defines.h"
 
+/* MIR internal functions. */
+
+static void mir_parallel_loop_start (void (*fn) (void *), void *data, unsigned num_threads, long start, long end, long incr, long chunk_size, bool private_loop_desc)
+{ /*{{{*/
+    struct mir_loop_des_t* loop = mir_new_omp_loop_desc();
+    mir_omp_loop_desc_init(loop, start, end, incr, chunk_size);
+
+    // Create thread team.
+    mir_create_int(num_threads);
+
+    // Ensure number of required threads is not larger than those available.
+    MIR_ASSERT_STR(num_threads <= runtime->num_workers, "Number of OMP threads requested is greater than number of MIR workers.");
+
+    // Create loop task on all workers.
+    MIR_RECORDER_STATE_BEGIN(MIR_STATE_TCREATE);
+
+    // Number of threads is either specified by the program or the number of threads created by the runtime system.
+    num_threads = num_threads == 0 ? runtime->num_workers : num_threads;
+    struct mir_worker_t* worker = mir_worker_get_context();
+    struct mir_omp_team_t* prevteam;
+    prevteam = worker->current_task ? worker->current_task->team : NULL;
+    struct mir_omp_team_t* team = mir_new_omp_team(prevteam, num_threads);
+
+    for (int i = 0; i < num_threads; i++) {
+        if(i == worker->id)
+            continue;
+
+        // Set loop parameters.
+        if (private_loop_desc) {
+            loop = mir_new_omp_loop_desc();
+            mir_omp_loop_desc_init(loop, start, end, incr, chunk_size);
+        }
+
+        // Create and schedule loop tasks on all workers except current.
+        mir_task_create_on_worker((mir_tfunc_t) fn, data, 0, 0, NULL, "GOMP_for_static_task", team, loop, i);
+    }
+
+    MIR_RECORDER_STATE_END(NULL, 0);
+
+    // Set loop parameters for fake task.
+    if (private_loop_desc) {
+        loop = mir_new_omp_loop_desc();
+        mir_omp_loop_desc_init(loop, start, end, incr, chunk_size);
+    }
+
+    // Create fake loop task on current worker.
+    struct mir_task_t* task = mir_task_create_common((mir_tfunc_t) fn, data, 0, 0, NULL, "GOMP_for_static_task", team, loop);
+    MIR_CHECK_MEM(task != NULL);
+
+    // Start profiling and book-keeping for fake task
+    mir_task_execute_prolog(task);
+} /*}}}*/
+
+
 /* barrier.c */
 
 void GOMP_barrier(void)
@@ -173,42 +227,7 @@ bool GOMP_loop_dynamic_start (long start, long end, long incr, long chunk_size, 
 
 void GOMP_parallel_loop_dynamic_start (void (*fn) (void *), void *data, unsigned num_threads, long start, long end, long incr, long chunk_size)
 { /*{{{*/
-    // Create thread team.
-    mir_create_int(num_threads);
-
-    // Ensure number of required threads is not larger than those available.
-    MIR_ASSERT_STR(num_threads <= runtime->num_workers, "Number of OMP threads requested is greater than number of MIR workers.");
-
-    // Keep loop description in a common structure.
-    struct mir_loop_des_t* loop = mir_new_omp_loop_desc();
-    mir_omp_loop_desc_init(loop, start, end, incr, chunk_size * incr);
-
-    // Create loop task on all workers.
-    MIR_RECORDER_STATE_BEGIN(MIR_STATE_TCREATE);
-
-    // Number of threads is either specified by the program or the number of threads created by the runtime system.
-    num_threads = num_threads == 0 ? runtime->num_workers : num_threads;
-    struct mir_worker_t* worker = mir_worker_get_context();
-    struct mir_omp_team_t* prevteam;
-    prevteam = worker->current_task ? worker->current_task->team : NULL;
-    struct mir_omp_team_t* team = mir_new_omp_team(prevteam, num_threads);
-
-    for (int i = 0; i < num_threads; i++) {
-        if(i == worker->id)
-            continue;
-
-        // Create and schedule loop tasks on all workers except current.
-        mir_task_create_on_worker((mir_tfunc_t) fn, data, 0, 0, NULL, "GOMP_for_dynamic_task", team, loop, i);
-    }
-
-    MIR_RECORDER_STATE_END(NULL, 0);
-
-    // Create fake loop task on current worker.
-    struct mir_task_t* task = mir_task_create_common((mir_tfunc_t) fn, data, 0, 0, NULL, "GOMP_for_dynamic_task", team, loop);
-    MIR_CHECK_MEM(task != NULL);
-
-    // Start profiling and book-keeping for fake task.
-    mir_task_execute_prolog(task);
+    mir_parallel_loop_start(fn, data, num_threads, start, end, incr, chunk_size, false);
 } /*}}}*/
 
 // Tasks spawned in GOMP_parallel_loop_dynamic have a single shared
@@ -345,46 +364,7 @@ bool GOMP_loop_static_start (long start, long end, long incr, long chunk_size, l
 
 void GOMP_parallel_loop_static_start (void (*fn) (void *), void *data, unsigned num_threads, long start, long end, long incr, long chunk_size)
 { /*{{{*/
-    // Create thread team.
-    mir_create_int(num_threads);
-
-    // Ensure number of required threads is not larger than those available.
-    MIR_ASSERT_STR(num_threads <= runtime->num_workers, "Number of OMP threads requested is greater than number of MIR workers.");
-
-    // Create loop task on all workers.
-    MIR_RECORDER_STATE_BEGIN(MIR_STATE_TCREATE);
-
-    // Number of threads is either specified by the program or the number of threads created by the runtime system.
-    num_threads = num_threads == 0 ? runtime->num_workers : num_threads;
-    struct mir_worker_t* worker = mir_worker_get_context();
-    struct mir_omp_team_t* prevteam;
-    prevteam = worker->current_task ? worker->current_task->team : NULL;
-    struct mir_omp_team_t* team = mir_new_omp_team(prevteam, num_threads);
-
-    for (int i = 0; i < num_threads; i++) {
-        if(i == worker->id)
-            continue;
-
-        // Set loop parameters.
-        struct mir_loop_des_t* loop = mir_new_omp_loop_desc();
-        mir_omp_loop_desc_init(loop, start, end, incr, chunk_size);
-
-        // Create and schedule loop tasks on all workers except current.
-        mir_task_create_on_worker((mir_tfunc_t) fn, data, 0, 0, NULL, "GOMP_for_static_task", team, loop, i);
-    }
-
-    MIR_RECORDER_STATE_END(NULL, 0);
-
-    // Set loop parameters for fake task.
-    struct mir_loop_des_t* loop = mir_new_omp_loop_desc();
-    mir_omp_loop_desc_init(loop, start, end, incr, chunk_size);
-
-    // Create fake loop task on current worker.
-    struct mir_task_t* task = mir_task_create_common((mir_tfunc_t) fn, data, 0, 0, NULL, "GOMP_for_static_task", team, loop);
-    MIR_CHECK_MEM(task != NULL);
-
-    // Start profiling and book-keeping for fake task
-    mir_task_execute_prolog(task);
+    mir_parallel_loop_start(fn, data, num_threads, start, end, incr, chunk_size, true);
 } /*}}}*/
 
 // Tasks spawned in GOMP_parallel_loop_static have their own local
