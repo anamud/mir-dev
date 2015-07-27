@@ -12,7 +12,7 @@ fi
 for i in `seq 1 $num_trials`;
 do
     echo Trial $i:
-    MIR_CONF="--single-task-block" ./test-opt.out | tee -a test-result.txt
+    MIR_CONF="--single-parallel-block" ./test-opt.out | tee -a test-result.txt
     if [ ${PIPESTATUS[0]} -ne 0 ];
     then echo Test FAILED.
     fi

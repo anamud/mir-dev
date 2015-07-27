@@ -42,7 +42,7 @@ static void parallel_start (void (*fn) (void *), void *data, unsigned num_thread
     struct mir_omp_team_t* team = mir_new_omp_team(prevteam, num_threads);
 
     for (int i = 0; i < num_threads; i++) {
-        if(i == worker->id || runtime->single_task_block)
+        if(i == worker->id || runtime->single_parallel_block)
             continue;
 
         // Set loop parameters.
@@ -88,7 +88,7 @@ void GOMP_barrier(void)
     struct mir_worker_t* worker = mir_worker_get_context();
     struct mir_omp_team_t* team;
     team = worker->current_task ? worker->current_task->team : NULL;
-    if (!runtime->single_task_block && team) {
+    if (!runtime->single_parallel_block && team) {
         // Announce impending barrier.
         __sync_fetch_and_add(&team->barrier_impending_count, 1);
         while(team->barrier_impending_count < team->num_threads)
@@ -665,7 +665,7 @@ bool GOMP_single_start(void)
         __sync_bool_compare_and_swap(&team->single_count, 0,
             team->num_threads);
     }
-    return runtime->single_task_block || sc == team->num_threads;
+    return runtime->single_parallel_block || sc == team->num_threads;
 } /*}}}*/
 
 /* omp.h */

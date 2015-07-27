@@ -35,7 +35,7 @@ struct mir_runtime_t { /*{{{*/
     struct mir_lock_t omp_atomic_lock;
     enum omp_for_schedule_t omp_for_schedule;
     long omp_for_chunk_size;
-    int single_task_block;
+    int single_parallel_block;
 
     // Flags
     int sig_dying;
