@@ -17,10 +17,10 @@
 
 /* MIR internal functions. */
 
-static void mir_parallel_loop_start (void (*fn) (void *), void *data, unsigned num_threads, long start, long end, long incr, long chunk_size, bool private_loop_desc)
+static void mir_parallel_start (void (*fn) (void *), void *data, unsigned num_threads, long start, long end, long incr, long chunk_size, bool has_loop_desc, bool private_loop_desc)
 { /*{{{*/
     struct mir_loop_des_t* loop = NULL;
-    if (!private_loop_desc) {
+    if (has_loop_desc && !private_loop_desc) {
         loop = mir_new_omp_loop_desc();
         mir_omp_loop_desc_init(loop, start, end, incr, chunk_size);
     }
@@ -46,7 +46,7 @@ static void mir_parallel_loop_start (void (*fn) (void *), void *data, unsigned n
             continue;
 
         // Set loop parameters.
-        if (private_loop_desc) {
+        if (has_loop_desc && private_loop_desc) {
             loop = mir_new_omp_loop_desc();
             mir_omp_loop_desc_init(loop, start, end, incr, chunk_size);
         }
@@ -58,7 +58,7 @@ static void mir_parallel_loop_start (void (*fn) (void *), void *data, unsigned n
     MIR_RECORDER_STATE_END(NULL, 0);
 
     // Set loop parameters for fake task.
-    if (private_loop_desc) {
+    if (has_loop_desc && private_loop_desc) {
         loop = mir_new_omp_loop_desc();
         mir_omp_loop_desc_init(loop, start, end, incr, chunk_size);
     }
@@ -230,7 +230,7 @@ bool GOMP_loop_dynamic_start (long start, long end, long incr, long chunk_size, 
 
 void GOMP_parallel_loop_dynamic_start (void (*fn) (void *), void *data, unsigned num_threads, long start, long end, long incr, long chunk_size)
 { /*{{{*/
-    mir_parallel_loop_start(fn, data, num_threads, start, end, incr, chunk_size, false);
+    mir_parallel_start(fn, data, num_threads, start, end, incr, chunk_size, true, false);
 } /*}}}*/
 
 // Tasks spawned in GOMP_parallel_loop_dynamic have a single shared
@@ -367,7 +367,7 @@ bool GOMP_loop_static_start (long start, long end, long incr, long chunk_size, l
 
 void GOMP_parallel_loop_static_start (void (*fn) (void *), void *data, unsigned num_threads, long start, long end, long incr, long chunk_size)
 { /*{{{*/
-    mir_parallel_loop_start(fn, data, num_threads, start, end, incr, chunk_size, true);
+    mir_parallel_start(fn, data, num_threads, start, end, incr, chunk_size, true, true);
 } /*}}}*/
 
 // Tasks spawned in GOMP_parallel_loop_static have their own local
