@@ -1,0 +1,21 @@
+Running suite(s): Test
+100%: Checks: 19, Failures: 0, Errors: 0
+omp_for/test.c:22:P:omp_for:omp_parallel_for_static:0: Passed
+omp_for/test.c:47:P:omp_for:omp_parallel_for_static_num_threads_small:0: Passed
+omp_for/test.c:72:P:omp_for:omp_parallel_for_dynamic:0: Passed
+omp_for/test.c:97:P:omp_for:omp_parallel_for_dynamic_num_threads_small:0: Passed
+omp_for/test.c:118:P:omp_for:omp_parallel_for_runtime:0: Passed
+omp_for/test.c:143:P:omp_for:omp_parallel_for_runtime_num_threads_small:0: Passed
+omp_for/test.c:168:P:omp_for:omp_parallel_for_runtime_static:0: Passed
+omp_for/test.c:193:P:omp_for:omp_parallel_for_runtime_static_chunk:0: Passed
+omp_for/test.c:218:P:omp_for:omp_parallel_for_runtime_dynamic:0: Passed
+omp_for/test.c:243:P:omp_for:omp_parallel_for_runtime_dynamic_chunk:0: Passed
+omp_for/test.c:267:P:omp_for:omp_for_static:0: Passed
+omp_for/test.c:295:P:omp_for:omp_for_static_num_threads_small:0: Passed
+omp_for/test.c:319:P:omp_for:omp_for_dynamic:0: Passed
+omp_for/test.c:347:P:omp_for:omp_for_dynamic_num_threads_small:0: Passed
+omp_for/test.c:371:P:omp_for:omp_for_runtime:0: Passed
+omp_for/test.c:427:P:omp_for:omp_for_runtime_static:0: Passed
+omp_for/test.c:455:P:omp_for:omp_for_runtime_static_chunk:0: Passed
+omp_for/test.c:483:P:omp_for:omp_for_runtime_dynamic:0: Passed
+omp_for/test.c:511:P:omp_for:omp_for_runtime_dynamic_chunk:0: Passed

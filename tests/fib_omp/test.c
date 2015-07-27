@@ -1,7 +1,6 @@
 #include <stdlib.h>
 #include <check.h>
 #include <omp.h>
-#include "mir_public_int.h"
 
 static uint64_t fib_seq(int n)
 { /*{{{*/
@@ -36,16 +35,14 @@ static uint64_t fib(int n, int d, int cutoff)
     return x + y;
 } /*}}}*/
 
-/* Fibonacci program OpenMP tasks. */
 START_TEST(fib_omp)
-{
+{/*{{{*/
     int result;
     int n = 42;
     int cutoff = 12;
 
 #pragma omp parallel
     {
-/* Single works as specified in the standard. */
 #pragma omp single
         {
 #pragma omp task firstprivate(n, cutoff)
@@ -58,25 +55,23 @@ START_TEST(fib_omp)
 
     /* fib(42) == 267914296 */
     ck_assert_int_eq(result, 267914296);
-}
+}/*}}}*/
 END_TEST
 
 Suite* test_suite(void)
-{
+{/*{{{*/
     Suite* s;
-    s = suite_create("Test_2");
+    s = suite_create("Test");
 
-    /* Fibonacci omp tasks test case */
-    TCase* tc_fib_omp;
-    tc_fib_omp = tcase_create("Fib_omp");
-    tcase_add_test(tc_fib_omp, fib_omp);
-    suite_add_tcase(s, tc_fib_omp);
+    TCase* tc = tcase_create("fib_omp");
+    tcase_add_test(tc, fib_omp);
+    suite_add_tcase(s, tc);
 
     return s;
-}
+}/*}}}*/
 
 int main(void)
-{
+{/*{{{*/
     int number_failed;
     Suite* s;
     SRunner* sr;
@@ -88,5 +83,5 @@ int main(void)
     number_failed = srunner_ntests_failed(sr);
     srunner_free(sr);
     return (number_failed == 0) ? EXIT_SUCCESS : EXIT_FAILURE;
-}
+}/*}}}*/
 
