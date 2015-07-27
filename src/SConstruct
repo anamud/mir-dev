@@ -93,7 +93,7 @@ if not env.GetOption('clean'):
     #if not os.path.isfile('mir_lib_int.h'):
     # FIXME: This runs every time rather than only when sources have changed.
     print('Generating library interface ...')
-    if(0 != os.system(MIR_ROOT+'/src/generate_lib_int.sh '+MIR_ROOT+'/src')):
+    if(0 != os.system(MIR_ROOT+'/src/generate_public_int.sh '+MIR_ROOT+'/src')):
         print('Could not generate library interface. Build cannot continue!')
         Exit(2)
 

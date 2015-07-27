@@ -1,0 +1,3 @@
+Running suite(s): Test
+100%: Checks: 1, Failures: 0, Errors: 0
+fib_omp/test.c:57:P:fib_omp:fib_omp:0: Passed

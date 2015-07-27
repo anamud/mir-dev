@@ -25,16 +25,16 @@ struct mir_task_list_t {
     struct mir_task_list_t* next;
 };
 
-/*LIBINT_BASE_DECL_BEGIN*/
+/*PUB_INT_BASE_DECL_BEGIN*/
 enum mir_data_access_t {
     MIR_DATA_ACCESS_READ = 0,
     MIR_DATA_ACCESS_WRITE,
     MIR_DATA_ACCESS_NUM_TYPES
 };
 typedef enum mir_data_access_t mir_data_access_t;
-/*LIBINT_BASE_DECL_END*/
+/*PUB_INT_BASE_DECL_END*/
 
-/*LIBINT_DECL_BEGIN*/
+/*PUB_INT_DECL_BEGIN*/
 struct mir_data_footprint_t {
     void* base;
     size_t type;
@@ -44,7 +44,7 @@ struct mir_data_footprint_t {
     mir_data_access_t data_access;
     void* part_of;
 };
-/*LIBINT_DECL_END*/
+/*PUB_INT_DECL_END*/
 
 static inline void data_footprint_copy(struct mir_data_footprint_t* dest, const struct mir_data_footprint_t* src)
 { /*{{{*/
@@ -67,7 +67,7 @@ END_C_DECLS
 BEGIN_C_DECLS
 
 // The task function pointer type
-/*LIBINT*/ typedef void* (*mir_tfunc_t)(void*);
+/*PUB_INT*/ typedef void* (*mir_tfunc_t)(void*);
 
 // The task
 struct mir_task_t { /*{{{*/
@@ -118,11 +118,11 @@ static void T_DBG(char* msg, struct mir_task_t* t)
 #define T_DBG(x, y)
 #endif
 
-/*LIBINT*/ void mir_task_create(mir_tfunc_t tfunc, void* data, size_t data_size, unsigned int num_data_footprints, struct mir_data_footprint_t* data_footprints, const char* name);
+/*PUB_INT*/ void mir_task_create(mir_tfunc_t tfunc, void* data, size_t data_size, unsigned int num_data_footprints, struct mir_data_footprint_t* data_footprints, const char* name);
 
 struct mir_task_t* mir_task_create_common(mir_tfunc_t tfunc, void* data, size_t data_size, unsigned int num_data_footprints, const struct mir_data_footprint_t* data_footprints, const char* name, struct mir_omp_team_t* myteam, struct mir_loop_des_t* loopdes);
 
-/*LIBINT*/ void mir_task_create_on_worker(mir_tfunc_t tfunc, void* data, size_t data_size, unsigned int num_data_footprints, struct mir_data_footprint_t* data_footprints, const char* name, struct mir_omp_team_t* myteam, struct mir_loop_des_t* loopdes, int workerid);
+void mir_task_create_on_worker(mir_tfunc_t tfunc, void* data, size_t data_size, unsigned int num_data_footprints, struct mir_data_footprint_t* data_footprints, const char* name, struct mir_omp_team_t* myteam, struct mir_loop_des_t* loopdes, int workerid);
 
 // TODO: Differentiate with mir_task_create_on_worker().
 void mir_task_schedule_on_worker(struct mir_task_t* task, int workerid);
@@ -139,7 +139,7 @@ struct mir_mem_node_dist_t* mir_task_get_mem_node_dist(struct mir_task_t* task, 
 
 void mir_task_wait_int(struct mir_twc_t* twc, int newval);
 
-/*LIBINT*/ void mir_task_wait();
+/*PUB_INT*/ void mir_task_wait();
 
 void mir_task_stats_write_header_to_file(FILE* file);
 

@@ -1,0 +1,107 @@
+import os
+import sys
+
+# Get paths
+MIR_ROOT = os.environ.get('MIR_ROOT')
+if(MIR_ROOT == None):
+    # Use the parent directory of the directory this SConstruct resides in.
+    this_sconscript_file = (lambda x:x).func_code.co_filename
+    MIR_ROOT=File(this_sconscript_file).Dir("..").abspath
+
+if os.path.isfile(MIR_ROOT+'/src/HAVE_PAPI'):
+    PAPI_ROOT = os.environ.get('PAPI_ROOT')
+    if(PAPI_ROOT == None):
+        if os.path.isfile('/usr/include/papi.h'):
+            print('PAPI_ROOT not defined. Using /usr as PAPI_ROOT.')
+            PAPI_ROOT="/usr"
+        else:
+            print('PAPI_ROOT is not defined and papi.h can not be found. Aborting!')
+            Exit(2)
+
+# Common environment
+env = Environment()
+env['CC'] = 'gcc'
+env['CXX'] = 'g++'
+env['CFLAGS'] = ['-std=c99']
+env['CCFLAGS'] = Split("""
+-Wall
+-Werror
+-Wno-unused-function
+-Wno-unused-variable
+-Wno-unused-but-set-variable
+-Wno-maybe-uninitialized
+-fopenmp
+-DLINUX
+-D_XOPEN_SOURCE
+-D_XOPEN_SOURCE_EXTENDED
+""")
+#-Wno-implicit-function-declaration
+env['CCFLAGS'] += ['-I' + MIR_ROOT+'/src']
+env['LINKFLAGS'] = ['-pthread']
+env['LIBS'] = Split("""
+m
+""")
+
+env['LIBPATH'] = [MIR_ROOT + '/src']
+
+if os.path.isfile(MIR_ROOT+'/src/HAVE_LIBNUMA'):
+    env['LIBS'] += ['numa']
+    env['CCFLAGS'] += ['-DMIR_MEM_POL_ENABLE']
+
+if os.path.isfile(MIR_ROOT+'/src/HAVE_PAPI'):
+    env['LIBS'] += ['papi']
+    env['LIBPATH'] += [PAPI_ROOT + '/lib']
+
+# Debug environment
+debug = env.Clone();
+debug['CCFLAGS'] += Split("""
+-O0
+-g
+-ggdb
+-DMIR_PROG_ENABLE_DEBUG
+""")
+#-fdump-tree-optimized
+debug.Prepend(LIBS = ['mir-debug'])
+
+# Opt environment
+opt = env.Clone();
+opt['CCFLAGS'] += Split("""
+-O3
+""")
+# These are ICC flags.
+#-vec-
+#-axsse4.2
+#-opt-prefetch
+#-vec-report
+#-opt-report3
+#-opt-report-phase hlo
+#-flto
+opt.Prepend(LIBS = ['mir-opt'])
+
+# Profiling environment
+prof = env.Clone();
+prof['CCFLAGS'] += Split("""
+-O0
+-fno-inline-functions
+-fno-inline-functions-called-once
+-fno-optimize-sibling-calls
+-fno-omit-frame-pointer
+-g
+-fdump-tree-optimized
+""")
+prof.Prepend(LIBS = ['mir-opt'])
+
+# Verbose environment
+check = opt.Clone();
+check['CCFLAGS'] += Split("""
+-DCHECK_RESULT
+""")
+
+# Export environments
+Export('opt','debug','prof','check')
+
+# Register build scripts
+# OpenMP test programs
+SConscript(os.path.join('OMP/fib', 'SConscript'))
+# Native interface test programs
+SConscript(os.path.join('native/fib/', 'SConscript'))

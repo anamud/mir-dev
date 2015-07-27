@@ -82,7 +82,7 @@ MIR is intended to be used by advanced task-based programmers. Knowledge of Open
 
 \section{Installation}\label{installation}
 
-MIR is built and tested on modern (2012+) Linux-based systems. 
+MIR is built and tested on modern (2012+) Linux-based systems.
 
 In order to build and use MIR for task-based program execution, you will minimally require:
 
@@ -135,15 +135,8 @@ The MIR source repository is easy to navigate. Files and directories have famili
     |__profiling : all things related to profiling
         |__task
         |__thread
-|__programs : test programs, benchmarks
-    |__common : build scripts
-    |__native : native interface programs
-        |__fib : Fibonacci program
-            |__helpers : testing scripts
-        |__bots : BOTS port
-    |__omp : OpenMP interface programs
-        |__fib
-        |__bots
+|__tests : test suite.
+|__examples : example programs.
 \end{lstlisting}
 
 \subsection{Build}\label{build}
@@ -197,20 +190,24 @@ $ scons -c && scons
 
 \subsection{Testing}\label{testing}
 
-Try different runtime system configurations and program inputs on Fibonacci in MIR\_ROOT/programs/native/fib. All programs under \\ MIR\_ROOT/programs can be used for testing.
+Run tests in MIR\_ROOT/tests.
 
 \begin{lstlisting}[style=MyInputStyle]
-$ cd $MIR_ROOT/programs/native/fib
-$ scons -c
-$ scons
-$ ./fib-verbose
-$ ./fib-debug
-$ ./fib-opt
+$ cd $MIR_ROOT/tests
+$ ./test-all.sh | tee test-all-result.txt
+\end{lstlisting}
+
+Run example in MIR\_ROOT/examples.
+
+\begin{lstlisting}[style=MyInputStyle]
+$ cd $MIR_ROOT/examples/OMP/fib
+$ scons -u
+$ ./fib-opt.out
 \end{lstlisting}
 
 \begin{framed}
 \begin{quote}
-Note: A dedicated test suite will be added soon, so watch out for that!
+Note: A dedicated suite of task-based programs is available upon request.
 \end{quote}
 \end{framed}
 
@@ -369,10 +366,8 @@ Add \texttt{-lmir-opt} to \texttt{LDFLAGS}. Enable MIR to intercept function cal
 MIR has several runtime configurable options which can be set using the environment variable \texttt{MIR\_CONF}. Set the \texttt{-h} flag to see available configuration options.
 
 \begin{lstlisting}[style=MyInputStyle]
-$ cd $MIR_ROOT/test/fib
-$ scons
-$ MIR_CONF="-h" ./fib-opt 3
-MIR_INFO: Valid options in MIR_CONF environment variable ...
+$ MIR_CONF="-h" <invoke mir-linked program>
+...
 -h (--help) print this help message
 -w <int> (--workers) number of workers
 -s <str> (--schedule) task scheduling policy. Choose among central, central-stack, ws, ws-de and numa.
@@ -398,9 +393,7 @@ $ grep "EXPLICIT_BIND" mir_defines.h
 $ cat /proc/cpuinfo | grep -c Core
 4
 $ export MIR_WORKER_CORE_MAP="0,2,3,1"
-$ cd $MIR_ROOT/programs/native/fib
-$ scons
-$ ./fib-debug 10 3
+$ <invoke mir-linked program>
 MIR_DBG: Starting initialization ...
 MIR_DBG: Architecture set to firenze
 MIR_DBG: Memory allocation policy set to system
@@ -426,7 +419,7 @@ Thread states and events are the main performance indicators in thread-based pro
 Enable the \texttt{--worker-stats} flag to get basic load-balance information in a CSV file called \texttt{mir-worker-stats}.
 
 \begin{lstlisting}[style=MyInputStyle]
-$ MIR_CONF="--worker-stats" ./fib-opt
+$ MIR_CONF="--worker-stats" <invoke mir-linked program>
 $ cat mir-worker-stats
 \end{lstlisting}
 
@@ -435,7 +428,7 @@ TODO: Explain file contents.
 MIR contains a \texttt{recorder} which produces execution traces. Use the \texttt{-r} flag to enable the recorder and get detailed state and event traces in a set of \texttt{mir-recorder-trace-*.rec} files.  Each file represents a worker thread. The files can be inspected individually or combined and visualized using Paraver.
 
 \begin{lstlisting}[style=MyInputStyle]
-$ MIR_CONF="-r" ./fib-opt
+$ MIR_CONF="-r" <invoke mir-linked program>
 $ $MIR_ROOT/scripts/profiling/thread/rec2paraver.py \
 mir-recorder-trace-config.rec
 $ wxparaver mir-recorder-trace.prv
@@ -505,7 +498,7 @@ Task are first-class citizens in task-based profiling.
 Enable the \texttt{--task-stats} flag to collect task statistics in a CSV file called \texttt{mir-task-stats}. Inspect the file manually or plot and visualize the fork-join task graph.
 
 \begin{lstlisting}[style=MyInputStyle]
-$ MIR_CONF="--task-stats" ./fib-opt
+$ MIR_CONF="--task-stats" <invoke mir-linked program>
 $ Rscript ${MIR_ROOT}/scripts/profiling/task/plot-task-graph.R -d mir-task-stats
 \end{lstlisting}
 
@@ -641,33 +634,23 @@ TODO: Instructions to use the full task graph profiler.
 
 \subsection{Profiling Case Study: Fibonacci}
 
-The Fibonacci program is found in MIR\_ROOT/programs/native/fib. The program takes two arguments -- the number n and the depth cutoff for recursive task creation. Let us see how to profile the program for task-based performance information.
+The Fibonacci program is found in MIR\_ROOT/examples/native/fib. The program takes two arguments -- the number n and the depth cutoff for recursive task creation. Let us see how to profile the program for task-based performance information.
 
-Compile the program for profiling -- remove aggressive optimizations and disable inlining so that outline functions representing tasks are visible to the Pin-based instruction profiler. Running scons in the program directory builds the profiler-friendly executable called \texttt{fib-prof}.
+Compile the program for profiling -- remove aggressive optimizations and disable inlining so that outline functions representing tasks are visible to the Pin-based instruction profiler. Running scons in the program directory builds the profiler-friendly executable called \texttt{fib-prof.out}.
 
 \begin{lstlisting}[style=MyInputStyle]
-$ cd $MIR_ROOT/programs/native/fib
-$ scons
-scons: Reading SConscript files ...
-scons: done reading SConscript files.
-scons: Building targets ...
-scons: building associated VariantDir targets: debug-build opt-build prof-build verbose-build
+$ cd $MIR_ROOT/examples/native/fib
+$ scons -u
 ...
 gcc -o prof-build/fib.o -c -std=c99 -Wall -Werror -Wno-unused-function -Wno-unused-variable -Wno-unused-but-set-variable -Wno-maybe-uninitialized -fopenmp -DLINUX -I/home/ananya/mir-dev/src -I/home/ananya/mir-dev/programs/common -O2 -DNDEBUG -fno-inline-functions -fno-inline-functions-called-once -fno-optimize-sibling-calls -fno-omit-frame-pointer -g fib.c
 ...
-gcc -o fib-prof prof-build/fib.o -L/home/ananya/mir-dev/src -lpthread -lm -lmir-opt
+gcc -o fib-prof.out prof-build/fib.o -L/home/ananya/mir-dev/src -lpthread -lm -lmir-opt
 \end{lstlisting}
 
-\begin{framed}
-\begin{quote}
-Tip: Look at the \texttt{SConstruct} file in MIR\_ROOT/test/fib and build output to understand how the profiling-friendly build is done.
-\end{quote}
-\end{framed}
-
-Identify outline functions and functions called within tasks of the \texttt{fib-prof} program using the script \texttt{of\_finder.py}. The script searches for known outline function name patterns within the object files of \texttt{fib-prof}. The script lists outline functions as \texttt{CHECKME\_OUTLINE\_FUNCTIONS} and all function symbols within the object files as \texttt{CHECKME\_CALLED\_FUNCTIONS}.
+Identify outline functions and functions called within tasks of the \texttt{fib-prof.out} program using the script \texttt{of\_finder.py}. The script searches for known outline function name patterns within the object files of \texttt{fib-prof.out}. The script lists outline functions as \texttt{CHECKME\_OUTLINE\_FUNCTIONS} and all function symbols within the object files as \texttt{CHECKME\_CALLED\_FUNCTIONS}.
 
 \begin{lstlisting}[style=MyInputStyle]
-$ cd $MIR_ROOT/programs/native/fib
+$ cd $MIR_ROOT/examples/native/fib
 $ $MIR_ROOT/scripts/profiling/task/of_finder.py -v prof-build/*.o
 Using "._omp_fn.|ol_" as outline function name pattern
 Processing file: prof-build/fib.o
@@ -691,13 +674,13 @@ Expert Tip: Identifying functions called by tasks is necessary because the instr
 \end{quote}
 \end{framed}
 
-Start the instruction profiler with appropriate arguments to profile \texttt{fib-prof}.  Also collect task statistics at the same time.
+Start the instruction profiler with appropriate arguments to profile \texttt{fib-prof.out}.  Also collect task statistics at the same time.
 
 \begin{lstlisting}[style=MyInputStyle]
 $ mir-inst-prof \
     -of ol_fib_0,ol_fib_1,ol_fib_2 \
     -cf fib,fib_seq \
-    -- ./fib-prof 10 4
+    -- ./fib-prof.out 10 4
 \end{lstlisting}
 
 \begin{framed}
@@ -709,7 +692,7 @@ $ `$MIR_ROOT/scripts/profiling/task/of_finder.py -e prof-build/*.o`
 $ mir-inst-prof \
     -of $CHECKME_OUTLINE_FUNCTIONS
     -cf $CHECKME_CALLED_FUNCTIONS
-    -- ./fib-prof 10 4
+    -- ./fib-prof.out 10 4
 \end{lstlisting}
 
 The \texttt{-e} option of \texttt{of\_finder.py} outputs outline and called function lists in the BASH export format. The backticks evaluate the output as commands.

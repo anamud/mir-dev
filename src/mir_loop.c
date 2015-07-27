@@ -12,15 +12,7 @@ struct mir_loop_des_t* mir_new_omp_loop_desc()
     return loop;
 } /*}}}*/
 
-struct mir_loop_des_t* mir_new_omp_loop_desc_init(long start, long end,
-                                                  long incr, long chunk_size)
-{ /*{{{*/
-    struct mir_loop_des_t* loop = mir_new_omp_loop_desc();
-    mir_populate_loop_desc(loop, start, end, incr, chunk_size);
-    return loop;
-} /*}}}*/
-
-void mir_populate_loop_desc(struct mir_loop_des_t* loop, long start, long end,
+void mir_omp_loop_desc_init(struct mir_loop_des_t* loop, long start, long end,
                             long incr, long chunk_size)
 { /*{{{*/
     loop->incr = incr;

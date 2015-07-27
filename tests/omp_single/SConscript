@@ -1,0 +1,23 @@
+import os
+import sys
+
+# Import environments
+Import('opt','debug')
+
+# Make copies of imported environment to keep changes local
+opt = opt.Clone()
+debug = debug.Clone()
+
+# Specialize debug environment
+debug['CCFLAGS'] += ['-fopenmp']
+debug.VariantDir('debug-build', '.', duplicate=0)
+debug_src = debug.Glob('debug-build/*.c')
+debug.Program('test-debug.out', source = debug_src)
+Clean('.','debug-build')
+
+# Specialize opt environment
+opt['CCFLAGS'] += ['-fopenmp']
+opt.VariantDir('opt-build', '.', duplicate=0)
+opt_src = opt.Glob('opt-build/*.c')
+opt.Program('test-opt.out', source = opt_src)
+Clean('.','opt-build')

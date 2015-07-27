@@ -1,13 +1,13 @@
 #!/bin/bash
 
-cd ./test_1
-echo In `pwd`
-./test.sh
-echo
-cd ..
-
-cd ./test_2
-./test.sh
-echo
-cd ..
-
+for d in */ ;
+do
+    echo Entering directory $d
+    pushd $d
+    if [ -f test.sh ];
+    then
+        ./test.sh
+        scons -uc
+    fi
+    popd
+done

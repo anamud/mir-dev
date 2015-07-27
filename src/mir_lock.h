@@ -3,7 +3,7 @@
 
 #include "mir_types.h"
 
-/*LIBINT_INC_BEGIN*/
+/*PUB_INT_INC_BEGIN*/
 // Uncomment this to use sync mutex on the tilepro64
 //#define TILEPRO_USE_SYNCMUTEX
 #ifdef __tile__
@@ -18,11 +18,11 @@
 #include <pthread.h>
 #define MIR_LOCK_INITIALIZER PTHREAD_MUTEX_INITIALIZER
 #endif
-/*LIBINT_INC_END*/
+/*PUB_INT_INC_END*/
 
 BEGIN_C_DECLS
 
-/*LIBINT_BASE_DECL_BEGIN*/
+/*PUB_INT_BASE_DECL_BEGIN*/
 struct mir_lock_t { /*{{{*/
 #ifdef __tile__
     //tmc_sync_mutex_t m;
@@ -31,9 +31,9 @@ struct mir_lock_t { /*{{{*/
     pthread_mutex_t m;
 #endif
 }; /*}}}*/
-/*LIBINT_BASE_DECL_END*/
+/*PUB_INT_BASE_DECL_END*/
 
-/*LIBINT_BEGIN*/
+/*PUB_INT_BEGIN*/
 void mir_lock_create(struct mir_lock_t* lock);
 
 void mir_lock_destroy(struct mir_lock_t* lock);
@@ -43,7 +43,7 @@ void mir_lock_set(struct mir_lock_t* lock);
 void mir_lock_unset(struct mir_lock_t* lock);
 
 int mir_lock_tryset(struct mir_lock_t* lock);
-/*LIBINT_END*/
+/*PUB_INT_END*/
 
 END_C_DECLS
 
