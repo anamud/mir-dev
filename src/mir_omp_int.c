@@ -574,38 +574,7 @@ void GOMP_loop_end_nowait(void)
 
 void GOMP_parallel_start(void (*fn)(void*), void* data, unsigned num_threads)
 { /*{{{*/
-    // Create thread team.
-    mir_create_int(num_threads);
-
-    // Ensure number of required threads is not larger than those available.
-    MIR_ASSERT_STR(num_threads <= runtime->num_workers, "Number of OMP threads requested is greater than number of MIR workers.");
-
-    MIR_RECORDER_STATE_BEGIN(MIR_STATE_TCREATE);
-
-    // Number of threads is either specified by the program or the number of threads created by the runtime system.
-    num_threads = num_threads == 0 ? runtime->num_workers : num_threads;
-
-    // Set team.
-    struct mir_worker_t* worker = mir_worker_get_context();
-    struct mir_omp_team_t* prevteam;
-    prevteam = worker->current_task ? worker->current_task->team : NULL;
-    struct mir_omp_team_t* team = mir_new_omp_team(prevteam, num_threads);
-
-    for (int i = 0; i < num_threads; i++) {
-        if(i == worker->id)
-            continue;
-        // Schedule parallel block tasks on all workers except current.
-        mir_task_create_on_worker((mir_tfunc_t)fn, data, 0, 0, NULL, "GOMP_parallel_task", team, NULL, i);
-    }
-
-    MIR_RECORDER_STATE_END(NULL, 0);
-
-    // Create fake task.
-    struct mir_task_t* task = mir_task_create_common((mir_tfunc_t)fn, data, 0, 0, NULL, "GOMP_parallel_task", team, NULL);
-    MIR_CHECK_MEM(task != NULL);
-
-    // Start profiling and book-keeping for parallel task
-    mir_task_execute_prolog(task);
+    mir_parallel_start(fn, data, num_threads, 0, 0, 0, 0, false, false);
 } /*}}}*/
 
 void GOMP_parallel_end(void)
