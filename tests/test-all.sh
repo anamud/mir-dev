@@ -3,10 +3,10 @@
 for d in */ ;
 do
     echo Entering directory $d
-    pushd $d
+    pushd $d > /dev/null
     if [ -f test.sh ];
     then
         ./test.sh
     fi
-    popd
+    popd > /dev/null
 done
