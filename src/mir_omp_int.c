@@ -19,8 +19,11 @@
 
 static void mir_parallel_loop_start (void (*fn) (void *), void *data, unsigned num_threads, long start, long end, long incr, long chunk_size, bool private_loop_desc)
 { /*{{{*/
-    struct mir_loop_des_t* loop = mir_new_omp_loop_desc();
-    mir_omp_loop_desc_init(loop, start, end, incr, chunk_size);
+    struct mir_loop_des_t* loop = NULL;
+    if (!private_loop_desc) {
+        loop = mir_new_omp_loop_desc();
+        mir_omp_loop_desc_init(loop, start, end, incr, chunk_size);
+    }
 
     // Create thread team.
     mir_create_int(num_threads);
