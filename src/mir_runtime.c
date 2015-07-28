@@ -270,7 +270,7 @@ static void mir_config()
             }
             else if (0 == strcmp(long_options[option_index].name, "single-parallel-block")) {
                 runtime->single_parallel_block = 1;
-                MIR_DEBUG("Executing parallel blocks with one worker enabled.\n");
+                MIR_DEBUG("Executing parallel blocks with one worker enabled.");
             }
             else if (0 == strcmp(long_options[option_index].name, "stack-size")) {
                 int ps_sz = atoi(optarg) * 1024 * 1024;
