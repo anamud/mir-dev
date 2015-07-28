@@ -369,7 +369,7 @@ void mir_create_int(int num_workers)
 { /*{{{*/
     // Create only if first call
     if (runtime != NULL) {
-        MIR_ASSERT_STR(num_workers == runtime->num_workers || num_workers == 0, "Runtime system is already created. Number of workers requested differs from first request.");
+        MIR_ASSERT_STR(num_workers == runtime->num_workers || num_workers == 0, "Runtime system is already created with number of workers (%d) different from number requested (%d).", runtime->num_workers, num_workers);
         MIR_ASSERT(runtime->destroyed == 0);
         __sync_fetch_and_add(&(runtime->init_count), 1);
         return;
