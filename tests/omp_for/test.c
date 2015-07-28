@@ -52,6 +52,31 @@ END_TEST
 // Large teams are unsupported in MIR.
 // The test should therefore pass if MIR throws an assertion.
 
+START_TEST(omp_parallel_for_static_reduction)
+{/*{{{*/
+    int a[128] = {0};
+    for(int i=0; i<128; i++)
+    {
+        a[i] = i;
+    }
+
+    int sum = 0;
+
+#pragma omp parallel for shared(a) schedule(static) reduction(+: sum)
+    for(int i=0; i<128; i++)
+    {
+        sum = sum + a[i];
+    }
+
+    int sum_gold = 0;
+    for(int i=0; i<128; i++)
+    {
+        sum_gold += a[i];
+    }
+    ck_assert_int_eq(sum, sum_gold);
+}/*}}}*/
+END_TEST
+
 START_TEST(omp_parallel_for_dynamic)
 {/*{{{*/
     int a[128] = {0};
@@ -95,6 +120,31 @@ START_TEST(omp_parallel_for_dynamic_num_threads_small)
     }
     ck_assert_int_eq(sum, sum_gold);
     ck_assert_int_eq(num_threads, num_threads_reqd);
+}/*}}}*/
+END_TEST
+
+START_TEST(omp_parallel_for_dynamic_reduction)
+{/*{{{*/
+    int a[128] = {0};
+    for(int i=0; i<128; i++)
+    {
+        a[i] = i;
+    }
+
+    int sum = 0;
+
+#pragma omp parallel for shared(a) schedule(dynamic) reduction(+: sum)
+    for(int i=0; i<128; i++)
+    {
+        sum = sum + a[i];
+    }
+
+    int sum_gold = 0;
+    for(int i=0; i<128; i++)
+    {
+        sum_gold += a[i];
+    }
+    ck_assert_int_eq(sum, sum_gold);
 }/*}}}*/
 END_TEST
 
@@ -191,6 +241,35 @@ START_TEST(omp_parallel_for_runtime_static_chunk)
         sum_gold += i;
     }
     ck_assert_int_eq(sum, sum_gold);
+}/*}}}*/
+END_TEST
+
+START_TEST(omp_parallel_for_runtime_static_reduction)
+{/*{{{*/
+    setenv("OMP_SCHEDULE", "static", 1);
+
+    int a[128] = {0};
+    for(int i=0; i<128; i++)
+    {
+        a[i] = i;
+    }
+
+    int sum = 0;
+
+#pragma omp parallel for shared(a) schedule(runtime) reduction(+: sum)
+    for(int i=0; i<128; i++)
+    {
+        sum = sum + a[i];
+    }
+
+    int sum_gold = 0;
+    for(int i=0; i<128; i++)
+    {
+        sum_gold += a[i];
+    }
+    ck_assert_int_eq(sum, sum_gold);
+
+    unsetenv("OMP_SCHEDULE");
 }/*}}}*/
 END_TEST
 
@@ -296,6 +375,34 @@ START_TEST(omp_for_static_num_threads_small)
 }/*}}}*/
 END_TEST
 
+START_TEST(omp_for_static_reduction)
+{/*{{{*/
+    int a[128] = {0};
+    for(int i=0; i<128; i++)
+    {
+        a[i] = i;
+    }
+
+    int sum = 0;
+
+#pragma omp parallel shared(a)
+    {
+#pragma omp for schedule(static) reduction(+: sum)
+        for(int i=0; i<128; i++)
+        {
+            sum = sum + a[i];
+        }
+    }
+
+    int sum_gold = 0;
+    for(int i=0; i<128; i++)
+    {
+        sum_gold += a[i];
+    }
+    ck_assert_int_eq(sum, sum_gold);
+}/*}}}*/
+END_TEST
+
 START_TEST(omp_for_dynamic)
 {/*{{{*/
     int a[128] = {0};
@@ -345,6 +452,33 @@ START_TEST(omp_for_dynamic_num_threads_small)
     }
     ck_assert_int_eq(sum, sum_gold);
     ck_assert_int_eq(num_threads, num_threads_reqd);
+}/*}}}*/
+END_TEST
+
+START_TEST(omp_for_dynamic_reduction)
+{/*{{{*/
+    int a[128] = {0};
+    for(int i=0; i<128; i++)
+    {
+        a[i] = i;
+    }
+
+    int sum = 0;
+#pragma omp parallel shared(a)
+    {
+#pragma omp for schedule(dynamic) reduction(+: sum)
+        for(int i=0; i<128; i++)
+        {
+            sum = sum + a[i];
+        }
+    }
+
+    int sum_gold = 0;
+    for(int i=0; i<128; i++)
+    {
+        sum_gold += a[i];
+    }
+    ck_assert_int_eq(sum, sum_gold);
 }/*}}}*/
 END_TEST
 
@@ -456,6 +590,38 @@ START_TEST(omp_for_runtime_static_chunk)
 }/*}}}*/
 END_TEST
 
+START_TEST(omp_for_runtime_static_reduction)
+{/*{{{*/
+    setenv("OMP_SCHEDULE", "static", 1);
+
+    int a[128] = {0};
+    for(int i=0; i<128; i++)
+    {
+        a[i] = i;
+    }
+
+    int sum = 0;
+
+#pragma omp parallel shared(a)
+    {
+#pragma omp for schedule(runtime) reduction(+: sum)
+        for(int i=0; i<128; i++)
+        {
+            sum = sum + a[i];
+        }
+    }
+
+    int sum_gold = 0;
+    for(int i=0; i<128; i++)
+    {
+        sum_gold += a[i];
+    }
+    ck_assert_int_eq(sum, sum_gold);
+
+    unsetenv("OMP_SCHEDULE");
+}/*}}}*/
+END_TEST
+
 START_TEST(omp_for_runtime_dynamic)
 {/*{{{*/
     int a[128] = {0};
@@ -517,23 +683,39 @@ Suite* test_suite(void)
     Suite* s = suite_create("Test");
 
     TCase* tc = tcase_create("omp_for");
+
     tcase_add_test(tc, omp_parallel_for_static);
     tcase_add_test(tc, omp_parallel_for_static_num_threads_small);
+    tcase_add_test(tc, omp_parallel_for_static_reduction);
+
     tcase_add_test(tc, omp_parallel_for_dynamic);
     tcase_add_test(tc, omp_parallel_for_dynamic_num_threads_small);
+    tcase_add_test(tc, omp_parallel_for_dynamic_reduction);
+
     tcase_add_test(tc, omp_parallel_for_runtime);
     tcase_add_test(tc, omp_parallel_for_runtime_num_threads_small);
+
     tcase_add_test(tc, omp_parallel_for_runtime_static);
     tcase_add_test(tc, omp_parallel_for_runtime_static_chunk);
+    tcase_add_test(tc, omp_parallel_for_runtime_static_reduction);
+
     tcase_add_test(tc, omp_parallel_for_runtime_dynamic);
     tcase_add_test(tc, omp_parallel_for_runtime_dynamic_chunk);
+
     tcase_add_test(tc, omp_for_static);
     tcase_add_test(tc, omp_for_static_num_threads_small);
+    tcase_add_test(tc, omp_for_static_reduction);
+
     tcase_add_test(tc, omp_for_dynamic);
     tcase_add_test(tc, omp_for_dynamic_num_threads_small);
+    tcase_add_test(tc, omp_for_dynamic_reduction);
+
     tcase_add_test(tc, omp_for_runtime);
+
     tcase_add_test(tc, omp_for_runtime_static);
     tcase_add_test(tc, omp_for_runtime_static_chunk);
+    tcase_add_test(tc, omp_for_runtime_static_reduction);
+
     tcase_add_test(tc, omp_for_runtime_dynamic);
     tcase_add_test(tc, omp_for_runtime_dynamic_chunk);
 
