@@ -1,7 +1,6 @@
 #!/bin/bash
 
 cat test-info.txt
-echo Rebuilding test code quietly ...
 scons -cu -Q --quiet &> /dev/null && scons -u -Q --quiet &> /dev/null
 echo -n Running test ...
 num_trials=1
