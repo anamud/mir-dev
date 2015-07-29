@@ -47,6 +47,7 @@ Suite* test_suite(void)
     TCase* tc = tcase_create("omp_barrier");
     tcase_add_test(tc, omp_barrier_simple);
 
+    tcase_set_timeout(tc, 10);
     suite_add_tcase(s, tc);
 
     return s;
