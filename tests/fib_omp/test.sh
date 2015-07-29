@@ -3,7 +3,7 @@
 cat test-info.txt
 echo Rebuilding test code quietly ...
 scons -cu -Q --quiet &> /dev/null && scons -u -Q --quiet &> /dev/null
-echo Running test ...
+echo -n Running test ...
 num_trials=1
 if [ $# -gt 0 ];
 then num_trials=$1
@@ -11,9 +11,12 @@ fi
 > test-result.txt
 for i in `seq 1 $num_trials`;
 do
-    echo Trial $i:
-    MIR_CONF="--single-parallel-block" ./test-opt.out | tee -a test-result.txt
-    if [ ${PIPESTATUS[0]} -ne 0 ];
-    then echo Test FAILED.
+    echo -n "  trial $i ..."
+    MIR_CONF="--single-parallel-block" ./test-opt.out >> test-result.txt
+    if [ $? -ne 0 ];
+    then cat test-result.txt
+         echo Test FAILED.
+         exit 1
     fi
 done
+echo "  Passed"
