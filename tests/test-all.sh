@@ -8,6 +8,7 @@ fi
 for d in */ ;
 do
     pushd $d > /dev/null
+    # Override default behaviour
     if [ -f test.sh ];
     then
         ./test.sh $num_trials
@@ -15,6 +16,24 @@ do
         then
             exitcode=1
         fi
+    # Regular test.
+    elif [ -f SConscript ];
+    then
+        cat test-info.txt
+        scons -cu -Q --quiet &> /dev/null && scons -u -Q --quiet &> /dev/null
+        echo -n Running test ...
+        > test-result.txt
+        for i in `seq 1 $num_trials`;
+        do
+            echo -n "  trial $i ..."
+           ./test-opt.out >> test-result.txt
+           if [ $? -ne 0 ];
+           then cat test-result.txt
+                echo Test FAILED.
+                exitcode=1
+           fi
+        done
+        echo "  Passed"
     fi
     popd > /dev/null
 done
