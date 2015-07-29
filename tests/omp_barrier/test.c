@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <check.h>
 #include <omp.h>
+#include <stdint.h>
 
 static uint64_t fib_seq(int n)
 { /*{{{*/
