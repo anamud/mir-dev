@@ -77,6 +77,31 @@ START_TEST(omp_parallel_for_static_reduction)
 }/*}}}*/
 END_TEST
 
+START_TEST(omp_parallel_for_static_reduction_num_threads_one)
+{/*{{{*/
+    int a[128] = {0};
+    for(int i=0; i<128; i++)
+    {
+        a[i] = i;
+    }
+
+    int sum = 0;
+
+#pragma omp parallel for shared(a) schedule(static) reduction(+: sum) num_threads(1)
+    for(int i=0; i<128; i++)
+    {
+        sum = sum + a[i];
+    }
+
+    int sum_gold = 0;
+    for(int i=0; i<128; i++)
+    {
+        sum_gold += a[i];
+    }
+    ck_assert_int_eq(sum, sum_gold);
+}/*}}}*/
+END_TEST
+
 START_TEST(omp_parallel_for_dynamic)
 {/*{{{*/
     int a[128] = {0};
@@ -134,6 +159,31 @@ START_TEST(omp_parallel_for_dynamic_reduction)
     int sum = 0;
 
 #pragma omp parallel for shared(a) schedule(dynamic) reduction(+: sum)
+    for(int i=0; i<128; i++)
+    {
+        sum = sum + a[i];
+    }
+
+    int sum_gold = 0;
+    for(int i=0; i<128; i++)
+    {
+        sum_gold += a[i];
+    }
+    ck_assert_int_eq(sum, sum_gold);
+}/*}}}*/
+END_TEST
+
+START_TEST(omp_parallel_for_dynamic_reduction_num_threads_one)
+{/*{{{*/
+    int a[128] = {0};
+    for(int i=0; i<128; i++)
+    {
+        a[i] = i;
+    }
+
+    int sum = 0;
+
+#pragma omp parallel for shared(a) schedule(dynamic) reduction(+: sum) num_threads(1)
     for(int i=0; i<128; i++)
     {
         sum = sum + a[i];
@@ -257,6 +307,35 @@ START_TEST(omp_parallel_for_runtime_static_reduction)
     int sum = 0;
 
 #pragma omp parallel for shared(a) schedule(runtime) reduction(+: sum)
+    for(int i=0; i<128; i++)
+    {
+        sum = sum + a[i];
+    }
+
+    int sum_gold = 0;
+    for(int i=0; i<128; i++)
+    {
+        sum_gold += a[i];
+    }
+    ck_assert_int_eq(sum, sum_gold);
+
+    unsetenv("OMP_SCHEDULE");
+}/*}}}*/
+END_TEST
+
+START_TEST(omp_parallel_for_runtime_static_reduction_num_threads_one)
+{/*{{{*/
+    setenv("OMP_SCHEDULE", "static", 1);
+
+    int a[128] = {0};
+    for(int i=0; i<128; i++)
+    {
+        a[i] = i;
+    }
+
+    int sum = 0;
+
+#pragma omp parallel for shared(a) schedule(runtime) reduction(+: sum) num_threads(1)
     for(int i=0; i<128; i++)
     {
         sum = sum + a[i];
@@ -687,10 +766,12 @@ Suite* test_suite(void)
     tcase_add_test(tc, omp_parallel_for_static);
     tcase_add_test(tc, omp_parallel_for_static_num_threads_small);
     tcase_add_test(tc, omp_parallel_for_static_reduction);
+    tcase_add_test(tc, omp_parallel_for_static_reduction_num_threads_one);
 
     tcase_add_test(tc, omp_parallel_for_dynamic);
     tcase_add_test(tc, omp_parallel_for_dynamic_num_threads_small);
     tcase_add_test(tc, omp_parallel_for_dynamic_reduction);
+    tcase_add_test(tc, omp_parallel_for_dynamic_reduction_num_threads_one);
 
     tcase_add_test(tc, omp_parallel_for_runtime);
     tcase_add_test(tc, omp_parallel_for_runtime_num_threads_small);
@@ -698,6 +779,7 @@ Suite* test_suite(void)
     tcase_add_test(tc, omp_parallel_for_runtime_static);
     tcase_add_test(tc, omp_parallel_for_runtime_static_chunk);
     tcase_add_test(tc, omp_parallel_for_runtime_static_reduction);
+    tcase_add_test(tc, omp_parallel_for_runtime_static_reduction_num_threads_one);
 
     tcase_add_test(tc, omp_parallel_for_runtime_dynamic);
     tcase_add_test(tc, omp_parallel_for_runtime_dynamic_chunk);
