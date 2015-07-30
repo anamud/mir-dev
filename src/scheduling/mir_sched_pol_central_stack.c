@@ -89,7 +89,6 @@ int pop_central_stack(struct mir_task_t** task)
     MIR_ASSERT(NULL != queue);
     struct mir_worker_t* worker = mir_worker_get_context();
     MIR_ASSERT(NULL != worker);
-    uint16_t node = runtime->arch->node_of(worker->cpu_id);
 
     if (mir_stack_size(queue) > 0) {
         *task = NULL;
@@ -101,6 +100,7 @@ int pop_central_stack(struct mir_task_t** task)
             // Update stats
             if (runtime->enable_worker_stats == 1) {
 #ifdef MIR_MEM_POL_ENABLE
+                uint16_t node = runtime->arch->node_of(worker->cpu_id);
                 struct mir_mem_node_dist_t* dist = mir_task_get_mem_node_dist(*task, MIR_DATA_ACCESS_READ);
                 if (dist) {
                     (*task)->comm_cost = mir_mem_node_dist_get_comm_cost(dist, node);
