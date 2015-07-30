@@ -87,37 +87,37 @@ int pop_central(struct mir_task_t** task)
     MIR_ASSERT(NULL != sp);
     struct mir_queue_t* queue = sp->queues[0];
     MIR_ASSERT(NULL != queue);
+    if (mir_queue_size(queue) == 0)
+        return 0;
+
     struct mir_worker_t* worker = mir_worker_get_context();
     MIR_ASSERT(NULL != worker);
     uint16_t node = runtime->arch->node_of(worker->cpu_id);
 
-    if (mir_queue_size(queue) > 0) {
-        *task = NULL;
-        mir_queue_pop(queue, (void**)&(*task));
-        if (*task) {
-            if (runtime->enable_task_stats == 1)
-                (*task)->queue_size_at_pop = mir_queue_size(queue);
-
-            // Update stats
-            if (runtime->enable_worker_stats == 1) {
+    *task = NULL;
+    mir_queue_pop(queue, (void**)&(*task));
+    if (*task) {
+        if (runtime->enable_task_stats == 1)
+            (*task)->queue_size_at_pop = mir_queue_size(queue);
+         // Update stats
+        if (runtime->enable_worker_stats == 1) {
 #ifdef MIR_MEM_POL_ENABLE
-                struct mir_mem_node_dist_t* dist = mir_task_get_mem_node_dist(*task, MIR_DATA_ACCESS_READ);
-                if (dist) {
-                    (*task)->comm_cost = mir_mem_node_dist_get_comm_cost(dist, node);
-                    mir_worker_statistics_update_comm_cost(worker->statistics, (*task)->comm_cost);
-                }
-#endif
+            struct mir_mem_node_dist_t* dist = mir_task_get_mem_node_dist(*task, MIR_DATA_ACCESS_READ);
+            if (dist) {
+                (*task)->comm_cost = mir_mem_node_dist_get_comm_cost(dist, node);
+                mir_worker_statistics_update_comm_cost(worker->statistics, (*task)->comm_cost);
             }
-
-            __sync_fetch_and_sub(&g_num_tasks_waiting, 1);
-            T_DBG("Dq", *task);
-
-            found = 1;
-
-            // Update stats
-            if (runtime->enable_worker_stats == 1)
-                worker->statistics->num_tasks_owned++;
+#endif
         }
+
+        __sync_fetch_and_sub(&g_num_tasks_waiting, 1);
+        T_DBG("Dq", *task);
+
+        found = 1;
+
+        // Update stats
+        if (runtime->enable_worker_stats == 1)
+            worker->statistics->num_tasks_owned++;
     }
 
     //MIR_RECORDER_STATE_END(NULL, 0);
