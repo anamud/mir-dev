@@ -84,7 +84,6 @@ int push_ws_de_node(struct mir_worker_t* worker, struct mir_task_t* task)
 
 int pop_ws_de_node(struct mir_task_t** task)
 { /*{{{*/
-    int found = 0;
     struct mir_sched_pol_t* sp = runtime->sched_pol;
     MIR_ASSERT(NULL != sp);
     uint32_t num_queues = sp->num_queues;
@@ -138,10 +137,10 @@ int pop_ws_de_node(struct mir_task_t** task)
     } while (++ctr != worker->id);
 
     // Next try to pop from other queues within other nodes
-    for (int d = 1; d <= runtime->arch->diameter && found != 1; d++) { /*{{{*/
+    for (int d = 1; d <= runtime->arch->diameter; d++) { /*{{{*/
         uint16_t neighbors[runtime->arch->num_nodes];
         uint16_t count = runtime->arch->vicinity_of(neighbors, node, d);
-        for (int i = 0; i < count && found != 1; i++) {
+        for (int i = 0; i < count; i++) {
             struct mir_sbuf_t cpus;
             runtime->arch->cpus_of(&cpus, neighbors[i]);
             for (int j = 0; j < cpus.size; j++) {
@@ -169,8 +168,7 @@ int pop_ws_de_node(struct mir_task_t** task)
                             MIR_ASSERT(g_num_tasks_waiting >= 0);
                             T_DBG("St", *task);
 
-                            found = 1;
-                            break;
+                            return 1;
                         }
                     }
                 }
@@ -178,7 +176,7 @@ int pop_ws_de_node(struct mir_task_t** task)
         }
     } /*}}}*/
 
-    return found;
+    return 0;
 } /*}}}*/
 
 struct mir_sched_pol_t policy_ws_de_node = { /*{{{*/
