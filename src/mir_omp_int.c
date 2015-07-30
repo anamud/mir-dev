@@ -145,9 +145,6 @@ static void chunk_task_next(long start, long end, bool last)
         // independent of the fake chunk tasks. Therefore the current fake task can be
         // terminated without creating a continuation.
 
-        // Create fake twin task.
-        struct mir_task_t* twin = mir_task_create_twin(temp, str);
-
         if(last)
         {
             // Describe twin as continuation.
@@ -159,7 +156,9 @@ static void chunk_task_next(long start, long end, bool last)
             sprintf(str, "chunk_%lu_%lu", start, end);
         }
 
-        mir_task_write_metadata(twin, str);
+        // Create fake twin task.
+        struct mir_task_t* twin = mir_task_create_twin(temp->name, temp, str);
+
         // Start profiling and book-keeping for fake twin task
         mir_task_execute_prolog(twin);
     }

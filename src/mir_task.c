@@ -62,11 +62,11 @@ static inline int inline_necessary()
     return 0;
 } /*}}}*/
 
-struct mir_task_t* mir_task_create_twin(struct mir_task_t* task, char *str)
+struct mir_task_t* mir_task_create_twin(char *name, struct mir_task_t* task, char *str)
 {/*{{{*/
     MIR_ASSERT(task != NULL);
     struct mir_task_t* twin;
-    twin = mir_task_create_common(task->func, task->data, task->data_size, task->num_data_footprints, task->data_footprints, task->name, task->team, task->loop, task->parent);
+    twin = mir_task_create_common(task->func, task->data, task->data_size, task->num_data_footprints, task->data_footprints, name, task->team, task->loop, task->parent);
     mir_task_write_metadata(twin, str);
     return twin;
 }/*}}}*/
