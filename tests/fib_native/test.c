@@ -114,6 +114,7 @@ Suite* test_suite(void)
 
     TCase* tc = tcase_create("fib_native");
     tcase_add_test(tc, fib_native);
+    tcase_set_timeout(tc, 10);
     suite_add_tcase(s, tc);
 
     return s;
