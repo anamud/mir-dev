@@ -117,13 +117,10 @@ int pop_ws_de_node(struct mir_task_t** task)
                 MIR_ASSERT(g_num_tasks_waiting >= 0);
                 T_DBG("Dq", *task);
 
-                found = 1;
+                return 1;
             }
         }
     }
-
-    if (found)
-        return found;
 
     // Next try to pop from other queues within own node
 
@@ -165,8 +162,7 @@ int pop_ws_de_node(struct mir_task_t** task)
                     MIR_ASSERT(g_num_tasks_waiting >= 0);
                     T_DBG("St", *task);
 
-                    found = 1;
-                    break;
+                    return 1;
                 }
             }
         }
@@ -176,9 +172,6 @@ int pop_ws_de_node(struct mir_task_t** task)
         if (ctr == num_queues)
             ctr = 0;
     }
-
-    if (found)
-        return found;
 
     // Next try to pop from other queues within other nodes
     for (int d = 1; d <= runtime->arch->diameter && found != 1; d++) { /*{{{*/
