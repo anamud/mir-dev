@@ -104,14 +104,11 @@ int pop_central_stack(struct mir_task_t** task)
                 mir_worker_statistics_update_comm_cost(worker->statistics, (*task)->comm_cost);
             }
 #endif
+            worker->statistics->num_tasks_owned++;
         }
 
         __sync_fetch_and_sub(&g_num_tasks_waiting, 1);
         T_DBG("Dq", *task);
-
-        // Update stats
-        if (runtime->enable_worker_stats == 1)
-            worker->statistics->num_tasks_owned++;
 
         return 1;
     }
