@@ -121,7 +121,7 @@ static void T_DBG(char* msg, struct mir_task_t* t)
 
 /*PUB_INT*/ void mir_task_create(mir_tfunc_t tfunc, void* data, size_t data_size, unsigned int num_data_footprints, struct mir_data_footprint_t* data_footprints, const char* name);
 
-struct mir_task_t* mir_task_create_sibling(struct mir_task_t* task);
+struct mir_task_t* mir_task_create_twin(struct mir_task_t* task);
 
 struct mir_task_t* mir_task_create_common(mir_tfunc_t tfunc, void* data, size_t data_size, unsigned int num_data_footprints, const struct mir_data_footprint_t* data_footprints, const char* name, struct mir_omp_team_t* myteam, struct mir_loop_des_t* loopdes, struct mir_task_t* parent);
 

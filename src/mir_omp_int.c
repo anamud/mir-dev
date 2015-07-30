@@ -142,16 +142,16 @@ static void chunk_task_next(long start, long end, bool last)
         }
         else
         {
-            // Create fake sibling task.
-            struct mir_task_t* sibling = mir_task_create_sibling(temp);
+            // Create fake twin task.
+            struct mir_task_t* twin = mir_task_create_twin(temp);
 
             // Write chunk details as metadata
             char str[MIR_SHORT_NAME_LEN];
             sprintf(str, "chunk_%lu_%lu", start, end);
-            mir_task_write_metadata(sibling, str);
+            mir_task_write_metadata(twin, str);
 
-            // Start profiling and book-keeping for fake sibling task
-            mir_task_execute_prolog(sibling);
+            // Start profiling and book-keeping for fake twin task
+            mir_task_execute_prolog(twin);
         }
     }
     else
@@ -160,24 +160,24 @@ static void chunk_task_next(long start, long end, bool last)
         // part of the fake chunk tasks. Therefore we terminate current fake task
         // and create the continuation.
 
-        // Create fake sibling task.
-        struct mir_task_t* sibling = mir_task_create_sibling(temp);
+        // Create fake twin task.
+        struct mir_task_t* twin = mir_task_create_twin(temp);
 
         if(!last)
         {
             // Write chunk details as metadata.
             char str[MIR_SHORT_NAME_LEN];
             sprintf(str, "chunk_%lu_%lu", start, end);
-            mir_task_write_metadata(sibling, str);
+            mir_task_write_metadata(twin, str);
         }
         else
         {
-            // Describe sibling as continuation.
-            mir_task_write_metadata(sibling, "chunk_continuation");
+            // Describe twin as continuation.
+            mir_task_write_metadata(twin, "chunk_continuation");
         }
 
-        // Start profiling and book-keeping for fake sibling task
-        mir_task_execute_prolog(sibling);
+        // Start profiling and book-keeping for fake twin task
+        mir_task_execute_prolog(twin);
     }
 }/*}}}*/
 

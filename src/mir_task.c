@@ -62,7 +62,7 @@ static inline int inline_necessary()
     return 0;
 } /*}}}*/
 
-struct mir_task_t* mir_task_create_sibling(struct mir_task_t* task)
+struct mir_task_t* mir_task_create_twin(struct mir_task_t* task)
 {/*{{{*/
     MIR_ASSERT(task != NULL);
     return mir_task_create_common(task->func, task->data, task->data_size, task->num_data_footprints, task->data_footprints, task->name, task->team, task->loop, task->parent);
