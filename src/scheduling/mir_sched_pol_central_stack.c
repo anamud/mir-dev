@@ -90,30 +90,29 @@ int pop_central_stack(struct mir_task_t** task)
 
     *task = NULL;
     mir_stack_pop(queue, (void**)&(*task));
-    if (*task) {
-        if (runtime->enable_task_stats == 1)
-            (*task)->queue_size_at_pop = mir_stack_size(queue);
+    if (!*task)
+        return 0;
 
-        // Update stats
-        if (runtime->enable_worker_stats == 1) {
+    if (runtime->enable_task_stats == 1)
+        (*task)->queue_size_at_pop = mir_stack_size(queue);
+
+    // Update stats
+    if (runtime->enable_worker_stats == 1) {
 #ifdef MIR_MEM_POL_ENABLE
-            uint16_t node = runtime->arch->node_of(worker->cpu_id);
-            struct mir_mem_node_dist_t* dist = mir_task_get_mem_node_dist(*task, MIR_DATA_ACCESS_READ);
-            if (dist) {
-                (*task)->comm_cost = mir_mem_node_dist_get_comm_cost(dist, node);
-                mir_worker_statistics_update_comm_cost(worker->statistics, (*task)->comm_cost);
-            }
-#endif
-            worker->statistics->num_tasks_owned++;
+        uint16_t node = runtime->arch->node_of(worker->cpu_id);
+        struct mir_mem_node_dist_t* dist = mir_task_get_mem_node_dist(*task, MIR_DATA_ACCESS_READ);
+        if (dist) {
+            (*task)->comm_cost = mir_mem_node_dist_get_comm_cost(dist, node);
+            mir_worker_statistics_update_comm_cost(worker->statistics, (*task)->comm_cost);
         }
-
-        __sync_fetch_and_sub(&g_num_tasks_waiting, 1);
-        T_DBG("Dq", *task);
-
-        return 1;
+#endif
+        worker->statistics->num_tasks_owned++;
     }
 
-    return 0;
+    __sync_fetch_and_sub(&g_num_tasks_waiting, 1);
+    T_DBG("Dq", *task);
+
+    return 1;
 } /*}}}*/
 
 struct mir_sched_pol_t policy_central_stack = { /*{{{*/
