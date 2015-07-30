@@ -111,29 +111,30 @@ int pop_ws_de_node(struct mir_task_t** task)
             continue;
 
         *task = ctr == worker->id ? (struct mir_task_t*)popWSDeque(queue) : (struct mir_task_t*)stealWSDeque(queue);
-        if (*task) {
-            if (__sync_bool_compare_and_swap(&((*task)->taken), 0, 1)) {
-                // Update stats
-                if (runtime->enable_worker_stats == 1) {
+        if (!*task)
+            continue;
+
+        if (__sync_bool_compare_and_swap(&((*task)->taken), 0, 1)) {
+            // Update stats
+            if (runtime->enable_worker_stats == 1) {
 #ifdef MIR_MEM_POL_ENABLE
-                    struct mir_mem_node_dist_t* dist = mir_task_get_mem_node_dist(*task, MIR_DATA_ACCESS_READ);
-                    if (dist) {
-                        (*task)->comm_cost = mir_mem_node_dist_get_comm_cost(dist, node);
-                        mir_worker_statistics_update_comm_cost(worker->statistics, (*task)->comm_cost);
-                    }
-#endif
-                    if (ctr == worker->id)
-                        worker->statistics->num_tasks_owned++;
-                    else
-                        worker->statistics->num_tasks_stolen++;
+                struct mir_mem_node_dist_t* dist = mir_task_get_mem_node_dist(*task, MIR_DATA_ACCESS_READ);
+                if (dist) {
+                    (*task)->comm_cost = mir_mem_node_dist_get_comm_cost(dist, node);
+                    mir_worker_statistics_update_comm_cost(worker->statistics, (*task)->comm_cost);
                 }
-
-                __sync_fetch_and_sub(&g_num_tasks_waiting, 1);
-                MIR_ASSERT(g_num_tasks_waiting >= 0);
-                T_DBG(ctr == worker->id ? "Dq" : "St", *task);
-
-                return 1;
+#endif
+                if (ctr == worker->id)
+                    worker->statistics->num_tasks_owned++;
+                else
+                    worker->statistics->num_tasks_stolen++;
             }
+
+            __sync_fetch_and_sub(&g_num_tasks_waiting, 1);
+            MIR_ASSERT(g_num_tasks_waiting >= 0);
+            T_DBG(ctr == worker->id ? "Dq" : "St", *task);
+
+            return 1;
         }
     } while (++ctr != worker->id);
 
@@ -150,28 +151,29 @@ int pop_ws_de_node(struct mir_task_t** task)
                     continue;
 
                 *task = (struct mir_task_t*)stealWSDeque(queue);
-                if (*task) {
-                    if (__sync_bool_compare_and_swap(&((*task)->taken), 0, 1)) {
-                        // Update stats
-                        if (runtime->enable_worker_stats == 1) {
-                            /*#ifdef MIR_MEM_POL_ENABLE*/ /*{{{*/
-                            /*struct mir_mem_node_dist_t* dist = mir_task_get_mem_node_dist(*task, MIR_DATA_ACCESS_READ);*/
-                            /*if(dist)*/
-                            /*{*/
-                            /*(*task)->comm_cost = mir_mem_node_dist_get_comm_cost(dist, node);*/
-                            /*mir_worker_statistics_update_comm_cost(worker->statistics, (*task)->comm_cost);*/
-                            /*}*/
-                            /*#endif*/ /*}}}*/
+                if (!*task)
+                    continue;
 
-                            worker->statistics->num_tasks_stolen++;
-                        }
+                if (__sync_bool_compare_and_swap(&((*task)->taken), 0, 1)) {
+                    // Update stats
+                    if (runtime->enable_worker_stats == 1) {
+                        /*#ifdef MIR_MEM_POL_ENABLE*/ /*{{{*/
+                        /*struct mir_mem_node_dist_t* dist = mir_task_get_mem_node_dist(*task, MIR_DATA_ACCESS_READ);*/
+                        /*if(dist)*/
+                        /*{*/
+                        /*(*task)->comm_cost = mir_mem_node_dist_get_comm_cost(dist, node);*/
+                        /*mir_worker_statistics_update_comm_cost(worker->statistics, (*task)->comm_cost);*/
+                        /*}*/
+                        /*#endif*/ /*}}}*/
 
-                        __sync_fetch_and_sub(&g_num_tasks_waiting, 1);
-                        MIR_ASSERT(g_num_tasks_waiting >= 0);
-                        T_DBG("St", *task);
+                        worker->statistics->num_tasks_stolen++;
+                    }
 
-                        return 1;
-                     }
+                    __sync_fetch_and_sub(&g_num_tasks_waiting, 1);
+                    MIR_ASSERT(g_num_tasks_waiting >= 0);
+                    T_DBG("St", *task);
+
+                    return 1;
                 }
             }
         }
