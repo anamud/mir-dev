@@ -387,19 +387,12 @@ void mir_task_execute(struct mir_task_t* task)
     // Execute task function
     task->func(task->data);
 
-    if(runtime->chunks_are_tasks == 1)
-    {
-        // The chunk continuation i.e., worker->continuation need not be the same as task.
-        // So we stop profiling and book-keeping for worker->task.
-        struct mir_worker_t* worker = mir_worker_get_context();
-        MIR_ASSERT(worker != NULL);
-        mir_task_execute_epilog(worker->current_task);
-    }
-    else
-    {
-        // Stop profiling and book-keeping for task
-        mir_task_execute_epilog(task);
-    }
+    // Stop profiling and book-keeping for task
+    // We use worker->current_task instead of task since task can be chained with fake tasks.
+    // An example of chaining is the execution of loop chunks as tasks.
+    struct mir_worker_t* worker = mir_worker_get_context();
+    MIR_ASSERT(worker != NULL);
+    mir_task_execute_epilog(worker->current_task);
 
     // Debugging
     //MIR_LOG_INFO("Task %" MIR_FORMSPEC_UL " executed on worker %d\n", task->id.uid, worker->id);
