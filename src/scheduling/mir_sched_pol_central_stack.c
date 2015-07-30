@@ -73,15 +73,11 @@ int push_central_stack(struct mir_worker_t* worker, struct mir_task_t* task)
             worker->statistics->num_tasks_created++;
     }
 
-    //MIR_RECORDER_STATE_END(NULL, 0);
-
     return pushed;
 } /*}}}*/
 
 int pop_central_stack(struct mir_task_t** task)
 { /*{{{*/
-    //MIR_RECORDER_STATE_BEGIN(MIR_STATE_TMOBING);
-
     int found = 0;
     struct mir_sched_pol_t* sp = runtime->sched_pol;
     MIR_ASSERT(NULL != sp);
@@ -120,7 +116,6 @@ int pop_central_stack(struct mir_task_t** task)
         }
     }
 
-    //MIR_RECORDER_STATE_END(NULL, 0);
     return found;
 } /*}}}*/
 
