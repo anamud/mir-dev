@@ -88,8 +88,6 @@ int pop_ws(struct mir_task_t** task)
     MIR_ASSERT(NULL != worker);
 
     // First try to pop from own queue
-    //MIR_RECORDER_STATE_BEGIN(MIR_STATE_TPOP);
-
     struct mir_queue_t* queue = sp->queues[worker->id];
     if (mir_queue_size(queue) > 0) {
         *task = NULL;
@@ -116,11 +114,7 @@ int pop_ws(struct mir_task_t** task)
         }
     }
 
-    //MIR_RECORDER_STATE_END(NULL, 0);
-
     // Next try to pop from other queues
-    //MIR_RECORDER_STATE_BEGIN(MIR_STATE_TSTEAL);
-
     uint16_t ctr = worker->id + 1;
     if (ctr == num_queues)
         ctr = 0;
@@ -158,8 +152,6 @@ int pop_ws(struct mir_task_t** task)
             return 1;
         }
     }
-
-    //MIR_RECORDER_STATE_END(NULL, 0);
 
     return 0;
 } /*}}}*/
