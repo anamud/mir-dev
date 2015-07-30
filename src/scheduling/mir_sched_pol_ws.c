@@ -81,89 +81,55 @@ int push_ws(struct mir_worker_t* worker, struct mir_task_t* task)
 
 int pop_ws(struct mir_task_t** task)
 { /*{{{*/
-    int found = 0;
     struct mir_sched_pol_t* sp = runtime->sched_pol;
     MIR_ASSERT(NULL != sp);
     uint32_t num_queues = sp->num_queues;
     struct mir_worker_t* worker = mir_worker_get_context();
     MIR_ASSERT(NULL != worker);
-    uint16_t node = runtime->arch->node_of(worker->cpu_id);
 
-    // First try to pop from own queue
-    //MIR_RECORDER_STATE_BEGIN(MIR_STATE_TPOP);
+    // Start with own queue, round-robin if empty.
+    uint16_t ctr = worker->id;
+    do {
+        // Wrap around.
+        if (ctr == num_queues) {
+	    // Worker 0 has already tried all queues, bail out.
+            if (worker->id == 0)
+                return 0;
+            ctr = 0;
+        }
 
-    struct mir_queue_t* queue = sp->queues[worker->id];
-    if (mir_queue_size(queue) > 0) {
+        struct mir_queue_t* queue = sp->queues[ctr];
+
+        if (mir_queue_size(queue) == 0)
+            continue;
+
         *task = NULL;
         mir_queue_pop(queue, (void**)&(*task));
         if (*task) {
             // Update stats
             if (runtime->enable_worker_stats == 1) {
 #ifdef MIR_MEM_POL_ENABLE
+                uint16_t node = runtime->arch->node_of(worker->cpu_id);
                 struct mir_mem_node_dist_t* dist = mir_task_get_mem_node_dist(*task, MIR_DATA_ACCESS_READ);
                 if (dist) {
                     (*task)->comm_cost = mir_mem_node_dist_get_comm_cost(dist, node);
                     mir_worker_statistics_update_comm_cost(worker->statistics, (*task)->comm_cost);
                 }
 #endif
-
-                worker->statistics->num_tasks_owned++;
+                if (ctr == worker->id)
+                    worker->statistics->num_tasks_owned++;
+                else
+                    worker->statistics->num_tasks_stolen++;
             }
 
             __sync_fetch_and_sub(&g_num_tasks_waiting, 1);
-            T_DBG("Dq", *task);
+            T_DBG(ctr == worker->id ? "Dq" : "St", *task);
 
-            found = 1;
+            return 1;
         }
-    }
+    } while (++ctr != worker->id);
 
-    //MIR_RECORDER_STATE_END(NULL, 0);
-
-    if (found)
-        return found;
-
-    // Next try to pop from other queues
-    //MIR_RECORDER_STATE_BEGIN(MIR_STATE_TSTEAL);
-
-    uint16_t ctr = worker->id + 1;
-    if (ctr == num_queues)
-        ctr = 0;
-
-    while (ctr != worker->id) {
-        struct mir_queue_t* queue = sp->queues[ctr];
-        if (mir_queue_size(queue) > 0) {
-            mir_queue_pop(queue, (void**)&(*task));
-            if (*task) {
-                // Update stats
-                if (runtime->enable_worker_stats == 1) {
-#ifdef MIR_MEM_POL_ENABLE
-                    struct mir_mem_node_dist_t* dist = mir_task_get_mem_node_dist(*task, MIR_DATA_ACCESS_READ);
-                    if (dist) {
-                        (*task)->comm_cost = mir_mem_node_dist_get_comm_cost(dist, node);
-                        mir_worker_statistics_update_comm_cost(worker->statistics, (*task)->comm_cost);
-                    }
-#endif
-
-                    worker->statistics->num_tasks_stolen++;
-                }
-
-                __sync_fetch_and_sub(&g_num_tasks_waiting, 1);
-                T_DBG("St", *task);
-
-                found = 1;
-                break;
-            }
-        }
-
-        // Incremenet counter and wrap around
-        ctr++;
-        if (ctr == num_queues)
-            ctr = 0;
-    }
-
-    //MIR_RECORDER_STATE_END(NULL, 0);
-
-    return found;
+    return 0;
 } /*}}}*/
 
 struct mir_sched_pol_t policy_ws = { /*{{{*/

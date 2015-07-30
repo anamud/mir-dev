@@ -213,23 +213,32 @@ static inline int mir_worker_pop(struct mir_worker_t* worker, struct mir_task_t*
     MIR_ASSERT(worker != NULL);
     MIR_ASSERT(task != NULL);
 
-    int found = 0;
     struct mir_queue_t* queue = worker->private_queue;
     MIR_ASSERT(worker->private_queue != NULL);
-    if (mir_queue_size(queue) > 0) {
-        // Ensure the queue pops in FIFO order.
-        mir_queue_pop(queue, (void**)&(*task));
-        MIR_ASSERT(*task != NULL);
-        __sync_fetch_and_sub(&g_num_tasks_waiting, 1);
-        T_DBG("Dq", *task);
+    if (mir_queue_size(queue) == 0)
+        return 0;
 
-        // Update stats
-        if (runtime->enable_worker_stats == 1)
-            worker->statistics->num_tasks_owned++;
-        found = 1;
-    }
+    // Ensure the queue pops in FIFO order.
+    mir_queue_pop(queue, (void**)&(*task));
+    MIR_ASSERT(*task != NULL);
+    __sync_fetch_and_sub(&g_num_tasks_waiting, 1);
+    T_DBG("Dq", *task);
 
-    return found;
+    // Update stats
+    if (runtime->enable_worker_stats == 1)
+        worker->statistics->num_tasks_owned++;
+
+    return 1;
+} /*}}}*/
+
+static inline bool mir_pop(struct mir_worker_t* worker, struct mir_task_t** task)
+{ /*{{{*/
+    int found = mir_worker_pop(worker, task);
+
+    if (found)
+        return true;
+
+    return runtime->sched_pol->pop(task) == 1;
 } /*}}}*/
 
 void mir_worker_do_work(struct mir_worker_t* worker, int backoff)
@@ -238,45 +247,18 @@ void mir_worker_do_work(struct mir_worker_t* worker, int backoff)
 
     // Try to find tasks to execute
     struct mir_task_t* task = NULL;
-    int work_available = 0;
 
     // Overhead measurement
     uint64_t start_instant = mir_get_cycles();
 
-    // Look for work in private task queue.
-    work_available = mir_worker_pop(worker, &task);
+    // Look for work
+    bool work_available = mir_pop(worker, &task);
 
     // Overhead measurement
     if (worker->current_task)
         worker->current_task->overhead_cycles += (mir_get_cycles() - start_instant);
 
-    if (work_available == 1) {
-        // Update busy counter
-        __sync_fetch_and_add(&g_worker_status_board, 1);
-
-        // Execute task
-        mir_task_execute(task);
-
-        // Update busy counter
-        __sync_fetch_and_sub(&g_worker_status_board, 1);
-
-        // Update backoff
-        mir_worker_backoff_reset(worker);
-
-        return;
-    }
-
-    // Overhead measurement
-    start_instant = mir_get_cycles();
-
-    // Look for work in shared task queues.
-    work_available = runtime->sched_pol->pop(&task);
-
-    // Overhead measurement
-    if (worker->current_task)
-        worker->current_task->overhead_cycles += (mir_get_cycles() - start_instant);
-
-    if (work_available == 1) {
+    if (work_available) {
         // Update busy counter
         __sync_fetch_and_add(&g_worker_status_board, 1);
 

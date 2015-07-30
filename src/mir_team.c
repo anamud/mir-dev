@@ -13,5 +13,7 @@ struct mir_omp_team_t* mir_new_omp_team(struct mir_omp_team_t* pteam, unsigned n
     team->barrier_impending_count = 0;
     mir_lock_create(&(team->loop_lock));
     team->loop = NULL;
+    for (int i = 0; i < MIR_WORKER_MAX_COUNT; i++)
+        team->parallel_block_flag[i] = 0;
     return team;
 } /*}}}*/
