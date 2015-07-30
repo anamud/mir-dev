@@ -21,6 +21,12 @@ do
              echo Test FAILED.
              exit 1
         fi
+        MIR_CONF="-s $p -w 1 --stack-size=32" ./test-opt.out >> test-result.txt
+        if [ $? -ne 0 ];
+        then cat test-result.txt
+             echo Test FAILED.
+             exit 1
+        fi
     done
 done
 echo "  Passed"
