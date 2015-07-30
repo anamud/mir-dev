@@ -89,6 +89,13 @@ static void chunk_task_start(const char* name, struct mir_loop_des_t* loop)
     struct mir_worker_t* worker = mir_worker_get_context();
     MIR_ASSERT(worker != NULL);
     MIR_ASSERT(worker->current_task != NULL);
+    if(!runtime->chunks_are_tasks)
+    {
+        // No task chunks. Associate current task with loop and return.
+        worker->current_task->loop = loop;
+        return;
+    }
+
     struct mir_omp_team_t* team = worker->current_task->team;
     MIR_ASSERT(team != NULL);
 
@@ -325,16 +332,7 @@ bool GOMP_loop_dynamic_start (long start, long end, long incr, long chunk_size, 
         team->loop = loop;
     }
     mir_lock_unset(&team->loop_lock);
-
-    if(runtime->chunks_are_tasks)
-    {
-        chunk_task_start("GOMP_for_dynamic_task", team->loop);
-    }
-    else
-    {
-        // Associate current task with loop.
-        worker->current_task->loop = team->loop;
-    }
+    chunk_task_start("GOMP_for_dynamic_task", team->loop);
 
     return GOMP_loop_dynamic_next(istart, iend);
 } /*}}}*/
@@ -478,16 +476,7 @@ bool GOMP_loop_static_start (long start, long end, long incr, long chunk_size, l
     // Create loop description and associate with task.
     struct mir_loop_des_t* loop = mir_new_omp_loop_desc();
     mir_omp_loop_desc_init(loop, start, end, incr, chunk_size);
-
-    if(runtime->chunks_are_tasks)
-    {
-        chunk_task_start("GOMP_for_static_task", loop);
-    }
-    else
-    {
-        // Associate current task with loop.
-        worker->current_task->loop = loop;
-    }
+    chunk_task_start("GOMP_for_static_task", loop);
 
     return GOMP_loop_static_next(istart, iend);
 } /*}}}*/
