@@ -62,15 +62,15 @@ void mir_stack_pop(struct mir_stack_t* stack, void** data)
     mir_lock_set(&(stack->lock));
     if (STACK_EMPTY(stack)) {
         S_DBG("stack empty", stack);
-        mir_lock_unset(&(stack->lock));
-        return;
+        goto cleanup;
     }
     *data = stack->buffer[stack->head - 1];
     MIR_ASSERT(*data != NULL);
     stack->head--;
+
+cleanup:
     //__sync_synchronize();
     mir_lock_unset(&(stack->lock));
-    return;
 } /*}}}*/
 
 uint32_t mir_stack_size(const struct mir_stack_t* stack)
