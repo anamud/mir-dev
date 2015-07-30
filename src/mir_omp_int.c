@@ -117,6 +117,9 @@ static void chunk_task_start(const char* name, struct mir_loop_des_t* loop)
 
 static void chunk_task_next(long start, long end, bool last)
 {/*{{{*/
+    if(!runtime->chunks_are_tasks)
+        return;
+
     struct mir_worker_t* worker = mir_worker_get_context();
     MIR_ASSERT(worker != NULL);
     MIR_ASSERT(worker->current_task != NULL);
@@ -305,11 +308,7 @@ bool GOMP_loop_dynamic_next(long* istart, long* iend)
     mir_lock_set(&(loop->lock));
     ret = GOMP_loop_dynamic_next_int(istart, iend);
     mir_lock_unset(&(loop->lock));
-
-    if(runtime->chunks_are_tasks == 1)
-    {
-        chunk_task_next(*istart, *iend, !ret);
-    }
+    chunk_task_next(*istart, *iend, !ret);
 
     return ret;
 } /*}}}*/
@@ -457,11 +456,7 @@ static int GOMP_loop_static_next_int(long* pstart, long* pend)
 bool GOMP_loop_static_next(long* istart, long* iend)
 { /*{{{*/
     bool ret = !GOMP_loop_static_next_int(istart, iend);
-
-    if(runtime->chunks_are_tasks == 1)
-    {
-        chunk_task_next(*istart, *iend, !ret);
-    }
+    chunk_task_next(*istart, *iend, !ret);
 
     return ret;
 } /*}}}*/
