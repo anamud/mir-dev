@@ -107,8 +107,7 @@ int pop_ws_de(struct mir_task_t** task)
 
         *task = ctr == worker->id ? (struct mir_task_t*)popWSDeque(queue) : (struct mir_task_t*)stealWSDeque(queue);
         if (*task) {
-            bool grab = __sync_bool_compare_and_swap(&((*task)->taken), 0, 1);
-            if (grab) {
+            if (__sync_bool_compare_and_swap(&((*task)->taken), 0, 1)) {
                 // Update stats
                 if (runtime->enable_worker_stats == 1) {
 #ifdef MIR_MEM_POL_ENABLE
