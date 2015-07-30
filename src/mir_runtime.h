@@ -36,6 +36,7 @@ struct mir_runtime_t { /*{{{*/
     enum omp_for_schedule_t omp_for_schedule;
     long omp_for_chunk_size;
     int single_parallel_block;
+    int chunks_are_tasks;
 
     // Flags
     int sig_dying;

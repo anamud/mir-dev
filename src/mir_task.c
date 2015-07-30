@@ -62,7 +62,13 @@ static inline int inline_necessary()
     return 0;
 } /*}}}*/
 
-struct mir_task_t* mir_task_create_common(mir_tfunc_t tfunc, void* data, size_t data_size, unsigned int num_data_footprints, const struct mir_data_footprint_t* data_footprints, const char* name, struct mir_omp_team_t* myteam, struct mir_loop_des_t* loopdes)
+struct mir_task_t* mir_task_create_sibling(struct mir_task_t* task)
+{/*{{{*/
+    MIR_ASSERT(task != NULL);
+    return mir_task_create_common(task->func, task->data, task->data_size, task->num_data_footprints, task->data_footprints, task->name, task->team, task->loop, task->parent);
+}/*}}}*/
+
+struct mir_task_t* mir_task_create_common(mir_tfunc_t tfunc, void* data, size_t data_size, unsigned int num_data_footprints, const struct mir_data_footprint_t* data_footprints, const char* name, struct mir_omp_team_t* myteam, struct mir_loop_des_t* loopdes, struct mir_task_t* parent)
 { /*{{{*/
     MIR_ASSERT(tfunc != NULL);
 
@@ -105,6 +111,9 @@ struct mir_task_t* mir_task_create_common(mir_tfunc_t tfunc, void* data, size_t 
         strcpy(task->name, name);
     } /*}}}*/
 
+    // Task metadata
+    mir_task_write_metadata(task, NULL);
+
     // Communication cost
     // Initially communication cost is unknown
     // Is determined when task is scheduled
@@ -131,17 +140,15 @@ struct mir_task_t* mir_task_create_common(mir_tfunc_t tfunc, void* data, size_t 
     } /*}}}*/
 
     // Task parent
-    struct mir_worker_t* worker = mir_worker_get_context();
-    MIR_ASSERT(worker != NULL);
-    task->parent = worker->current_task;
+    task->parent = parent;
     task->team = myteam;
 
     // Wait counters
     // For children
     task->ctwc = mir_twc_create();
     // Link to parent wait counter
-    if (task->parent)
-        task->twc = task->parent->ctwc;
+    if (parent)
+        task->twc = parent->ctwc;
     else
         task->twc = runtime->ctwc;
     __sync_fetch_and_add(&(task->twc->count), 1);
@@ -149,9 +156,9 @@ struct mir_task_t* mir_task_create_common(mir_tfunc_t tfunc, void* data, size_t 
     // Task children book-keeping
     task->num_children = 0;
     task->child_number = 0;
-    if (task->parent) {
-        __sync_fetch_and_add(&(task->parent->num_children), 1);
-        task->child_number = task->parent->num_children;
+    if (parent) {
+        __sync_fetch_and_add(&(parent->num_children), 1);
+        task->child_number = parent->num_children;
     }
     else {
         __sync_fetch_and_add(&(runtime->num_children_tasks), 1);
@@ -169,13 +176,13 @@ struct mir_task_t* mir_task_create_common(mir_tfunc_t tfunc, void* data, size_t 
     task->loop = loopdes;
 
     // Overhead measurement
-    if (worker->current_task)
-        worker->current_task->overhead_cycles += (mir_get_cycles() - start_instant);
+    if (parent)
+        parent->overhead_cycles += (mir_get_cycles() - start_instant);
 
     // Record creation instant
     task->create_instant = 0;
-    if (worker->current_task)
-        task->create_instant = elapsed_execution_time(worker->current_task);
+    if (parent)
+        task->create_instant = elapsed_execution_time(parent);
 
     // Task is now created
     T_DBG("Cr", task);
@@ -242,8 +249,12 @@ void mir_task_create_on_worker(mir_tfunc_t tfunc, void* data, size_t data_size, 
 
     MIR_RECORDER_STATE_BEGIN(MIR_STATE_TCREATE);
 
+    // Get this worker
+    struct mir_worker_t* worker = mir_worker_get_context();
+    MIR_ASSERT(worker != NULL);
+
     // Create task
-    struct mir_task_t* task = mir_task_create_common(tfunc, data, data_size, num_data_footprints, data_footprints, name, myteam, loopdes);
+    struct mir_task_t* task = mir_task_create_common(tfunc, data, data_size, num_data_footprints, data_footprints, name, myteam, loopdes, worker->current_task);
     MIR_CHECK_MEM(task != NULL);
 
     // Schedule task
@@ -265,6 +276,8 @@ void mir_task_execute_prolog(struct mir_task_t* task)
     // Get this worker
     struct mir_worker_t* worker = mir_worker_get_context();
     MIR_ASSERT(worker != NULL);
+
+    //MIR_LOG_INFO("worker %d task %" MIR_FORMSPEC_UL " start", worker->id, task->id.uid);
 
     if (runtime->enable_recorder == 1) {
         // Compose event metadata
@@ -314,6 +327,8 @@ void mir_task_execute_epilog(struct mir_task_t* task)
     // Get this worker
     struct mir_worker_t* worker = mir_worker_get_context();
     MIR_ASSERT(worker != NULL);
+
+    //MIR_LOG_INFO("worker %d task %" MIR_FORMSPEC_UL " end", worker->id, task->id.uid);
 
     // Record where executed
     task->cpu_id = worker->cpu_id;
@@ -372,12 +387,35 @@ void mir_task_execute(struct mir_task_t* task)
     // Execute task function
     task->func(task->data);
 
-    // Stop profiling and book-keeping for task
-    mir_task_execute_epilog(task);
+    if(runtime->chunks_are_tasks == 1)
+    {
+        // The chunk continuation i.e., worker->continuation need not be the same as task.
+        // So we stop profiling and book-keeping for worker->task.
+        struct mir_worker_t* worker = mir_worker_get_context();
+        MIR_ASSERT(worker != NULL);
+        mir_task_execute_epilog(worker->current_task);
+    }
+    else
+    {
+        // Stop profiling and book-keeping for task
+        mir_task_execute_epilog(task);
+    }
 
     // Debugging
     //MIR_LOG_INFO("Task %" MIR_FORMSPEC_UL " executed on worker %d\n", task->id.uid, worker->id);
 } /*}}}*/
+
+void mir_task_write_metadata(struct mir_task_t* task, const char* metadata)
+{/*{{{*/
+    MIR_ASSERT(task != NULL);
+    if(metadata == NULL)
+        strcpy(task->metadata, "NA");
+    else
+    {
+        MIR_ASSERT(strlen(metadata) < MIR_SHORT_NAME_LEN);
+        strcpy(task->metadata, metadata);
+    }
+}/*}}}*/
 
 #ifdef MIR_MEM_POL_ENABLE
 static inline void mir_data_footprint_get_mem_node_dist(struct mir_mem_node_dist_t* dist, const struct mir_data_footprint_t* footprint)
@@ -487,7 +525,7 @@ void mir_task_wait()
 
 void mir_task_stats_write_header_to_file(FILE* file)
 { /*{{{*/
-    fprintf(file, "task,parent,joins_at,cpu_id,child_number,num_children,exec_cycles,overhead_cycles,queue_size,create_instant,exec_end_instant,tag,wait_instants\n");
+    fprintf(file, "task,parent,joins_at,cpu_id,child_number,num_children,exec_cycles,overhead_cycles,queue_size,create_instant,exec_end_instant,tag,metadata,wait_instants\n");
 } /*}}}*/
 
 void mir_task_stats_write_to_file(struct mir_task_list_t* list, FILE* file)
@@ -499,7 +537,7 @@ void mir_task_stats_write_to_file(struct mir_task_list_t* list, FILE* file)
         if (temp->task->parent)
             task_parent.uid = temp->task->parent->id.uid;
 
-        fprintf(file, "%" MIR_FORMSPEC_UL ",%" MIR_FORMSPEC_UL ",%lu,%u,%u,%u,%" MIR_FORMSPEC_UL ",%" MIR_FORMSPEC_UL ",%u,%" MIR_FORMSPEC_UL ",%" MIR_FORMSPEC_UL ",%s,[",
+        fprintf(file, "%" MIR_FORMSPEC_UL ",%" MIR_FORMSPEC_UL ",%lu,%u,%u,%u,%" MIR_FORMSPEC_UL ",%" MIR_FORMSPEC_UL ",%u,%" MIR_FORMSPEC_UL ",%" MIR_FORMSPEC_UL ",%s,%s,[",
             temp->task->id.uid,
             task_parent.uid,
             temp->task->sync_pass,
@@ -511,7 +549,8 @@ void mir_task_stats_write_to_file(struct mir_task_list_t* list, FILE* file)
             temp->task->queue_size_at_pop,
             temp->task->create_instant,
             temp->task->exec_end_instant,
-            temp->task->name);
+            temp->task->name,
+            temp->task->metadata);
 
         struct mir_time_list_t* tl = temp->task->ctwc->pass_time;
         fprintf(file, "%" MIR_FORMSPEC_UL, tl->time);

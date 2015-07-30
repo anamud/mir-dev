@@ -20,5 +20,6 @@ void mir_omp_loop_desc_init(struct mir_loop_des_t* loop, long start, long end,
     loop->end = ((incr > 0 && start > end) || (incr < 0 && start < end)) ? start : end;
     loop->chunk_size = chunk_size;
     loop->static_trip = 0;
+    loop->non_parallel_start = 0;
     loop->init = 1;
 } /*}}}*/

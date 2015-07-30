@@ -53,8 +53,8 @@ static void parallel_start (void (*fn) (void *), void *data, unsigned num_thread
 
         // Create and schedule loop tasks on all workers except current.
         mir_task_create_on_worker((mir_tfunc_t) fn, data, 0, 0, NULL,
-           has_loop_desc ? (private_loop_desc ? "GOMP_for_dynamic_task"
-                                              : "GOMP_for_static_task")
+           has_loop_desc ? (private_loop_desc ? "GOMP_parallel_for_dynamic_task"
+                                              : "GOMP_parallel_for_static_task")
                          : "GOMP_parallel_task",
            team, loop, i);
     }
@@ -70,16 +70,105 @@ static void parallel_start (void (*fn) (void *), void *data, unsigned num_thread
     // Create fake loop task on current worker.
     struct mir_task_t* task = mir_task_create_common((mir_tfunc_t) fn, data,
            0, 0, NULL,
-           has_loop_desc ? (private_loop_desc ? "GOMP_for_dynamic_task"
-                                              : "GOMP_for_static_task")
+           has_loop_desc ? (private_loop_desc ? "GOMP_parallel_for_dynamic_task"
+                                              : "GOMP_parallel_for_static_task")
                          : "GOMP_parallel_task",
-           team, loop);
+           team, loop, worker->current_task);
     MIR_CHECK_MEM(task != NULL);
 
     // Start profiling and book-keeping for fake task
     mir_task_execute_prolog(task);
 } /*}}}*/
 
+static void chunk_task_start(const char* name, struct mir_loop_des_t* loop)
+{/*{{{*/
+    MIR_ASSERT(loop != NULL);
+    MIR_ASSERT(name != NULL);
+
+    struct mir_worker_t* worker = mir_worker_get_context();
+    MIR_ASSERT(worker != NULL);
+    MIR_ASSERT(worker->current_task != NULL);
+    struct mir_omp_team_t* team = worker->current_task->team;
+    MIR_ASSERT(team != NULL);
+
+    // Mark loop descriptor as stemming from non-parallel loop start routine.
+    mir_lock_set(&(loop->lock));
+    loop->non_parallel_start = 1;
+    mir_lock_unset(&(loop->lock));
+
+    // Create fake loop task on current worker.
+    struct mir_task_t* task = mir_task_create_common(worker->current_task->func, worker->current_task->data, 0, 0, NULL, name, team, loop, worker->current_task);
+    MIR_CHECK_MEM(task != NULL);
+
+    // Write chunk details as metadata
+    mir_task_write_metadata(task, "chunk_start");
+
+    // Start profiling and book-keeping for fake task
+    mir_task_execute_prolog(task);
+}/*}}}*/
+
+static void chunk_task_next(long start, long end, bool last)
+{/*{{{*/
+    struct mir_worker_t* worker = mir_worker_get_context();
+    MIR_ASSERT(worker != NULL);
+    MIR_ASSERT(worker->current_task != NULL);
+
+    struct mir_task_t* temp = worker->current_task;
+
+    // End current task.
+    mir_task_execute_epilog(worker->current_task);
+
+    if(temp->loop->non_parallel_start == 1)
+    {
+        // If loop stems from a non-parallel start routine, then a continuation exists
+        // independent of the fake chunk tasks. Therefore the current fake task can be
+        // terminated without creating a continuation.
+
+        if(last)
+        {
+            // Mark that fake tasks are done.
+            mir_task_wait();
+        }
+        else
+        {
+            // Create fake sibling task.
+            struct mir_task_t* sibling = mir_task_create_sibling(temp);
+
+            // Write chunk details as metadata
+            char str[MIR_SHORT_NAME_LEN];
+            sprintf(str, "chunk_%lu_%lu", start, end);
+            mir_task_write_metadata(sibling, str);
+
+            // Start profiling and book-keeping for fake sibling task
+            mir_task_execute_prolog(sibling);
+        }
+    }
+    else
+    {
+        // If loop stems from a parallel start routine, then the continuation is
+        // part of the fake chunk tasks. Therefore we terminate current fake task
+        // and create the continuation.
+
+        // Create fake sibling task.
+        struct mir_task_t* sibling = mir_task_create_sibling(temp);
+
+        if(!last)
+        {
+            // Write chunk details as metadata.
+            char str[MIR_SHORT_NAME_LEN];
+            sprintf(str, "chunk_%lu_%lu", start, end);
+            mir_task_write_metadata(sibling, str);
+        }
+        else
+        {
+            // Describe sibling as continuation.
+            mir_task_write_metadata(sibling, "chunk_continuation");
+        }
+
+        // Start profiling and book-keeping for fake sibling task
+        mir_task_execute_prolog(sibling);
+    }
+}/*}}}*/
 
 /* barrier.c */
 
@@ -209,6 +298,11 @@ bool GOMP_loop_dynamic_next(long* istart, long* iend)
     ret = GOMP_loop_dynamic_next_int(istart, iend);
     mir_lock_unset(&(loop->lock));
 
+    if(runtime->chunks_are_tasks == 1)
+    {
+        chunk_task_next(*istart, *iend, !ret);
+    }
+
     return ret;
 } /*}}}*/
 
@@ -231,8 +325,15 @@ bool GOMP_loop_dynamic_start (long start, long end, long incr, long chunk_size, 
     }
     mir_lock_unset(&team->loop_lock);
 
-    // Associate task with loop.
-    worker->current_task->loop = team->loop;
+    if(runtime->chunks_are_tasks)
+    {
+        chunk_task_start("GOMP_for_dynamic_task", team->loop);
+    }
+    else
+    {
+        // Associate current task with loop.
+        worker->current_task->loop = team->loop;
+    }
 
     return GOMP_loop_dynamic_next(istart, iend);
 } /*}}}*/
@@ -356,7 +457,14 @@ static int GOMP_loop_static_next_int(long* pstart, long* pend)
 
 bool GOMP_loop_static_next(long* istart, long* iend)
 { /*{{{*/
-    return !GOMP_loop_static_next_int(istart, iend);
+    bool ret = !GOMP_loop_static_next_int(istart, iend);
+
+    if(runtime->chunks_are_tasks == 1)
+    {
+        chunk_task_next(*istart, *iend, !ret);
+    }
+
+    return ret;
 } /*}}}*/
 
 bool GOMP_loop_static_start (long start, long end, long incr, long chunk_size, long *istart, long *iend)
@@ -369,7 +477,16 @@ bool GOMP_loop_static_start (long start, long end, long incr, long chunk_size, l
     // Create loop description and associate with task.
     struct mir_loop_des_t* loop = mir_new_omp_loop_desc();
     mir_omp_loop_desc_init(loop, start, end, incr, chunk_size);
-    worker->current_task->loop = loop;
+
+    if(runtime->chunks_are_tasks)
+    {
+        chunk_task_start("GOMP_for_static_task", loop);
+    }
+    else
+    {
+        // Associate current task with loop.
+        worker->current_task->loop = loop;
+    }
 
     return GOMP_loop_static_next(istart, iend);
 } /*}}}*/

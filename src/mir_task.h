@@ -85,6 +85,7 @@ struct mir_task_t { /*{{{*/
     struct mir_twc_t* ctwc; // Sync counter for children
     unsigned long comm_cost;
     char name[MIR_SHORT_NAME_LEN];
+    char metadata[MIR_SHORT_NAME_LEN];
     struct mir_task_t* parent;
     struct mir_task_t* predecessor;
     uint16_t cpu_id;
@@ -120,7 +121,9 @@ static void T_DBG(char* msg, struct mir_task_t* t)
 
 /*PUB_INT*/ void mir_task_create(mir_tfunc_t tfunc, void* data, size_t data_size, unsigned int num_data_footprints, struct mir_data_footprint_t* data_footprints, const char* name);
 
-struct mir_task_t* mir_task_create_common(mir_tfunc_t tfunc, void* data, size_t data_size, unsigned int num_data_footprints, const struct mir_data_footprint_t* data_footprints, const char* name, struct mir_omp_team_t* myteam, struct mir_loop_des_t* loopdes);
+struct mir_task_t* mir_task_create_sibling(struct mir_task_t* task);
+
+struct mir_task_t* mir_task_create_common(mir_tfunc_t tfunc, void* data, size_t data_size, unsigned int num_data_footprints, const struct mir_data_footprint_t* data_footprints, const char* name, struct mir_omp_team_t* myteam, struct mir_loop_des_t* loopdes, struct mir_task_t* parent);
 
 void mir_task_create_on_worker(mir_tfunc_t tfunc, void* data, size_t data_size, unsigned int num_data_footprints, struct mir_data_footprint_t* data_footprints, const char* name, struct mir_omp_team_t* myteam, struct mir_loop_des_t* loopdes, int workerid);
 
@@ -132,6 +135,8 @@ void mir_task_execute_prolog(struct mir_task_t* task);
 void mir_task_execute_epilog(struct mir_task_t* task);
 
 void mir_task_execute(struct mir_task_t* task);
+
+void mir_task_write_metadata(struct mir_task_t* task, const char* metadata);
 
 #ifdef MIR_MEM_POL_ENABLE
 struct mir_mem_node_dist_t* mir_task_get_mem_node_dist(struct mir_task_t* task, mir_data_access_t access);

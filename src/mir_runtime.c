@@ -198,6 +198,7 @@ static inline void print_help()
                               "--single-parallel-block run parallel blocks with one worker\n"
                               "--worker-stats collect worker statistics\n"
                               "--task-stats collect task statistics\n"
+                              "--chunks-are-tasks treat loop chunks as tasks\n"
                               "-r (--recorder) enable worker recorder\n"
                               "-p (--profiler) enable communication with Outline Function Profiler. Note: This option is supported only for single-worker execution!\n");
 } /*}}}*/
@@ -251,6 +252,7 @@ static void mir_config()
             { "recorder", no_argument, 0, 'r' },
             { "worker-stats", no_argument, 0, 0 },
             { "task-stats", no_argument, 0, 0 },
+            { "chunks-are-tasks", no_argument, 0, 0 },
             { 0, 0, 0, 0 }
         };
 
@@ -285,6 +287,10 @@ static void mir_config()
             else if (0 == strcmp(long_options[option_index].name, "task-stats")) {
                 runtime->enable_task_stats = 1;
                 MIR_DEBUG("Task statistics collection is enabled.");
+            }
+            else if (0 == strcmp(long_options[option_index].name, "chunks-are-tasks")) {
+                runtime->chunks_are_tasks = 1;
+                MIR_DEBUG("Treating loop chunks as tasks.");
             }
             else if (0 == strcmp(long_options[option_index].name, "queue-size")) {
                 runtime->sched_pol->queue_capacity = atoi(optarg);
