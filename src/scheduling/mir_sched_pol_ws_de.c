@@ -93,8 +93,6 @@ int pop_ws_de(struct mir_task_t** task)
     uint16_t node = runtime->arch->node_of(worker->cpu_id);
 
     // First try to pop from own queue
-    //MIR_RECORDER_STATE_BEGIN(MIR_STATE_TPOP);
-
     mir_dequeue_t* queue = (mir_dequeue_t*)sp->queues[worker->id];
     if (looksEmptyWSDeque(queue) == rtsFalse) {
         *task = NULL;
@@ -124,14 +122,10 @@ int pop_ws_de(struct mir_task_t** task)
         }
     }
 
-    //MIR_RECORDER_STATE_END(NULL, 0);
-
     if (found)
         return found;
 
     // Next try to pop from other queues
-    //MIR_RECORDER_STATE_BEGIN(MIR_STATE_TSTEAL);
-
     uint16_t ctr = worker->id + 1;
     if (ctr == num_queues)
         ctr = 0;
@@ -172,8 +166,6 @@ int pop_ws_de(struct mir_task_t** task)
         if (ctr == num_queues)
             ctr = 0;
     }
-
-    //MIR_RECORDER_STATE_END(NULL, 0);
 
     return found;
 } /*}}}*/
