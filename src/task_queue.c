@@ -63,17 +63,18 @@ int task_queue_push(struct task_queue_t* queue, struct mir_task_t* data)
     return 1;
 } /*}}}*/
 
-void task_queue_pop(struct task_queue_t* queue, struct mir_task_t** data)
+struct mir_task_t* task_queue_pop(struct task_queue_t* queue)
 { /*{{{*/
     MIR_ASSERT(queue != NULL);
-    MIR_ASSERT(data != NULL);
+    struct mir_task_t* task = NULL;
 
     mir_lock_set(&(queue->deq_lock));
     if (TASK_QUEUE_EMPTY(queue)) {
         TQ_DBG("queue empty!", queue);
         goto cleanup;
     }
-    struct mir_task_t* task = queue->buffer[queue->out];
+    task = queue->buffer[queue->out];
+    MIR_ASSERT(task != NULL);
     struct mir_worker_t* worker = mir_worker_get_context();
     if (!runtime->single_parallel_block && task->team) {
         // The private queue is FIFO ordered. We have either already
@@ -83,20 +84,20 @@ void task_queue_pop(struct task_queue_t* queue, struct mir_task_t** data)
         // our parallel block first.
         if ((void *)queue == worker->private_queue)
             task->team->parallel_block_flag[worker->id] = 1;
-        else if (task->team->parallel_block_flag[worker->id] == 0)
+        else if (task->team->parallel_block_flag[worker->id] == 0) {
+            task = NULL;
             goto cleanup;
+	}
     }
 
-    *data = queue->buffer[queue->out];
-    MIR_ASSERT(*data != NULL);
     __sync_fetch_and_sub(&(queue->size), 1);
-
     queue->out++;
     if (queue->out >= queue->capacity)
         queue->out -= queue->capacity;
 
 cleanup:
     mir_lock_unset(&(queue->deq_lock));
+    return task;
 } /*}}}*/
 
 uint32_t task_queue_size(const struct task_queue_t* queue)

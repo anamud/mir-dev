@@ -46,7 +46,7 @@ void task_queue_destroy(struct task_queue_t* queue);
 int task_queue_push(struct task_queue_t* queue, struct mir_task_t* task);
 
 // Remove an element from the task queue.
-void task_queue_pop(struct task_queue_t* queue, struct mir_task_t** task);
+struct mir_task_t* task_queue_pop(struct task_queue_t* queue);
 
 // Get task queue size
 uint32_t task_queue_size(const struct task_queue_t* queue);
