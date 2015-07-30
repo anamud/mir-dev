@@ -78,7 +78,6 @@ int push_central_stack(struct mir_worker_t* worker, struct mir_task_t* task)
 
 int pop_central_stack(struct mir_task_t** task)
 { /*{{{*/
-    int found = 0;
     struct mir_sched_pol_t* sp = runtime->sched_pol;
     MIR_ASSERT(NULL != sp);
     struct mir_stack_t* queue = (struct mir_stack_t*)(sp->queues[0]);
@@ -110,14 +109,14 @@ int pop_central_stack(struct mir_task_t** task)
         __sync_fetch_and_sub(&g_num_tasks_waiting, 1);
         T_DBG("Dq", *task);
 
-        found = 1;
-
         // Update stats
         if (runtime->enable_worker_stats == 1)
             worker->statistics->num_tasks_owned++;
+
+        return 1;
     }
 
-    return found;
+    return 0;
 } /*}}}*/
 
 struct mir_sched_pol_t policy_central_stack = { /*{{{*/
