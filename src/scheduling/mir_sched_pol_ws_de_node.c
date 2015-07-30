@@ -93,8 +93,6 @@ int pop_ws_de_node(struct mir_task_t** task)
     uint16_t node = runtime->arch->node_of(worker->cpu_id);
 
     // First try to pop from own queue
-    //MIR_RECORDER_STATE_BEGIN(MIR_STATE_TPOP);
-
     mir_dequeue_t* queue = (mir_dequeue_t*)sp->queues[worker->id];
     if (looksEmptyWSDeque(queue) == rtsFalse) {
         *task = NULL;
@@ -123,8 +121,6 @@ int pop_ws_de_node(struct mir_task_t** task)
             }
         }
     }
-
-    //MIR_RECORDER_STATE_END(NULL, 0);
 
     if (found)
         return found;
