@@ -124,6 +124,7 @@ static void chunk_task_next(long start, long end, bool last)
     MIR_ASSERT(worker != NULL);
     MIR_ASSERT(worker->current_task != NULL);
 
+    char str[MIR_SHORT_NAME_LEN];
     struct mir_task_t* temp = worker->current_task;
 
     // End current task.
@@ -146,7 +147,6 @@ static void chunk_task_next(long start, long end, bool last)
             struct mir_task_t* twin = mir_task_create_twin(temp);
 
             // Write chunk details as metadata
-            char str[MIR_SHORT_NAME_LEN];
             sprintf(str, "chunk_%lu_%lu", start, end);
             mir_task_write_metadata(twin, str);
 
@@ -166,16 +166,15 @@ static void chunk_task_next(long start, long end, bool last)
         if(last)
         {
             // Describe twin as continuation.
-            mir_task_write_metadata(twin, "chunk_continuation");
+            strcpy(str, "chunk_continuation");
         }
         else
         {
             // Write chunk details as metadata.
-            char str[MIR_SHORT_NAME_LEN];
             sprintf(str, "chunk_%lu_%lu", start, end);
-            mir_task_write_metadata(twin, str);
         }
 
+        mir_task_write_metadata(twin, str);
         // Start profiling and book-keeping for fake twin task
         mir_task_execute_prolog(twin);
     }
