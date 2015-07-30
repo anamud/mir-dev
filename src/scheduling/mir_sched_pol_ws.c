@@ -87,7 +87,6 @@ int pop_ws(struct mir_task_t** task)
     uint32_t num_queues = sp->num_queues;
     struct mir_worker_t* worker = mir_worker_get_context();
     MIR_ASSERT(NULL != worker);
-    uint16_t node = runtime->arch->node_of(worker->cpu_id);
 
     // First try to pop from own queue
     //MIR_RECORDER_STATE_BEGIN(MIR_STATE_TPOP);
@@ -100,6 +99,7 @@ int pop_ws(struct mir_task_t** task)
             // Update stats
             if (runtime->enable_worker_stats == 1) {
 #ifdef MIR_MEM_POL_ENABLE
+                uint16_t node = runtime->arch->node_of(worker->cpu_id);
                 struct mir_mem_node_dist_t* dist = mir_task_get_mem_node_dist(*task, MIR_DATA_ACCESS_READ);
                 if (dist) {
                     (*task)->comm_cost = mir_mem_node_dist_get_comm_cost(dist, node);
@@ -134,6 +134,7 @@ int pop_ws(struct mir_task_t** task)
                 // Update stats
                 if (runtime->enable_worker_stats == 1) {
 #ifdef MIR_MEM_POL_ENABLE
+                    uint16_t node = runtime->arch->node_of(worker->cpu_id);
                     struct mir_mem_node_dist_t* dist = mir_task_get_mem_node_dist(*task, MIR_DATA_ACCESS_READ);
                     if (dist) {
                         (*task)->comm_cost = mir_mem_node_dist_get_comm_cost(dist, node);
