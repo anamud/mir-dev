@@ -3,6 +3,7 @@
 #include "mir_memory.h"
 #include "mir_queue.h"
 #include "mir_utils.h"
+#include "mir_task.h"
 
 struct mir_queue_t* mir_queue_create(uint32_t capacity)
 { /*{{{*/
@@ -73,6 +74,19 @@ void mir_queue_pop(struct mir_queue_t* queue, void** data)
     if (QUEUE_EMPTY(queue)) {
         Q_DBG("queue empty!", queue);
         goto cleanup;
+    }
+    struct mir_task_t* task = queue->buffer[queue->out];
+    struct mir_worker_t* worker = mir_worker_get_context();
+    if (task->team) {
+        // The private queue is FIFO ordered. We have either already
+        // executed the parallel block or will execute it right now.
+        //
+        // If we are stealing from another queue, ensure we have executed
+        // our parallel block first.
+        if (queue == worker->private_queue)
+            task->team->parallel_block_flag[worker->id] = 1;
+        else if (task->team->parallel_block_flag[worker->id] == 0)
+            goto cleanup;
     }
 
     *data = queue->buffer[queue->out];
