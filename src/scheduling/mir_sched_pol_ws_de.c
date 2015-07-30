@@ -84,7 +84,6 @@ int push_ws_de(struct mir_worker_t* worker, struct mir_task_t* task)
 
 int pop_ws_de(struct mir_task_t** task)
 { /*{{{*/
-    int found = 0;
     struct mir_sched_pol_t* sp = runtime->sched_pol;
     MIR_ASSERT(NULL != sp);
     uint32_t num_queues = sp->num_queues;
@@ -134,7 +133,7 @@ int pop_ws_de(struct mir_task_t** task)
         }
     } while (++ctr != worker->id);
 
-    return found;
+    return 0;
 } /*}}}*/
 
 struct mir_sched_pol_t policy_ws_de = { /*{{{*/
