@@ -21,6 +21,11 @@ uint32_t g_num_tasks_waiting = 0;
 
 extern uint32_t g_sig_worker_alive;
 
+void* idle_task_func(void* arg)
+{/*{{{*/
+    MIR_LOG_ERR("Cannot call idle task.");
+}/*}}}*/
+
 static void* mir_worker_loop(void* arg)
 { /*{{{*/
     struct mir_worker_t* worker = (struct mir_worker_t*)arg;
@@ -37,6 +42,15 @@ static void* mir_worker_loop(void* arg)
     MIR_RECORDER_EVENT(NULL, 0);
     MIR_RECORDER_STATE_BEGIN(MIR_STATE_TIDLE);
 
+    if(runtime->idle_task) {
+        // Start idle task as fake task
+        struct mir_task_t* task = mir_task_create_common((mir_tfunc_t) idle_task_func, NULL, 0, 0, NULL, MIR_IDLE_TASK_NAME, NULL, NULL, worker->current_task);
+        MIR_CHECK_MEM(task != NULL);
+
+        // Start profiling and book-keeping for idle task
+        mir_task_execute_prolog(task);
+    }
+
     // Now do useful work
     while (1) {
         // Do work with backoff=1
@@ -45,6 +59,15 @@ static void* mir_worker_loop(void* arg)
         // Check for runtime shutdown
         // __sync_synchronize();
         if (worker->sig_dying == 1) {
+            if(runtime->idle_task) {
+                // Get idle task
+                struct mir_task_t* task = worker->current_task;
+                MIR_ASSERT(strcmp(task->name, MIR_IDLE_TASK_NAME) == 0);
+
+                // Stop profiling and book-keeping for idle task
+                mir_task_execute_epilog(task);
+            }
+
             // Dump MIR_STATE_TIDLE state
             MIR_RECORDER_STATE_END(NULL, 0);
             MIR_RECORDER_EVENT(NULL, 0);

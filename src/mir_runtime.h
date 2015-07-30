@@ -44,6 +44,7 @@ struct mir_runtime_t { /*{{{*/
     int enable_task_stats;
     int enable_recorder;
     int enable_ofp_handshake;
+    int idle_task;
 }; /*}}}*/
 
 extern struct mir_runtime_t* runtime;

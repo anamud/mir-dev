@@ -71,6 +71,7 @@ static void mir_preconfig_init(int num_workers)
     runtime->enable_recorder = 0;
     runtime->enable_ofp_handshake = 0;
     runtime->task_inlining_limit = MIR_INLINE_TASK_DURING_CREATION;
+    runtime->idle_task = 0;
 } /*}}}*/
 
 static void mir_postconfig_init()
@@ -199,6 +200,7 @@ static inline void print_help()
                               "--worker-stats collect worker statistics\n"
                               "--task-stats collect task statistics\n"
                               "--chunks-are-tasks treat loop chunks as tasks\n"
+                              "--idle-task workers idle under implicit task\n"
                               "-r (--recorder) enable worker recorder\n"
                               "-p (--profiler) enable communication with Outline Function Profiler. Note: This option is supported only for single-worker execution!\n");
 } /*}}}*/
@@ -253,6 +255,7 @@ static void mir_config()
             { "worker-stats", no_argument, 0, 0 },
             { "task-stats", no_argument, 0, 0 },
             { "chunks-are-tasks", no_argument, 0, 0 },
+            { "idle-task", no_argument, 0, 0 },
             { 0, 0, 0, 0 }
         };
 
@@ -291,6 +294,10 @@ static void mir_config()
             else if (0 == strcmp(long_options[option_index].name, "chunks-are-tasks")) {
                 runtime->chunks_are_tasks = 1;
                 MIR_DEBUG("Treating loop chunks as tasks.");
+            }
+            else if (0 == strcmp(long_options[option_index].name, "idle-task")) {
+                runtime->idle_task = 1;
+                MIR_DEBUG("Workers idle under implicit task enabled.");
             }
             else if (0 == strcmp(long_options[option_index].name, "queue-size")) {
                 runtime->sched_pol->queue_capacity = atoi(optarg);
@@ -399,6 +406,15 @@ void mir_create_int(int num_workers)
 
     // Set a marking event
     MIR_RECORDER_EVENT(NULL, 0);
+
+    if(runtime->idle_task) {
+        // Start idle task as fake task
+        struct mir_task_t* task = mir_task_create_common((mir_tfunc_t) idle_task_func, NULL, 0, 0, NULL, MIR_IDLE_TASK_NAME, NULL, NULL, mir_worker_get_context()->current_task);
+        MIR_CHECK_MEM(task != NULL);
+
+        // Start profiling and book-keeping for idle task
+        mir_task_execute_prolog(task);
+    }
 } /*}}}*/
 
 void mir_create()
@@ -433,6 +449,15 @@ void mir_destroy()
         runtime->destroyed = 1;
     else
         return;
+
+    if(runtime->idle_task) {
+        // Get idle task
+        struct mir_task_t* task = mir_worker_get_context()->current_task;
+        MIR_ASSERT(strcmp(task->name, MIR_IDLE_TASK_NAME) == 0);
+
+        // Stop profiling and book-keeping for idle task
+        mir_task_execute_epilog(task);
+    }
 
     // Set a marking event
     MIR_RECORDER_EVENT(NULL, 0);

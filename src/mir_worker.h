@@ -51,6 +51,8 @@ struct mir_worker_t {
     struct mir_task_list_t* task_list;
 };
 
+void* idle_task_func(void* arg);
+
 void mir_worker_update_bias(struct mir_worker_t* worker);
 
 void mir_worker_master_init(struct mir_worker_t* worker);

@@ -15,6 +15,7 @@
 // Task
 //#define MIR_TASK_DEBUG
 #define MIR_TASK_DEFAULT_NAME "NO_NAME"
+#define MIR_IDLE_TASK_NAME "idle_task"
 //#define MIR_TASK_ALLOCATE_ON_STACK
 #define MIR_TASK_ID_START 0
 #define MIR_TASKWAIT_ID_START 0
