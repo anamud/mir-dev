@@ -82,7 +82,6 @@ int pop_central(struct mir_task_t** task)
 { /*{{{*/
     //MIR_RECORDER_STATE_BEGIN(MIR_STATE_TMOBING);
 
-    int found = 0;
     struct mir_sched_pol_t* sp = runtime->sched_pol;
     MIR_ASSERT(NULL != sp);
     struct mir_queue_t* queue = sp->queues[0];
@@ -95,30 +94,28 @@ int pop_central(struct mir_task_t** task)
 
     *task = NULL;
     mir_queue_pop(queue, (void**)&(*task));
-    if (*task) {
-        if (runtime->enable_task_stats == 1)
-            (*task)->queue_size_at_pop = mir_queue_size(queue);
-         // Update stats
-        if (runtime->enable_worker_stats == 1) {
-            worker->statistics->num_tasks_owned++;
+    if (!*task)
+        return 0;
+
+    if (runtime->enable_task_stats == 1)
+        (*task)->queue_size_at_pop = mir_queue_size(queue);
+    // Update stats
+    if (runtime->enable_worker_stats == 1) {
+        worker->statistics->num_tasks_owned++;
 #ifdef MIR_MEM_POL_ENABLE
-            uint16_t node = runtime->arch->node_of(worker->cpu_id);
-            struct mir_mem_node_dist_t* dist = mir_task_get_mem_node_dist(*task, MIR_DATA_ACCESS_READ);
-            if (dist) {
-                (*task)->comm_cost = mir_mem_node_dist_get_comm_cost(dist, node);
-                mir_worker_statistics_update_comm_cost(worker->statistics, (*task)->comm_cost);
-            }
-#endif
+        uint16_t node = runtime->arch->node_of(worker->cpu_id);
+        struct mir_mem_node_dist_t* dist = mir_task_get_mem_node_dist(*task, MIR_DATA_ACCESS_READ);
+        if (dist) {
+            (*task)->comm_cost = mir_mem_node_dist_get_comm_cost(dist, node);
+            mir_worker_statistics_update_comm_cost(worker->statistics, (*task)->comm_cost);
         }
-
-        __sync_fetch_and_sub(&g_num_tasks_waiting, 1);
-        T_DBG("Dq", *task);
-
-        found = 1;
+#endif
     }
 
-    //MIR_RECORDER_STATE_END(NULL, 0);
-    return found;
+    __sync_fetch_and_sub(&g_num_tasks_waiting, 1);
+    T_DBG("Dq", *task);
+
+    return 1;
 } /*}}}*/
 
 struct mir_sched_pol_t policy_central = { /*{{{*/
