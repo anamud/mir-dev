@@ -72,8 +72,7 @@ void mir_queue_pop(struct mir_queue_t* queue, void** data)
     mir_lock_set(&(queue->deq_lock));
     if (QUEUE_EMPTY(queue)) {
         Q_DBG("queue empty!", queue);
-        mir_lock_unset(&(queue->deq_lock));
-        return;
+        goto cleanup;
     }
 
     *data = queue->buffer[queue->out];
@@ -84,9 +83,9 @@ void mir_queue_pop(struct mir_queue_t* queue, void** data)
     if (queue->out >= queue->capacity)
         queue->out -= queue->capacity;
 
+cleanup:
     //__sync_synchronize();
     mir_lock_unset(&(queue->deq_lock));
-    return;
 } /*}}}*/
 
 uint32_t mir_queue_size(const struct mir_queue_t* queue)
