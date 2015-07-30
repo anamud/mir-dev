@@ -130,35 +130,20 @@ static void chunk_task_next(long start, long end, bool last)
     // End current task.
     mir_task_execute_epilog(worker->current_task);
 
-    if(temp->loop->non_parallel_start == 1)
+    if(last && temp->loop->non_parallel_start == 1)
     {
-        // If loop stems from a non-parallel start routine, then a continuation exists
-        // independent of the fake chunk tasks. Therefore the current fake task can be
-        // terminated without creating a continuation.
-
-        if(last)
-        {
-            // Mark that fake tasks are done.
-            mir_task_wait();
-        }
-        else
-        {
-            // Create fake twin task.
-            struct mir_task_t* twin = mir_task_create_twin(temp);
-
-            // Write chunk details as metadata
-            sprintf(str, "chunk_%lu_%lu", start, end);
-            mir_task_write_metadata(twin, str);
-
-            // Start profiling and book-keeping for fake twin task
-            mir_task_execute_prolog(twin);
-        }
+        // Mark that fake tasks are done.
+        mir_task_wait();
     }
     else
     {
         // If loop stems from a parallel start routine, then the continuation is
         // part of the fake chunk tasks. Therefore we terminate current fake task
         // and create the continuation.
+        //
+        // If loop stems from a non-parallel start routine, then a continuation exists
+        // independent of the fake chunk tasks. Therefore the current fake task can be
+        // terminated without creating a continuation.
 
         // Create fake twin task.
         struct mir_task_t* twin = mir_task_create_twin(temp);
