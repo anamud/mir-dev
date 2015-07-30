@@ -20,6 +20,7 @@ struct mir_loop_des_t {
 
 struct mir_loop_des_t* mir_new_omp_loop_desc();
 void mir_omp_loop_desc_init(struct mir_loop_des_t* loop, long start, long end, long incr, long chunk_size);
+struct mir_loop_des_t* mir_new_omp_loop_desc_init(long start, long end, long incr, long chunk_size);
 
 END_C_DECLS
 #endif

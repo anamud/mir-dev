@@ -23,3 +23,10 @@ void mir_omp_loop_desc_init(struct mir_loop_des_t* loop, long start, long end,
     loop->non_parallel_start = 0;
     loop->init = 1;
 } /*}}}*/
+
+struct mir_loop_des_t* mir_new_omp_loop_desc_init(long start, long end, long incr, long chunk_size)
+{/*{{{*/
+    struct mir_loop_des_t* loop = mir_new_omp_loop_desc();
+    mir_omp_loop_desc_init(loop, start, end, incr, chunk_size);
+    return loop;
+}/*}}}*/
