@@ -128,6 +128,12 @@ int pop_ws(struct mir_task_t** task)
 
     while (ctr != worker->id) {
         struct mir_queue_t* queue = sp->queues[ctr];
+
+        // Incremenet counter and wrap around
+        ctr++;
+        if (ctr == num_queues)
+            ctr = 0;
+
         if (mir_queue_size(queue) > 0) {
             mir_queue_pop(queue, (void**)&(*task));
             if (*task) {
@@ -152,11 +158,6 @@ int pop_ws(struct mir_task_t** task)
                 break;
             }
         }
-
-        // Incremenet counter and wrap around
-        ctr++;
-        if (ctr == num_queues)
-            ctr = 0;
     }
 
     //MIR_RECORDER_STATE_END(NULL, 0);
