@@ -134,29 +134,30 @@ int pop_ws(struct mir_task_t** task)
         if (ctr == num_queues)
             ctr = 0;
 
-        if (mir_queue_size(queue) > 0) {
-            mir_queue_pop(queue, (void**)&(*task));
-            if (*task) {
-                // Update stats
-                if (runtime->enable_worker_stats == 1) {
+        if (mir_queue_size(queue) == 0)
+            continue;
+
+        mir_queue_pop(queue, (void**)&(*task));
+        if (*task) {
+            // Update stats
+            if (runtime->enable_worker_stats == 1) {
 #ifdef MIR_MEM_POL_ENABLE
-                    uint16_t node = runtime->arch->node_of(worker->cpu_id);
-                    struct mir_mem_node_dist_t* dist = mir_task_get_mem_node_dist(*task, MIR_DATA_ACCESS_READ);
-                    if (dist) {
-                        (*task)->comm_cost = mir_mem_node_dist_get_comm_cost(dist, node);
-                        mir_worker_statistics_update_comm_cost(worker->statistics, (*task)->comm_cost);
-                    }
+                uint16_t node = runtime->arch->node_of(worker->cpu_id);
+                struct mir_mem_node_dist_t* dist = mir_task_get_mem_node_dist(*task, MIR_DATA_ACCESS_READ);
+                if (dist) {
+                    (*task)->comm_cost = mir_mem_node_dist_get_comm_cost(dist, node);
+                    mir_worker_statistics_update_comm_cost(worker->statistics, (*task)->comm_cost);
+                }
 #endif
 
-                    worker->statistics->num_tasks_stolen++;
-                }
-
-                __sync_fetch_and_sub(&g_num_tasks_waiting, 1);
-                T_DBG("St", *task);
-
-                found = 1;
-                break;
+                worker->statistics->num_tasks_stolen++;
             }
+
+            __sync_fetch_and_sub(&g_num_tasks_waiting, 1);
+            T_DBG("St", *task);
+
+            found = 1;
+            break;
         }
     }
 
