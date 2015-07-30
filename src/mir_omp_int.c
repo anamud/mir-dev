@@ -146,7 +146,7 @@ static void chunk_task_next(long start, long end, bool last)
         // terminated without creating a continuation.
 
         // Create fake twin task.
-        struct mir_task_t* twin = mir_task_create_twin(temp);
+        struct mir_task_t* twin = mir_task_create_twin(temp, str);
 
         if(last)
         {
