@@ -146,7 +146,6 @@ int pop_ws_de_node(struct mir_task_t** task)
             for (int j = 0; j < cpus.size; j++) {
                 mir_dequeue_t* queue = (mir_dequeue_t*)sp->queues[cpus.buf[j]];
                 if (looksEmptyWSDeque(queue) == rtsFalse) {
-                    *task = NULL;
                     *task = (struct mir_task_t*)stealWSDeque(queue);
                     if (*task) {
                         if (__sync_bool_compare_and_swap(&((*task)->taken), 0, 1)) {
