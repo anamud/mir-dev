@@ -81,7 +81,6 @@ int push_ws(struct mir_worker_t* worker, struct mir_task_t* task)
 
 int pop_ws(struct mir_task_t** task)
 { /*{{{*/
-    int found = 0;
     struct mir_sched_pol_t* sp = runtime->sched_pol;
     MIR_ASSERT(NULL != sp);
     uint32_t num_queues = sp->num_queues;
@@ -156,14 +155,13 @@ int pop_ws(struct mir_task_t** task)
             __sync_fetch_and_sub(&g_num_tasks_waiting, 1);
             T_DBG("St", *task);
 
-            found = 1;
-            break;
+            return 1;
         }
     }
 
     //MIR_RECORDER_STATE_END(NULL, 0);
 
-    return found;
+    return 0;
 } /*}}}*/
 
 struct mir_sched_pol_t policy_ws = { /*{{{*/
