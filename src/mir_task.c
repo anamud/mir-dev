@@ -7,7 +7,7 @@
 #include "scheduling/mir_sched_pol.h"
 #include "mir_utils.h"
 #include "mir_memory.h"
-#include "mir_queue.h"
+#include "task_queue.h"
 #include "mir_loop.h"
 #include "mir_mem_pol.h"
 

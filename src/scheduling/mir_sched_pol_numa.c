@@ -2,7 +2,7 @@
 #include "scheduling/mir_sched_pol.h"
 #include "mir_worker.h"
 #include "mir_task.h"
-#include "mir_queue.h"
+#include "task_queue.h"
 #include "mir_recorder.h"
 #include "mir_memory.h"
 #include "mir_utils.h"
@@ -23,20 +23,20 @@ void create_numa()
 
     // Create node private task queues
     sp->num_queues = runtime->arch->num_nodes;
-    sp->queues = mir_malloc_int(sp->num_queues * sizeof(struct mir_queue_t*));
+    sp->queues = mir_malloc_int(sp->num_queues * sizeof(struct task_queue_t*));
     MIR_CHECK_MEM(NULL != sp->queues);
 
     for (int i = 0; i < sp->num_queues; i++) {
-        sp->queues[i] = mir_queue_create(sp->queue_capacity);
+        sp->queues[i] = task_queue_create(sp->queue_capacity);
         MIR_ASSERT(NULL != sp->queues[i]);
     }
 
     // Create node private alternate task queues
-    sp->alt_queues = mir_malloc_int(sp->num_queues * sizeof(struct mir_queue_t*));
+    sp->alt_queues = mir_malloc_int(sp->num_queues * sizeof(struct task_queue_t*));
     MIR_CHECK_MEM(NULL != sp->alt_queues);
 
     for (int i = 0; i < sp->num_queues; i++) {
-        sp->alt_queues[i] = mir_queue_create(sp->queue_capacity);
+        sp->alt_queues[i] = task_queue_create(sp->queue_capacity);
         MIR_ASSERT(NULL != sp->alt_queues[i]);
     }
 } /*}}}*/
@@ -49,23 +49,23 @@ void destroy_numa()
     // Free queues
     for (int i = 0; i < sp->num_queues; i++) {
         MIR_ASSERT(NULL != sp->queues[i]);
-        mir_queue_destroy(sp->queues[i]);
+        task_queue_destroy((struct task_queue_t *)sp->queues[i]);
         sp->queues[i] = NULL;
     }
 
     MIR_ASSERT(NULL != sp->queues);
-    mir_free_int(sp->queues, sizeof(struct mir_queue_t*) * sp->num_queues);
+    mir_free_int(sp->queues, sizeof(struct task_queue_t*) * sp->num_queues);
     sp->queues = NULL;
 
     // Free alt_queues
     for (int i = 0; i < sp->num_queues; i++) {
         MIR_ASSERT(NULL != sp->alt_queues[i]);
-        mir_queue_destroy(sp->alt_queues[i]);
+        task_queue_destroy((struct task_queue_t *)sp->alt_queues[i]);
         sp->alt_queues[i] = NULL;
     }
 
     MIR_ASSERT(NULL != sp->alt_queues);
-    mir_free_int(sp->alt_queues, sizeof(struct mir_queue_t*) * sp->num_queues);
+    mir_free_int(sp->alt_queues, sizeof(struct task_queue_t*) * sp->num_queues);
     sp->alt_queues = NULL;
 } /*}}}*/
 
@@ -146,13 +146,13 @@ int push_numa(struct mir_worker_t* this_worker, struct mir_task_t* task)
     }
 
     // Push task to worker's queue
-    struct mir_queue_t* queue = NULL;
+    struct task_queue_t* queue;
     if (push_to_alt_queue == 1)
-        queue = runtime->sched_pol->alt_queues[runtime->arch->node_of(least_cost_worker->cpu_id)];
+        queue = (struct task_queue_t *)runtime->sched_pol->alt_queues[runtime->arch->node_of(least_cost_worker->cpu_id)];
     else
-        queue = runtime->sched_pol->queues[runtime->arch->node_of(least_cost_worker->cpu_id)];
+        queue = (struct task_queue_t *)runtime->sched_pol->queues[runtime->arch->node_of(least_cost_worker->cpu_id)];
     MIR_ASSERT(NULL != queue);
-    if (0 == mir_queue_push(queue, (void*)task)) {
+    if (0 == task_queue_push(queue, (void*)task)) {
 #ifdef MIR_INLINE_TASK_IF_QUEUE_FULL
         pushed = 0;
         mir_task_execute(task);
