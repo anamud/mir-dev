@@ -401,13 +401,8 @@ void mir_task_execute(struct mir_task_t* task)
 void mir_task_write_metadata(struct mir_task_t* task, const char* metadata)
 {/*{{{*/
     MIR_ASSERT(task != NULL);
-    if(metadata == NULL)
-        strcpy(task->metadata, "NA");
-    else
-    {
-        MIR_ASSERT(strlen(metadata) < MIR_SHORT_NAME_LEN);
-        strcpy(task->metadata, metadata);
-    }
+    MIR_ASSERT(metadata == NULL || strlen(metadata) < MIR_SHORT_NAME_LEN);
+    strcpy(task->metadata, metadata ? metadata : "NA");
 }/*}}}*/
 
 #ifdef MIR_MEM_POL_ENABLE
