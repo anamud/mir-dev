@@ -213,23 +213,22 @@ static inline int mir_worker_pop(struct mir_worker_t* worker, struct mir_task_t*
     MIR_ASSERT(worker != NULL);
     MIR_ASSERT(task != NULL);
 
-    int found = 0;
     struct mir_queue_t* queue = worker->private_queue;
     MIR_ASSERT(worker->private_queue != NULL);
-    if (mir_queue_size(queue) > 0) {
-        // Ensure the queue pops in FIFO order.
-        mir_queue_pop(queue, (void**)&(*task));
-        MIR_ASSERT(*task != NULL);
-        __sync_fetch_and_sub(&g_num_tasks_waiting, 1);
-        T_DBG("Dq", *task);
+    if (mir_queue_size(queue) == 0)
+        return 0;
 
-        // Update stats
-        if (runtime->enable_worker_stats == 1)
-            worker->statistics->num_tasks_owned++;
-        found = 1;
-    }
+    // Ensure the queue pops in FIFO order.
+    mir_queue_pop(queue, (void**)&(*task));
+    MIR_ASSERT(*task != NULL);
+    __sync_fetch_and_sub(&g_num_tasks_waiting, 1);
+    T_DBG("Dq", *task);
 
-    return found;
+    // Update stats
+    if (runtime->enable_worker_stats == 1)
+        worker->statistics->num_tasks_owned++;
+
+    return 1;
 } /*}}}*/
 
 static inline bool mir_pop(struct mir_worker_t* worker, struct mir_task_t** task)
