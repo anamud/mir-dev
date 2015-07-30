@@ -78,6 +78,7 @@ static void parallel_start (void (*fn) (void *), void *data, unsigned num_thread
 
     // Start profiling and book-keeping for fake task
     mir_task_execute_prolog(task);
+    worker->current_task->team->parallel_block_flag[worker->id] = 1;
 } /*}}}*/
 
 static void chunk_task_start(const char* name, struct mir_loop_des_t* loop)

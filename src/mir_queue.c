@@ -4,6 +4,7 @@
 #include "mir_queue.h"
 #include "mir_utils.h"
 #include "mir_task.h"
+#include "mir_runtime.h"
 
 struct mir_queue_t* mir_queue_create(uint32_t capacity)
 { /*{{{*/
@@ -77,7 +78,7 @@ void mir_queue_pop(struct mir_queue_t* queue, void** data)
     }
     struct mir_task_t* task = queue->buffer[queue->out];
     struct mir_worker_t* worker = mir_worker_get_context();
-    if (task->team) {
+    if (!runtime->single_parallel_block && task->team) {
         // The private queue is FIFO ordered. We have either already
         // executed the parallel block or will execute it right now.
         //

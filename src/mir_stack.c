@@ -3,6 +3,8 @@
 #include "mir_memory.h"
 #include "mir_defines.h"
 #include "mir_lock.h"
+#include "mir_task.h"
+#include "mir_runtime.h"
 
 struct mir_stack_t* mir_stack_create(uint32_t capacity)
 { /*{{{*/
@@ -64,6 +66,14 @@ void mir_stack_pop(struct mir_stack_t* stack, void** data)
         S_DBG("stack empty", stack);
         goto cleanup;
     }
+
+    // Ensure we have executed our parallel block before this task.
+    struct mir_task_t* task = stack->buffer[stack->head - 1];
+    struct mir_worker_t* worker = mir_worker_get_context();
+    if (!runtime->single_parallel_block && task->team &&
+        task->team->parallel_block_flag[worker->id] == 0)
+        goto cleanup;
+
     *data = stack->buffer[stack->head - 1];
     MIR_ASSERT(*data != NULL);
     stack->head--;
