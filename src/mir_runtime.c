@@ -320,6 +320,7 @@ static void mir_config()
             if (omp_num_threads_str)
                 MIR_LOG_WARN("MIR_CONF worker argument takes precedence over OMP_NUM_THREADS.");
             runtime->num_workers = atoi(optarg);
+            MIR_ASSERT_STR(runtime->num_workers > 0, "Number of workers should be greater than 0.");
             if (runtime->num_workers > runtime->arch->num_cores)
                 MIR_LOG_ERR("Cannot configure more workers (%d) than number of cores (%d).",
                     runtime->num_workers, runtime->arch->num_cores);
