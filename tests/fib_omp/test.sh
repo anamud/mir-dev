@@ -17,5 +17,11 @@ do
          echo Test FAILED.
          exit 1
     fi
+    ./test-opt.out >> test-result.txt
+    if [ $? -ne 0 ];
+    then cat test-result.txt
+         echo Test FAILED.
+         exit 1
+    fi
 done
 echo "  Passed"
