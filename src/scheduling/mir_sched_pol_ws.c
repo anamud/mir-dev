@@ -113,14 +113,11 @@ int pop_ws(struct mir_task_t** task)
             __sync_fetch_and_sub(&g_num_tasks_waiting, 1);
             T_DBG("Dq", *task);
 
-            found = 1;
+            return 1;
         }
     }
 
     //MIR_RECORDER_STATE_END(NULL, 0);
-
-    if (found)
-        return found;
 
     // Next try to pop from other queues
     //MIR_RECORDER_STATE_BEGIN(MIR_STATE_TSTEAL);
