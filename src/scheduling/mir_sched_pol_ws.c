@@ -87,9 +87,22 @@ int pop_ws(struct mir_task_t** task)
     struct mir_worker_t* worker = mir_worker_get_context();
     MIR_ASSERT(NULL != worker);
 
-    // First try to pop from own queue
-    struct mir_queue_t* queue = sp->queues[worker->id];
-    if (mir_queue_size(queue) > 0) {
+    // Start with own queue, round-robin if empty.
+    uint16_t ctr = worker->id;
+    do {
+        // Wrap around.
+        if (ctr == num_queues) {
+	    // Worker 0 has already tried all queues, bail out.
+            if (worker->id == 0)
+                return 0;
+            ctr = 0;
+        }
+
+        struct mir_queue_t* queue = sp->queues[ctr];
+
+        if (mir_queue_size(queue) == 0)
+            continue;
+
         *task = NULL;
         mir_queue_pop(queue, (void**)&(*task));
         if (*task) {
@@ -103,55 +116,18 @@ int pop_ws(struct mir_task_t** task)
                     mir_worker_statistics_update_comm_cost(worker->statistics, (*task)->comm_cost);
                 }
 #endif
-
-                worker->statistics->num_tasks_owned++;
+                if (ctr == worker->id)
+                    worker->statistics->num_tasks_owned++;
+                else
+                    worker->statistics->num_tasks_stolen++;
             }
 
             __sync_fetch_and_sub(&g_num_tasks_waiting, 1);
-            T_DBG("Dq", *task);
+            T_DBG(ctr == worker->id ? "Dq" : "St", *task);
 
             return 1;
         }
-    }
-
-    // Next try to pop from other queues
-    uint16_t ctr = worker->id + 1;
-    if (ctr == num_queues)
-        ctr = 0;
-
-    while (ctr != worker->id) {
-        struct mir_queue_t* queue = sp->queues[ctr];
-
-        // Incremenet counter and wrap around
-        ctr++;
-        if (ctr == num_queues)
-            ctr = 0;
-
-        if (mir_queue_size(queue) == 0)
-            continue;
-
-        mir_queue_pop(queue, (void**)&(*task));
-        if (*task) {
-            // Update stats
-            if (runtime->enable_worker_stats == 1) {
-#ifdef MIR_MEM_POL_ENABLE
-                uint16_t node = runtime->arch->node_of(worker->cpu_id);
-                struct mir_mem_node_dist_t* dist = mir_task_get_mem_node_dist(*task, MIR_DATA_ACCESS_READ);
-                if (dist) {
-                    (*task)->comm_cost = mir_mem_node_dist_get_comm_cost(dist, node);
-                    mir_worker_statistics_update_comm_cost(worker->statistics, (*task)->comm_cost);
-                }
-#endif
-
-                worker->statistics->num_tasks_stolen++;
-            }
-
-            __sync_fetch_and_sub(&g_num_tasks_waiting, 1);
-            T_DBG("St", *task);
-
-            return 1;
-        }
-    }
+    } while (++ctr != worker->id);
 
     return 0;
 } /*}}}*/
