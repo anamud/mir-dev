@@ -163,17 +163,17 @@ static void chunk_task_next(long start, long end, bool last)
         // Create fake twin task.
         struct mir_task_t* twin = mir_task_create_twin(temp);
 
-        if(!last)
+        if(last)
+        {
+            // Describe twin as continuation.
+            mir_task_write_metadata(twin, "chunk_continuation");
+        }
+        else
         {
             // Write chunk details as metadata.
             char str[MIR_SHORT_NAME_LEN];
             sprintf(str, "chunk_%lu_%lu", start, end);
             mir_task_write_metadata(twin, str);
-        }
-        else
-        {
-            // Describe twin as continuation.
-            mir_task_write_metadata(twin, "chunk_continuation");
         }
 
         // Start profiling and book-keeping for fake twin task
