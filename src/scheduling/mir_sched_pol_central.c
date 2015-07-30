@@ -100,6 +100,7 @@ int pop_central(struct mir_task_t** task)
             (*task)->queue_size_at_pop = mir_queue_size(queue);
          // Update stats
         if (runtime->enable_worker_stats == 1) {
+            worker->statistics->num_tasks_owned++;
 #ifdef MIR_MEM_POL_ENABLE
             uint16_t node = runtime->arch->node_of(worker->cpu_id);
             struct mir_mem_node_dist_t* dist = mir_task_get_mem_node_dist(*task, MIR_DATA_ACCESS_READ);
@@ -114,10 +115,6 @@ int pop_central(struct mir_task_t** task)
         T_DBG("Dq", *task);
 
         found = 1;
-
-        // Update stats
-        if (runtime->enable_worker_stats == 1)
-            worker->statistics->num_tasks_owned++;
     }
 
     //MIR_RECORDER_STATE_END(NULL, 0);
