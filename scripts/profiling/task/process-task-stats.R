@@ -55,14 +55,14 @@ ts_data$work_cycles <- ts_data$exec_cycles - ts_data$overhead_cycles
 ## Calc parallel benefit
 ### Parallel benefit is the ratio of work done by a task to the average overhead incurred by its parent.
 if(parsed$verbose) my_print("Calculating parallel benefit ...")
-calc_parallel_benefit <- function(t)
+calc_parallel_benefit <- function(task)
 {
-    i <- which(ts_data$task == t)
-    t_p <- ts_data$parent[i]
-    j <- which(ts_data$task == t_p)
-    k <- which(ts_data$parent == t_p)
-    t_p_o_c <- ts_data$overhead_cycles[j] / length(ts_data$task[k])
-    ts_data$work_cycles[i]/t_p_o_c
+    task_ind <- which(ts_data$task == task)
+    parent <- ts_data$parent[task_ind]
+    parent_ind <- which(ts_data$task == parent)
+    sibling_ind <- which(ts_data$parent == parent)
+    overhead_per_child <- ts_data$overhead_cycles[parent_ind] / length(ts_data$task[sibling_ind])
+    ts_data$work_cycles[task_ind]/overhead_per_child
 }
 parallel_benefit <- as.numeric(sapply(ts_data$task, calc_parallel_benefit))
 ts_data["parallel_benefit"] <- parallel_benefit
