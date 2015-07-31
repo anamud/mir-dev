@@ -61,8 +61,8 @@ calc_parallel_benefit <- function(task)
     parent <- ts_data$parent[task_ind]
     parent_ind <- which(ts_data$task == parent)
     sibling_ind <- which(ts_data$parent == parent)
-    overhead_per_child <- ts_data$overhead_cycles[parent_ind] / length(ts_data$task[sibling_ind])
-    ts_data$work_cycles[task_ind]/overhead_per_child
+    sync_overhead_per_child <- (ts_data$overhead_cycles[parent_ind] - sum(as.numeric(ts_data$creation_cycles[sibling_ind]))) / length(ts_data$task[sibling_ind])
+    ts_data$work_cycles[task_ind]/(ts_data$creation_cycles[task_ind] + sync_overhead_per_child)
 }
 parallel_benefit <- as.numeric(sapply(ts_data$task, calc_parallel_benefit))
 ts_data["parallel_benefit"] <- parallel_benefit
