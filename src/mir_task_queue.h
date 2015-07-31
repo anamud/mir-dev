@@ -9,7 +9,7 @@
 BEGIN_C_DECLS
 
 #ifdef TASK_QUEUE_DEBUG
-static void TQ_DBG(const char* msg, const struct task_queue_t* q)
+static void TQ_DBG(const char* msg, const struct mir_task_queue_t* q)
 { /*{{{*/
     fprintf(stderr, "%ld\t#%d in %d out %d\t%s\n",
         pthread_self(),
@@ -24,7 +24,7 @@ static void TQ_DBG(const char* msg, const struct task_queue_t* q)
 #define TASK_QUEUE_FULL(queue) ((queue)->size == (queue)->capacity)
 #define TASK_QUEUE_EMPTY(queue) ((queue)->size == 0)
 
-struct task_queue_t { /*{{{*/
+struct mir_task_queue_t { /*{{{*/
     struct mir_task_t** buffer;
     uint32_t capacity; // Max size of queue
     uint32_t size;     // Number of elements
@@ -37,20 +37,21 @@ struct task_queue_t { /*{{{*/
 }; /*}}}*/
 
 // Create a task queue.
-void* task_queue_create(uint32_t capacity);
+void* mir_task_queue_create(uint32_t capacity);
 
 // Destroy a task queue.
-void task_queue_destroy(struct task_queue_t* queue);
+void mir_task_queue_destroy(struct mir_task_queue_t* queue);
 
 // Add an element to the task queue.
-int task_queue_push(struct task_queue_t* queue, struct mir_task_t* task);
+int mir_task_queue_push(struct mir_task_queue_t* queue, struct mir_task_t* task);
 
 // Remove an element from the task queue.
-struct mir_task_t* task_queue_pop(struct task_queue_t* queue);
+struct mir_task_t* mir_task_queue_pop(struct mir_task_queue_t* queue);
 
 // Get task queue size
-uint32_t task_queue_size(const struct task_queue_t* queue);
+uint32_t mir_task_queue_size(const struct mir_task_queue_t* queue);
 
 END_C_DECLS
 
 #endif
+

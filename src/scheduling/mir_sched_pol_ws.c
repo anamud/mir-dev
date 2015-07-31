@@ -2,7 +2,7 @@
 #include "scheduling/mir_sched_pol.h"
 #include "mir_worker.h"
 #include "mir_task.h"
-#include "task_queue.h"
+#include "mir_task_queue.h"
 #include "mir_recorder.h"
 #include "mir_memory.h"
 #include "mir_utils.h"
@@ -20,11 +20,11 @@ void create_ws()
 
     // Create worker private task queues
     sp->num_queues = runtime->num_workers;
-    sp->queues = mir_malloc_int(sp->num_queues * sizeof(struct task_queue_t*));
+    sp->queues = mir_malloc_int(sp->num_queues * sizeof(struct mir_task_queue_t*));
     MIR_CHECK_MEM(NULL != sp->queues);
 
     for (int i = 0; i < sp->num_queues; i++) {
-        sp->queues[i] = task_queue_create(sp->queue_capacity);
+        sp->queues[i] = mir_task_queue_create(sp->queue_capacity);
         MIR_ASSERT(NULL != sp->queues[i]);
     }
 } /*}}}*/

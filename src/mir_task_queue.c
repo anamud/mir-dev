@@ -1,16 +1,16 @@
 #include "mir_defines.h"
 #include "mir_lock.h"
 #include "mir_memory.h"
-#include "task_queue.h"
+#include "mir_task_queue.h"
 #include "mir_utils.h"
 #include "mir_task.h"
 #include "mir_runtime.h"
 
-void* task_queue_create(uint32_t capacity)
+void* mir_task_queue_create(uint32_t capacity)
 { /*{{{*/
     MIR_ASSERT(capacity > 0);
 
-    struct task_queue_t* queue = mir_cmalloc_int(sizeof(struct task_queue_t));
+    struct mir_task_queue_t* queue = mir_cmalloc_int(sizeof(struct mir_task_queue_t));
     MIR_CHECK_MEM(queue != NULL);
 
     queue->buffer = mir_cmalloc_int(capacity * sizeof(void*));
@@ -27,7 +27,7 @@ void* task_queue_create(uint32_t capacity)
     return queue;
 } /*}}}*/
 
-void task_queue_destroy(struct task_queue_t* queue)
+void mir_task_queue_destroy(struct mir_task_queue_t* queue)
 { /*{{{*/
     MIR_ASSERT(queue != NULL);
 
@@ -35,11 +35,11 @@ void task_queue_destroy(struct task_queue_t* queue)
     mir_lock_destroy(&(queue->deq_lock));
     mir_free_int(queue->buffer, queue->capacity * sizeof(void*));
     queue->buffer = NULL;
-    mir_free_int(queue, sizeof(struct task_queue_t));
+    mir_free_int(queue, sizeof(struct mir_task_queue_t));
     queue = NULL;
 } /*}}}*/
 
-int task_queue_push(struct task_queue_t* queue, struct mir_task_t* data)
+int mir_task_queue_push(struct mir_task_queue_t* queue, struct mir_task_t* data)
 { /*{{{*/
     MIR_ASSERT(queue != NULL);
     MIR_ASSERT(data != NULL);
@@ -63,7 +63,7 @@ int task_queue_push(struct task_queue_t* queue, struct mir_task_t* data)
     return 1;
 } /*}}}*/
 
-struct mir_task_t* task_queue_pop(struct task_queue_t* queue)
+struct mir_task_t* mir_task_queue_pop(struct mir_task_queue_t* queue)
 { /*{{{*/
     MIR_ASSERT(queue != NULL);
     struct mir_task_t* task = NULL;
@@ -100,10 +100,11 @@ cleanup:
     return task;
 } /*}}}*/
 
-uint32_t task_queue_size(const struct task_queue_t* queue)
+uint32_t mir_task_queue_size(const struct mir_task_queue_t* queue)
 { /*{{{*/
     MIR_ASSERT(queue != NULL);
 
     return queue->size;
 } /*}}}*/
+
 

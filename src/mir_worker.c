@@ -8,7 +8,7 @@
 #include "mir_worker.h"
 #include "arch/mir_arch.h"
 #include "scheduling/mir_sched_pol.h"
-#include "task_queue.h"
+#include "mir_task_queue.h"
 
 #ifdef __tile__
 #include <tmc/cpus.h>
@@ -193,7 +193,7 @@ void mir_worker_local_init(struct mir_worker_t* worker)
     worker->task_list = NULL;
 
     // Create private task queue
-    worker->private_queue = task_queue_create(runtime->sched_pol->queue_capacity);
+    worker->private_queue = mir_task_queue_create(runtime->sched_pol->queue_capacity);
     MIR_CHECK_MEM(worker->private_queue != NULL);
 } /*}}}*/
 
@@ -215,7 +215,7 @@ void mir_worker_push(struct mir_worker_t* worker, struct mir_task_t* task)
     MIR_ASSERT(worker != NULL);
     MIR_ASSERT(task != NULL);
 
-    if (0 == task_queue_push(worker->private_queue, task))
+    if (0 == mir_task_queue_push(worker->private_queue, task))
         MIR_LOG_ERR("Cannot enque task into private queue. Increase queue capacity using MIR_CONF.");
 
     __sync_fetch_and_add(&g_num_tasks_waiting, 1);
@@ -236,13 +236,13 @@ static inline struct mir_task_t* mir_worker_pop(struct mir_worker_t* worker)
 { /*{{{*/
     MIR_ASSERT(worker != NULL);
 
-    struct task_queue_t* queue = worker->private_queue;
+    struct mir_task_queue_t* queue = worker->private_queue;
     MIR_ASSERT(queue != NULL);
-    if (task_queue_size(queue) == 0)
+    if (mir_task_queue_size(queue) == 0)
         return NULL;
 
     // Ensure the queue pops in FIFO order.
-    struct mir_task_t* task = task_queue_pop(queue);
+    struct mir_task_t* task = mir_task_queue_pop(queue);
     MIR_ASSERT(task != NULL);
     __sync_fetch_and_sub(&g_num_tasks_waiting, 1);
     T_DBG("Dq", task);
