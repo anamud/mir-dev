@@ -635,7 +635,7 @@ void GOMP_parallel_loop_runtime(void (*fn)(void*), void* data, unsigned num_thre
 } /*}}}*/
 
 void GOMP_loop_end_int()
-{
+{/*{{{*/
     // Wait for all workers to finish executing their loop task.
     // Waiting is essential since loop description are deleted next.
     GOMP_barrier();
@@ -652,7 +652,7 @@ void GOMP_loop_end_int()
     mir_lock_set(&team->loop_lock);
     team->loop = NULL;
     mir_lock_unset(&team->loop_lock);
-}
+}/*}}}*/
 
 void GOMP_loop_end(void)
 { /*{{{*/
