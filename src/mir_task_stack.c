@@ -1,4 +1,4 @@
-#include "task_stack.h"
+#include "mir_task_stack.h"
 #include "mir_utils.h"
 #include "mir_memory.h"
 #include "mir_defines.h"
@@ -6,9 +6,9 @@
 #include "mir_task.h"
 #include "mir_runtime.h"
 
-void* task_stack_create(uint32_t capacity)
+void* mir_task_stack_create(uint32_t capacity)
 { /*{{{*/
-    struct task_stack_t* stack = mir_cmalloc_int(sizeof(struct task_stack_t));
+    struct mir_task_stack_t* stack = mir_cmalloc_int(sizeof(struct mir_task_stack_t));
     MIR_CHECK_MEM(stack != NULL);
 
     stack->buffer = mir_cmalloc_int(capacity * sizeof(void*));
@@ -21,7 +21,7 @@ void* task_stack_create(uint32_t capacity)
     return stack;
 } /*}}}*/
 
-void task_stack_destroy(struct task_stack_t* stack)
+void mir_task_stack_destroy(struct mir_task_stack_t* stack)
 { /*{{{*/
     MIR_ASSERT(stack != NULL);
     MIR_ASSERT(stack->buffer != NULL);
@@ -29,11 +29,11 @@ void task_stack_destroy(struct task_stack_t* stack)
     mir_lock_destroy(&(stack->lock));
     mir_free_int(stack->buffer, stack->capacity * sizeof(void*));
     stack->buffer = NULL;
-    mir_free_int(stack, sizeof(struct task_stack_t));
+    mir_free_int(stack, sizeof(struct mir_task_stack_t));
     stack = NULL;
 } /*}}}*/
 
-int task_stack_push(struct task_stack_t* stack, struct mir_task_t* data)
+int mir_task_stack_push(struct mir_task_stack_t* stack, struct mir_task_t* data)
 { /*{{{*/
     MIR_ASSERT(stack != NULL);
     MIR_ASSERT(data != NULL);
@@ -52,7 +52,7 @@ int task_stack_push(struct task_stack_t* stack, struct mir_task_t* data)
     return 1;
 } /*}}}*/
 
-void task_stack_pop(struct task_stack_t* stack, struct mir_task_t** data)
+void mir_task_stack_pop(struct mir_task_stack_t* stack, struct mir_task_t** data)
 { /*{{{*/
     MIR_ASSERT(stack != NULL);
     MIR_ASSERT(data != NULL);
@@ -78,7 +78,7 @@ cleanup:
     mir_lock_unset(&(stack->lock));
 } /*}}}*/
 
-uint32_t task_stack_size(const struct task_stack_t* stack)
+uint32_t mir_task_stack_size(const struct mir_task_stack_t* stack)
 { /*{{{*/
     MIR_ASSERT(stack != NULL);
 

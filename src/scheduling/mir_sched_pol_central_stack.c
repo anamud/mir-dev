@@ -2,7 +2,7 @@
 #include "scheduling/mir_sched_pol.h"
 #include "mir_worker.h"
 #include "mir_task.h"
-#include "task_stack.h"
+#include "mir_task_stack.h"
 #include "mir_recorder.h"
 #include "mir_memory.h"
 #include "mir_utils.h"
@@ -19,11 +19,11 @@ void create_central_stack()
     MIR_ASSERT(NULL != sp);
 
     // Create queues
-    sp->queues = mir_malloc_int(sp->num_queues * sizeof(struct task_stack_t*));
+    sp->queues = mir_malloc_int(sp->num_queues * sizeof(struct mir_task_stack_t*));
     MIR_CHECK_MEM(NULL != sp->queues);
 
     for (int i = 0; i < sp->num_queues; i++) {
-        sp->queues[i] = task_stack_create(sp->queue_capacity);
+        sp->queues[i] = mir_task_stack_create(sp->queue_capacity);
         MIR_ASSERT(NULL != sp->queues[i]);
     }
 } /*}}}*/
@@ -36,12 +36,12 @@ void destroy_central_stack()
     // Free queues
     for (int i = 0; i < sp->num_queues; i++) {
         MIR_ASSERT(NULL != sp->queues[i]);
-        task_stack_destroy((struct task_stack_t*)(sp->queues[i]));
+        mir_task_stack_destroy((struct mir_task_stack_t*)(sp->queues[i]));
         sp->queues[i] = NULL;
     }
 
     MIR_ASSERT(NULL != sp->queues);
-    mir_free_int(sp->queues, sizeof(struct task_stack_t*) * sp->num_queues);
+    mir_free_int(sp->queues, sizeof(struct mir_task_stack_t*) * sp->num_queues);
     sp->queues = NULL;
 } /*}}}*/
 
@@ -53,9 +53,9 @@ int push_central_stack(struct mir_worker_t* worker, struct mir_task_t* task)
     int pushed = 1;
 
     // Push task to central_stack queue
-    struct task_stack_t* queue = (struct task_stack_t*)(runtime->sched_pol->queues[0]);
+    struct mir_task_stack_t* queue = (struct mir_task_stack_t*)(runtime->sched_pol->queues[0]);
     MIR_ASSERT(NULL != queue);
-    if (0 == task_stack_push(queue, (void*)task)) {
+    if (0 == mir_task_stack_push(queue, (void*)task)) {
 #ifdef MIR_INLINE_TASK_IF_QUEUE_FULL
         pushed = 0;
         mir_task_execute(task);
@@ -80,21 +80,21 @@ int pop_central_stack(struct mir_task_t** task)
 { /*{{{*/
     struct mir_sched_pol_t* sp = runtime->sched_pol;
     MIR_ASSERT(NULL != sp);
-    struct task_stack_t* queue = (struct task_stack_t*)(sp->queues[0]);
+    struct mir_task_stack_t* queue = (struct mir_task_stack_t*)(sp->queues[0]);
     MIR_ASSERT(NULL != queue);
     struct mir_worker_t* worker = mir_worker_get_context();
     MIR_ASSERT(NULL != worker);
 
-    if (task_stack_size(queue) == 0)
+    if (mir_task_stack_size(queue) == 0)
         return 0;
 
     *task = NULL;
-    task_stack_pop(queue, &(*task));
+    mir_task_stack_pop(queue, &(*task));
     if (!*task)
         return 0;
 
     if (runtime->enable_task_stats == 1)
-        (*task)->queue_size_at_pop = task_stack_size(queue);
+        (*task)->queue_size_at_pop = mir_task_stack_size(queue);
 
     // Update stats
     if (runtime->enable_worker_stats == 1) {
