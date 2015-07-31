@@ -93,6 +93,7 @@ struct mir_task_t { /*{{{*/
     uint64_t exec_resume_instant;
     uint64_t exec_end_instant;
     uint64_t exec_cycles;
+    uint64_t creation_cycles; // Creation cost borne by parent.
     uint64_t overhead_cycles;
     uint32_t queue_size_at_pop;
     struct mir_loop_des_t* loop;
