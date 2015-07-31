@@ -178,12 +178,12 @@ struct mir_task_t* mir_task_create_common(mir_tfunc_t tfunc, void* data, size_t 
     // Create loop structure to support GOMP_loop_*_start.
     task->loop = loopdes;
 
-    // Overhead measurement
-    if (parent)
-        parent->overhead_cycles += (mir_get_cycles() - start_instant);
-
     // Creation cost
     task->creation_cycles = (mir_get_cycles() - start_instant);
+
+    // Overhead measurement
+    if (parent)
+        parent->overhead_cycles += task->creation_cycles;
 
     // Record creation instant
     task->create_instant = 0;
