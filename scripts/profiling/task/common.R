@@ -1,5 +1,3 @@
-suppressMessages(library(plyr, quietly=TRUE))
-suppressMessages(library(dplyr, quietly=TRUE))
 library(ggplot2, quietly=TRUE) # Plotting
 library(reshape2, quietly=TRUE) # Melting
 library(scales, quietly=TRUE) # Log transformations
