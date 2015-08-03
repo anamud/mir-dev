@@ -100,7 +100,7 @@ if(parsed$lineage)
             ts_data$lineage[i] <- paste("R", as.character(child_number), sep="-")
     }
     # Sanity check
-    if(anyDuplicated(ts_data$lineage))
+    if(anyDuplicated(ts_data$lineage, incomparables="NA"))
     {
         my_print("Error: Duplicate lineages exist. Aborting!")
         quit("no", 1)
