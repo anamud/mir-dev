@@ -594,6 +594,7 @@ degree.distribution(tg)
 my_print()
 sink()
 
+# Write graph to file
 if (parsed$verbose) my_print("Writing graph files ...")
 ## Write dot file
 #if (parsed$timing) tic(type="elapsed")
@@ -1017,7 +1018,6 @@ if (parsed$analyze) {
 }
 
 my_print(paste("Wrote file:", tg_info_out_file))
-
 
 # Warn
 wa <- warnings()
