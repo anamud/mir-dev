@@ -979,6 +979,39 @@ if (parsed$analyze) {
         my_print(paste("Wrote file:", tg_out_file))
     }# }}}
 
+    # Sibling scatter problem
+    if ("sibling_scatter" %in% colnames(tg_data)) {# {{{
+        prob_tg <- base_tg
+        sibling_scatter_thresh <- (length(unique(tg_data$cpu_id))/4)
+        prob_task <- subset(tg_data, sibling_scatter > sibling_scatter_thresh, select=task)
+
+        sink(tg_analysis_out_file, append=T)
+        my_print(paste(length(prob_task$task), "tasks have sibling_scatter >", sibling_scatter_thresh))
+        sink()
+
+        if (!parsed$cplengthonly) {
+            prob_task_critical <- subset(tg_df, sibling_scatter > sibling_scatter_thresh & on_crit_path == 1, select=task)
+
+            sink(tg_analysis_out_file, append=T)
+            my_print(paste("    ", length(prob_task_critical$task), " of which are on the critical path."))
+            sink()
+        }
+
+        sink(tg_analysis_out_file, append=T)
+        my_print()
+        sink()
+
+        prob_task_index <- match(as.character(prob_task$task), V(prob_tg)$name)
+        #prob_task_color <- get.vertex.attribute(prob_tg, name='sibling_scatter_to_color', index=prob_task_index)
+        prob_task_color <- get.vertex.attribute(prob_tg, name='cpu_id_to_color', index=prob_task_index)
+        prob_tg <- set.vertex.attribute(prob_tg, name='color', index=prob_task_index, value=prob_task_color)
+        prob_tg <- set.vertex.attribute(prob_tg, name='problematic', index=prob_task_index, value=1)
+
+        tg_out_file <- paste(gsub(". $", "", parsed$out), "-problem-sibling-scatter.graphml", sep="")
+        res <- write.graph(prob_tg, file=tg_out_file, format="graphml")
+        my_print(paste("Wrote file:", tg_out_file))
+    }# }}}
+
     my_print(paste("Wrote file:", tg_analysis_out_file))
     if (parsed$timing) toc("Analyzing graph for problems")
 }
