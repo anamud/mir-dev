@@ -16,8 +16,7 @@ library(igraph, quietly=TRUE)
 # Parse arguments
 # TODO: Understand how to capture if not running inside RStudio.
 running_outside_rstudio <- 1
-if(running_outside_rstudio)
-{
+if (running_outside_rstudio) {
     library(optparse, quietly=TRUE)
     option_list <- list(
                         make_option(c("-d","--data"), help = "Task performance data file.", metavar="FILE"),
@@ -27,7 +26,7 @@ if(running_outside_rstudio)
                         make_option(c("--quiet"), action="store_false", dest="verbose", help="Print little output."),
                         make_option(c("--timing"), action="store_true", default=FALSE, help="Print processing time."))
     parsed <- parse_args(OptionParser(option_list = option_list), args = commandArgs(TRUE))
-    if(!exists("data", where=parsed))
+    if (!exists("data", where=parsed))
     {
         my_print("Error: Data argument missing. Check help (-h)")
         quit("no", 1)
@@ -50,16 +49,16 @@ if(running_outside_rstudio)
 }
 
 # Read data
-if(arg_timing) tic(type="elapsed")
+if (arg_timing) tic(type="elapsed")
 tg_file_in <- arg_data
-if(arg_verbose) my_print(paste("Reading file:", tg_file_in, sep=" "))
+if (arg_verbose) my_print(paste("Reading file:", tg_file_in, sep=" "))
 tg_data <- fread(tg_file_in, header=TRUE)
-if(arg_timing) toc("Read data")
+if (arg_timing) toc("Read data")
 
 # Join frequeny
-if(arg_timing) tic(type="elapsed")
+if (arg_timing) tic(type="elapsed")
 join_freq <- tg_data %>% arrange(parent, joins_at) %>% group_by(parent, joins_at) %>% summarise(count = n())
-if(arg_timing) toc("Compute join frequency")
+if (arg_timing) toc("Compute join frequency")
 
 # Funciton returns edges of fragment chain for input task
 fragmentize <- function (task, num_children, parent, child_number, joins_at)
@@ -71,7 +70,7 @@ fragmentize <- function (task, num_children, parent, child_number, joins_at)
     edg <- c(parent_fork, new_fragment)
     last_fragment <- new_fragment
     # Connect fragments
-    if(num_children > 0)
+    if (num_children > 0)
     {
         joins <- join_freq[parent == task]$count
         joins_ind <- 1
@@ -88,7 +87,7 @@ fragmentize <- function (task, num_children, parent, child_number, joins_at)
                 edg <- c(edg, last_fragment, fork, fork, new_fragment)
                 num_forks <- num_forks + 1
                 last_fragment <- new_fragment
-                if(i == joins[joins_ind])
+                if (i == joins[joins_ind])
                 {
                     num_fragments <- num_fragments + 1
                     new_fragment <- paste(task, num_fragments, sep='.')
@@ -99,7 +98,7 @@ fragmentize <- function (task, num_children, parent, child_number, joins_at)
                 }
             }
             joins_ind <- joins_ind + 1
-            if(joins_ind > length(joins))
+            if (joins_ind > length(joins))
                 break
         }
     }
@@ -110,7 +109,7 @@ fragmentize <- function (task, num_children, parent, child_number, joins_at)
 }
 
 # Apply fragmentize on all tasks
-if(arg_timing) tic(type="elapsed")
+if (arg_timing) tic(type="elapsed")
 tg_edges <- unlist(mapply(fragmentize,
                           task=tg_data$task,
                           num_children=tg_data$num_children,
@@ -118,12 +117,12 @@ tg_edges <- unlist(mapply(fragmentize,
                           child_number=tg_data$child_number,
                           joins_at=tg_data$joins_at))
 tg_edges <- matrix(tg_edges, nc=2, byrow=TRUE)
-if(arg_timing) toc("Fragmentize")
+if (arg_timing) toc("Fragmentize")
 
 # Construct graph
-if(arg_timing) tic(type="elapsed")
+if (arg_timing) tic(type="elapsed")
 tg <- graph.edgelist(tg_edges, directed = TRUE)
-if(arg_timing) toc("Construct graph")
+if (arg_timing) toc("Construct graph")
 
 # Visual attributes
 node_min_size <- 10
@@ -131,7 +130,7 @@ node_max_size <- 50
 
 # Assign weights to nodes
 # Read graph as table
-if(arg_timing) tic(type="elapsed")
+if (arg_timing) tic(type="elapsed")
 tg_vertices <- data.table(node=get.data.frame(tg, what="vertices")$name, exec_cycles=0, kind="fragment")
 pesky_factors <- sapply(tg_vertices, is.factor)
 tg_vertices[pesky_factors] <- lapply(tg_vertices[pesky_factors], as.character)
@@ -145,7 +144,7 @@ end_ind <- with(tg_vertices, grepl("^j.0.0$", node))
 tg_vertices[fork_ind]$kind <- "fork"
 tg_vertices[join_ind]$kind <- "join"
 tg <- set.vertex.attribute(tg, name="kind", index=V(tg), value=tg_vertices$kind)
-if(arg_timing) toc("Assign other weights")
+if (arg_timing) toc("Assign other weights")
 # Assign exec cycles
 compute_fragment_duration <- function(task, wait, exec_cycles, choice)
 {
@@ -166,12 +165,12 @@ compute_fragment_duration <- function(task, wait, exec_cycles, choice)
     # Get fragment identifiers
     fragments <- paste(as.character(task),paste(".",as.character(seq(1:length(durations))),sep=""),sep="")
     # This is an ugly hack because mapply and do.call(rbind) are not working together.
-    if(choice == 1)
+    if (choice == 1)
         return(fragments)
     else
         return(durations)
 }
-if(arg_timing) tic(type="elapsed")
+if (arg_timing) tic(type="elapsed")
 fd <- data.table(fragment=unlist(mapply(compute_fragment_duration,
                                         task=tg_data$task,
                                         wait=tg_data$wait_instants,
@@ -182,23 +181,23 @@ fd <- data.table(fragment=unlist(mapply(compute_fragment_duration,
                                         wait=tg_data$wait_instants,
                                         exec_cycles=tg_data$exec_cycles,
                                         choice=2)))
-if(arg_timing) toc("Assign execution cycles [step 1]")
-if(arg_timing) tic(type="elapsed")
+if (arg_timing) toc("Assign execution cycles [step 1]")
+if (arg_timing) tic(type="elapsed")
 tg_vertices[match(fd$fragment, tg_vertices$node)]$exec_cycles <- fd$duration
-if(arg_timing) toc("Assign execution cycles [step 2]")
-if(arg_timing) tic(type="elapsed")
+if (arg_timing) toc("Assign execution cycles [step 2]")
+if (arg_timing) tic(type="elapsed")
 tg <- set.vertex.attribute(tg, name="exec_cycles", index=V(tg), value=tg_vertices$exec_cycles)
 scale_fn <- function(x) { node_min_size + (x * 100/max(x, na.rm = TRUE)) }
 tg <- set.vertex.attribute(tg, name="scaled_exec_cycles", index=V(tg), value=scale_fn(tg_vertices$exec_cycles))
-if(arg_timing) toc("Assign execution cycles [step 3]")
+if (arg_timing) toc("Assign execution cycles [step 3]")
 
 # Calculate critical path
-if(arg_verbose) my_print("Calculating critical path ...")
-if(arg_timing) tic(type="elapsed")
+if (arg_verbose) my_print("Calculating critical path ...")
+if (arg_timing) tic(type="elapsed")
 #Rprof("profile-critpathcalc.out")
 # Progress bar
 lntg <- length(V(tg))
-if(arg_verbose) {
+if (arg_verbose) {
     pb <- txtProgressBar(min = 0, max = lntg, style = 3)
     ctr <- 0
 }
@@ -234,7 +233,7 @@ for(node in tsg[-1])
     # Set node's depth as one greater than the largest depth its predecessors
     tg_vertices_df$depth[node] <- max(tg_vertices_df$depth[nn]) + 1
     # Progress report
-    if(arg_verbose) {
+    if (arg_verbose) {
         ctr <- ctr + 1;
         setTxtProgressBar(pb, ctr);
     }
@@ -252,7 +251,7 @@ tg <- set.vertex.attribute(tg, name="depth", index=V(tg), value=tg_vertices_df$d
 critical_edges <- E(tg)[V(tg)[on_crit_path==1] %--% V(tg)[on_crit_path==1]]
 tg <- set.edge.attribute(tg, name="on_crit_path", index=critical_edges, value=1)
 # Progress report
-if(arg_verbose) {
+if (arg_verbose) {
     ctr <- ctr + 1;
     setTxtProgressBar(pb, ctr);
     close(pb)
@@ -274,10 +273,10 @@ sink()
 my_print(paste("Wrote file:", tg_file_out))
 # Clear rpath since dot/table writing complains
 tg <- remove.vertex.attribute(tg,"rpath")
-if(arg_timing) toc("Critical path calculation")
+if (arg_timing) toc("Critical path calculation")
 
 # Calc shape
-if(arg_timing) tic(type="elapsed")
+if (arg_timing) tic(type="elapsed")
 tg_vertices_df <- get.data.frame(tg, what="vertices")
 # Select only fragments
 tg_vertices_df <- tg_vertices_df[with(tg_vertices_df, grepl("^[0-9]+.[0-9]+$", name)),]
@@ -285,8 +284,8 @@ tg_vertices_df <- tg_vertices_df[with(tg_vertices_df, grepl("^[0-9]+.[0-9]+$", n
 # See question http://stackoverflow.com/questions/30978837/histogram-like-summary-for-interval-data
 # Each fragment has exection range [rdist, rdist + exec_cycles], based on the premise of earliest possible execution.
 tg_vertices_df$rdist_exec_cycles <- tg_vertices_df$rdist + tg_vertices_df$exec_cycles
-if(arg_timing) toc("Shape calculation [Step 1]")
-if(arg_timing) tic(type="elapsed")
+if (arg_timing) toc("Shape calculation [Step 1]")
+if (arg_timing) tic(type="elapsed")
 # Calculate breaks based on summary lengths of fragment
 #shape_breaks <- total_work/(length(unique(tg_data$cpu_id))*median(tg_vertices_df$exec_cycles))
 shape_interval_width <- median(tg_vertices_df$exec_cycles)
@@ -294,8 +293,8 @@ stopifnot(shape_interval_width > 0)
 shape_bins_lower <- seq(0, max(tg_vertices_df$rdist_exec_cycles) + 1 + shape_interval_width, by=shape_interval_width)
 stopifnot(length(shape_bins_lower) > 1)
 shape_bins_upper <- shape_bins_lower + (shape_bins_lower[2] - shape_bins_lower[1] - 1)
-if(arg_timing) toc("Shape calculation [Step 2]")
-if(arg_timing) tic(type="elapsed")
+if (arg_timing) toc("Shape calculation [Step 2]")
+if (arg_timing) tic(type="elapsed")
 # Use IRanges package to countOverlaps using the fast NCList data structure.
 #suppressMessages(library(IRanges, quietly=TRUE, warn.conflicts=FALSE))
 #subject <- IRanges(tg_vertices_df$rdist, tg_vertices_df$rdist_exec_cycles)
@@ -310,13 +309,13 @@ query <- data.table(start = shape_bins_lower,
 setkey(subject, start, end)
 overlaps <- foverlaps(query, subject, type="any")
 overlaps <- overlaps[, .(count = sum(!is.na(start)),
-                        fragment = paste(interval, collapse=";")),
-                        by = .(i.start, i.end)]
-if(arg_timing) toc("Shape calculation [Step 3]")
-if(arg_timing) tic(type="elapsed")
+                         fragment = paste(interval, collapse=";")),
+by = .(i.start, i.end)]
+if (arg_timing) toc("Shape calculation [Step 3]")
+if (arg_timing) tic(type="elapsed")
 #tg_shape <- data.frame(low=shape_bins_lower, count=countOverlaps(query, subject))
 tg_shape <- data.frame(low=shape_bins_lower, count=overlaps$count)
-if(arg_timing) toc("Shape calculation [Step 4]")
+if (arg_timing) toc("Shape calculation [Step 4]")
 # Write shape to file
 tg_file_out <- paste(gsub(". $", "", arg_outfileprefix), "-shape.pdf", sep="")
 pdf(tg_file_out)
@@ -331,7 +330,7 @@ write_res <- write.csv(overlaps, file=tg_file_out, row.names=F)
 my_print(paste("Wrote file:", tg_file_out))
 
 # Task shape contribution
-if(arg_timing) tic(type="elapsed")
+if (arg_timing) tic(type="elapsed")
 # Remove intervals where count is NA
 overlaps[fragment == "NA"] <- NA
 overlaps <- overlaps[complete.cases(overlaps),]
@@ -340,7 +339,7 @@ overlaps <- overlaps[, list(count, fragment = as.numeric(unlist(strsplit(as.char
 # Get task of fragment
 overlaps$task <- as.integer(overlaps$fragment)
 overlaps_agg <- overlaps[, j=list(median_shape_contrib = as.numeric(median(count, na.rm = TRUE)), min_shape_contrib = as.numeric(min(count, na.rm = TRUE)), max_shape_contrib = as.numeric(max(count, na.rm = TRUE))), by=list(task)]
-if(arg_timing) toc("Shape calculation [Step 5]")
+if (arg_timing) toc("Shape calculation [Step 5]")
 # Write shape contribution to file
 tg_file_out <- paste(gsub(". $", "", arg_outfileprefix), "-shape-contrib.csv", sep="")
 write_res <- write.csv(overlaps_agg, file=tg_file_out, row.names=F)
@@ -353,5 +352,5 @@ my_print(paste("Wrote file:", tg_file_out))
 
 # Warn
 wa <- warnings()
-if(class(wa) != "NULL")
+if (class(wa) != "NULL")
     print(wa)
