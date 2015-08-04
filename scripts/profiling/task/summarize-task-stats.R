@@ -177,25 +177,6 @@ summarize_task_stats <- function(df, plot_title=" ")
       print("Mean work deviation by tag")
       print(wd.tag)
       bar_plotter(wd.tag, xt="Tag", yt="Mean work deviation", mt=plot_title, tilt=T, tilt_angle=90)
-
-      # Overhead deviation summary causes a lot of warnings! Fix them before shipping!
-      #print("Overhead deviation:")
-      #print(summary(df$overhead_deviation))
-      #box_plotter(df$overhead_deviation, xt="", yt="Parallel overhead deviation", mt=plot_title)
-
-      ### By tag
-      #if(any(is.na(df$overhead_deviation)))
-      #{
-          #warning("Overhead deviation data contains NAs. Ignoring NAs to calculate mean.")
-          #od.tag <- as.table(tapply(df$overhead_deviation, df$tag, FUN= function(x) {mean(as.numeric(x), na.rm=T)} ))
-      #} else {
-          #od.tag <- as.table(tapply(df$overhead_deviation, df$tag, FUN= function(x) {mean(as.numeric(x))} ))
-      #}
-      #od.tag <- data.frame(od.tag)
-      #colnames(od.tag) <- c("tag", "overhead_deviation")
-      #print("Mean overhead deviation by tag")
-      #print(od.tag)
-      #bar_plotter(od.tag, xt="Tag", yt="Mean overhead deviation", mt=plot_title, tilt=T, tilt_angle=90)
   }
 
   # PAPI_RES_STL related
