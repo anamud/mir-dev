@@ -10,14 +10,14 @@ suppressMessages(library(dplyr))
 library(optparse, quietly=TRUE)
 
 # Default comparison
-comp.type.default.file <- "scripts/profiling/task/task-stats-comparison-default.cfg"
+comp_type_default_file <- "scripts/profiling/task/task-stats-comparison-default.cfg"
 
 # Read arguments
 option_list <- list(
                     make_option(c("-l","--left"), help = "Task stats left.", metavar="FILE"),
                     make_option(c("-r","--right"), help = "Task stats right.", metavar="FILE"),
                     make_option(c("-k","--key"), default="lineage", help = "Column used for comparison [default \"%default\"]", metavar="STRING"),
-                    make_option(c("--config"), default=comp.type.default.file, help = "Comparison configuration [default \"%default\"]", metavar="FILE"),
+                    make_option(c("--config"), default=comp_type_default_file, help = "Comparison configuration [default \"%default\"]", metavar="FILE"),
                     make_option(c("-o","--out"), default="task-stats", help = "Output file suffix [default \"%default\"].", metavar="STRING"),
                     make_option(c("--verbose"), action="store_true", default=TRUE, help="Print output [default]."),
                     make_option(c("--timing"), action="store_true", default=FALSE, help="Print timing information."),
@@ -33,10 +33,10 @@ if(!exists("left", where=parsed) | !exists("right", where=parsed)) {
 # Read data
 if(parsed$verbo) my_print("Reading task stats ...")
 
-ts.data.l <- read.csv(parsed$left, header=TRUE)
-ts.data.r <- read.csv(parsed$right, header=TRUE)
+ts_data_l <- read.csv(parsed$left, header=TRUE)
+ts_data_r <- read.csv(parsed$right, header=TRUE)
 
-if(!(parsed$key %in% colnames(ts.data.l)) | !(parsed$key %in% colnames(ts.data.r))) {
+if(!(parsed$key %in% colnames(ts_data_l)) | !(parsed$key %in% colnames(ts_data_r))) {
     my_print("Error: Key not found in task stats. Aborting!")
     quit("no", 1)
 }
@@ -44,45 +44,45 @@ if(!(parsed$key %in% colnames(ts.data.l)) | !(parsed$key %in% colnames(ts.data.r
 # Read config
 if(parsed$verbo) my_print("Reading comparison configuration ...")
 
-if(parsed$config == comp.type.default.file) {
-    comp.type <- read.csv(paste(mir_root, comp.type.default.file, sep="/"), header=T)
+if(parsed$config == comp_type_default_file) {
+    comp_type <- read.csv(paste(mir_root, comp_type_default_file, sep="/"), header=T)
 } else {
-    comp.type <- read.csv(parsed$config, header=T)
+    comp_type <- read.csv(parsed$config, header=T)
 }
 
 # Set output data
-ts.data.out <- subset(ts.data.l, select=parsed$key)
+ts_data_out <- subset(ts_data_l, select=parsed$key)
 
 # Compare
 if(parsed$timing) tic(type="elapsed")
 if(parsed$verbose) my_print("Comparing task stats ...")
 
-for(r in seq(1,nrow(comp.type))) {
+for(r in seq(1,nrow(comp_type))) {
     # Paramters
-    attrib <- as.character(comp.type[r,]$comp.attrib)
-    op <- as.character(comp.type[r,]$comp.op)
-    name <- as.character(comp.type[r,]$comp.name)
+    attrib <- as.character(comp_type[r,]$comp_attrib)
+    op <- as.character(comp_type[r,]$comp_op)
+    name <- as.character(comp_type[r,]$comp_name)
 
-    if(attrib %in% colnames(ts.data.l) & attrib %in% colnames(ts.data.l)) {
+    if(attrib %in% colnames(ts_data_l) & attrib %in% colnames(ts_data_l)) {
         if(parsed$verbose) my_print(paste("Processing comparison type:" , attrib, op, name))
 
         # Subset and merge left and right task stats
-        ts.data.l.sub <- ts.data.l[,c(parsed$key,attrib)]
-        ts.data.r.sub <- ts.data.r[,c(parsed$key,attrib)]
-        ts.data.comp <- merge(ts.data.l.sub, ts.data.r.sub, by=parsed$key, suffixes=c(".l",".r"))
+        ts_data_l_sub <- ts_data_l[,c(parsed$key,attrib)]
+        ts_data_r_sub <- ts_data_r[,c(parsed$key,attrib)]
+        ts_data_comp <- merge(ts_data_l_sub, ts_data_r_sub, by=parsed$key, suffixes=c(".l",".r"))
 
         # Apply operation
         if(op == "div") {
-            ts.data.comp[name] <- subset(ts.data.comp, select=paste(attrib,'.l',sep=""))/subset(ts.data.comp, select=paste(attrib,'.r',sep=""))
+            ts_data_comp[name] <- subset(ts_data_comp, select=paste(attrib,'.l',sep=""))/subset(ts_data_comp, select=paste(attrib,'.r',sep=""))
         } else if(op == "sub") {
-            ts.data.comp[name] <- subset(ts.data.comp, select=paste(attrib,'.l',sep="")) - subset(ts.data.comp, select=paste(attrib,'.r',sep=""))
+            ts_data_comp[name] <- subset(ts_data_comp, select=paste(attrib,'.l',sep="")) - subset(ts_data_comp, select=paste(attrib,'.r',sep=""))
         } else {
             my_print(paste("Error: Invalid comparsion operation [", op, "]. Check comparison types.", sep=""))
             quit("no", 1)
         }
 
         # Merge with output
-        ts.data.out <- merge(ts.data.out, ts.data.comp, by=parsed$key, suffixes=c("",""))
+        ts_data.out <- merge(ts_data_out, ts_data_comp, by=parsed$key, suffixes=c("",""))
     } else {
         if(parsed$verbose) my_print(paste("Warning: Could not find comparsion attribute [", attrib, "] in task stats. Check comparison types.", sep=""))
     }
@@ -91,11 +91,11 @@ for(r in seq(1,nrow(comp.type))) {
 if(parsed$timing) toc("Comparing")
 
 # Write out processed data
-out.file <- paste(gsub(". $", "", parsed$out), ".compared", sep="")
-sink(out.file)
-write.csv(ts.data.out, out.file, row.names=F)
+out_file <- paste(gsub(". $", "", parsed$out), ".compared", sep="")
+sink(out_file)
+write.csv(ts_data_out, out_file, row.names=F)
 sink()
-if(parsed$verbose) my_print(paste("Wrote file:", out.file))
+if(parsed$verbose) my_print(paste("Wrote file:", out_file))
 
 # Warn
 wa <- warnings()
