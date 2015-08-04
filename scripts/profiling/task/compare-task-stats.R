@@ -82,7 +82,7 @@ for(r in seq(1,nrow(comp_type))) {
         }
 
         # Merge with output
-        ts_data.out <- merge(ts_data_out, ts_data_comp, by=parsed$key, suffixes=c("",""))
+        ts_data_out <- merge(ts_data_out, ts_data_comp, by=parsed$key, suffixes=c("",""))
     } else {
         if(parsed$verbose) my_print(paste("Warning: Could not find comparsion attribute [", attrib, "] in task stats. Check comparison types.", sep=""))
     }
