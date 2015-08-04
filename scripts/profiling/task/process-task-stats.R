@@ -1,13 +1,13 @@
 # Clear workspace
 rm(list=ls())
 
-# Libary
-suppressMessages(library(dplyr))
-library(optparse, quietly=TRUE)
-
 # Import
 mir_root <- Sys.getenv("MIR_ROOT")
 source(paste(mir_root,"/scripts/profiling/task/common.R",sep=""))
+
+# Libary
+suppressMessages(library(dplyr))
+library(optparse, quietly=TRUE)
 
 # Read arguments
 option_list <- list(
