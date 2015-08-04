@@ -1,10 +1,10 @@
-# Libary
-suppressMessages(library(dplyr))
-library(optparse, quietly=TRUE)
-
 # Include
 mir_root <- Sys.getenv("MIR_ROOT")
 source(paste(mir_root,"/scripts/profiling/task/common.R",sep=""))
+
+# Libary
+suppressMessages(library(dplyr))
+library(optparse, quietly=TRUE)
 
 # Default comparison
 comp.type.default.file <- "scripts/profiling/task/task-stats-comparison-default.cfg"
