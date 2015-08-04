@@ -11,6 +11,7 @@ source(paste(mir_root,"/scripts/profiling/task/common.R",sep=""))
 # Library
 library(igraph, quietly=TRUE)
 suppressMessages(library(gdata, quietly=TRUE, warn.conflicts=FALSE))
+library(optparse, quietly=TRUE)
 
 # Graph element sizes
 join_size <- 10
@@ -31,25 +32,36 @@ start_shape <- fork_shape
 end_shape <- start_shape
 
 # Parse args
-library(optparse, quietly=TRUE)
+Rstudio_mode <- F
+if (Rstudio_mode) {
+    parsed <- list(data="task-stats.processed",
+                   palette="color",
+                   out="task-graph",
+                   tree=F,
+                   cplengthonly=F,
+                   analyze=T,
+                   config="task-graph-analysis.cfg",
+                   verbose=T,
+                   timing=F)
+} else {
+    option_list <- list(
+                        make_option(c("-d","--data"), help = "Task stats.", metavar="FILE"),
+                        make_option(c("-p","--palette"), default="color", help = "Color palette for graph elements [default \"%default\"]."),
+                        make_option(c("-o","--out"), default="task-graph", help = "Output file suffix [default \"%default\"].", metavar="STRING"),
+                        make_option(c("-t", "--tree"), action="store_true", default=FALSE, help="Plot task graph as tree."),
+                        make_option(c("--cplengthonly"), action="store_true", default=FALSE, help="Calculate critical path length only. Skip critical path enumeration."),
+                        make_option(c("--analyze"), action="store_true", default=FALSE, help="Analyze task graph for problems."),
+                        make_option(c("--config"), default="task-graph-analysis.cfg", help = "Analysis configuration file [default \"%default\"].", metavar="FILE"),
+                        make_option(c("--verbose"), action="store_true", default=TRUE, help="Print output [default]."),
+                        make_option(c("--quiet"), action="store_false", dest="verbose", help="Print little output."),
+                        make_option(c("--timing"), action="store_true", default=FALSE, help="Print processing time."))
 
-option_list <- list(
-                    make_option(c("-d","--data"), help = "Task performance data file.", metavar="FILE"),
-                    make_option(c("-p","--palette"), default="color", help = "Color palette for graph elements [default \"%default\"]."),
-                    make_option(c("-o","--out"), default="task-graph", help = "Output file suffix [default \"%default\"].", metavar="STRING"),
-                    make_option(c("-t", "--tree"), action="store_true", default=FALSE, help="Plot task graph as tree."),
-                    make_option(c("--cplengthonly"), action="store_true", default=FALSE, help="Calculate critical path length only. Skip critical path enumeration."),
-                    make_option(c("--analyze"), action="store_true", default=FALSE, help="Analyze task graph for problems."),
-                    make_option(c("--config"), default="task-graph-analysis.cfg", help = "Analysis configuration file [default \"%default\"].", metavar="FILE"),
-                    make_option(c("--verbose"), action="store_true", default=TRUE, help="Print output [default]."),
-                    make_option(c("--quiet"), action="store_false", dest="verbose", help="Print little output."),
-                    make_option(c("--timing"), action="store_true", default=FALSE, help="Print processing time."))
+    parsed <- parse_args(OptionParser(option_list = option_list), args = commandArgs(TRUE))
 
-parsed <- parse_args(OptionParser(option_list = option_list), args = commandArgs(TRUE))
-
-if (!exists("data", where=parsed)) {
-    my_print("Error: Invalid arguments. Check help (-h)")
-    quit("no", 1)
+    if (!exists("data", where=parsed)) {
+        my_print("Error: Invalid arguments. Check help (-h)")
+        quit("no", 1)
+    }
 }
 
 if (parsed$verbose) my_print("Initializing ...")
