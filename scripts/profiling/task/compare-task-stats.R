@@ -1,7 +1,7 @@
 # Clear workspace
 rm(list=ls())
 
-# Include
+# Import
 mir_root <- Sys.getenv("MIR_ROOT")
 source(paste(mir_root,"/scripts/profiling/task/common.R",sep=""))
 
@@ -41,7 +41,9 @@ if(!(parsed$key %in% colnames(ts.data.l)) | !(parsed$key %in% colnames(ts.data.r
     quit("no", 1)
 }
 
+# Read config
 if(parsed$verbo) my_print("Reading comparison configuration ...")
+
 if(parsed$config == comp.type.default.file) {
     comp.type <- read.csv(paste(mir_root, comp.type.default.file, sep="/"), header=T)
 } else {
@@ -54,6 +56,7 @@ ts.data.out <- subset(ts.data.l, select=parsed$key)
 # Compare
 if(parsed$timing) tic(type="elapsed")
 if(parsed$verbose) my_print("Comparing task stats ...")
+
 for(r in seq(1,nrow(comp.type))) {
     # Paramters
     attrib <- as.character(comp.type[r,]$comp.attrib)
@@ -84,6 +87,7 @@ for(r in seq(1,nrow(comp.type))) {
         if(parsed$verbose) my_print(paste("Warning: Could not find comparsion attribute [", attrib, "] in task stats. Check comparison types.", sep=""))
     }
 }
+
 if(parsed$timing) toc("Comparing")
 
 # Write out processed data
