@@ -391,137 +391,6 @@ tg <- set.vertex.attribute(tg, name='label', index=fork_nodes_index, value='^')
 tg <- set.vertex.attribute(tg, name='shape', index=fork_nodes_index, value=fork_shape)
 if (parsed$timing) toc("Misc. attribute calculation")
 
-# Set fork balance in terms of exec_cycles
-if ("exec_cycles" %in% colnames(tg_data)) {
-    if (parsed$timing) tic(type="elapsed")
-    #Rprof("profile-fork-bal-ec.out", line.profiling=TRUE)
-    get_fork_bal <- function(fork)
-    {
-        # Get fork info
-        fork_split <- unlist(strsplit(fork, "\\."))
-        parent <- as.numeric(fork_split[2])
-        join_count <- as.numeric(fork_split[3])
-
-        # Get exec_cycles
-        exec_cycles <- tg_data[tg_data$parent == parent & tg_data$joins_at == join_count, ]$exec_cycles
-        exec_cycles <- exec_cycles[!is.na(exec_cycles)]
-
-        # Compute balance
-        bal <- max(exec_cycles)/mean(exec_cycles)
-
-        bal
-    }
-    fork_bal_ec <- as.vector(sapply(V(tg)$name[fork_nodes_index], get_fork_bal))
-    tg <- set.vertex.attribute(tg, name='exec_balance', index=fork_nodes_index, value=fork_bal_ec*fork_size)
-
-    fork_bal_ec_unique <- unique(fork_bal_ec)
-    if (length(fork_bal_ec_unique) == 1) p_fork_size <- fork_size_mult
-    else p_fork_size <- fork_size_mult * as.numeric(cut(fork_bal_ec, fork_size_bins))
-    tg <- set.vertex.attribute(tg, name='exec_balance_to_size', index=fork_nodes_index, value=p_fork_size)
-    #Rprof(NULL)
-
-    sink(tg_info_out_file, append=T)
-    my_print("Load balance among siblings = max(exec_cycles)/mean(exec_cycles):")
-    print(summary(fork_bal_ec))
-    my_print()
-    sink()
-    tg_info_plot_file <- paste(gsub(". $", "", parsed$out), "-sibling-balance-ec-plot.pdf", sep="")
-    pdf(tg_info_plot_file)
-    box_plotter(fork_bal_ec, xt="", yt="Sibling load balance = max(exec_cycles)/mean(exec_cycles)")
-    junk <- dev.off()
-    my_print(paste("Wrote file:", tg_info_plot_file))
-    if (parsed$timing) toc("Sibling load balance calculation (execution cycles)")
-}
-
-# Set fork balance in terms of work_cycles
-if ("work_cycles" %in% colnames(tg_data)) {
-    if (parsed$timing) tic(type="elapsed")
-    # Set fork balance
-    get_fork_bal <- function(fork)
-    {
-        # Get fork info
-        fork_split <- unlist(strsplit(fork, "\\."))
-        parent <- as.numeric(fork_split[2])
-        join_count <- as.numeric(fork_split[3])
-
-        # Get work_cycles
-        work_cycles <- tg_data[tg_data$parent == parent & tg_data$joins_at == join_count, ]$work_cycles
-        work_cycles <- work_cycles[!is.na(work_cycles)]
-
-        # Compute balance
-        bal <- max(work_cycles)/mean(work_cycles)
-
-        bal
-    }
-    fork_bal_wc <- as.vector(sapply(V(tg)[fork_nodes_index]$name, get_fork_bal))
-    tg <- set.vertex.attribute(tg, name='work_balance', index=fork_nodes_index, value=fork_bal_wc)
-
-    fork_bal_wc_unique <- unique(fork_bal_wc)
-    if (length(fork_bal_wc_unique) == 1) p_fork_size <- fork_size_mult
-    else p_fork_size <- fork_size_mult * as.numeric(cut(fork_bal_wc, fork_size_bins))
-    tg <- set.vertex.attribute(tg, name='work_balance_to_size', index=fork_nodes_index, value=p_fork_size)
-
-    sink(tg_info_out_file, append=T)
-    my_print("Load balance among siblings = max(work_cycles)/mean(work_cycles):")
-    print(summary(fork_bal_wc))
-    my_print()
-    sink()
-    tg_info_plot_file <- paste(gsub(". $", "", parsed$out), "-sibling-balance-wc-plot.pdf", sep="")
-    pdf(tg_info_plot_file)
-    box_plotter(fork_bal_wc, xt="", yt="Sibling load balance = max(work_cycles)/mean(work_cycles)")
-    junk <- dev.off()
-    my_print(paste("Wrote file:", tg_info_plot_file))
-    if (parsed$timing) toc("Sibling load balance calculation (work cycles)")
-}
-
-# Set fork scatter
-if ("cpu_id" %in% colnames(tg_data)) {
-    if (parsed$timing) tic(type="elapsed")
-    # Set fork scatter
-    get_fork_scatter <- function(fork)
-    {
-        # Get fork info
-        fork_split <- unlist(strsplit(fork, "\\."))
-        parent <- as.numeric(fork_split[2])
-        join_count <- as.numeric(fork_split[3])
-
-        # Get cpu_id
-        cpu_id <- tg_data[tg_data$parent == parent & tg_data$joins_at == join_count, ]$cpu_id
-        cpu_id <- cpu_id[!is.na(cpu_id)]
-
-        # Compute scatter
-        if (length(cpu_id) > 1)
-            scatter <- c(dist(cpu_id))
-        else
-            scatter <- 0
-
-        median(scatter)
-    }
-    fork_scatter <- as.vector(sapply(V(tg)[fork_nodes_index]$name, get_fork_scatter))
-    tg <- set.vertex.attribute(tg, name='scatter', index=fork_nodes_index, value=fork_scatter)
-
-    fork_scatter_unique <- unique(fork_scatter)
-    if (length(fork_scatter_unique) == 1) p_fork_size <- fork_size_mult
-    else p_fork_size <- fork_size_mult * as.numeric(cut(fork_scatter, fork_size_bins))
-    tg <- set.vertex.attribute(tg, name='scatter_to_size', index=fork_nodes_index, value=p_fork_size)
-
-    if (length(fork_scatter_unique) == 1) p_fork_color <- fork_color_pal[1]
-    else p_fork_color <- fork_color_pal[as.numeric(cut(fork_scatter, fork_color_bins))]
-    tg <- set.vertex.attribute(tg, name='scatter_to_color', index=fork_nodes_index, value=p_fork_color)
-
-    sink(tg_info_out_file, append=T)
-    my_print("Scatter among siblings = median(scatter):")
-    print(summary(fork_scatter))
-    my_print()
-    sink()
-    tg_info_plot_file <- paste(gsub(". $", "", parsed$out), "-fork-scatter-plot.pdf", sep="")
-    pdf(tg_info_plot_file)
-    box_plotter(fork_scatter, xt="", yt="Sibling scatter = median(scatter)")
-    junk <- dev.off()
-    my_print(paste("Wrote file:", tg_info_plot_file))
-    if (parsed$timing) toc("Fork scatter calculation")
-}
-
 # Set join vertex attributes
 if (!parsed$tree) {
     if (parsed$timing) tic(type="elapsed")
@@ -1010,106 +879,42 @@ if (parsed$analyze) {
     #my_print(paste("Wrote file:", tg_out_file))
     #}
 
-    # Scatter problem
-    if ("cpu_id" %in% colnames(tg_data) && !parsed$tree) {
-        prob_tg <- base_tg
-        scatter_thresh <- (length(unique(tg_data$cpu_id))/4)
-        prob_fork <- V(prob_tg)[fork_nodes_index]$name[which(fork_scatter > scatter_thresh)]
-        sink(tg_analysis_out_file, append=T)
-        my_print(paste(length(prob_fork), "forks have scatter >", scatter_thresh))
-        sink()
-        prob_fork_critical <- 0
-        for(f in prob_fork)
-        {
-            f_i <- match(as.character(f), V(prob_tg)$name)
-            prob_task_index <- neighbors(prob_tg, f_i, mode="out")
-            if (!parsed$cplengthonly) {
-                if (any(get.vertex.attribute(prob_tg, name='on_crit_path', index=prob_task_index) == 1))
-                    prob_fork_critical <- prob_fork_critical + 1
-            }
-            prob_task_color <- get.vertex.attribute(prob_tg, name='cpu_id_to_color', index=prob_task_index)
-            prob_tg <- set.vertex.attribute(prob_tg, name='problematic', index=prob_task_index, value=1)
-            prob_tg <- set.vertex.attribute(prob_tg, name='color', index=prob_task_index, value=prob_task_color)
-            f_s <- unlist(strsplit(f, "\\."))
-            f_p <- as.numeric(f_s[2])
-            f_p_i <- match(as.character(f_p), V(prob_tg)$name)
-            f_p_c <- get.vertex.attribute(prob_tg, name='cpu_id_to_color', index=f_p_i)
-            prob_tg <- set.vertex.attribute(prob_tg, name='color', index=f_i, value=f_p_c)
-            prob_tg <- set.vertex.attribute(prob_tg, name='problematic', index=f_i, value=1)
-        }
-        if (!parsed$cplengthonly) {
-            sink(tg_analysis_out_file, append=T)
-            my_print(paste(prob_fork_critical, "critical forks have scatter >", scatter_thresh))
-            sink()
-        }
-        tg_out_file <- paste(gsub(". $", "", parsed$out), "-problem-scatter.graphml", sep="")
-        res <- write.graph(prob_tg, file=tg_out_file, format="graphml")
-        my_print(paste("Wrote file:", tg_out_file))
-    }
-
-    # Balance problem (work cycles)
-    if ("work_cycles" %in% colnames(tg_data) && !parsed$tree) {
-        prob_tg <- base_tg
-        fork_bal_thresh <- 2
-        prob_fork <- V(prob_tg)[fork_nodes_index]$name[which(fork_bal_wc > fork_bal_thresh)]
-        sink(tg_analysis_out_file, append=T)
-        my_print(paste(length(prob_fork), "forks have load balance (work cycles) >", fork_bal_thresh))
-        sink()
-        prob_fork_critical <- 0
-        for(f in prob_fork)
-        {
-            f_i <- match(as.character(f), V(prob_tg)$name)
-            prob_task_index <- neighbors(prob_tg, f_i, mode="out")
-            if (!parsed$cplengthonly) {
-                if (any(get.vertex.attribute(prob_tg, name='on_crit_path', index=prob_task_index) == 1))
-                    prob_fork_critical <- prob_fork_critical + 1
-            }
+    ## Scatter problem
+    #if ("cpu_id" %in% colnames(tg_data) && !parsed$tree) {
+        #prob_tg <- base_tg
+        #scatter_thresh <- (length(unique(tg_data$cpu_id))/4)
+        #prob_fork <- V(prob_tg)[fork_nodes_index]$name[which(fork_scatter > scatter_thresh)]
+        #sink(tg_analysis_out_file, append=T)
+        #my_print(paste(length(prob_fork), "forks have scatter >", scatter_thresh))
+        #sink()
+        #prob_fork_critical <- 0
+        #for(f in prob_fork)
+        #{
+            #f_i <- match(as.character(f), V(prob_tg)$name)
+            #prob_task_index <- neighbors(prob_tg, f_i, mode="out")
+            #if (!parsed$cplengthonly) {
+                #if (any(get.vertex.attribute(prob_tg, name='on_crit_path', index=prob_task_index) == 1))
+                    #prob_fork_critical <- prob_fork_critical + 1
+            #}
             #prob_task_color <- get.vertex.attribute(prob_tg, name='cpu_id_to_color', index=prob_task_index)
-            prob_task_color <- "#FF0000"
-            prob_tg <- set.vertex.attribute(prob_tg, name='color', index=prob_task_index, value=prob_task_color)
-            prob_tg <- set.vertex.attribute(prob_tg, name='problematic', index=prob_task_index, value=1)
-        }
-        if (!parsed$cplengthonly) {
-            sink(tg_analysis_out_file, append=T)
-            my_print(paste(prob_fork_critical, "critical forks have load balance (work cycles) >", fork_bal_thresh))
-            sink()
-        }
-        tg_out_file <- paste(gsub(". $", "", parsed$out), "-problem-balance-work-cycles.graphml", sep="")
-        res <- write.graph(prob_tg, file=tg_out_file, format="graphml")
-        my_print(paste("Wrote file:", tg_out_file))
-    }
-
-    # Balance problem (execution cycles)
-    if ("exec_cycles" %in% colnames(tg_data) && !parsed$tree) {
-        prob_tg <- base_tg
-        fork_bal_thresh <- 2
-        prob_fork <- V(prob_tg)[fork_nodes_index]$name[which(fork_bal_ec > fork_bal_thresh)]
-        sink(tg_analysis_out_file, append=T)
-        my_print(paste(length(prob_fork), "forks have load balance (execution cycles) >", fork_bal_thresh))
-        sink()
-        prob_fork_critical <- 0
-        for(f in prob_fork)
-        {
-            f_i <- match(as.character(f), V(prob_tg)$name)
-            prob_task_index <- neighbors(prob_tg, f_i, mode="out")
-            if (!parsed$cplengthonly) {
-                if (any(get.vertex.attribute(prob_tg, name='on_crit_path', index=prob_task_index) == 1))
-                    prob_fork_critical <- prob_fork_critical + 1
-            }
-            #prob_task_color <- get.vertex.attribute(prob_tg, name='cpu_id_to_color', index=prob_task_index)
-            prob_task_color <- "#FF0000"
-            prob_tg <- set.vertex.attribute(prob_tg, name='color', index=prob_task_index, value=prob_task_color)
-            prob_tg <- set.vertex.attribute(prob_tg, name='problematic', index=prob_task_index, value=1)
-        }
-        if (!parsed$cplengthonly) {
-            sink(tg_analysis_out_file, append=T)
-            my_print(paste(prob_fork_critical, "critical forks have load balance (execution cycles) >", fork_bal_thresh))
-            sink()
-        }
-        tg_out_file <- paste(gsub(". $", "", parsed$out), "-problem-balance-exec-cycles.graphml", sep="")
-        res <- write.graph(prob_tg, file=tg_out_file, format="graphml")
-        my_print(paste("Wrote file:", tg_out_file))
-    }
+            #prob_tg <- set.vertex.attribute(prob_tg, name='problematic', index=prob_task_index, value=1)
+            #prob_tg <- set.vertex.attribute(prob_tg, name='color', index=prob_task_index, value=prob_task_color)
+            #f_s <- unlist(strsplit(f, "\\."))
+            #f_p <- as.numeric(f_s[2])
+            #f_p_i <- match(as.character(f_p), V(prob_tg)$name)
+            #f_p_c <- get.vertex.attribute(prob_tg, name='cpu_id_to_color', index=f_p_i)
+            #prob_tg <- set.vertex.attribute(prob_tg, name='color', index=f_i, value=f_p_c)
+            #prob_tg <- set.vertex.attribute(prob_tg, name='problematic', index=f_i, value=1)
+        #}
+        #if (!parsed$cplengthonly) {
+            #sink(tg_analysis_out_file, append=T)
+            #my_print(paste(prob_fork_critical, "critical forks have scatter >", scatter_thresh))
+            #sink()
+        #}
+        #tg_out_file <- paste(gsub(". $", "", parsed$out), "-problem-scatter.graphml", sep="")
+        #res <- write.graph(prob_tg, file=tg_out_file, format="graphml")
+        #my_print(paste("Wrote file:", tg_out_file))
+    #}
 
     my_print(paste("Wrote file:", tg_analysis_out_file))
     if (parsed$timing) toc("Analyzing graph for problems")
