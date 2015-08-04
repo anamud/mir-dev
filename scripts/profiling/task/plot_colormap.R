@@ -6,7 +6,7 @@ library(optparse, quietly=TRUE)
 
 # Read arguments
 option_list <- list(
-make_option(c("-d","--data"), help = "Colormap, usually called *.*to_color", metavar="FILE"),
+make_option(c("-d","--data"), help = "Color map, usually called *.*to_color", metavar="FILE"),
 make_option(c("--verbose"), action="store_true", default=TRUE, help="Print output [default]."),
 make_option(c("--quiet"), action="store_false", dest="verbose", help="Print little output."))
 
