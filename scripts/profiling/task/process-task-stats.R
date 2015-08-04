@@ -85,6 +85,10 @@ if("ins_count" %in% colnames(task_stats) & "mem_fp" %in% colnames(task_stats)) {
     task_stats$compute_int <- task_stats$ins_count/task_stats$mem_fp
 }
 
+# Calculate sibling work balance
+if(parsed$verbose) my_print("Calculating sibling work balance ...")
+task_stats <- task_stats %>% group_by(parent,joins_at) %>% mutate(sibling_work_balance = max(work_cycles)/mean(work_cycles))
+
 # Calculate lineage
 if(parsed$lineage) {
     # Lineage = child number chain
