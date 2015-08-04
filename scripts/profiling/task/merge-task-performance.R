@@ -7,18 +7,20 @@ source(paste(mir_root,"/scripts/profiling/task/common.R",sep=""))
 
 # Parse args
 library(optparse, quietly=TRUE)
+
 option_list <- list(
-make_option(c("-v", "--verbose"), action="store_true", default=TRUE, help="Print output [default]"),
-make_option(c("-q", "--quiet"), action="store_false", dest="verbose", help="Print little output"),
-make_option(c("--timing"), action="store_true", default=FALSE, help="Print timing"),
-make_option(c("-l","--left"), help = "Table 1", metavar="FILE"),
-make_option(c("-r","--right"), help = "Table 2", metavar="FILE"),
-make_option(c("-o","--out"), default="merged-task-perf", help = "Output file name [default \"%default\"]", metavar="STRING"),
-make_option(c("-k","--key"), help = "Column used for merging"),
-make_option(c("-c","--common"), default="prompt", help = "How to treat common columns? Choose from: left, right, both, avoid, prompt [default \"%default\"]", metavar="STRING"))
+                    make_option(c("-v", "--verbose"), action="store_true", default=TRUE, help="Print output [default]"),
+                    make_option(c("-q", "--quiet"), action="store_false", dest="verbose", help="Print little output"),
+                    make_option(c("--timing"), action="store_true", default=FALSE, help="Print timing"),
+                    make_option(c("-l","--left"), help = "Table 1", metavar="FILE"),
+                    make_option(c("-r","--right"), help = "Table 2", metavar="FILE"),
+                    make_option(c("-o","--out"), default="merged-task-perf", help = "Output file name [default \"%default\"]", metavar="STRING"),
+                    make_option(c("-k","--key"), help = "Column used for merging"),
+                    make_option(c("-c","--common"), default="prompt", help = "How to treat common columns? Choose from: left, right, both, avoid, prompt [default \"%default\"]", metavar="STRING"))
+
 parsed <- parse_args(OptionParser(option_list = option_list), args = commandArgs(TRUE))
-if(!exists("left", where=parsed) | !exists("right", where=parsed) | !exists("key", where=parsed))
-{
+
+if(!exists("left", where=parsed) | !exists("right", where=parsed) | !exists("key", where=parsed)) {
     my_print("Error: Invalid arguments. Check help (-h)")
     quit("no", 1)
 }
@@ -26,27 +28,29 @@ if(!exists("left", where=parsed) | !exists("right", where=parsed) | !exists("key
 # Read data
 if(parsed$verbose) my_print("Reading data ...")
 if(parsed$timing) tic(type="elapsed")
+
 dleft <- read.csv(parsed$left, header=TRUE)
 dright <- read.csv(parsed$right, header=TRUE)
+
 if(parsed$timing) toc("Read data ")
 
 # Sanity check for key
 if(parsed$verbose) my_print("Running sanity checks ...")
 if(parsed$timing) tic(type="elapsed")
-if(!(parsed$key %in% colnames(dleft)) | !(parsed$key %in% colnames(dright)))
-{
+
+if(!(parsed$key %in% colnames(dleft)) | !(parsed$key %in% colnames(dright))) {
     my_print("Error: Key not found in tables. Aborting!")
     quit("no", 1)
 }
 
 # Merge while checking for common columns
 if(parsed$verbose) my_print("Merging ...")
+
 common <- intersect(colnames(dleft)[colnames(dleft) != parsed$key], colnames(dright)[colnames(dright) != parsed$key])
-if(length(common) > 0)
-{
+
+if(length(common) > 0) {
     my_print(paste("Tables contain common columns: ", common))
-    if(parsed$common == "prompt")
-    {
+    if(parsed$common == "prompt") {
         my_print("Merging common columns:  prompt ")
         my_print("Enter choice for merging common columns: both [b], all from left [l], all from right [r], avoid [a] or make selection [s].")
         mc <- scan(file = "stdin", what=character(), n=1, quiet=T)
@@ -109,8 +113,7 @@ dmerge.mod <- dmerge[!is.na(dmerge$parent),]
 if(parsed$verbose) my_print("Checking for NAs ...")
 row.has.na <- apply(dmerge.mod, 1, function(x){any(is.na(x))})
 sum.row.has.na <- sum(row.has.na)
-if(sum.row.has.na > 0)
-{
+if(sum.row.has.na > 0) {
     my_print(sprintf("Warning: %d rows contained NAs in the merged table", sum.row.has.na ))
 }
 if(parsed$timing) toc("Merge")
