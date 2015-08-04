@@ -50,6 +50,10 @@ if(parsed$config == comp_type_default_file) {
     comp_type <- read.csv(parsed$config, header=T)
 }
 
+# Remove rows where key is NA.
+ts_data_l <- ts_data_l[!is.na(subset(ts_data_l, select=parsed$key)),]
+ts_data_r <- ts_data_r[!is.na(subset(ts_data_r, select=parsed$key)),]
+
 # Set output data
 ts_data_out <- subset(ts_data_l, select=parsed$key)
 
