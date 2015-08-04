@@ -18,22 +18,21 @@ make_option(c("--scatter"), action="store_true", default=FALSE, help="Compute sc
 make_option(c("--extend"), action="store_true", default=FALSE, help="Extensive summary."),
 make_option(c("--quiet"), action="store_false", dest="verbose", help="Print little output."))
 parsed <- parse_args(OptionParser(option_list = option_list), args = commandArgs(TRUE))
-if(!exists("data", where=parsed))
-{
+if (!exists("data", where=parsed)) {
     print("Error: Invalid arguments. Check help (-h).")
     quit("no", 1)
 }
 
 # Read data
-if(parsed$verbose) print(paste("Reading file", parsed$data))
+if (parsed$verbose) print(paste("Reading file", parsed$data))
 ts.data <- read.csv(parsed$data, header=TRUE)
 
 # Remove non-sense data
-if(parsed$timing) tic(type="elapsed")
+if (parsed$timing) tic(type="elapsed")
 # Remove background task
 ts.data <- ts.data[!is.na(ts.data$parent),]
 #ts.data <- ts.data[!ts.data$parent==0,]
-if(parsed$timing) toc("Removing non-sense data")
+if (parsed$timing) toc("Removing non-sense data")
 
 # Summary helper
 summarize_task_stats <- function(df, plot_title=" ")
@@ -56,8 +55,7 @@ summarize_task_stats <- function(df, plot_title=" ")
   box_plotter(join.freq$count, xt="", yt="Number of siblings", mt=plot_title)
 
   # Work
-  if("work_cycles" %in% colnames(df))
-  {
+  if ("work_cycles" %in% colnames(df)) {
       print("Work:")
       print("Note: Work is the amount of computation by a task excluding runtime system calls.")
       print(summary(df$work_cycles))
@@ -77,8 +75,7 @@ summarize_task_stats <- function(df, plot_title=" ")
       bar_plotter(data.frame(work.tag), xt="Tag", yt="Work cycles", mt=plot_title, tilt=T, tilt_angle=90)
 
       ## By tag
-      if(any(is.na(df$work_cycles)))
-      {
+      if (any(is.na(df$work_cycles))) {
           stop("Error: Work cycles data contains NAs. Aborting!")
           quit("no", 1)
       }
@@ -91,8 +88,7 @@ summarize_task_stats <- function(df, plot_title=" ")
   }
 
   # Overhead
-  if("overhead_cycles" %in% colnames(df))
-  {
+  if ("overhead_cycles" %in% colnames(df)) {
       print("Parallel overhead:")
       print("Note: Parallel overhead is the amount of computation done by a task inside runtime system calls.")
       print(summary(df$overhead_cycles))
@@ -101,10 +97,8 @@ summarize_task_stats <- function(df, plot_title=" ")
       total_ovh <- sum(as.numeric(df$overhead_cycles))
       print(paste("Total parallel overhead = ", total_ovh))
 
-      if("work_cycles" %in% colnames(df))
-      {
-          if(total_ovh > 0)
-            print(paste("Total work/total parallel overhead = ", total_work/total_ovh))
+      if ("work_cycles" %in% colnames(df)) {
+          if (total_ovh > 0) print(paste("Total work/total parallel overhead = ", total_work/total_ovh))
       }
 
       ## By CPU
@@ -118,8 +112,7 @@ summarize_task_stats <- function(df, plot_title=" ")
       bar_plotter(data.frame(ovh.tag), xt="Tag", yt="Parallel overhead cycles", mt=plot_title, tilt=T, tilt_angle=90)
 
       ## By tag
-      if(any(is.na(df$overhead_cycles)))
-      {
+      if (any(is.na(df$overhead_cycles))) {
           warning("Overhead cycles data contains NAs. Ignoring NAs to calculate mean.")
           ovh.tag <- as.table(tapply(df$overhead_cycles, df$tag, FUN= function(x) {mean(as.numeric(x), na.rm=T)} ))
       } else {
@@ -133,8 +126,7 @@ summarize_task_stats <- function(df, plot_title=" ")
   }
 
   # Parallelization benefit
-  if("parallel_benefit" %in% colnames(df))
-  {
+  if ("parallel_benefit" %in% colnames(df)) {
       # Remove wrapper task
       df.temp <- df[!df$parent==0,]
 
@@ -144,8 +136,7 @@ summarize_task_stats <- function(df, plot_title=" ")
       box_plotter(df.temp$parallel_benefit, xt="", yt="Parallel benefit", mt=plot_title, log=T)
 
       ## By tag
-      if(any(is.na(df.temp$parallel_benefit)))
-      {
+      if (any(is.na(df.temp$parallel_benefit))) {
           stop("Error: Parallel benefit data contains NAs. Aborting!")
           quit("no", 1)
       }
@@ -158,19 +149,17 @@ summarize_task_stats <- function(df, plot_title=" ")
   }
 
   # Last tasks to finish
-  if("last_to_finish" %in% colnames(df))
+  if ("last_to_finish" %in% colnames(df))
       bar_plotter(subset(df, last_to_finish == T, select=c(cpu_id, exec_end_instant)), xt="Core", yt="Instant last executed task ended (cycles)", mt=plot_title)
 
   # Deviation
-  if("work_deviation" %in% colnames(df))
-  {
+  if ("work_deviation" %in% colnames(df)) {
       print("Work deviation:")
       print(summary(df$work_deviation))
       box_plotter(df$work_deviation, xt="", yt="Work deviation", mt=plot_title)
 
       ## By tag
-      if(any(is.na(df$work_deviation)))
-      {
+      if (any(is.na(df$work_deviation))) {
           stop("Error: Work deviation data contains NAs. Aborting!")
           quit("no", 1)
       }
@@ -183,8 +172,7 @@ summarize_task_stats <- function(df, plot_title=" ")
   }
 
   # PAPI_RES_STL related
-  if("PAPI_RES_STL_sum" %in% colnames(df) & "work_cycles" %in% colnames(df))
-  {
+  if ("PAPI_RES_STL_sum" %in% colnames(df) & "work_cycles" %in% colnames(df)) {
     df$work.PAPI_RES_STL <- df$work_cycles/df$PAPI_RES_STL_sum
 
     print("Work to PAPI_RES_STL ratio:")
@@ -192,8 +180,7 @@ summarize_task_stats <- function(df, plot_title=" ")
     box_plotter(df$work.PAPI_RES_STL, xt="", yt="Work/PAPI_RES_STL", mt=plot_title)
 
     # Sanity check
-    if(any(is.na(df$work.PAPI_RES_STL)))
-    {
+    if (any(is.na(df$work.PAPI_RES_STL))) {
       stop("Error: Work per PAPI_RES_STL cycle data contains NAs. Aborting!")
       quit("no", 1)
     }
@@ -212,15 +199,13 @@ summarize_task_stats <- function(df, plot_title=" ")
   }
 
   # Memory hierarchy utilization
-  if("mem_hier_util" %in% colnames(df))
-  {
+  if ("mem_hier_util" %in% colnames(df)) {
     print("Memory hierarchy utilization (PAPI_RES_STL to work ratio):")
     print(summary(df$mem_hier_util))
     box_plotter(df$mem_hier_util, xt="", yt=paste("Memory hierarchy utilization","(PAPI_RES_STL/work)",sep="\n"), mt=plot_title)
 
     # Sanity check
-    if(any(is.na(df$mem_hier_util)))
-    {
+    if (any(is.na(df$mem_hier_util))) {
       stop("Error: Memory hierarchy utilization data contains NAs. Aborting!")
       quit("no", 1)
     }
@@ -239,15 +224,13 @@ summarize_task_stats <- function(df, plot_title=" ")
   }
 
   # Computation intensity
-  if("compute_int" %in% colnames(df))
-  {
+  if ("compute_int" %in% colnames(df)) {
     print("Compute intensity:")
     print(summary(df$compute_int))
     box_plotter(df$compute_int, xt="", yt=paste("Compute intensity", "(instruction count/memory footprint)", sep="\n"), mt=plot_title)
 
     # Sanity check
-    if(any(is.na(df$compute_int)))
-    {
+    if (any(is.na(df$compute_int))) {
       stop("Error: Compute intensity data contains NAs. Aborting!")
       quit("no", 1)
     }
@@ -265,10 +248,8 @@ summarize_task_stats <- function(df, plot_title=" ")
     bar_plotter(data.frame(compute_int.tag), xt="Tag", yt=paste("Mean compute intensity", "(instruction count/memory footprint)", sep="\n"),  mt=plot_title, tilt=T, tilt_angle=90)
   }
 
-  if(parsed$scatter)
-  {
-      if("cpu_id" %in% colnames(df))
-      {
+  if (parsed$scatter) {
+      if ("cpu_id" %in% colnames(df)) {
         print("Computing scatter ...")
         fork_nodes <- mapply(function(x, y, z) {paste('f', x, y, sep='.')}, x=df$parent, y=df$joins_at)
         fork_nodes <- unique(unlist(fork_nodes, use.names=FALSE))
@@ -284,7 +265,7 @@ summarize_task_stats <- function(df, plot_title=" ")
             cpu_id <- cpu_id[!is.na(cpu_id)]
 
             # Compute scatter
-            if(length(cpu_id) > 1)
+            if (length(cpu_id) > 1)
                 scatter <- c(dist(cpu_id))
             else
                 scatter <- 0
@@ -299,14 +280,14 @@ summarize_task_stats <- function(df, plot_title=" ")
   }
 
   ## TODO: Summarize lineage depth
-  #if("lineage" %in% colnames(ts.data))
+  #if ("lineage" %in% colnames(ts.data))
   #{
   #}
 }
 
 # Summarize
-if(parsed$verbose) print("Summarizing ...")
-if(parsed$timing) tic(type="elapsed")
+if (parsed$verbose) print("Summarizing ...")
+if (parsed$timing) tic(type="elapsed")
 out.file <- paste(gsub(". $", "", parsed$data), ".info", sep="")
 out.file.plots <- paste(gsub(". $", "", parsed$data), "-plots.pdf", sep="")
 sink(out.file)
@@ -315,10 +296,8 @@ pdf(out.file.plots, width=10, height=7.5)
 print("Summarizing all tasks ...")
 summarize_task_stats(ts.data, "All tasks")
 
-if(parsed$extend)
-{
-    if("last_to_finish" %in% colnames(ts.data))
-    {
+if (parsed$extend) {
+    if ("last_to_finish" %in% colnames(ts.data)) {
         print("Summarizing leaf tasks ...")
         ts.data.leaf <- subset(ts.data, leaf == T)
         summarize_task_stats(ts.data.leaf, "Leaf tasks")
@@ -331,12 +310,12 @@ if(parsed$extend)
 
 junk <- dev.off()
 sink()
-if(parsed$verbose) print(paste("Wrote file:", out.file.plots))
-if(parsed$verbose) print(paste("Wrote file:", out.file))
-if(parsed$timing) toc("Summarizing")
+if (parsed$verbose) print(paste("Wrote file:", out.file.plots))
+if (parsed$verbose) print(paste("Wrote file:", out.file))
+if (parsed$timing) toc("Summarizing")
 
 # Warn
 wa <- warnings()
-if(class(wa) != "NULL")
+if (class(wa) != "NULL")
     print(wa)
 
