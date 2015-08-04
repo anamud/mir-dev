@@ -69,13 +69,13 @@ for(r in seq(1,nrow(comp_type))) {
         # Subset and merge left and right task stats
         ts_data_l_sub <- ts_data_l[,c(parsed$key,attrib)]
         ts_data_r_sub <- ts_data_r[,c(parsed$key,attrib)]
-        ts_data_comp <- merge(ts_data_l_sub, ts_data_r_sub, by=parsed$key, suffixes=c(".l",".r"))
+        ts_data_comp <- merge(ts_data_l_sub, ts_data_r_sub, by=parsed$key, suffixes=c("_left","_right"))
 
         # Apply operation
         if(op == "div") {
-            ts_data_comp[name] <- subset(ts_data_comp, select=paste(attrib,'.l',sep=""))/subset(ts_data_comp, select=paste(attrib,'.r',sep=""))
+            ts_data_comp[name] <- subset(ts_data_comp, select=paste(attrib,"_left",sep=""))/subset(ts_data_comp, select=paste(attrib,"_right",sep=""))
         } else if(op == "sub") {
-            ts_data_comp[name] <- subset(ts_data_comp, select=paste(attrib,'.l',sep="")) - subset(ts_data_comp, select=paste(attrib,'.r',sep=""))
+            ts_data_comp[name] <- subset(ts_data_comp, select=paste(attrib,"_left",sep="")) - subset(ts_data_comp, select=paste(attrib,"_right",sep=""))
         } else {
             my_print(paste("Error: Invalid comparsion operation [", op, "]. Check comparison types.", sep=""))
             quit("no", 1)
