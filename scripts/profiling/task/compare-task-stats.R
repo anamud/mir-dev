@@ -14,8 +14,8 @@ comp_type_default_file <- "scripts/profiling/task/task-stats-comparison-default.
 
 # Read arguments
 option_list <- list(
-                    make_option(c("-l","--left"), help = "Task stats left.", metavar="FILE"),
-                    make_option(c("-r","--right"), help = "Task stats right.", metavar="FILE"),
+                    make_option(c("-l","--left"), help = "Task stats to be compared", metavar="FILE"),
+                    make_option(c("-r","--right"), help = "Other task stats to be compared", metavar="FILE"),
                     make_option(c("-k","--key"), default="lineage", help = "Column used for comparison [default \"%default\"]", metavar="STRING"),
                     make_option(c("--config"), default=comp_type_default_file, help = "Comparison configuration [default \"%default\"]", metavar="FILE"),
                     make_option(c("-o","--out"), default="task-stats", help = "Output file suffix [default \"%default\"].", metavar="STRING"),
