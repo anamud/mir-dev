@@ -308,9 +308,9 @@ query <- data.table(start = shape_bins_lower,
                     end = shape_bins_upper)
 setkey(subject, start, end)
 overlaps <- foverlaps(query, subject, type="any")
-overlaps <- overlaps[, .(count = sum(!is.na(start)),
-                         fragment = paste(interval, collapse=";")),
-by = .(i.start, i.end)]
+overlaps <- overlaps[,
+                     .(count = sum(!is.na(start)), fragment = paste(interval, collapse=";")),
+                     by = .(i.start, i.end)]
 if (arg_timing) toc("Shape calculation [Step 3]")
 if (arg_timing) tic(type="elapsed")
 #tg_shape <- data.frame(low=shape_bins_lower, count=countOverlaps(query, subject))
