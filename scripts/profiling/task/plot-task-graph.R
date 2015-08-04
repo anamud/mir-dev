@@ -67,21 +67,15 @@ if (Rstudio_mode) {
 if (parsed$verbose) my_print("Initializing ...")
 
 # Read data
-if (parsed$timing) tic(type="elapsed")
 tg_data <- read.csv(parsed$data, header=TRUE)
-if (parsed$timing) toc("Read data")
 
 # Information output
 tg_info_out_file <- paste(gsub(". $", "", parsed$out), ".info", sep="")
 sink(tg_info_out_file)
 sink()
 
-# Remove non-sense data
-if (parsed$timing) tic(type="elapsed")
-
 # Remove background task
 tg_data <- tg_data[!is.na(tg_data$parent),]
-if (parsed$timing) toc("Removing non-sense data")
 
 # Critical path calculation weight
 if ("ins_count" %in% colnames(tg_data)) {
