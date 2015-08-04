@@ -1,3 +1,6 @@
+# Clear workspace
+rm(list=ls())
+
 # Import
 library(optparse, quietly=TRUE)
 
