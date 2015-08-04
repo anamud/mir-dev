@@ -610,23 +610,23 @@ res <- write.graph(tg, file=tg_out_file, format="graphml")
 my_print(paste("Wrote file:", tg_out_file))
 if (parsed$timing) toc("Write graphml")
 
-# Write adjacency matrix file
-if (parsed$timing) tic(type="elapsed")
-tg_out_file <- paste(gsub(". $", "", parsed$out), ".adjmat", sep="")
-sink(tg_out_file)
-get.adjacency(tg,names=T)
-sink()
-my_print(paste("Wrote file:", tg_out_file))
-if (parsed$timing) toc("Write adjacency matrix")
+## Write adjacency matrix file
+#if (parsed$timing) tic(type="elapsed")
+#tg_out_file <- paste(gsub(". $", "", parsed$out), ".adjmat", sep="")
+#sink(tg_out_file)
+#get.adjacency(tg,names=T)
+#sink()
+#my_print(paste("Wrote file:", tg_out_file))
+#if (parsed$timing) toc("Write adjacency matrix")
 
-# Write edgelist file
-if (parsed$timing) tic(type="elapsed")
-tg_out_file <- paste(gsub(". $", "", parsed$out), ".edgelist", sep="")
-sink(tg_out_file)
-get.edgelist(tg, names=T)
-sink()
-my_print(paste("Wrote file:", tg_out_file))
-if (parsed$timing) toc("Write edgelist")
+## Write edgelist file
+#if (parsed$timing) tic(type="elapsed")
+#tg_out_file <- paste(gsub(". $", "", parsed$out), ".edgelist", sep="")
+#sink(tg_out_file)
+#get.edgelist(tg, names=T)
+#sink()
+#my_print(paste("Wrote file:", tg_out_file))
+#if (parsed$timing) toc("Write edgelist")
 
 # Write node attributes
 if (parsed$timing) tic(type="elapsed")
