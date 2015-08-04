@@ -1,3 +1,6 @@
+# Clear workspace
+rm(list=ls())
+
 # Include
 mir_root <- Sys.getenv("MIR_ROOT")
 source(paste(mir_root,"/scripts/profiling/task/common.R",sep=""))
