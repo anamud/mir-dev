@@ -12,9 +12,9 @@ option_list <- list(
                     make_option(c("-v", "--verbose"), action="store_true", default=TRUE, help="Print output [default]"),
                     make_option(c("-q", "--quiet"), action="store_false", dest="verbose", help="Print little output"),
                     make_option(c("--timing"), action="store_true", default=FALSE, help="Print timing"),
-                    make_option(c("-l","--left"), help = "Table 1", metavar="FILE"),
-                    make_option(c("-r","--right"), help = "Table 2", metavar="FILE"),
-                    make_option(c("-o","--out"), default="merged-task-perf", help = "Output file name [default \"%default\"]", metavar="STRING"),
+                    make_option(c("-l","--left"), help = "Task stats to be merged", metavar="FILE"),
+                    make_option(c("-r","--right"), help = "Other task stats to be merged", metavar="FILE"),
+                    make_option(c("-o","--out"), default="task-stats.merged", help = "Output file name [default \"%default\"]", metavar="STRING"),
                     make_option(c("-k","--key"), help = "Column used for merging"),
                     make_option(c("-c","--common"), default="prompt", help = "How to treat common columns? Choose from: left, right, both, avoid, prompt [default \"%default\"]", metavar="STRING"))
 
@@ -27,16 +27,12 @@ if(!exists("left", where=parsed) | !exists("right", where=parsed) | !exists("key
 
 # Read data
 if(parsed$verbose) my_print("Reading data ...")
-if(parsed$timing) tic(type="elapsed")
 
 dleft <- read.csv(parsed$left, header=TRUE)
 dright <- read.csv(parsed$right, header=TRUE)
 
-if(parsed$timing) toc("Read data ")
-
 # Sanity check for key
 if(parsed$verbose) my_print("Running sanity checks ...")
-if(parsed$timing) tic(type="elapsed")
 
 if(!(parsed$key %in% colnames(dleft)) | !(parsed$key %in% colnames(dright))) {
     my_print("Error: Key not found in tables. Aborting!")
@@ -45,9 +41,9 @@ if(!(parsed$key %in% colnames(dleft)) | !(parsed$key %in% colnames(dright))) {
 
 # Merge while checking for common columns
 if(parsed$verbose) my_print("Merging ...")
+if(parsed$timing) tic(type="elapsed")
 
 common <- intersect(colnames(dleft)[colnames(dleft) != parsed$key], colnames(dright)[colnames(dright) != parsed$key])
-
 if(length(common) > 0) {
     my_print(paste("Tables contain common columns: ", common))
     if(parsed$common == "prompt") {
@@ -63,8 +59,7 @@ if(length(common) > 0) {
             dleft <- subset(dleft, select=(setdiff(colnames(dleft), common)))
             dright <- subset(dright, select=(setdiff(colnames(dright), common)))
         } else if(mc == 's') {
-            for(c in common)
-            {
+            for(c in common) {
                 my_print(paste("Enter choice for merging column <", c, ">: both [b], left [l], right [r] or avoid [a]."))
                 mcs <- scan(file = "stdin", what=character(), n=1, quiet=T)
                 if(mcs == 'b') {
@@ -101,9 +96,9 @@ if(length(common) > 0) {
         quit("no", 1)
     }
 
-    dmerge <- merge(dleft, dright, by=parsed$key, all=T, suffixes=c(".left", ".right"))
+    dmerge <- merge(dleft, dright, by=parsed$key, all=T, suffixes=c("_left", "_right"))
 } else {
-    dmerge <- merge(dleft, dright, by=parsed$key, all=T, suffixes=c(".left", ".right"))
+    dmerge <- merge(dleft, dright, by=parsed$key, all=T, suffixes=c("_left", "_right"))
 }
 
 # Remove background task
@@ -116,13 +111,12 @@ sum.row.has.na <- sum(row.has.na)
 if(sum.row.has.na > 0) {
     my_print(sprintf("Warning: %d rows contained NAs in the merged table", sum.row.has.na ))
 }
+
 if(parsed$timing) toc("Merge")
 
 # Write out csv
-if(parsed$timing) tic(type="elapsed")
 write.csv(dmerge, parsed$out, row.names=FALSE)
 my_print(paste("Wrote file:", parsed$out))
-if(parsed$timing) toc("Write output")
 
 # Warn
 wa <- warnings()
