@@ -41,9 +41,9 @@ if (running_outside_rstudio) {
     arg_verbose <- parsed$verbose
     arg_timing <- parsed$timing
 } else {
-    arg_data <- "/home/ananya/mir-dev/programs/omp/bots/sort/mir-task-stats"
+    arg_data <- "mir-task-stats"
     arg_palette <- "color"
-    arg_outfileprefix <- "task-graph"
+    arg_outfileprefix <- "full-task-graph"
     arg_verbose <- 1
     arg_timing <- 1
 }
