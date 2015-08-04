@@ -1,3 +1,6 @@
+# Clear workspace
+rm(list=ls())
+
 # Libary
 suppressMessages(library(dplyr))
 library(optparse, quietly=TRUE)
