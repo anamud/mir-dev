@@ -95,7 +95,6 @@ if ("ins_count" %in% colnames(tg_data)) {
 }
 
 # Set colors
-if (parsed$timing) tic(type="elapsed")
 join_color <- "#FF7F50"  # coral
 fork_color <- "#2E8B57"  # seagreen
 task_color <- "#4682B4" #steelblue
@@ -106,8 +105,7 @@ scope_edge_color <- "#000000"
 cont_edge_color <- "#000000"
 color_fun <- colorRampPalette(c("blue", "red"))
 
-if (parsed$palette == "color") {
-} else if (parsed$palette == "gray") {
+if (parsed$palette == "gray") {
     join_color <- "#D3D3D3"  # light gray
     fork_color <- "#D3D3D3"  # light gray
     task_color <- "#6B6B6B"  # gray42
@@ -117,7 +115,7 @@ if (parsed$palette == "color") {
     scope_edge_color <-  "#000000"
     cont_edge_color <- "#000000"
     color_fun <- colorRampPalette(c("gray10", "gray90"))
-} else {
+} else if (parsed$palette != "color") {
     my_print("Unsupported color format. Supported formats: color, gray. Defaulting to color.")
 }
 
