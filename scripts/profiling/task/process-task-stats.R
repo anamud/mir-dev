@@ -29,7 +29,7 @@ if(!exists("data", where=parsed)) {
 if(parsed$verbose) my_print(paste("Reading file", parsed$data))
 task_stats <- read.csv(parsed$data, header=TRUE)
 
-# Process
+# Start processing
 if(parsed$timing) tic(type="elapsed")
 if(parsed$verbose) my_print("Processing ...")
 
@@ -52,12 +52,12 @@ if(parsed$verbose) my_print("Marking leaf tasks ...")
 task_stats["leaf"] <- F
 task_stats$leaf[task_stats$num_children == 0] <- T
 
-# Calc work cycles
+# Calculate work cycles
 # Work is the amount of computation by a task excluding runtime system calls.
 if(parsed$verbose) my_print("Calculating work cycles ...")
 task_stats$work_cycles <- task_stats$exec_cycles - task_stats$overhead_cycles
 
-# Calc parallel benefit
+# Calculate parallel benefit
 # Parallel benefit is the ratio of work done by a task to the average overhead incurred by its parent.
 if(parsed$verbose) my_print("Calculating parallel benefit ...")
 
@@ -79,7 +79,7 @@ if("PAPI_RES_STL_sum" %in% colnames(task_stats)) {
     task_stats$mem_hier_util <- task_stats$PAPI_RES_STL_sum/task_stats$work_cycles
 }
 
-# Calculat compute intensity
+# Calculate compute intensity
 if("ins_count" %in% colnames(task_stats) & "mem_fp" %in% colnames(task_stats)) {
     if(parsed$verbose) my_print("Calculating compute intensity ...")
     task_stats$compute_int <- task_stats$ins_count/task_stats$mem_fp
@@ -109,6 +109,7 @@ if(parsed$lineage) {
     }
 }
 
+# Stop processing
 if(parsed$timing) toc("Processing")
 
 # Write out processed data
