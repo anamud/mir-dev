@@ -20,7 +20,7 @@ if(!exists("data", where=parsed)) {
 # Read data
 if(parsed$verbose) print(paste("Reading file", parsed$data))
 
-cm.data <- read.csv(parsed$data, header=TRUE)
+cm_data <- read.csv(parsed$data, header=TRUE)
 outf <- paste(gsub("\\.", "-", parsed$data), ".pdf", sep="")
 
 # Plot colormap
@@ -28,7 +28,7 @@ if(parsed$verbose) print("Plotting colormap")
 
 pdf(outf)
 plot(0,0)
-legend("right", legend=as.character(cm.data$value), fill=as.character(cm.data$color))
+legend("right", legend=as.character(cm_data$value), fill=as.character(cm_data$color))
 title(parsed$data)
 
 # Write out
