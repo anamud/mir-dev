@@ -15,6 +15,7 @@ option_list <- list(
                     make_option(c("--lineage"), action="store_true", default=FALSE, help="Calculate task lineage."),
                     make_option(c("--verbose"), action="store_true", default=TRUE, help="Print output [default]."),
                     make_option(c("--timing"), action="store_true", default=FALSE, help="Print timing information."),
+                    make_option(c("-o","--out"), default="task-stats.processed", help = "Output file name [default \"%default\"]", metavar="STRING"),
                     make_option(c("--quiet"), action="store_false", dest="verbose", help="Print little output."))
 
 parsed <- parse_args(OptionParser(option_list = option_list), args = commandArgs(TRUE))
@@ -111,7 +112,7 @@ if(parsed$lineage) {
 if(parsed$timing) toc("Processing")
 
 # Write out processed data
-out_file <- paste(gsub(". $", "", parsed$data), ".processed", sep="")
+out_file <- parsed$out
 sink(out_file)
 write.csv(task_stats, out_file, row.names=F)
 sink()
