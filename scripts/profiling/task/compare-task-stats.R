@@ -59,9 +59,9 @@ if(parsed$verbose) my_print("Comparing task stats ...")
 
 for(r in seq(1,nrow(comp_type))) {
     # Paramters
-    attrib <- as.character(comp_type[r,]$comp_attrib)
-    op <- as.character(comp_type[r,]$comp_op)
-    name <- as.character(comp_type[r,]$comp_name)
+    attrib <- as.character(comp_type[r,]$attribute)
+    op <- as.character(comp_type[r,]$operation)
+    name <- as.character(comp_type[r,]$name)
 
     if(attrib %in% colnames(ts_data_l) & attrib %in% colnames(ts_data_l)) {
         if(parsed$verbose) my_print(paste("Processing comparison type:" , attrib, op, name))
