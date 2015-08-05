@@ -6,6 +6,9 @@ library(RColorBrewer, quietly=TRUE) # Colors
 # Set number of precision digits
 options("scipen"=999)
 
+# Strings as factors
+options(stringsAsFactors = F)
+
 # Timing functions
 tic <- function(gcFirst = TRUE, type=c("elapsed", "user.self", "sys.self"))
 {

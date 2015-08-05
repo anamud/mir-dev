@@ -4,6 +4,9 @@ rm(list=ls())
 # Treat warnings as errors
 #options(warn=2)
 
+# Strings as factors
+options(stringsAsFactors = F)
+
 # Include
 mir_root <- Sys.getenv("MIR_ROOT")
 source(paste(mir_root,"/scripts/profiling/task/common.R",sep=""))

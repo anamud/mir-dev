@@ -1,6 +1,9 @@
 # Clear workspace
 rm(list=ls())
 
+# Strings as factors
+options(stringsAsFactors = F)
+
 # Import
 library(optparse, quietly=TRUE)
 

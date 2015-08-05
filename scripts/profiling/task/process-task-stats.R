@@ -1,6 +1,9 @@
 # Clear workspace
 rm(list=ls())
 
+# Strings as factors
+options(stringsAsFactors = F)
+
 # Import
 mir_root <- Sys.getenv("MIR_ROOT")
 source(paste(mir_root,"/scripts/profiling/task/common.R",sep=""))
