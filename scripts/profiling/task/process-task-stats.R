@@ -14,19 +14,28 @@ suppressMessages(library(data.table))
 suppressMessages(library(dplyr))
 
 # Read arguments
-option_list <- list(
-                    make_option(c("-d","--data"), help = "Task stats.", metavar="FILE"),
-                    make_option(c("--lineage"), action="store_true", default=FALSE, help="Calculate task lineage."),
-                    make_option(c("--verbose"), action="store_true", default=TRUE, help="Print output [default]."),
-                    make_option(c("--timing"), action="store_true", default=FALSE, help="Print timing information."),
-                    make_option(c("-o","--out"), default="task-stats.processed", help = "Output file name [default \"%default\"]", metavar="STRING"),
-                    make_option(c("--quiet"), action="store_false", dest="verbose", help="Print little output."))
+Rstudio_mode <- F
+if (Rstudio_mode) {
+    parsed <- list(data="mir-task-stats",
+                   lineage=T,
+                   verbose=T,
+                   timing=F,
+                   out="task-stats.processed")
+} else {
+    option_list <- list(
+                        make_option(c("-d","--data"), help = "Task stats.", metavar="FILE"),
+                        make_option(c("--lineage"), action="store_true", default=FALSE, help="Calculate task lineage."),
+                        make_option(c("--verbose"), action="store_true", default=TRUE, help="Print output [default]."),
+                        make_option(c("--timing"), action="store_true", default=FALSE, help="Print timing information."),
+                        make_option(c("-o","--out"), default="task-stats.processed", help = "Output file name [default \"%default\"]", metavar="STRING"),
+                        make_option(c("--quiet"), action="store_false", dest="verbose", help="Print little output."))
 
-parsed <- parse_args(OptionParser(option_list = option_list), args = commandArgs(TRUE))
+    parsed <- parse_args(OptionParser(option_list = option_list), args = commandArgs(TRUE))
 
-if (!exists("data", where=parsed)) {
-    my_print("Error: Invalid arguments. Check help (-h).")
-    quit("no", 1)
+    if (!exists("data", where=parsed)) {
+        my_print("Error: Invalid arguments. Check help (-h).")
+        quit("no", 1)
+    }
 }
 
 # Read data
