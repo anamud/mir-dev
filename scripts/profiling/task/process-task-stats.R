@@ -43,36 +43,32 @@ if (parsed$verbose) my_print("Processing ...")
 if (parsed$verbose) my_print("Removing non-sense data ...")
 
 # Remove background task
-task_stats <- task_stats[!is.na(task_stats$parent),]
+task_stats <- task_stats[!is.na(parent),]
 
 # Find task executed last per worker
 if (parsed$verbose) my_print("Calculating last tasks to finish ...")
-max_exec_end <- task_stats %>% group_by(cpu_id) %>% filter(exec_end_instant == max(exec_end_instant))
-task_stats[, last_to_finish := F]
-for(task in max_exec_end$task) {
-    task_stats[match(task, task_stats$task), last_to_finish := T]
-}
+task_stats <- task_stats %>% group_by(cpu_id) %>% mutate(last_to_finish = (exec_end_instant == max(exec_end_instant)))
 
 # Mark leaf tasks
 if (parsed$verbose) my_print("Marking leaf tasks ...")
-task_stats[, leaf := F]
-task_stats[which(task_stats$num_children == 0), leaf := T]
+task_stats <- task_stats[, leaf := F]
+task_stats <- task_stats[which(num_children == 0), leaf := T]
 
 # Calculate work cycles
 # Work is the amount of computation by a task excluding runtime system calls.
 if (parsed$verbose) my_print("Calculating work cycles ...")
-task_stats[, work_cycles := exec_cycles - overhead_cycles]
+task_stats <- task_stats[, work_cycles := exec_cycles - overhead_cycles]
 
 # Calculate memory hierarchy utilization
 if ("PAPI_RES_STL_sum" %in% colnames(task_stats)) {
     if (parsed$verbose) my_print("Calculating memory hierarchy utilization ...")
-    task_stats[, mem_hier_util := PAPI_RES_STL_sum / work_cycles]
+    task_stats <- task_stats[, mem_hier_util := PAPI_RES_STL_sum / work_cycles]
 }
 
 # Calculate compute intensity
 if ("ins_count" %in% colnames(task_stats) & "mem_fp" %in% colnames(task_stats)) {
     if (parsed$verbose) my_print("Calculating compute intensity ...")
-    task_stats[, compute_int := ins_count / mem_fp]
+    task_stats <- task_stats[, compute_int := ins_count / mem_fp]
 }
 
 # Calculate lineage
