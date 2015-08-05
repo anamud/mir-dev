@@ -6,8 +6,9 @@ mir_root <- Sys.getenv("MIR_ROOT")
 source(paste(mir_root,"/scripts/profiling/task/common.R",sep=""))
 
 # Libary
-suppressMessages(library(dplyr))
 library(optparse, quietly=TRUE)
+suppressMessages(library(data.table))
+suppressMessages(library(dplyr))
 
 # Read arguments
 option_list <- list(
@@ -28,6 +29,8 @@ if (!exists("data", where=parsed)) {
 # Read data
 if (parsed$verbose) my_print(paste("Reading file", parsed$data))
 task_stats <- read.csv(parsed$data, header=TRUE)
+setDT(task_stats)
+setkey(task_stats, task, parent)
 
 # Start processing
 if (parsed$timing) tic(type="elapsed")
@@ -42,48 +45,67 @@ task_stats <- task_stats[!is.na(task_stats$parent),]
 # Find task executed last per worker
 if (parsed$verbose) my_print("Calculating last tasks to finish ...")
 max_exec_end <- task_stats %>% group_by(cpu_id) %>% filter(exec_end_instant == max(exec_end_instant))
-task_stats["last_to_finish"] <- F
+task_stats[, last_to_finish := F]
 for(task in max_exec_end$task) {
-    task_stats$last_to_finish[task_stats$task == task] <- T
+    task_stats[match(task, task_stats$task), last_to_finish := T]
 }
 
 # Mark leaf tasks
 if (parsed$verbose) my_print("Marking leaf tasks ...")
-task_stats["leaf"] <- F
-task_stats$leaf[task_stats$num_children == 0] <- T
+task_stats[, leaf := F]
+task_stats[which(task_stats$num_children == 0), leaf := T]
 
 # Calculate work cycles
 # Work is the amount of computation by a task excluding runtime system calls.
 if (parsed$verbose) my_print("Calculating work cycles ...")
-task_stats$work_cycles <- task_stats$exec_cycles - task_stats$overhead_cycles
-
-# Calculate parallel benefit
-# Parallel benefit is the ratio of work done by a task to the average overhead incurred by its parent.
-if (parsed$verbose) my_print("Calculating parallel benefit ...")
-
-calc_parallel_benefit <- function(task)
-{
-    task_ind <- which(task_stats$task == task)
-    parent <- task_stats$parent[task_ind]
-    parent_ind <- which(task_stats$task == parent)
-    sibling_ind <- which(task_stats$parent == parent)
-    sync_overhead_per_child <- (task_stats$overhead_cycles[parent_ind] - sum(as.numeric(task_stats$creation_cycles[sibling_ind]))) / length(task_stats$task[sibling_ind])
-    task_stats$work_cycles[task_ind]/(task_stats$creation_cycles[task_ind] + sync_overhead_per_child)
-}
-parallel_benefit <- as.numeric(sapply(task_stats$task, calc_parallel_benefit))
-task_stats["parallel_benefit"] <- parallel_benefit
+task_stats[, work_cycles := exec_cycles - overhead_cycles]
 
 # Calculate memory hierarchy utilization
 if ("PAPI_RES_STL_sum" %in% colnames(task_stats)) {
     if (parsed$verbose) my_print("Calculating memory hierarchy utilization ...")
-    task_stats$mem_hier_util <- task_stats$PAPI_RES_STL_sum/task_stats$work_cycles
+    task_stats[, mem_hier_util := PAPI_RES_STL_sum / work_cycles]
 }
 
 # Calculate compute intensity
 if ("ins_count" %in% colnames(task_stats) & "mem_fp" %in% colnames(task_stats)) {
     if (parsed$verbose) my_print("Calculating compute intensity ...")
-    task_stats$compute_int <- task_stats$ins_count/task_stats$mem_fp
+    task_stats[, compute_int := ins_count / mem_fp]
 }
+
+# Calculate lineage
+if (parsed$lineage) {
+    # Lineage = child number chain
+    if (parsed$verbose) my_print("Calculating lineage ...")
+    task_stats <- task_stats[order(task_stats$task),]
+
+    #Rprof("test.prof", line.profiling=TRUE)
+    task_stats[, parent_ind := match(task_stats$parent, task_stats$task)]
+    for(i in seq(1:nrow(task_stats))) {
+        parent <- task_stats$parent[i]
+        child_number <- task_stats$child_number[i]
+        if (parent != 0) {
+            parent_lineage <- task_stats$lineage[task_stats$parent_ind[i]]
+            task_stats[i, lineage := paste(parent_lineage, as.character(child_number), sep="-")]
+        }
+        else
+            task_stats[i, lineage := paste("R", as.character(child_number), sep="-")]
+    }
+    #Rprof(NULL)
+    #summaryRprof("test.prof", lines = "both")
+
+    # Sanity check
+    if (anyDuplicated(task_stats$lineage, incomparables="NA")) {
+        my_print("Error: Duplicate lineages exist. Aborting!")
+        quit("no", 1)
+    }
+}
+
+# Calculate parallel benefit
+if (parsed$verbose) my_print("Calculating parallel benefit ...")
+task_stats$parent_overhead_cycles <- task_stats$overhead_cycles[match(task_stats$parent, task_stats$task)]
+task_stats <- task_stats %>% group_by(parent) %>% mutate(sync_cycles_per_child = (parent_overhead_cycles - sum(creation_cycles))/n())
+task_stats <- task_stats %>% rowwise() %>% mutate(parallel_benefit = work_cycles/(creation_cycles + sync_cycles_per_child))
+task_stats <- ungroup(task_stats)
 
 # Calculate sibling work balance
 if (parsed$verbose) my_print("Calculating sibling work balance ...")
@@ -92,29 +114,6 @@ task_stats <- task_stats %>% group_by(parent,joins_at) %>% mutate(sibling_work_b
 # Calculate sibling scatter
 if (parsed$verbose) my_print("Calculating scatter ...")
 task_stats <- task_stats %>% group_by(parent,joins_at) %>% mutate(sibling_scatter = median(c(dist(cpu_id))))
-
-# Calculate lineage
-if (parsed$lineage) {
-    # Lineage = child number chain
-    if (parsed$verbose) my_print("Calculating lineage ...")
-    task_stats <- task_stats[order(task_stats$task),]
-    task_stats["lineage"] <- "NA"
-    for(task in task_stats$task) {
-        i <- which(task_stats$task == task)
-        parent <- task_stats$parent[i]
-        child_number <- task_stats$child_number[i]
-        if (parent != 0)
-            task_stats$lineage[i] <- paste(task_stats$lineage[which(task_stats$task == parent)], as.character(child_number), sep="-")
-        else
-            task_stats$lineage[i] <- paste("R", as.character(child_number), sep="-")
-    }
-
-    # Sanity check
-    if (anyDuplicated(task_stats$lineage, incomparables="NA")) {
-        my_print("Error: Duplicate lineages exist. Aborting!")
-        quit("no", 1)
-    }
-}
 
 # Stop processing
 if (parsed$timing) toc("Processing")
