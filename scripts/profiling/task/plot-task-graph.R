@@ -541,7 +541,7 @@ if (!is.na(path_weight) && !parsed$tree) {
 
     # Calculate and write info
     sink(tg_info_out_file, append=T)
-    my_print(paste("Cilk Theory Parallelism (Unit =", path_weight, "):", sep=""))
+    my_print(paste("# Cilk theory parallelism (unit =", path_weight, "):", sep=""))
     my_print(paste("Span (critical path) =", lpl))
     work <- sum(as.numeric(tg_data[,path_weight]))
     my_print(paste("Work =", work))
@@ -582,7 +582,7 @@ if (!is.na(path_weight) && !parsed$tree) {
 
 # Write basic graph info
 sink(tg_info_out_file, append=T)
-my_print("Task graph structure:")
+my_print("# Task graph structure:")
 my_print(paste("Number of nodes =", length(V(tg))))
 my_print(paste("Number of edges =", length(E(tg))))
 my_print(paste("Number of tasks =", length(tg_data$task)))
@@ -658,7 +658,7 @@ if (parsed$analyze) {
     # Analysis text output
     tg_analysis_out_file <- paste(gsub(". $", "", parsed$out), "-analysis.info", sep="")
     sink(tg_analysis_out_file)
-    my_print("Analysis:")
+    my_print("# Analysis:")
     my_print()
     sink()
 
