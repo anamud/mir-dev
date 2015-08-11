@@ -79,6 +79,10 @@ static void mir_postconfig_init()
     // Init time
     runtime->init_time = mir_get_cycles();
 
+    // Global taskwait counter
+    runtime->ctwc = mir_twc_create();
+    runtime->num_children_tasks = 0;
+
     // Scheduling policy
     runtime->sched_pol->create();
     MIR_DEBUG("Task scheduling policy set to %s.", runtime->sched_pol->name);
@@ -168,10 +172,6 @@ wait_alive:
     __sync_synchronize();
     goto wait_alive;
 alive:
-
-    // Global taskwait counter
-    runtime->ctwc = mir_twc_create();
-    runtime->num_children_tasks = 0;
 
     // Memory allocation policy
     // Init memory distributer only after workers are bound.
