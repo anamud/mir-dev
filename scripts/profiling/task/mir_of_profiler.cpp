@@ -485,6 +485,8 @@ VOID Fini(INT32 code, VOID* v)
     out.open(filename.c_str());
     std::cout << "Writing call graph information to file: " << filename << " ..." << std::endl;
     // Write as csv
+    // TODO: Rename fields for clarity. Example: What does the field "ccr" mean?
+    // FIXME: Task statistics also reports outline fuction name in a field called "outline_fuction".
     const char* fileheader = "task,ins_count,stack_read,stack_write,mem_fp,ccr,clr,mem_read,mem_write,outl_func";
 #ifdef GET_INS_MIX
     string ins_catg = ",";
