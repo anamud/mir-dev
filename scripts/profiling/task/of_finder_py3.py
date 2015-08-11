@@ -6,6 +6,8 @@ import sys
 import os
 import subprocess
 import getopt
+import re
+import string
 
 # Seperate pattern with a "|"
 outline_func_pattern = '._omp_fn.|omp_fn.| ol_'
@@ -40,6 +42,7 @@ def get_callable(obj_fil):
     return process(raw_out)
 
 def main():
+    global outline_funcs, callable_funcs
     if sys.version_info < (3,0):
         print("Python version < 3. Aborting!")
         sys.exit(1)
@@ -76,16 +79,25 @@ def main():
             print('Processing file: {}'.format(obj_fil))
         outline_funcs.append(get_outlined(obj_fil))
         callable_funcs.append(get_callable(obj_fil))
+    # Remove multiple commas and spaces in outline_funcs list
+    outline_funcs = ",".join(outline_funcs)
+    outline_funcs = re.sub(' +', '', outline_funcs)
+    outline_funcs = re.sub(',+', ',', outline_funcs)
+    # Remove multiple commas and spaces in callable_funcs list
+    callable_funcs = ",".join(callable_funcs)
+    callable_funcs = re.sub(' +', '', callable_funcs)
+    callable_funcs = re.sub(',+', ',', callable_funcs)
+    # Print out
     if export:
         print('export CHECKME_OUTLINE_FUNCTIONS=',end='')
     else:
         print('CHECKME_OUTLINE_FUNCTIONS=',end='')
-    print(", ".join(outline_funcs).strip().replace(',,',',').replace(' ','').strip(','))
+    print(outline_funcs.strip().strip(','))
     if export:
         print('export CHECKME_CALLED_FUNCTIONS=',end='')
     else:
         print('CHECKME_CALLED_FUNCTIONS=',end='')
-    print(", ".join(callable_funcs).strip().replace(',,',',').replace(' ','').strip(','))
+    print(callable_funcs.strip().strip(','))
 
 if __name__ == '__main__':
     main()

@@ -6,6 +6,8 @@ import sys
 import os
 import subprocess
 import getopt
+import re
+import string
 
 # Seperate pattern with a "|"
 outline_func_pattern = '._omp_fn.|omp_fn.| ol_'
@@ -40,6 +42,7 @@ def get_callable(obj_fil):
     return process(raw_out)
 
 def main():
+    global outline_funcs, callable_funcs
     try:
         opts, args = getopt.getopt(sys.argv[1:], "hve", ["help", "verbose", "export"])
     except getopt.GetoptError as err:
@@ -73,16 +76,25 @@ def main():
             print 'Processing file: {0}'.format(obj_fil)
         outline_funcs.append(get_outlined(obj_fil))
         callable_funcs.append(get_callable(obj_fil))
+    # Remove multiple commas and spaces in outline_funcs list
+    outline_funcs = string.join(outline_funcs, ",")
+    outline_funcs = re.sub(' +', '', outline_funcs)
+    outline_funcs = re.sub(',+', ',', outline_funcs)
+    # Remove multiple commas and spaces in callable_funcs list
+    callable_funcs = string.join(callable_funcs, ",")
+    callable_funcs = re.sub(' +', '', callable_funcs)
+    callable_funcs = re.sub(',+', ',', callable_funcs)
+    # Print out
     if export:
         sys.stdout.write('export CHECKME_OUTLINE_FUNCTIONS=')
     else:
         sys.stdout.write('CHECKME_OUTLINE_FUNCTIONS=')
-    print ", ".join(outline_funcs).strip().replace(',,',',').replace(' ','').strip(',')
+    print outline_funcs.strip().strip(',')
     if export:
         sys.stdout.write('export CHECKME_CALLED_FUNCTIONS=')
     else:
         sys.stdout.write('CHECKME_CALLED_FUNCTIONS=')
-    print ", ".join(callable_funcs).strip().replace(',,',',').replace(' ','').strip(',')
+    print callable_funcs.strip().strip(',')
 
 if __name__ == '__main__':
     main()
