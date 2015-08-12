@@ -46,11 +46,11 @@ do
     dec_address_re='^[0-9]+$'
     hex_address_re='^0x[0-9]+$'
     if ! [[ $of =~ $dec_address_re ]] ; then
-        echo Outline function: $of is located by GDB at $(gdb $debug_exe -ex "set breakpoint pending on" -ex "b *$of" --batch)
+        echo Outline function: $of is located by GDB at $(gdb -n -q $debug_exe -ex "set breakpoint pending on" -ex "b *$of" --batch)
     elif ! [[ $of =~ $hex_address_re ]] ; then
-        echo Outline function: $of is located by GDB at $(gdb $debug_exe -ex "set breakpoint pending on" -ex "b *$of" --batch)
+        echo Outline function: $of is located by GDB at $(gdb -n -q $debug_exe -ex "set breakpoint pending on" -ex "b *$of" --batch)
     else
-        echo Outline function: $of is located by GDB at $(gdb $debug_exe -ex "set breakpoint pending on" -ex "b $of" --batch)
+        echo Outline function: $of is located by GDB at $(gdb -n -q $debug_exe -ex "set breakpoint pending on" -ex "b $of" --batch)
     fi
 done
 
