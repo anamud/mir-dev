@@ -12,7 +12,7 @@ mir_root <- Sys.getenv("MIR_ROOT")
 source(paste(mir_root,"/scripts/profiling/task/common.R",sep=""))
 
 # Library
-library(igraph, quietly=TRUE)
+suppressMessages(library(igraph, quietly=TRUE))
 suppressMessages(library(gdata, quietly=TRUE, warn.conflicts=FALSE))
 library(optparse, quietly=TRUE)
 
