@@ -25,6 +25,7 @@ if (Rstudio_mode) {
     option_list <- list(
                         make_option(c("-d","--data"), help = "Task stats.", metavar="FILE"),
                         make_option(c("--lineage"), action="store_true", default=FALSE, help="Calculate chunk lineage."),
+                        make_option(c("--nochunks"), action="store_true", default=FALSE, help="Disable chunk processing."),
                         make_option(c("--verbose"), action="store_true", default=TRUE, help="Print output [default]."),
                         make_option(c("--timing"), action="store_true", default=FALSE, help="Print timing information."),
                         make_option(c("-o","--out"), default="loop-task-stats.processed", help = "Output file name [default \"%default\"]", metavar="STRING"),
@@ -88,57 +89,59 @@ if ("ins_count" %in% colnames(task_stats) & "mem_fp" %in% colnames(task_stats)) 
     task_stats <- task_stats[, compute_int := ins_count / mem_fp]
 }
 
-# Chunk tasks
-chunk_tasks <- which(grepl(glob2rx("chunk_*"), task_stats$metadata))
-iteration_bound_chunk_tasks <- which(grepl(glob2rx("chunk_*_*"), task_stats$metadata))
+if (!parsed$nochunks) {
+    # Chunk tasks
+    chunk_tasks <- which(grepl(glob2rx("chunk_*"), task_stats$metadata))
+    iteration_bound_chunk_tasks <- which(grepl(glob2rx("chunk_*_*"), task_stats$metadata))
 
-# Calculate chunk idle join point
-task_stats <- task_stats[, idle_join := joins_at]
-task_stats <- task_stats[, parent_joins_at := joins_at[match(parent, task)]]
-task_stats <- task_stats[, parent_tag := tag[match(parent, task)]]
-task_stats <- task_stats[chunk_tasks, idle_join := ifelse(parent_tag == "idle_task", joins_at, parent_joins_at)]
+    # Calculate chunk idle join point
+    task_stats <- task_stats[, idle_join := joins_at]
+    task_stats <- task_stats[, parent_joins_at := joins_at[match(parent, task)]]
+    task_stats <- task_stats[, parent_tag := tag[match(parent, task)]]
+    task_stats <- task_stats[chunk_tasks, idle_join := ifelse(parent_tag == "idle_task", joins_at, parent_joins_at)]
 
-# Calculate chunk lineage
-if (parsed$lineage) {
-    if (parsed$verbose) my_print("Calculating chunk lineage ...")
+    # Calculate chunk lineage
+    if (parsed$lineage) {
+        if (parsed$verbose) my_print("Calculating chunk lineage ...")
 
-    # For-loop graph shapes are run dependent since chunk tasks can be created by different threads across runs.
-    # Therefore, lineage of chunk tasks cannot be calculated by tracing their path from the root task.
+        # For-loop graph shapes are run dependent since chunk tasks can be created by different threads across runs.
+        # Therefore, lineage of chunk tasks cannot be calculated by tracing their path from the root task.
 
-    # In a for-loop task graph, chunk tasks at the same depth with respect to the idle task
-    # belong to the same for-loop instance.
-    # Chunk tasks of a for-loop instance have the same join point, but not the same parent.
-    # Chunks can be ordered by iteration start number.
-    # Lineage is therefore calculated by concatenating joins_at with respect to the idle task
-    # and iteration start number.
+        # In a for-loop task graph, chunk tasks at the same depth with respect to the idle task
+        # belong to the same for-loop instance.
+        # Chunk tasks of a for-loop instance have the same join point, but not the same parent.
+        # Chunks can be ordered by iteration start number.
+        # Lineage is therefore calculated by concatenating joins_at with respect to the idle task
+        # and iteration start number.
 
-    task_stats <- task_stats[, chunk_lineage := "NA"]
-    task_stats <- task_stats[iteration_bound_chunk_tasks, chunk_lineage := paste(idle_join, as.character(sapply(metadata, function(x) {unlist(strsplit(x, "_"))[2]})), sep="-")]
+        task_stats <- task_stats[, chunk_lineage := "NA"]
+        task_stats <- task_stats[iteration_bound_chunk_tasks, chunk_lineage := paste(idle_join, as.character(sapply(metadata, function(x) {unlist(strsplit(x, "_"))[2]})), sep="-")]
 
-    # Check for duplicates
-    if (anyDuplicated(task_stats$chunk_lineage, incomparables="NA")) {
-        my_print("Error: Duplicate chunk lineages exist. Aborting!")
-        quit("no", 1)
+        # Check for duplicates
+        if (anyDuplicated(task_stats$chunk_lineage, incomparables="NA")) {
+            my_print("Error: Duplicate chunk lineages exist. Aborting!")
+            quit("no", 1)
+        }
     }
+
+    if (parsed$verbose) my_print("Calculating chunk work balance statistics ...")
+
+    # Subset
+    task_stats_only_chunks <- task_stats[chunk_tasks,]
+
+    # Calculate chunk work balance
+    task_stats_only_chunks <- task_stats_only_chunks %>% group_by(idle_join) %>% mutate(chunk_work_balance = max(work_cycles)/mean(work_cycles))
+
+    # Calculate chunk work per cpu
+    task_stats_only_chunks <- task_stats_only_chunks %>% group_by(idle_join, cpu_id) %>% mutate(chunk_work_cpu = sum(work_cycles))
+
+    # Calculate chunk per cpu
+    task_stats_only_chunks <- task_stats_only_chunks %>% group_by(idle_join) %>% mutate(chunk_work_cpu_balance = max(chunk_work_cpu)/mean(unique(chunk_work_cpu)))
+
+    # Merge back
+    task_stats_only_chunks <- subset(task_stats_only_chunks, select=c(task, chunk_work_balance, chunk_work_cpu, chunk_work_cpu_balance))
+    task_stats <- merge(task_stats, task_stats_only_chunks, by="task", all=T, suffixes=c("_left", "_right"))
 }
-
-if (parsed$verbose) my_print("Calculating chunk work balance statistics ...")
-
-# Subset
-task_stats_only_chunks <- task_stats[chunk_tasks,]
-
-# Calculate chunk work balance
-task_stats_only_chunks <- task_stats_only_chunks %>% group_by(idle_join) %>% mutate(chunk_work_balance = max(work_cycles)/mean(work_cycles))
-
-# Calculate chunk work per cpu
-task_stats_only_chunks <- task_stats_only_chunks %>% group_by(idle_join, cpu_id) %>% mutate(chunk_work_cpu = sum(work_cycles))
-
-# Calculate chunk per cpu
-task_stats_only_chunks <- task_stats_only_chunks %>% group_by(idle_join) %>% mutate(chunk_work_cpu_balance = max(chunk_work_cpu)/mean(unique(chunk_work_cpu)))
-
-# Merge back
-task_stats_only_chunks <- subset(task_stats_only_chunks, select=c(task, chunk_work_balance, chunk_work_cpu, chunk_work_cpu_balance))
-task_stats <- merge(task_stats, task_stats_only_chunks, by="task", all=T, suffixes=c("_left", "_right"))
 
 # Calculate parallel benefit
 if (parsed$verbose) my_print("Calculating parallel benefit ...")
