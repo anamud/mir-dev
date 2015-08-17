@@ -198,6 +198,102 @@ START_TEST(omp_parallel_for_dynamic_reduction_num_threads_one)
 }/*}}}*/
 END_TEST
 
+START_TEST(omp_parallel_for_guided)
+{/*{{{*/
+    int a[128] = {0};
+
+#pragma omp parallel for shared(a) schedule(guided)
+    for(int i=0; i<128; i++)
+    {
+        a[i] = i;
+    }
+
+    int sum = 0;
+    int sum_gold = 0;
+    for(int i=0; i<128; i++)
+    {
+        sum += a[i];
+        sum_gold += i;
+    }
+    ck_assert_int_eq(sum, sum_gold);
+}/*}}}*/
+END_TEST
+
+START_TEST(omp_parallel_for_guided_num_threads_small)
+{/*{{{*/
+    int a[128] = {0};
+    int num_threads_reqd = 2;
+    int num_threads;
+
+#pragma omp parallel for shared(a) schedule(guided) num_threads(num_threads_reqd)
+    for(int i=0; i<128; i++)
+    {
+        a[i] = i;
+        num_threads = omp_get_num_threads();
+    }
+
+    int sum = 0;
+    int sum_gold = 0;
+    for(int i=0; i<128; i++)
+    {
+        sum += a[i];
+        sum_gold += i;
+    }
+    ck_assert_int_eq(sum, sum_gold);
+    ck_assert_int_eq(num_threads, num_threads_reqd);
+}/*}}}*/
+END_TEST
+
+START_TEST(omp_parallel_for_guided_reduction)
+{/*{{{*/
+    int a[128] = {0};
+    for(int i=0; i<128; i++)
+    {
+        a[i] = i;
+    }
+
+    int sum = 0;
+
+#pragma omp parallel for shared(a) schedule(guided) reduction(+: sum)
+    for(int i=0; i<128; i++)
+    {
+        sum = sum + a[i];
+    }
+
+    int sum_gold = 0;
+    for(int i=0; i<128; i++)
+    {
+        sum_gold += a[i];
+    }
+    ck_assert_int_eq(sum, sum_gold);
+}/*}}}*/
+END_TEST
+
+START_TEST(omp_parallel_for_guided_reduction_num_threads_one)
+{/*{{{*/
+    int a[128] = {0};
+    for(int i=0; i<128; i++)
+    {
+        a[i] = i;
+    }
+
+    int sum = 0;
+
+#pragma omp parallel for shared(a) schedule(guided) reduction(+: sum) num_threads(1)
+    for(int i=0; i<128; i++)
+    {
+        sum = sum + a[i];
+    }
+
+    int sum_gold = 0;
+    for(int i=0; i<128; i++)
+    {
+        sum_gold += a[i];
+    }
+    ck_assert_int_eq(sum, sum_gold);
+}/*}}}*/
+END_TEST
+
 START_TEST(omp_parallel_for_runtime)
 {/*{{{*/
     int a[128] = {0};
@@ -402,6 +498,56 @@ START_TEST(omp_parallel_for_runtime_dynamic_chunk)
 }/*}}}*/
 END_TEST
 
+START_TEST(omp_parallel_for_runtime_guided)
+{/*{{{*/
+    int a[128] = {0};
+
+    setenv("OMP_SCHEDULE", "guided", 1);
+
+#pragma omp parallel for shared(a) schedule(runtime)
+    for(int i=0; i<128; i++)
+    {
+        a[i] = i;
+    }
+
+    unsetenv("OMP_SCHEDULE");
+
+    int sum = 0;
+    int sum_gold = 0;
+    for(int i=0; i<128; i++)
+    {
+        sum += a[i];
+        sum_gold += i;
+    }
+    ck_assert_int_eq(sum, sum_gold);
+}/*}}}*/
+END_TEST
+
+START_TEST(omp_parallel_for_runtime_guided_chunk)
+{/*{{{*/
+    int a[128] = {0};
+
+    setenv("OMP_SCHEDULE", "guided,10", 1);
+
+#pragma omp parallel for shared(a) schedule(runtime)
+    for(int i=0; i<128; i++)
+    {
+        a[i] = i;
+    }
+
+    unsetenv("OMP_SCHEDULE");
+
+    int sum = 0;
+    int sum_gold = 0;
+    for(int i=0; i<128; i++)
+    {
+        sum += a[i];
+        sum_gold += i;
+    }
+    ck_assert_int_eq(sum, sum_gold);
+}/*}}}*/
+END_TEST
+
 START_TEST(omp_for_static)
 {/*{{{*/
     int a[128] = {0};
@@ -546,6 +692,85 @@ START_TEST(omp_for_dynamic_reduction)
 #pragma omp parallel shared(a)
     {
 #pragma omp for schedule(dynamic) reduction(+: sum)
+        for(int i=0; i<128; i++)
+        {
+            sum = sum + a[i];
+        }
+    }
+
+    int sum_gold = 0;
+    for(int i=0; i<128; i++)
+    {
+        sum_gold += a[i];
+    }
+    ck_assert_int_eq(sum, sum_gold);
+}/*}}}*/
+END_TEST
+
+START_TEST(omp_for_guided)
+{/*{{{*/
+    int a[128] = {0};
+
+#pragma omp parallel shared(a)
+    {
+#pragma omp for schedule(guided)
+        for(int i=0; i<128; i++)
+        {
+            a[i] = i;
+        }
+    }
+
+    int sum = 0;
+    int sum_gold = 0;
+    for(int i=0; i<128; i++)
+    {
+        sum += a[i];
+        sum_gold += i;
+    }
+    ck_assert_int_eq(sum, sum_gold);
+}/*}}}*/
+END_TEST
+
+START_TEST(omp_for_guided_num_threads_small)
+{/*{{{*/
+    int a[128] = {0};
+    int num_threads_reqd = 2;
+    int num_threads;
+
+#pragma omp parallel shared(a) num_threads(num_threads_reqd)
+    {
+        num_threads = omp_get_num_threads();
+#pragma omp for schedule(guided)
+        for(int i=0; i<128; i++)
+        {
+            a[i] = i;
+        }
+    }
+
+    int sum = 0;
+    int sum_gold = 0;
+    for(int i=0; i<128; i++)
+    {
+        sum += a[i];
+        sum_gold += i;
+    }
+    ck_assert_int_eq(sum, sum_gold);
+    ck_assert_int_eq(num_threads, num_threads_reqd);
+}/*}}}*/
+END_TEST
+
+START_TEST(omp_for_guided_reduction)
+{/*{{{*/
+    int a[128] = {0};
+    for(int i=0; i<128; i++)
+    {
+        a[i] = i;
+    }
+
+    int sum = 0;
+#pragma omp parallel shared(a)
+    {
+#pragma omp for schedule(guided) reduction(+: sum)
         for(int i=0; i<128; i++)
         {
             sum = sum + a[i];
@@ -757,6 +982,62 @@ START_TEST(omp_for_runtime_dynamic_chunk)
 }/*}}}*/
 END_TEST
 
+START_TEST(omp_for_runtime_guided)
+{/*{{{*/
+    int a[128] = {0};
+
+    setenv("OMP_SCHEDULE", "guided", 1);
+
+#pragma omp parallel shared(a)
+    {
+#pragma omp for schedule(runtime)
+        for(int i=0; i<128; i++)
+        {
+            a[i] = i;
+        }
+    }
+
+    unsetenv("OMP_SCHEDULE");
+
+    int sum = 0;
+    int sum_gold = 0;
+    for(int i=0; i<128; i++)
+    {
+        sum += a[i];
+        sum_gold += i;
+    }
+    ck_assert_int_eq(sum, sum_gold);
+}/*}}}*/
+END_TEST
+
+START_TEST(omp_for_runtime_guided_chunk)
+{/*{{{*/
+    int a[128] = {0};
+
+    setenv("OMP_SCHEDULE", "guided,10", 1);
+
+#pragma omp parallel shared(a)
+    {
+#pragma omp for schedule(runtime)
+        for(int i=0; i<128; i++)
+        {
+            a[i] = i;
+        }
+    }
+
+    unsetenv("OMP_SCHEDULE");
+
+    int sum = 0;
+    int sum_gold = 0;
+    for(int i=0; i<128; i++)
+    {
+        sum += a[i];
+        sum_gold += i;
+    }
+    ck_assert_int_eq(sum, sum_gold);
+}/*}}}*/
+END_TEST
+
 Suite* test_suite(void)
 {/*{{{*/
     Suite* s = suite_create("Test");
@@ -773,6 +1054,11 @@ Suite* test_suite(void)
     tcase_add_test(tc, omp_parallel_for_dynamic_reduction);
     tcase_add_test(tc, omp_parallel_for_dynamic_reduction_num_threads_one);
 
+    tcase_add_test(tc, omp_parallel_for_guided);
+    tcase_add_test(tc, omp_parallel_for_guided_num_threads_small);
+    tcase_add_test(tc, omp_parallel_for_guided_reduction);
+    tcase_add_test(tc, omp_parallel_for_guided_reduction_num_threads_one);
+
     tcase_add_test(tc, omp_parallel_for_runtime);
     tcase_add_test(tc, omp_parallel_for_runtime_num_threads_small);
 
@@ -784,6 +1070,9 @@ Suite* test_suite(void)
     tcase_add_test(tc, omp_parallel_for_runtime_dynamic);
     tcase_add_test(tc, omp_parallel_for_runtime_dynamic_chunk);
 
+    tcase_add_test(tc, omp_parallel_for_runtime_guided);
+    tcase_add_test(tc, omp_parallel_for_runtime_guided_chunk);
+
     tcase_add_test(tc, omp_for_static);
     tcase_add_test(tc, omp_for_static_num_threads_small);
     tcase_add_test(tc, omp_for_static_reduction);
@@ -791,6 +1080,10 @@ Suite* test_suite(void)
     tcase_add_test(tc, omp_for_dynamic);
     tcase_add_test(tc, omp_for_dynamic_num_threads_small);
     tcase_add_test(tc, omp_for_dynamic_reduction);
+
+    tcase_add_test(tc, omp_for_guided);
+    tcase_add_test(tc, omp_for_guided_num_threads_small);
+    tcase_add_test(tc, omp_for_guided_reduction);
 
     tcase_add_test(tc, omp_for_runtime);
 
@@ -800,6 +1093,9 @@ Suite* test_suite(void)
 
     tcase_add_test(tc, omp_for_runtime_dynamic);
     tcase_add_test(tc, omp_for_runtime_dynamic_chunk);
+
+    tcase_add_test(tc, omp_for_runtime_guided);
+    tcase_add_test(tc, omp_for_runtime_guided_chunk);
 
     suite_add_tcase(s, tc);
 

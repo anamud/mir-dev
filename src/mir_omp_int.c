@@ -17,7 +17,7 @@
 
 /* MIR internal functions. */
 
-static void parallel_start (void (*fn) (void *), void *data, unsigned num_threads, long start, long end, long incr, long chunk_size, bool has_loop_desc, bool private_loop_desc)
+static void parallel_start (void (*fn) (void *), void *data, unsigned num_threads, long start, long end, long incr, long chunk_size, bool has_loop_desc, bool private_loop_desc, const char* name)
 { /*{{{*/
     struct mir_loop_des_t* loop = NULL;
     if (has_loop_desc && !private_loop_desc) {
@@ -53,10 +53,7 @@ static void parallel_start (void (*fn) (void *), void *data, unsigned num_thread
 
         // Create and schedule loop tasks on all workers except current.
         mir_task_create_on_worker((mir_tfunc_t) fn, data, 0, 0, NULL,
-           has_loop_desc ? (private_loop_desc ? "GOMP_parallel_for_static_task"
-                                              : "GOMP_parallel_for_dynamic_task")
-                         : "GOMP_parallel_task",
-           team, loop, i);
+           name, team, loop, i);
     }
 
     MIR_RECORDER_STATE_END(NULL, 0);
@@ -69,11 +66,7 @@ static void parallel_start (void (*fn) (void *), void *data, unsigned num_thread
 
     // Create fake loop task on current worker.
     struct mir_task_t* task = mir_task_create_common((mir_tfunc_t) fn, data,
-           0, 0, NULL,
-           has_loop_desc ? (private_loop_desc ? "GOMP_parallel_for_static_task"
-                                              : "GOMP_parallel_for_dynamic_task")
-                         : "GOMP_parallel_task",
-           team, loop, worker->current_task);
+           0, 0, NULL, name, team, loop, worker->current_task);
     MIR_CHECK_MEM(task != NULL);
 
     // Start profiling and book-keeping for fake task
@@ -241,6 +234,106 @@ void GOMP_atomic_end(void)
 
 /* loop.c, iter.c, env.c*/
 
+static bool GOMP_loop_guided_next_int(long* pstart, long* pend)
+{ /*{{{*/
+    struct mir_worker_t* worker = mir_worker_get_context();
+    MIR_ASSERT(worker != NULL);
+    MIR_ASSERT(worker->current_task != NULL);
+    MIR_ASSERT(worker->current_task->loop != NULL);
+    MIR_ASSERT(worker->current_task->loop->init == 1);
+
+    struct mir_loop_des_t* loop = worker->current_task->loop;
+
+    unsigned long nthreads = omp_get_num_threads();
+
+    unsigned long n, q;
+    long start, end;
+
+    if (loop->next == loop->end)
+        return false;
+
+    start = loop->next;
+    n = (loop->end - start) / loop->incr;
+    q = (n + nthreads - 1) / nthreads;
+
+    if (q < loop->chunk_size)
+        q = loop->chunk_size;
+    if (q <= n)
+        end = start + q * loop->incr;
+    else
+        end = loop->end;
+
+    loop->next = end;
+    *pstart = start;
+    *pend = end;
+    return true;
+} /*}}}*/
+
+bool GOMP_loop_guided_next(long* istart, long* iend)
+{ /*{{{*/
+    bool ret;
+
+    struct mir_worker_t* worker = mir_worker_get_context();
+    MIR_ASSERT(worker != NULL);
+    MIR_ASSERT(worker->current_task != NULL);
+    MIR_ASSERT(worker->current_task->loop != NULL);
+    MIR_ASSERT(worker->current_task->loop->init == 1);
+
+    struct mir_loop_des_t* loop = worker->current_task->loop;
+
+    mir_lock_set(&(loop->lock));
+    ret = GOMP_loop_guided_next_int(istart, iend);
+    mir_lock_unset(&(loop->lock));
+    chunk_task_next(*istart, *iend, !ret);
+
+    return ret;
+} /*}}}*/
+
+bool GOMP_loop_guided_start (long start, long end, long incr, long chunk_size, long *istart, long *iend)
+{ /*{{{*/
+    struct mir_worker_t* worker = mir_worker_get_context();
+    MIR_ASSERT(worker != NULL);
+    MIR_ASSERT(worker->current_task != NULL);
+    MIR_ASSERT_STR(worker->current_task->loop == NULL, "Nested parallel for loops are not supported.");
+
+    // Create common loop description within team.
+    struct mir_omp_team_t* team = worker->current_task->team;
+    MIR_ASSERT(team != NULL);
+    mir_lock_set(&team->loop_lock);
+    if(team->loop == NULL)
+    {
+        struct mir_loop_des_t* loop = mir_new_omp_loop_desc();
+        mir_omp_loop_desc_init(loop, start, end, incr, chunk_size);
+        team->loop = loop;
+    }
+    mir_lock_unset(&team->loop_lock);
+    chunk_task_start("GOMP_for_guided_task", team->loop);
+
+    return GOMP_loop_guided_next(istart, iend);
+} /*}}}*/
+
+void GOMP_parallel_loop_guided_start (void (*fn) (void *), void *data, unsigned num_threads, long start, long end, long incr, long chunk_size)
+{ /*{{{*/
+    parallel_start(fn, data, num_threads, start, end, incr, chunk_size, true, false, "GOMP_parallel_for_guided_task");
+} /*}}}*/
+
+// Tasks spawned in GOMP_parallel_loop_guided have a single shared
+// loop iteration allocator which assigns non-overlapping loop iterations
+// on demand when GOMP_loop_guided_next_int is called. This is
+// different from GOMP_parallel_loop_static.
+
+void GOMP_parallel_loop_guided(void (*fn)(void*), void* data, unsigned num_threads, long start, long end, long incr, long chunk_size, unsigned flags)
+{ /*{{{*/
+    // Schedule for loop tasks on all workers except current.
+    GOMP_parallel_loop_guided_start(fn, data, num_threads, start, end, incr, chunk_size);
+
+    // Execute task.
+    fn(data);
+
+    // Wait for for loop tasks to finish.
+    GOMP_parallel_end();
+} /*}}}*/
+
 static bool GOMP_loop_dynamic_next_int(long* pstart, long* pend)
 { /*{{{*/
     struct mir_worker_t* worker = mir_worker_get_context();
@@ -321,7 +414,7 @@ bool GOMP_loop_dynamic_start (long start, long end, long incr, long chunk_size, 
 
 void GOMP_parallel_loop_dynamic_start (void (*fn) (void *), void *data, unsigned num_threads, long start, long end, long incr, long chunk_size)
 { /*{{{*/
-    parallel_start(fn, data, num_threads, start, end, incr, chunk_size * incr, true, false);
+    parallel_start(fn, data, num_threads, start, end, incr, chunk_size * incr, true, false, "GOMP_parallel_for_dynamic_task");
 } /*}}}*/
 
 // Tasks spawned in GOMP_parallel_loop_dynamic have a single shared
@@ -461,7 +554,7 @@ bool GOMP_loop_static_start (long start, long end, long incr, long chunk_size, l
 
 void GOMP_parallel_loop_static_start (void (*fn) (void *), void *data, unsigned num_threads, long start, long end, long incr, long chunk_size)
 { /*{{{*/
-    parallel_start(fn, data, num_threads, start, end, incr, chunk_size, true, true);
+    parallel_start(fn, data, num_threads, start, end, incr, chunk_size, true, true, "GOMP_parallel_for_static_task");
 } /*}}}*/
 
 // Tasks spawned in GOMP_parallel_loop_static have their own local
@@ -500,6 +593,10 @@ static int parse_omp_schedule_chunk_size(void)
     else if (strncasecmp(env, "dynamic", 7) == 0) {
         omp_for_schedule = OFS_DYNAMIC;
         env += 7;
+    }
+    else if (strncasecmp(env, "guided", 6) == 0) {
+        omp_for_schedule = OFS_GUIDED;
+        env += 6;
     }
     else
         goto unknown;
@@ -560,6 +657,10 @@ static enum omp_for_schedule_t parse_omp_schedule_name(void)
         omp_for_schedule = OFS_DYNAMIC;
         env += 7;
     }
+    else if (strncasecmp(env, "guided", 6) == 0) {
+        omp_for_schedule = OFS_GUIDED;
+        env += 6;
+    }
     else
         goto unknown;
 
@@ -582,8 +683,9 @@ bool GOMP_loop_runtime_next(long* istart, long* iend)
         return GOMP_loop_static_next(istart, iend);
     case OFS_DYNAMIC:
         return GOMP_loop_dynamic_next(istart, iend);
-    case OFS_AUTO:
     case OFS_GUIDED:
+        return GOMP_loop_guided_next(istart, iend);
+    case OFS_AUTO:
     default:
         MIR_LOG_ERR("OMP_SCHEDULE is unsupported.");
     }
@@ -596,8 +698,9 @@ bool GOMP_loop_runtime_start (long start, long end, long incr, long *istart, lon
         return GOMP_loop_static_start(start, end, incr, parse_omp_schedule_chunk_size(), istart, iend);
     case OFS_DYNAMIC:
         return GOMP_loop_dynamic_start(start, end, incr, parse_omp_schedule_chunk_size(), istart, iend);
-    case OFS_AUTO:
     case OFS_GUIDED:
+        return GOMP_loop_guided_start(start, end, incr, parse_omp_schedule_chunk_size(), istart, iend);
+    case OFS_AUTO:
     default:
         MIR_LOG_ERR("OMP_SCHEDULE is unsupported.");
     }
@@ -615,8 +718,10 @@ void GOMP_parallel_loop_runtime_start(void (*fn) (void *), void *data,
     case OFS_DYNAMIC:
         GOMP_parallel_loop_dynamic_start(fn, data, num_threads, start, end, incr, parse_omp_schedule_chunk_size());
         break;
-    case OFS_AUTO:
     case OFS_GUIDED:
+        GOMP_parallel_loop_guided_start(fn, data, num_threads, start, end, incr, parse_omp_schedule_chunk_size());
+        break;
+    case OFS_AUTO:
     default:
         MIR_LOG_ERR("OMP_SCHEDULE is unsupported.");
     }
@@ -668,7 +773,7 @@ void GOMP_loop_end_nowait(void)
 
 void GOMP_parallel_start(void (*fn)(void*), void* data, unsigned num_threads)
 { /*{{{*/
-    parallel_start(fn, data, num_threads, 0, 0, 0, 0, false, false);
+    parallel_start(fn, data, num_threads, 0, 0, 0, 0, false, false, "GOMP_parallel_task");
 } /*}}}*/
 
 void GOMP_parallel_end(void)

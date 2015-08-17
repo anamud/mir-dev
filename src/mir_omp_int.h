@@ -34,6 +34,10 @@ void GOMP_atomic_end(void);
 
 /* loop.c */
 
+bool GOMP_loop_guided_next(long* istart, long* iend);
+bool GOMP_loop_guided_start (long start, long end, long incr, long chunk_size, long *istart, long *iend);
+void GOMP_parallel_loop_guided_start (void (*fn) (void *), void *data, unsigned num_threads, long start, long end, long incr, long chunk_size);
+void GOMP_parallel_loop_guided(void (*fn)(void*), void* data, unsigned num_threads, long start, long end, long incr, long chunk_size, unsigned flags);
 bool GOMP_loop_dynamic_next(long* istart, long* iend);
 bool GOMP_loop_dynamic_start (long start, long end, long incr, long chunk_size, long *istart, long *iend);
 void GOMP_parallel_loop_dynamic_start (void (*fn) (void *), void *data, unsigned num_threads, long start, long end, long incr, long chunk_size);
