@@ -440,7 +440,9 @@ VOID Fini(INT32 code, VOID* v)
     std::cout << "Writing memory map (/proc/<pid>/maps) to file: " << filename << " ..." << std::endl;
     char cmd[256];
     sprintf(cmd, "cat /proc/%d/maps > %s", getpid_portable(), filename.c_str());
-    system(cmd);
+    int rv = system(cmd);
+    if (rv == 127)
+        std::cerr << "Could not write memory map to " << filename << std::endl;
 
     // Update instances in parallel
     std::cout << "Updating statistics in parallel ..." << std::endl;
