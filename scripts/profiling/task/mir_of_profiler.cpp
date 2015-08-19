@@ -496,12 +496,11 @@ VOID Fini(INT32 code, VOID* v)
         std::cerr << "Could not write memory map to " << filename << std::endl;
 
     // Update instances in parallel
-    //std::cout << "Updating statistics in parallel ..." << std::endl;
-    std::cout << "Updating statistics ..." << std::endl;
+    std::cout << "Updating statistics in parallel ..." << std::endl;
     UINT64 num_instances = 0;
-//#pragma omp parallel
+#pragma omp parallel
     {
-//#pragma omp single
+#pragma omp single
         {
             std::cout << "Updating memory footprint ..." << std::endl;
             for (MIR_FUNCTION_STAT* stat = g_stat_list; stat; stat = stat->next) {
@@ -515,16 +514,16 @@ VOID Fini(INT32 code, VOID* v)
             //#pragma omp taskwait
             if (KnobCalcMemShare) {
                 std::cout << "Updating memory sharing ..." << std::endl;
-                //std::cout << "Using " << omp_get_num_threads() << " threads" << std::endl;
+                std::cout << "Using " << omp_get_num_threads() << " threads" << std::endl;
                 size_t cutoff = 0;
                 for (MIR_FUNCTION_STAT* stat = g_stat_list; stat; stat = stat->next, cutoff++) {
-//#pragma omp task
+                    #pragma omp task
                     {
                         // Update memory sharing
                         MIROutlineFunctionUpdateMemShare(stat, cutoff);
                     }
                 }
-//#pragma omp taskwait
+                #pragma omp taskwait
             }
         }
     }
