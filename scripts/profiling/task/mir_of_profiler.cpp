@@ -42,7 +42,6 @@ char* g_shm;
 int g_id = 0;
 #endif
 
-bool g_inside_ignore_context = false;
 
 //std::vector<std::string> &split(const std::string &s, char delim, std::vector<std::string> &elems)
 //{
@@ -97,6 +96,7 @@ typedef struct _MIR_FUNCTION_STAT_ { /*{{{*/
     //std::vector<VOID*> mrefs_read;
     //std::vector<VOID*> mrefs_write;
     UINT64 mem_fp_sz;
+    INT64 ignore_context_count;
     std::vector<UINT64> mem_share;
     std::vector<UINT64> task_create_instant;
     std::vector<UINT64> task_wait_instant;
@@ -109,7 +109,7 @@ std::stack<MIR_FUNCTION_STAT*> g_stat_stack;
 
 VOID MIROutlineFunctionUpdateMemRefRead(VOID* memp)
 { /*{{{*/
-    if (g_current_stat && !g_inside_ignore_context) {
+    if (g_current_stat && g_current_stat->ignore_context_count == 0) {
         g_current_stat->mem_read++;
         g_current_stat->mem_fp.insert(memp);
         //g_current_stat->mrefs_read.push_back(memp);
@@ -118,7 +118,7 @@ VOID MIROutlineFunctionUpdateMemRefRead(VOID* memp)
 
 VOID MIROutlineFunctionUpdateMemRefWrite(VOID* memp)
 { /*{{{*/
-    if (g_current_stat && !g_inside_ignore_context) {
+    if (g_current_stat && g_current_stat->ignore_context_count == 0) {
         g_current_stat->mem_write++;
         g_current_stat->mem_fp.insert(memp);
         //g_current_stat->mrefs_write.push_back(memp);
@@ -128,36 +128,38 @@ VOID MIROutlineFunctionUpdateMemRefWrite(VOID* memp)
 #ifdef GET_INS_MIX
 VOID MIROutlineFunctionUpdateInsMix(INT32 index)
 { /*{{{*/
-    if (g_current_stat && !g_inside_ignore_context)
+    if (g_current_stat && g_current_stat->ignore_context_count == 0)
         g_current_stat->ins_mix[index]++;
 } /*}}}*/
 #endif
 
 VOID MIROutlineFunctionIgnoreContextEntry()
 {/*{{{*/
-    g_inside_ignore_context = true;
+    if(g_current_stat)
+        g_current_stat->ignore_context_count++;
 }/*}}}*/
 
 VOID MIROutlineFunctionIgnoreContextExit()
 {/*{{{*/
-    g_inside_ignore_context = false;
+    if(g_current_stat)
+        g_current_stat->ignore_context_count--;
 }/*}}}*/
 
 VOID MIROutlineFunctionUpdateInsCount()
 { /*{{{*/
-    if (g_current_stat && !g_inside_ignore_context)
+    if (g_current_stat && g_current_stat->ignore_context_count == 0)
         g_current_stat->ins_count++;
 } /*}}}*/
 
 VOID MIROutlineFunctionUpdateStackRead()
 { /*{{{*/
-    if (g_current_stat && !g_inside_ignore_context)
+    if (g_current_stat && g_current_stat->ignore_context_count == 0)
         g_current_stat->stack_read++;
 } /*}}}*/
 
 VOID MIROutlineFunctionUpdateStackWrite()
 { /*{{{*/
-    if (g_current_stat && !g_inside_ignore_context)
+    if (g_current_stat && g_current_stat->ignore_context_count == 0)
         g_current_stat->stack_write++;
 } /*}}}*/
 
@@ -202,6 +204,7 @@ VOID MIROutlineFunctionEntry(VOID* name)
 #ifdef GET_INS_MIX
     memset(&stat->ins_mix, 0, sizeof(UINT64) * XED_CATEGORY_LAST);
 #endif
+    stat->ignore_context_count = 0;
     stat->next = g_stat_list;
     g_stat_list = stat;
 
