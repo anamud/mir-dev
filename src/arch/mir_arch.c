@@ -25,6 +25,8 @@ static struct mir_arch_t* mir_arch_predef[MIR_ARCH_NUM_PREDEF] = { /*{{{*/
 
 struct mir_arch_t* mir_arch_create_by_query()
 { /*{{{*/
+    MIR_CONTEXT_ENTER;
+
     struct mir_arch_t* arch = &arch_this;
 
 #ifdef __tile__
@@ -50,6 +52,6 @@ struct mir_arch_t* mir_arch_create_by_query()
     }
 #endif
 
-    return arch;
+    MIR_CONTEXT_EXIT; return arch;
 } /*}}}*/
 

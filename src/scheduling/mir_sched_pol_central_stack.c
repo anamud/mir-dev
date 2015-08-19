@@ -15,6 +15,8 @@
 
 void create_central_stack()
 { /*{{{*/
+    MIR_CONTEXT_ENTER;
+
     struct mir_sched_pol_t* sp = runtime->sched_pol;
     MIR_ASSERT(NULL != sp);
 
@@ -26,10 +28,14 @@ void create_central_stack()
         sp->queues[i] = mir_task_stack_create(sp->queue_capacity);
         MIR_ASSERT(NULL != sp->queues[i]);
     }
+
+    MIR_CONTEXT_EXIT;
 } /*}}}*/
 
 void destroy_central_stack()
 { /*{{{*/
+    MIR_CONTEXT_ENTER;
+
     struct mir_sched_pol_t* sp = runtime->sched_pol;
     MIR_ASSERT(NULL != sp);
 
@@ -43,10 +49,14 @@ void destroy_central_stack()
     MIR_ASSERT(NULL != sp->queues);
     mir_free_int(sp->queues, sizeof(struct mir_task_stack_t*) * sp->num_queues);
     sp->queues = NULL;
+
+    MIR_CONTEXT_EXIT;
 } /*}}}*/
 
 int push_central_stack(struct mir_worker_t* worker, struct mir_task_t* task)
 { /*{{{*/
+    MIR_CONTEXT_ENTER;
+
     MIR_ASSERT(NULL != task);
     MIR_ASSERT(NULL != worker);
 
@@ -73,11 +83,13 @@ int push_central_stack(struct mir_worker_t* worker, struct mir_task_t* task)
             worker->statistics->num_tasks_created++;
     }
 
-    return pushed;
+    MIR_CONTEXT_EXIT; return pushed;
 } /*}}}*/
 
 int pop_central_stack(struct mir_task_t** task)
 { /*{{{*/
+    MIR_CONTEXT_ENTER;
+
     struct mir_sched_pol_t* sp = runtime->sched_pol;
     MIR_ASSERT(NULL != sp);
     struct mir_task_stack_t* queue = (struct mir_task_stack_t*)(sp->queues[0]);
@@ -85,13 +97,15 @@ int pop_central_stack(struct mir_task_t** task)
     struct mir_worker_t* worker = mir_worker_get_context();
     MIR_ASSERT(NULL != worker);
 
-    if (mir_task_stack_size(queue) == 0)
-        return 0;
+    if (mir_task_stack_size(queue) == 0) {
+        MIR_CONTEXT_EXIT; return 0;
+    }
 
     *task = NULL;
     mir_task_stack_pop(queue, &(*task));
-    if (!*task)
-        return 0;
+    if (!*task) {
+        MIR_CONTEXT_EXIT; return 0;
+    }
 
     if (runtime->enable_task_stats == 1)
         (*task)->queue_size_at_pop = mir_task_stack_size(queue);
@@ -112,7 +126,7 @@ int pop_central_stack(struct mir_task_t** task)
     __sync_fetch_and_sub(&g_num_tasks_waiting, 1);
     T_DBG("Dq", *task);
 
-    return 1;
+    MIR_CONTEXT_EXIT; return 1;
 } /*}}}*/
 
 struct mir_sched_pol_t policy_central_stack = { /*{{{*/

@@ -1,5 +1,6 @@
 #include "arch/mir_arch.h"
 #include "mir_types.h"
+#include "mir_defines.h"
 #include "mir_utils.h"
 
 void create_gothmog()
@@ -14,6 +15,8 @@ void destroy_gothmog()
 
 uint16_t sys_cpu_of_gothmog(uint16_t cpuid)
 { /*{{{*/
+    MIR_CONTEXT_ENTER;
+
     struct mir_arch_topology_t topology_gothmog[] = {
         { 0, 0, 0, 0, 0 },
         { 1, 1, 1, 0, 0 },
@@ -65,11 +68,14 @@ uint16_t sys_cpu_of_gothmog(uint16_t cpuid)
         { 47, 47, 47, 3, 7 },
     };
     MIR_ASSERT(topology_gothmog[cpuid].log_cpu == cpuid);
-    return topology_gothmog[cpuid].sys_cpu;
+
+    MIR_CONTEXT_EXIT; return topology_gothmog[cpuid].sys_cpu;
 } /*}}}*/
 
 uint16_t node_of_gothmog(uint16_t cpuid)
 { /*{{{*/
+    MIR_CONTEXT_ENTER;
+
     switch (cpuid) {
     case 0:
     case 1:
@@ -77,7 +83,7 @@ uint16_t node_of_gothmog(uint16_t cpuid)
     case 3:
     case 4:
     case 5:
-        return 0;
+        MIR_CONTEXT_EXIT; return 0;
         break;
     case 6:
     case 7:
@@ -85,7 +91,7 @@ uint16_t node_of_gothmog(uint16_t cpuid)
     case 9:
     case 10:
     case 11:
-        return 1;
+        MIR_CONTEXT_EXIT; return 1;
         break;
     case 12:
     case 13:
@@ -93,7 +99,7 @@ uint16_t node_of_gothmog(uint16_t cpuid)
     case 15:
     case 16:
     case 17:
-        return 2;
+        MIR_CONTEXT_EXIT; return 2;
         break;
     case 18:
     case 19:
@@ -101,7 +107,7 @@ uint16_t node_of_gothmog(uint16_t cpuid)
     case 21:
     case 22:
     case 23:
-        return 3;
+        MIR_CONTEXT_EXIT; return 3;
         break;
     case 24:
     case 25:
@@ -109,7 +115,7 @@ uint16_t node_of_gothmog(uint16_t cpuid)
     case 27:
     case 28:
     case 29:
-        return 4;
+        MIR_CONTEXT_EXIT; return 4;
         break;
     case 30:
     case 31:
@@ -117,7 +123,7 @@ uint16_t node_of_gothmog(uint16_t cpuid)
     case 33:
     case 34:
     case 35:
-        return 5;
+        MIR_CONTEXT_EXIT; return 5;
         break;
     case 36:
     case 37:
@@ -125,7 +131,7 @@ uint16_t node_of_gothmog(uint16_t cpuid)
     case 39:
     case 40:
     case 41:
-        return 6;
+        MIR_CONTEXT_EXIT; return 6;
         break;
     case 42:
     case 43:
@@ -133,16 +139,20 @@ uint16_t node_of_gothmog(uint16_t cpuid)
     case 45:
     case 46:
     case 47:
-        return 7;
+        MIR_CONTEXT_EXIT; return 7;
         break;
     default:
         MIR_LOG_ERR("Node of CPU %d not found.", cpuid);
         break;
     }
+
+    MIR_CONTEXT_EXIT;
 } /*}}}*/
 
 void cpus_of_gothmog(struct mir_sbuf_t* cpuids, uint16_t nodeid)
 { /*{{{*/
+    MIR_CONTEXT_ENTER;
+
     MIR_ASSERT(cpuids != NULL);
     cpuids->size = 0;
     switch (nodeid) {
@@ -190,10 +200,14 @@ void cpus_of_gothmog(struct mir_sbuf_t* cpuids, uint16_t nodeid)
         MIR_LOG_ERR("CPU of node %d not found.", nodeid);
         break;
     }
+
+    MIR_CONTEXT_EXIT;
 } /*}}}*/
 
 uint16_t vicinity_of_gothmog(uint16_t* neighbors, uint16_t nodeid, uint16_t diameter)
 { /*{{{*/
+    MIR_CONTEXT_ENTER;
+
     uint16_t count = 0;
     if (diameter == 1) {
         switch (nodeid) { /*{{{*/
@@ -312,28 +326,30 @@ uint16_t vicinity_of_gothmog(uint16_t* neighbors, uint16_t nodeid, uint16_t diam
             break;
         } /*}}}*/
     }
-    return count;
+
+    MIR_CONTEXT_EXIT; return count;
 } /*}}}*/
 
 /*static uint16_t socket_of(uint16_t nodeid)*/
 /*{[>{{{<]*/
+/*MIR_CONTEXT_ENTER;*/
 /*switch(nodeid)*/
 /*{*/
 /*case 0:*/
 /*case 1:*/
-/*return 0;*/
+/*MIR_CONTEXT_EXIT; return 0;*/
 /*break;*/
 /*case 2:*/
 /*case 3:*/
-/*return 1;*/
+/*MIR_CONTEXT_EXIT; return 1;*/
 /*break;*/
 /*case 4:*/
 /*case 5:*/
-/*return 2;*/
+/*MIR_CONTEXT_EXIT; return 2;*/
 /*break;*/
 /*case 6:*/
 /*case 7:*/
-/*return 3;*/
+/*MIR_CONTEXT_EXIT; return 3;*/
 /*break;*/
 /*default:*/
 /*MIR_LOG_ERR("Invalid socket query.");*/
@@ -342,33 +358,40 @@ uint16_t vicinity_of_gothmog(uint16_t* neighbors, uint16_t nodeid, uint16_t diam
 
 /*uint16_t comm_cost_of_gothmog(uint16_t from_nodeid, uint16_t to_nodeid)*/
 /*{[>{{{<]*/
+/*MIR_CONTEXT_ENTER;*/
 /*if(from_nodeid == to_nodeid)*/
-/*return 10;*/
+/*{MIR_CONTEXT_EXIT; return 10;}*/
 
 /*// Nodes in the same socket have a HT24 connection*/
 /*if(socket_of(from_nodeid) == socket_of(to_nodeid))*/
-/*return 16;*/
+/*{MIR_CONTEXT_EXIT; return 16;}*/
 
 /*// Even and odd-numbered nodes are connected together using HT8*/
 /*// Even-to-odd connection requires two hops over HT8*/
 /*if(from_nodeid % 2 != to_nodeid % 2)*/
-/*return 30;*/
+/*{MIR_CONTEXT_EXIT; return 30;}*/
 /*else*/
-/*return 20;*/
+/*{MIR_CONTEXT_EXIT; return 20;}*/
 /*}[>}}}<]*/
 
 uint16_t comm_cost_of_gothmog(uint16_t from_nodeid, uint16_t to_nodeid)
 { /*{{{*/
+    MIR_CONTEXT_ENTER;
+
     // These values straight from numactl --hardware
-    if (from_nodeid == to_nodeid)
-        return 10;
+    if (from_nodeid == to_nodeid) {
+        MIR_CONTEXT_EXIT; return 10;
+    }
 
     // Even and odd-numbered nodes are connected together using HT8
     // Even-to-odd connection requires two hops over HT8
-    if (from_nodeid % 2 != to_nodeid % 2)
-        return 22;
-    else
-        return 16;
+    if (from_nodeid % 2 != to_nodeid % 2) {
+        MIR_CONTEXT_EXIT; return 22;
+    } else {
+        MIR_CONTEXT_EXIT; return 16;
+    }
+
+    MIR_CONTEXT_EXIT;
 } /*}}}*/
 
 struct mir_arch_t arch_gothmog = { /*{{{*/

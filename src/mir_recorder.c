@@ -72,6 +72,8 @@ struct _perf_ctr_map perf_ctr_map[MIR_RECORDER_NUM_PAPI_HWPC] = {
 
 struct mir_recorder_t* mir_recorder_create(uint16_t id)
 { /*{{{*/
+    MIR_CONTEXT_ENTER;
+
     struct mir_recorder_t* recorder = mir_malloc_int(sizeof(struct mir_recorder_t));
     MIR_CHECK_MEM(recorder != NULL);
 
@@ -154,11 +156,13 @@ struct mir_recorder_t* mir_recorder_create(uint16_t id)
 #endif
 
     // Pass it on!
-    return recorder;
+    MIR_CONTEXT_EXIT; return recorder;
 } /*}}}*/
 
 void mir_recorder_destroy(struct mir_recorder_t* recorder)
 { /*{{{*/
+    MIR_CONTEXT_ENTER;
+
     MIR_ASSERT(recorder != NULL);
 
     // Update state time
@@ -217,10 +221,14 @@ void mir_recorder_destroy(struct mir_recorder_t* recorder)
 
     fclose(recorder->buffer_file);
     mir_free_int(recorder, sizeof(struct mir_recorder_t));
+
+    MIR_CONTEXT_EXIT;
 } /*}}}*/
 
 void mir_recorder_write_to_file(struct mir_recorder_t* recorder)
 { /*{{{*/
+    MIR_CONTEXT_ENTER;
+
     MIR_ASSERT(recorder != NULL);
 
     // Dump states
@@ -271,20 +279,27 @@ void mir_recorder_write_to_file(struct mir_recorder_t* recorder)
     recorder->event_buffer_head = 0;
     recorder->state_buffer_head = 0;
 
+    MIR_CONTEXT_EXIT;
 } /*}}}*/
 
 void mir_recorder_record_state_transition(struct mir_recorder_t* recorder, mir_state_name_t next_state)
 { /*{{{*/
+    MIR_CONTEXT_ENTER;
+
     MIR_ASSERT(recorder != NULL);
     uint64_t this_instant = mir_get_cycles();
     recorder->state_time[recorder->this_state] += (this_instant - recorder->this_state_trans_time);
     recorder->prev_state = recorder->this_state;
     recorder->this_state = next_state;
     recorder->this_state_trans_time = this_instant;
+
+    MIR_CONTEXT_EXIT;
 } /*}}}*/
 
 void mir_recorder_state_begin(mir_state_name_t name)
 { /*{{{*/
+    MIR_CONTEXT_ENTER;
+
     // Get this worker
     struct mir_worker_t* worker = mir_worker_get_context();
     MIR_ASSERT(worker != NULL);
@@ -312,10 +327,14 @@ void mir_recorder_state_begin(mir_state_name_t name)
     // Increment state_stack head
     r->state_stack_head++;
     MIR_ASSERT(r->state_stack_head < MIR_RECORDER_STACK_MAX_SIZE);
+
+    MIR_CONTEXT_EXIT;
 } /*}}}*/
 
 void mir_recorder_state_end(const char* meta_data, uint32_t meta_data_length)
 { /*{{{*/
+    MIR_CONTEXT_ENTER;
+
     // Get this worker
     struct mir_worker_t* worker = mir_worker_get_context();
     MIR_ASSERT(worker != NULL);
@@ -359,10 +378,14 @@ void mir_recorder_state_end(const char* meta_data, uint32_t meta_data_length)
         mir_recorder_write_to_file(r);
         MIR_ASSERT(r->state_buffer_head == 0);
     }
+
+    MIR_CONTEXT_EXIT;
 } /*}}}*/
 
 void mir_recorder_event(const char* meta_data, uint32_t meta_data_length)
 { /*{{{*/
+    MIR_CONTEXT_ENTER;
+
     // Get this worker
     struct mir_worker_t* worker = mir_worker_get_context();
     MIR_ASSERT(worker != NULL);
@@ -426,4 +449,6 @@ void mir_recorder_event(const char* meta_data, uint32_t meta_data_length)
         mir_recorder_write_to_file(r);
         MIR_ASSERT(r->state_buffer_head == 0);
     }
+
+    MIR_CONTEXT_EXIT;
 } /*}}}*/

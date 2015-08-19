@@ -1,8 +1,13 @@
 #include "mir_barrier.h"
+#include "mir_defines.h"
 
 void mir_barrier_init(pthread_barrier_t * barrier, int count)
 { /*{{{*/
+    MIR_CONTEXT_ENTER;
+
     pthread_barrier_init(barrier, NULL, count);
+
+    MIR_CONTEXT_EXIT;
 } /*}}}*/
 
 // The function mir_barrier_wait returns 1 to a single worker.
@@ -11,8 +16,12 @@ void mir_barrier_init(pthread_barrier_t * barrier, int count)
 
 int mir_barrier_wait(pthread_barrier_t * barrier)
 { /*{{{*/
-    if(PTHREAD_BARRIER_SERIAL_THREAD == pthread_barrier_wait(barrier))
-        return 1;
-    else
-        return 0;
+    MIR_CONTEXT_ENTER;
+
+    if(PTHREAD_BARRIER_SERIAL_THREAD == pthread_barrier_wait(barrier)) {
+        MIR_CONTEXT_EXIT_VAL (1);
+    }
+    else {
+        MIR_CONTEXT_EXIT_VAL (0);
+    }
 } /*}}}*/

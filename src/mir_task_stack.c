@@ -8,6 +8,8 @@
 
 void* mir_task_stack_create(uint32_t capacity)
 { /*{{{*/
+    MIR_CONTEXT_ENTER;
+
     struct mir_task_stack_t* stack = mir_cmalloc_int(sizeof(struct mir_task_stack_t));
     MIR_CHECK_MEM(stack != NULL);
 
@@ -18,11 +20,14 @@ void* mir_task_stack_create(uint32_t capacity)
     stack->head = 0;
 
     mir_lock_create(&(stack->lock));
-    return stack;
+
+    MIR_CONTEXT_EXIT; return stack;
 } /*}}}*/
 
 void mir_task_stack_destroy(struct mir_task_stack_t* stack)
 { /*{{{*/
+    MIR_CONTEXT_ENTER;
+
     MIR_ASSERT(stack != NULL);
     MIR_ASSERT(stack->buffer != NULL);
 
@@ -31,10 +36,14 @@ void mir_task_stack_destroy(struct mir_task_stack_t* stack)
     stack->buffer = NULL;
     mir_free_int(stack, sizeof(struct mir_task_stack_t));
     stack = NULL;
+
+    MIR_CONTEXT_EXIT;
 } /*}}}*/
 
 int mir_task_stack_push(struct mir_task_stack_t* stack, struct mir_task_t* data)
 { /*{{{*/
+    MIR_CONTEXT_ENTER;
+
     MIR_ASSERT(stack != NULL);
     MIR_ASSERT(data != NULL);
 
@@ -43,17 +52,20 @@ int mir_task_stack_push(struct mir_task_stack_t* stack, struct mir_task_t* data)
     if (TASK_STACK_FULL(stack)) {
         TS_DBG("stack full!", stack);
         mir_lock_unset(&(stack->lock));
-        return 0;
+        MIR_CONTEXT_EXIT; return 0;
     }
     stack->buffer[stack->head] = (void*)data;
     stack->head++;
 
     mir_lock_unset(&(stack->lock));
-    return 1;
+
+    MIR_CONTEXT_EXIT; return 1;
 } /*}}}*/
 
 void mir_task_stack_pop(struct mir_task_stack_t* stack, struct mir_task_t** data)
 { /*{{{*/
+    MIR_CONTEXT_ENTER;
+
     MIR_ASSERT(stack != NULL);
     MIR_ASSERT(data != NULL);
 
@@ -76,12 +88,16 @@ void mir_task_stack_pop(struct mir_task_stack_t* stack, struct mir_task_t** data
 
 cleanup:
     mir_lock_unset(&(stack->lock));
+
+    MIR_CONTEXT_EXIT;
 } /*}}}*/
 
 uint32_t mir_task_stack_size(const struct mir_task_stack_t* stack)
 { /*{{{*/
+    MIR_CONTEXT_ENTER;
+
     MIR_ASSERT(stack != NULL);
 
-    return stack->head;
+    MIR_CONTEXT_EXIT; return stack->head;
 } /*}}}*/
 

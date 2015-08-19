@@ -17,6 +17,8 @@
 
 void create_ws_de_node()
 { /*{{{*/
+    MIR_CONTEXT_ENTER;
+
     struct mir_sched_pol_t* sp = runtime->sched_pol;
     MIR_ASSERT(NULL != sp);
 
@@ -29,11 +31,15 @@ void create_ws_de_node()
         sp->queues[i] = (struct mir_queue_t*)newWSDeque(sp->queue_capacity);
         MIR_ASSERT(NULL != sp->queues[i]);
     }
+
+    MIR_CONTEXT_EXIT;
 } /*}}}*/
 
 void destroy_ws_de_node()
-{           /*{{{*/
+{ /*{{{*/
     return; // FIXME: Bad exit. Workers bang on queues which are freed.
+    MIR_CONTEXT_ENTER;
+
     struct mir_sched_pol_t* sp = runtime->sched_pol;
     MIR_ASSERT(NULL != sp);
 
@@ -47,10 +53,14 @@ void destroy_ws_de_node()
     MIR_ASSERT(NULL != sp->queues);
     mir_free_int(sp->queues, sizeof(mir_dequeue_t*) * sp->num_queues);
     sp->queues = NULL;
+
+    MIR_CONTEXT_EXIT;
 } /*}}}*/
 
 int push_ws_de_node(struct mir_worker_t* worker, struct mir_task_t* task)
 { /*{{{*/
+    MIR_CONTEXT_ENTER;
+
     MIR_ASSERT(NULL != task);
     MIR_ASSERT(NULL != worker);
 
@@ -79,11 +89,13 @@ int push_ws_de_node(struct mir_worker_t* worker, struct mir_task_t* task)
 
     //MIR_RECORDER_STATE_END(NULL, 0);
 
-    return pushed;
+    MIR_CONTEXT_EXIT; return pushed;
 } /*}}}*/
 
 int pop_ws_de_node(struct mir_task_t** task)
 { /*{{{*/
+    MIR_CONTEXT_ENTER;
+
     struct mir_sched_pol_t* sp = runtime->sched_pol;
     MIR_ASSERT(NULL != sp);
     uint32_t num_queues = sp->num_queues;
@@ -136,7 +148,7 @@ int pop_ws_de_node(struct mir_task_t** task)
         MIR_ASSERT(g_num_tasks_waiting >= 0);
         T_DBG(ctr == worker->id ? "Dq" : "St", *task);
 
-        return 1;
+        MIR_CONTEXT_EXIT; return 1;
     } while (++ctr != worker->id);
 
     // Next try to pop from other queues within other nodes
@@ -181,7 +193,7 @@ int pop_ws_de_node(struct mir_task_t** task)
         }
     } /*}}}*/
 
-    return 0;
+    MIR_CONTEXT_EXIT; return 0;
 } /*}}}*/
 
 struct mir_sched_pol_t policy_ws_de_node = { /*{{{*/

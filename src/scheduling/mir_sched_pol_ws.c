@@ -15,6 +15,8 @@
 
 void create_ws()
 { /*{{{*/
+    MIR_CONTEXT_ENTER;
+
     struct mir_sched_pol_t* sp = runtime->sched_pol;
     MIR_ASSERT(NULL != sp);
 
@@ -27,10 +29,14 @@ void create_ws()
         sp->queues[i] = mir_task_queue_create(sp->queue_capacity);
         MIR_ASSERT(NULL != sp->queues[i]);
     }
+
+    MIR_CONTEXT_EXIT;
 } /*}}}*/
 
 void destroy_ws()
 { /*{{{*/
+    MIR_CONTEXT_ENTER;
+
     struct mir_sched_pol_t* sp = runtime->sched_pol;
     MIR_ASSERT(NULL != sp);
 
@@ -44,10 +50,14 @@ void destroy_ws()
     MIR_ASSERT(NULL != sp->queues);
     mir_free_int(sp->queues, sizeof(struct mir_queue_t*) * sp->num_queues);
     sp->queues = NULL;
+
+    MIR_CONTEXT_EXIT;
 } /*}}}*/
 
 int push_ws(struct mir_worker_t* worker, struct mir_task_t* task)
 { /*{{{*/
+    MIR_CONTEXT_ENTER;
+
     MIR_ASSERT(NULL != task);
     MIR_ASSERT(NULL != worker);
 
@@ -76,11 +86,13 @@ int push_ws(struct mir_worker_t* worker, struct mir_task_t* task)
 
     //MIR_RECORDER_STATE_END(NULL, 0);
 
-    return pushed;
+    MIR_CONTEXT_EXIT; return pushed;
 } /*}}}*/
 
 int pop_ws(struct mir_task_t** task)
 { /*{{{*/
+    MIR_CONTEXT_ENTER;
+
     struct mir_sched_pol_t* sp = runtime->sched_pol;
     MIR_ASSERT(NULL != sp);
     uint32_t num_queues = sp->num_queues;
@@ -93,8 +105,9 @@ int pop_ws(struct mir_task_t** task)
         // Wrap around.
         if (ctr == num_queues) {
 	    // Worker 0 has already tried all queues, bail out.
-            if (worker->id == 0)
-                return 0;
+            if (worker->id == 0) {
+                MIR_CONTEXT_EXIT; return 0;
+            }
             ctr = 0;
         }
 
@@ -125,11 +138,11 @@ int pop_ws(struct mir_task_t** task)
             __sync_fetch_and_sub(&g_num_tasks_waiting, 1);
             T_DBG(ctr == worker->id ? "Dq" : "St", *task);
 
-            return 1;
+            MIR_CONTEXT_EXIT; return 1;
         }
     } while (++ctr != worker->id);
 
-    return 0;
+    MIR_CONTEXT_EXIT; return 0;
 } /*}}}*/
 
 struct mir_sched_pol_t policy_ws = { /*{{{*/

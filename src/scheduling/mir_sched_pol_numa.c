@@ -18,6 +18,8 @@ size_t g_numa_schedule_footprint_config = 0;
 
 void create_numa()
 { /*{{{*/
+    MIR_CONTEXT_ENTER;
+
     struct mir_sched_pol_t* sp = runtime->sched_pol;
     MIR_ASSERT(NULL != sp);
 
@@ -39,10 +41,14 @@ void create_numa()
         sp->alt_queues[i] = mir_task_queue_create(sp->queue_capacity);
         MIR_ASSERT(NULL != sp->alt_queues[i]);
     }
+
+    MIR_CONTEXT_EXIT;
 } /*}}}*/
 
 void destroy_numa()
 { /*{{{*/
+    MIR_CONTEXT_ENTER;
+
     struct mir_sched_pol_t* sp = runtime->sched_pol;
     MIR_ASSERT(NULL != sp);
 
@@ -67,6 +73,8 @@ void destroy_numa()
     MIR_ASSERT(NULL != sp->alt_queues);
     mir_free_int(sp->alt_queues, sizeof(struct mir_task_queue_t*) * sp->num_queues);
     sp->alt_queues = NULL;
+
+    MIR_CONTEXT_EXIT;
 } /*}}}*/
 
 static inline int is_data_dist_significant(struct mir_mem_node_dist_t* dist)
@@ -94,6 +102,8 @@ static inline int is_data_dist_significant(struct mir_mem_node_dist_t* dist)
 
 int push_numa(struct mir_worker_t* this_worker, struct mir_task_t* task)
 { /*{{{*/
+    MIR_CONTEXT_ENTER;
+
     MIR_ASSERT(NULL != task);
 
     struct mir_worker_t* least_cost_worker = NULL;
@@ -174,11 +184,13 @@ int push_numa(struct mir_worker_t* this_worker, struct mir_task_t* task)
 
     //MIR_RECORDER_STATE_END(NULL, 0);
 
-    return pushed;
+    MIR_CONTEXT_EXIT; return pushed;
 } /*}}}*/
 
 int pop_numa(struct mir_task_t** task)
 { /*{{{*/
+    MIR_CONTEXT_ENTER;
+
     int found = 0;
     struct mir_sched_pol_t* sp = runtime->sched_pol;
     MIR_ASSERT(NULL != sp);
@@ -209,7 +221,7 @@ int pop_numa(struct mir_task_t** task)
             __sync_fetch_and_sub(&g_num_tasks_waiting, 1);
             T_DBG("Dq", *task);
 
-            return 1;
+            MIR_CONTEXT_EXIT; return 1;
         }
     }
 
@@ -237,7 +249,7 @@ int pop_numa(struct mir_task_t** task)
             __sync_fetch_and_sub(&g_num_tasks_waiting, 1);
             T_DBG("Dq", *task);
 
-            return 1;
+            MIR_CONTEXT_EXIT; return 1;
         }
     }
 
@@ -287,8 +299,9 @@ int pop_numa(struct mir_task_t** task)
 //MIR_RECORDER_STATE_END(NULL, 0);
 #endif
 
-    if (found)
-        return found;
+    if (found) {
+        MIR_CONTEXT_EXIT; return found;
+    }
 
 // Now check in other queues
 // Nearest queues get searched first
@@ -339,7 +352,7 @@ int pop_numa(struct mir_task_t** task)
 //MIR_RECORDER_STATE_END(NULL, 0);
 #endif
 
-    return found;
+    MIR_CONTEXT_EXIT; return found;
 } /*}}}*/
 
 struct mir_sched_pol_t policy_numa = { /*{{{*/

@@ -1,6 +1,7 @@
 #include "mir_utils.h"
 #include "mir_runtime.h"
 #include "mir_worker.h"
+#include "mir_defines.h"
 
 #include <sys/resource.h>
 #include <stdlib.h>
@@ -10,6 +11,8 @@
 
 int mir_pstack_set_size(size_t sz)
 { /*{{{*/
+    MIR_CONTEXT_ENTER;
+
     struct rlimit rl;
 
     int result = getrlimit(RLIMIT_STACK, &rl);
@@ -20,7 +23,7 @@ int mir_pstack_set_size(size_t sz)
         }
     }
 
-    return result;
+    MIR_CONTEXT_EXIT; return result;
 } /*}}}*/
 
 int mir_get_num_threads()
@@ -30,12 +33,17 @@ int mir_get_num_threads()
 
 int mir_get_threadid()
 { /*{{{*/
+    MIR_CONTEXT_ENTER;
+
     struct mir_worker_t* worker = mir_worker_get_context();
-    return worker->id;
+
+    MIR_CONTEXT_EXIT; return worker->id;
 } /*}}}*/
 
 void mir_sleep_ms(uint32_t msec)
 { /*{{{*/
+    MIR_CONTEXT_ENTER;
+
 #ifdef __tile__
 #include <unistd.h>
     usleep(msec * 1000);
@@ -55,10 +63,14 @@ void mir_sleep_ms(uint32_t msec)
         t1 = tmp;
     }
 #endif
+
+    MIR_CONTEXT_EXIT;
 } /*}}}*/
 
 void mir_sleep_us(uint32_t usec)
 { /*{{{*/
+    MIR_CONTEXT_ENTER;
+
 #ifdef __tile__
 #include <unistd.h>
     usleep(usec);
@@ -79,20 +91,29 @@ void mir_sleep_us(uint32_t usec)
         t1 = tmp;
     }
 #endif
+
+    MIR_CONTEXT_EXIT;
 } /*}}}*/
 
 #ifdef __tile__
 #include <arch/cycle.h>
 uint64_t mir_get_cycles()
 { /*{{{*/
-    return get_cycle_count();
+    MIR_CONTEXT_ENTER;
+
+    uint64_t count = get_cycle_count();
+
+    MIR_CONTEXT_EXIT; return count;
 } /*}}}*/
 #else
 uint64_t mir_get_cycles()
 { /*{{{*/
+    MIR_CONTEXT_ENTER;
+
     unsigned a, d;
     __asm__ volatile("rdtsc"
                      : "=a"(a), "=d"(d));
-    return ((uint64_t)a) | (((uint64_t)d) << 32);
+
+    MIR_CONTEXT_EXIT; return ((uint64_t)a) | (((uint64_t)d) << 32);
 } /*}}}*/
 #endif

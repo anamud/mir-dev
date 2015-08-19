@@ -161,6 +161,8 @@ static void chunk_task_next(long start, long end, bool last)
 
 void GOMP_barrier(void)
 { /*{{{*/
+    MIR_CONTEXT_ENTER;
+
     struct mir_worker_t* worker = mir_worker_get_context();
     struct mir_omp_team_t* team;
     team = worker->current_task ? worker->current_task->team : NULL;
@@ -182,26 +184,38 @@ void GOMP_barrier(void)
         }
 
     }
+
+    MIR_CONTEXT_EXIT;
 } /*}}}*/
 
 /* critical.c */
 
 void GOMP_critical_start(void)
 { /*{{{*/
+    MIR_CONTEXT_ENTER;
+
     // A single global (whole program, not restricted to current team) critical section is supported.
     // From OpenMP 4.0 specification:
     // The binding thread set for a critical region is all threads in the contention group. Region execution is restricted to a single thread at a time among all threads in the contention group, without regard to the team(s) to which the threads belong.
     // The critical construct enforces exclusive access with respect to all critical constructs with the same name in all threads in the contention group, not just those threads in the current team.
     mir_lock_set(&runtime->omp_critsec_lock);
+
+    MIR_CONTEXT_EXIT;
 } /*}}}*/
 
 void GOMP_critical_end(void)
 { /*{{{*/
+    MIR_CONTEXT_ENTER;
+
     mir_lock_unset(&runtime->omp_critsec_lock);
+
+    MIR_CONTEXT_EXIT;
 } /*}}}*/
 
 void GOMP_critical_name_start(void **pptr)
 { /*{{{*/
+    MIR_CONTEXT_ENTER;
+
     if(*pptr == NULL)
     {
         // Create new critical section.
@@ -214,22 +228,36 @@ void GOMP_critical_name_start(void **pptr)
     }
 
     mir_lock_set((struct mir_lock_t*)(*pptr));
+
+    MIR_CONTEXT_EXIT;
 } /*}}}*/
 
 void GOMP_critical_name_end(void **pptr)
 { /*{{{*/
+    MIR_CONTEXT_ENTER;
+
     MIR_ASSERT_STR(*pptr != NULL, "Named critical section lock is corrupted.");
     mir_lock_unset((struct mir_lock_t*)(*pptr));
+
+    MIR_CONTEXT_EXIT;
 } /*}}}*/
 
 void GOMP_atomic_start(void)
 { /*{{{*/
+    MIR_CONTEXT_ENTER;
+
     mir_lock_set(&runtime->omp_atomic_lock);
+
+    MIR_CONTEXT_EXIT;
 } /*}}}*/
 
 void GOMP_atomic_end(void)
 { /*{{{*/
+    MIR_CONTEXT_ENTER;
+
     mir_lock_unset(&runtime->omp_atomic_lock);
+
+    MIR_CONTEXT_EXIT;
 } /*}}}*/
 
 /* loop.c, iter.c, env.c*/
@@ -271,6 +299,8 @@ static bool GOMP_loop_guided_next_int(long* pstart, long* pend)
 
 bool GOMP_loop_guided_next(long* istart, long* iend)
 { /*{{{*/
+    MIR_CONTEXT_ENTER;
+
     bool ret;
 
     struct mir_worker_t* worker = mir_worker_get_context();
@@ -286,11 +316,13 @@ bool GOMP_loop_guided_next(long* istart, long* iend)
     mir_lock_unset(&(loop->lock));
     chunk_task_next(*istart, *iend, !ret);
 
-    return ret;
+    MIR_CONTEXT_EXIT; return ret;
 } /*}}}*/
 
 bool GOMP_loop_guided_start (long start, long end, long incr, long chunk_size, long *istart, long *iend)
 { /*{{{*/
+    MIR_CONTEXT_ENTER;
+
     struct mir_worker_t* worker = mir_worker_get_context();
     MIR_ASSERT(worker != NULL);
     MIR_ASSERT(worker->current_task != NULL);
@@ -309,12 +341,18 @@ bool GOMP_loop_guided_start (long start, long end, long incr, long chunk_size, l
     mir_lock_unset(&team->loop_lock);
     chunk_task_start("GOMP_for_guided_task", team->loop);
 
-    return GOMP_loop_guided_next(istart, iend);
+    bool retval = GOMP_loop_guided_next(istart, iend);
+
+    MIR_CONTEXT_EXIT; return retval;
 } /*}}}*/
 
 void GOMP_parallel_loop_guided_start (void (*fn) (void *), void *data, unsigned num_threads, long start, long end, long incr, long chunk_size)
 { /*{{{*/
+    MIR_CONTEXT_ENTER;
+
     parallel_start(fn, data, num_threads, start, end, incr, chunk_size, true, false, "GOMP_parallel_for_guided_task");
+
+    MIR_CONTEXT_EXIT;
 } /*}}}*/
 
 // Tasks spawned in GOMP_parallel_loop_guided have a single shared
@@ -324,14 +362,22 @@ void GOMP_parallel_loop_guided_start (void (*fn) (void *), void *data, unsigned 
 
 void GOMP_parallel_loop_guided(void (*fn)(void*), void* data, unsigned num_threads, long start, long end, long incr, long chunk_size, unsigned flags)
 { /*{{{*/
+    MIR_CONTEXT_ENTER;
+
     // Schedule for loop tasks on all workers except current.
     GOMP_parallel_loop_guided_start(fn, data, num_threads, start, end, incr, chunk_size);
+
+    MIR_CONTEXT_EXIT;
 
     // Execute task.
     fn(data);
 
+    MIR_CONTEXT_ENTER;
+
     // Wait for for loop tasks to finish.
     GOMP_parallel_end();
+
+    MIR_CONTEXT_EXIT;
 } /*}}}*/
 
 static bool GOMP_loop_dynamic_next_int(long* pstart, long* pend)
@@ -371,6 +417,8 @@ static bool GOMP_loop_dynamic_next_int(long* pstart, long* pend)
 
 bool GOMP_loop_dynamic_next(long* istart, long* iend)
 { /*{{{*/
+    MIR_CONTEXT_ENTER;
+
     bool ret;
 
     struct mir_worker_t* worker = mir_worker_get_context();
@@ -386,11 +434,13 @@ bool GOMP_loop_dynamic_next(long* istart, long* iend)
     mir_lock_unset(&(loop->lock));
     chunk_task_next(*istart, *iend, !ret);
 
-    return ret;
+    MIR_CONTEXT_EXIT; return ret;
 } /*}}}*/
 
 bool GOMP_loop_dynamic_start (long start, long end, long incr, long chunk_size, long *istart, long *iend)
 { /*{{{*/
+    MIR_CONTEXT_ENTER;
+
     struct mir_worker_t* worker = mir_worker_get_context();
     MIR_ASSERT(worker != NULL);
     MIR_ASSERT(worker->current_task != NULL);
@@ -409,12 +459,18 @@ bool GOMP_loop_dynamic_start (long start, long end, long incr, long chunk_size, 
     mir_lock_unset(&team->loop_lock);
     chunk_task_start("GOMP_for_dynamic_task", team->loop);
 
-    return GOMP_loop_dynamic_next(istart, iend);
+    bool retval = GOMP_loop_dynamic_next(istart, iend);
+
+    MIR_CONTEXT_EXIT; return retval;
 } /*}}}*/
 
 void GOMP_parallel_loop_dynamic_start (void (*fn) (void *), void *data, unsigned num_threads, long start, long end, long incr, long chunk_size)
 { /*{{{*/
+    MIR_CONTEXT_ENTER;
+
     parallel_start(fn, data, num_threads, start, end, incr, chunk_size * incr, true, false, "GOMP_parallel_for_dynamic_task");
+
+    MIR_CONTEXT_EXIT;
 } /*}}}*/
 
 // Tasks spawned in GOMP_parallel_loop_dynamic have a single shared
@@ -424,14 +480,22 @@ void GOMP_parallel_loop_dynamic_start (void (*fn) (void *), void *data, unsigned
 
 void GOMP_parallel_loop_dynamic(void (*fn)(void*), void* data, unsigned num_threads, long start, long end, long incr, long chunk_size, unsigned flags)
 { /*{{{*/
+    MIR_CONTEXT_ENTER;
+
     // Schedule for loop tasks on all workers except current.
     GOMP_parallel_loop_dynamic_start(fn, data, num_threads, start, end, incr, chunk_size);
+
+    MIR_CONTEXT_EXIT;
 
     // Execute task.
     fn(data);
 
+    MIR_CONTEXT_ENTER;
+
     // Wait for for loop tasks to finish.
     GOMP_parallel_end();
+
+    MIR_CONTEXT_EXIT;
 } /*}}}*/
 
 static int GOMP_loop_static_next_int(long* pstart, long* pend)
@@ -531,14 +595,18 @@ static int GOMP_loop_static_next_int(long* pstart, long* pend)
 
 bool GOMP_loop_static_next(long* istart, long* iend)
 { /*{{{*/
+    MIR_CONTEXT_ENTER;
+
     bool ret = !GOMP_loop_static_next_int(istart, iend);
     chunk_task_next(*istart, *iend, !ret);
 
-    return ret;
+    MIR_CONTEXT_EXIT; return ret;
 } /*}}}*/
 
 bool GOMP_loop_static_start (long start, long end, long incr, long chunk_size, long *istart, long *iend)
 { /*{{{*/
+    MIR_CONTEXT_ENTER;
+
     struct mir_worker_t* worker = mir_worker_get_context();
     MIR_ASSERT(worker != NULL);
     MIR_ASSERT(worker->current_task != NULL);
@@ -549,12 +617,18 @@ bool GOMP_loop_static_start (long start, long end, long incr, long chunk_size, l
     mir_omp_loop_desc_init(loop, start, end, incr, chunk_size);
     chunk_task_start("GOMP_for_static_task", loop);
 
-    return GOMP_loop_static_next(istart, iend);
+    bool retval = GOMP_loop_static_next(istart, iend);
+
+    MIR_CONTEXT_EXIT; return retval;
 } /*}}}*/
 
 void GOMP_parallel_loop_static_start (void (*fn) (void *), void *data, unsigned num_threads, long start, long end, long incr, long chunk_size)
 { /*{{{*/
+    MIR_CONTEXT_ENTER;
+
     parallel_start(fn, data, num_threads, start, end, incr, chunk_size, true, true, "GOMP_parallel_for_static_task");
+
+    MIR_CONTEXT_EXIT;
 } /*}}}*/
 
 // Tasks spawned in GOMP_parallel_loop_static have their own local
@@ -564,14 +638,22 @@ void GOMP_parallel_loop_static_start (void (*fn) (void *), void *data, unsigned 
 
 void GOMP_parallel_loop_static(void (*fn)(void*), void* data, unsigned num_threads, long start, long end, long incr, long chunk_size, unsigned flags)
 { /*{{{*/
+    MIR_CONTEXT_ENTER;
+
     // Schedule for loop tasks on all workers except current.
     GOMP_parallel_loop_static_start(fn, data, num_threads, start, end, incr, chunk_size);
+
+    MIR_CONTEXT_EXIT;
 
     // Execute task.
     fn(data);
 
+    MIR_CONTEXT_ENTER;
+
     // Wait for for loop tasks to finish.
     GOMP_parallel_end();
+
+    MIR_CONTEXT_EXIT;
 } /*}}}*/
 
 static int parse_omp_schedule_chunk_size(void)
@@ -672,45 +754,70 @@ unknown:
 
 void parse_omp_schedule(void)
 { /*{{{*/
+    MIR_CONTEXT_ENTER;
+
     runtime->omp_for_schedule = parse_omp_schedule_name();
     runtime->omp_for_chunk_size = parse_omp_schedule_chunk_size();
+
+    MIR_CONTEXT_EXIT;
 } /*}}}*/
 
 bool GOMP_loop_runtime_next(long* istart, long* iend)
 { /*{{{*/
+    MIR_CONTEXT_ENTER;
+
+    bool retval = false;
+
     switch (runtime->omp_for_schedule) {
     case OFS_STATIC:
-        return GOMP_loop_static_next(istart, iend);
+        retval = GOMP_loop_static_next(istart, iend);
+        break;
     case OFS_DYNAMIC:
-        return GOMP_loop_dynamic_next(istart, iend);
+        retval = GOMP_loop_dynamic_next(istart, iend);
+        break;
     case OFS_GUIDED:
-        return GOMP_loop_guided_next(istart, iend);
+        retval = GOMP_loop_guided_next(istart, iend);
+        break;
     case OFS_AUTO:
     default:
         MIR_LOG_ERR("OMP_SCHEDULE is unsupported.");
+        break;
     }
+
+    MIR_CONTEXT_EXIT; return retval;
 } /*}}}*/
 
 bool GOMP_loop_runtime_start (long start, long end, long incr, long *istart, long *iend)
 { /*{{{*/
+    MIR_CONTEXT_ENTER;
+
+    bool retval = false;
+
     switch (parse_omp_schedule_name()) {
     case OFS_STATIC:
-        return GOMP_loop_static_start(start, end, incr, parse_omp_schedule_chunk_size(), istart, iend);
+        retval = GOMP_loop_static_start(start, end, incr, parse_omp_schedule_chunk_size(), istart, iend);
+        break;
     case OFS_DYNAMIC:
-        return GOMP_loop_dynamic_start(start, end, incr, parse_omp_schedule_chunk_size(), istart, iend);
+        retval = GOMP_loop_dynamic_start(start, end, incr, parse_omp_schedule_chunk_size(), istart, iend);
+        break;
     case OFS_GUIDED:
-        return GOMP_loop_guided_start(start, end, incr, parse_omp_schedule_chunk_size(), istart, iend);
+        retval = GOMP_loop_guided_start(start, end, incr, parse_omp_schedule_chunk_size(), istart, iend);
+        break;
     case OFS_AUTO:
     default:
         MIR_LOG_ERR("OMP_SCHEDULE is unsupported.");
+        break;
     }
-    return false;
+
+    MIR_CONTEXT_EXIT; return retval;
 } /*}}}*/
 
 void GOMP_parallel_loop_runtime_start(void (*fn) (void *), void *data,
                                       unsigned num_threads, long start,
                                       long end, long incr)
 { /*{{{*/
+    MIR_CONTEXT_ENTER;
+
     switch (parse_omp_schedule_name()) {
     case OFS_STATIC:
         GOMP_parallel_loop_static_start(fn, data, num_threads, start, end, incr, parse_omp_schedule_chunk_size());
@@ -725,22 +832,34 @@ void GOMP_parallel_loop_runtime_start(void (*fn) (void *), void *data,
     default:
         MIR_LOG_ERR("OMP_SCHEDULE is unsupported.");
     }
+
+    MIR_CONTEXT_EXIT;
 } /*}}}*/
 
 void GOMP_parallel_loop_runtime(void (*fn)(void*), void* data, unsigned num_threads, long start, long end, long incr, unsigned flags)
 { /*{{{*/
+    MIR_CONTEXT_ENTER;
+
     // Schedule for loop tasks on all workers except current.
     GOMP_parallel_loop_runtime_start(fn, data, num_threads, start, end, incr);
+
+    MIR_CONTEXT_EXIT;
 
     // Execute task.
     fn(data);
 
+    MIR_CONTEXT_ENTER;
+
     // Wait for for loop tasks to finish.
     GOMP_parallel_end();
+
+    MIR_CONTEXT_EXIT;
 } /*}}}*/
 
 void GOMP_loop_end_int()
 {/*{{{*/
+    MIR_CONTEXT_ENTER;
+
     // Wait for all workers to finish executing their loop task.
     // Waiting is essential since loop description are deleted next.
     GOMP_barrier();
@@ -757,27 +876,43 @@ void GOMP_loop_end_int()
     mir_lock_set(&team->loop_lock);
     team->loop = NULL;
     mir_lock_unset(&team->loop_lock);
+
+    MIR_CONTEXT_EXIT;
 }/*}}}*/
 
 void GOMP_loop_end(void)
 { /*{{{*/
+    MIR_CONTEXT_ENTER;
+
     GOMP_loop_end_int();
+
+    MIR_CONTEXT_EXIT;
 } /*}}}*/
 
 void GOMP_loop_end_nowait(void)
 { /*{{{*/
+    MIR_CONTEXT_ENTER;
+
     GOMP_loop_end_int();
+
+    MIR_CONTEXT_EXIT;
 } /*}}}*/
 
 /* parallel.c */
 
 void GOMP_parallel_start(void (*fn)(void*), void* data, unsigned num_threads)
 { /*{{{*/
+    MIR_CONTEXT_ENTER;
+
     parallel_start(fn, data, num_threads, 0, 0, 0, 0, false, false, "GOMP_parallel_task");
+
+    MIR_CONTEXT_EXIT;
 } /*}}}*/
 
 void GOMP_parallel_end(void)
 { /*{{{*/
+    MIR_CONTEXT_ENTER;
+
     struct mir_worker_t* worker = mir_worker_get_context();
     struct mir_omp_team_t* team;
     team = worker->current_task ? worker->current_task->team : NULL;
@@ -794,24 +929,36 @@ void GOMP_parallel_end(void)
         team->prev = NULL;
 
     mir_soft_destroy();
+
+    MIR_CONTEXT_EXIT;
 } /*}}}*/
 
 void GOMP_parallel(void (*fn)(void*), void* data, unsigned num_threads, unsigned flags)
 { /*{{{*/
+    MIR_CONTEXT_ENTER;
+
     // Schedule parallel block tasks on all workers except current.
     GOMP_parallel_start(fn, data, num_threads);
+
+    MIR_CONTEXT_EXIT;
 
     // Execute parallel block task.
     fn(data);
 
+    MIR_CONTEXT_ENTER;
+
     // Wait for parallel block tasks to finish.
     GOMP_parallel_end();
+
+    MIR_CONTEXT_EXIT;
 } /*}}}*/
 
 /* task.c */
 
 void GOMP_task(void (*fn)(void*), void* data, void (*copyfn)(void*, void*), long arg_size, long arg_align, bool if_clause, unsigned flags, void** depend)
 { /*{{{*/
+    MIR_CONTEXT_ENTER;
+
     char task_name[MIR_SHORT_NAME_LEN];
     sprintf(task_name, "%p", &fn);
 
@@ -832,239 +979,409 @@ void GOMP_task(void (*fn)(void*), void* data, void (*copyfn)(void*, void*), long
     }
     else
         mir_task_create_on_worker((mir_tfunc_t)fn, data, (size_t)(arg_size), 0, NULL, task_name, team, NULL, -1);
+
+    MIR_CONTEXT_EXIT;
 } /*}}}*/
 
 __attribute__((optimize("-fno-optimize-sibling-calls")))
 void GOMP_taskwait(void)
 { /*{{{*/
+    MIR_CONTEXT_ENTER;
+
     mir_task_wait();
+
+    MIR_CONTEXT_EXIT;
 } /*}}}*/
 
 /* single.c */
 
 bool GOMP_single_start(void)
 { /*{{{*/
+    MIR_CONTEXT_ENTER;
+
     struct mir_worker_t* worker = mir_worker_get_context();
     struct mir_omp_team_t* team;
     team = worker->current_task ? worker->current_task->team : NULL;
 
-    if (team == NULL)
-        return true;
+    if (team == NULL) {
+        MIR_CONTEXT_EXIT; return true;
+    }
 
     int sc = __sync_fetch_and_sub(&team->single_count, 1);
     if (sc == 1) {
         __sync_bool_compare_and_swap(&team->single_count, 0,
             team->num_threads);
     }
-    return runtime->single_parallel_block || sc == team->num_threads;
+    MIR_CONTEXT_EXIT; return runtime->single_parallel_block || sc == team->num_threads;
 } /*}}}*/
 
 /* omp.h */
 
 int omp_get_thread_num(void)
 { /*{{{*/
-    if (runtime == NULL)
+    MIR_CONTEXT_ENTER;
+
+    if (runtime == NULL) {
         return 0;
+    }
+
     struct mir_worker_t* worker = mir_worker_get_context();
-    return worker->id;
+
+    MIR_CONTEXT_EXIT; return worker->id;
 } /*}}}*/
 
 int omp_get_num_threads(void)
 { /*{{{*/
-    if(runtime == NULL)
-        return 1;
+    MIR_CONTEXT_ENTER;
+
+    if(runtime == NULL) {
+        MIR_CONTEXT_EXIT; return 1;
+    }
 
     struct mir_worker_t* worker = mir_worker_get_context();
     struct mir_omp_team_t* team = worker->current_task ? worker->current_task->team : NULL;
-    return team ? team->num_threads : 1;
+
+    MIR_CONTEXT_EXIT; return team ? team->num_threads : 1;
 } /*}}}*/
 
 int omp_get_max_threads(void)
 { /*{{{*/
-    return runtime == NULL ?  mir_arch_create_by_query()->num_cores : runtime->num_workers;
+    MIR_CONTEXT_ENTER;
+
+    int retval = (runtime == NULL ?  mir_arch_create_by_query()->num_cores : runtime->num_workers);
+
+    MIR_CONTEXT_EXIT; return retval;
 } /*}}}*/
 
 void omp_set_num_threads (int n)
 {/*{{{*/
+    MIR_CONTEXT_ENTER;
+
     MIR_LOG_ERR("omp_set_num_threads() is not supported.");
+
+    MIR_CONTEXT_EXIT;
 }/*}}}*/
 
 void omp_set_dynamic(int val)
 {/*{{{*/
+    MIR_CONTEXT_ENTER;
+
     MIR_LOG_ERR("omp_set_dynamic() is not supported.");
+
+    MIR_CONTEXT_EXIT;
 }/*}}}*/
 
 int omp_get_dynamic(void)
 {/*{{{*/
+    MIR_CONTEXT_ENTER;
+
     MIR_LOG_ERR("omp_get_dynamic() is not supported.");
+
+    MIR_CONTEXT_EXIT;
 }/*}}}*/
 
 void omp_set_nested(int val)
 {/*{{{*/
+    MIR_CONTEXT_ENTER;
+
     MIR_LOG_ERR("omp_set_nested() is not supported.");
+
+    MIR_CONTEXT_EXIT;
 }/*}}}*/
 
 int omp_get_nested (void)
 {/*{{{*/
+    MIR_CONTEXT_ENTER;
+
     MIR_LOG_ERR("omp_get_nested() is not supported.");
+
+    MIR_CONTEXT_EXIT;
 }/*}}}*/
 
 void omp_set_schedule (omp_sched_t kind, int modifier)
 {/*{{{*/
+    MIR_CONTEXT_ENTER;
+
     MIR_LOG_ERR("omp_set_schedule() is not supported.");
+
+    MIR_CONTEXT_EXIT;
 }/*}}}*/
 
 void omp_get_schedule (omp_sched_t *kind, int *modifier)
 {/*{{{*/
+    MIR_CONTEXT_ENTER;
+
     MIR_LOG_ERR("omp_get_schedule() is not supported.");
+
+    MIR_CONTEXT_EXIT;
 }/*}}}*/
 
 int omp_get_thread_limit (void)
 {/*{{{*/
+    MIR_CONTEXT_ENTER;
+
     MIR_LOG_ERR("omp_get_thread_limit() is not supported.");
+
+    MIR_CONTEXT_EXIT;
 }/*}}}*/
 
 void omp_set_max_active_levels (int max_levels)
 {/*{{{*/
+    MIR_CONTEXT_ENTER;
+
     MIR_LOG_ERR("omp_set_max_active_levels() is not supported.");
+
+    MIR_CONTEXT_EXIT;
 }/*}}}*/
 
 int omp_get_max_active_levels (void)
 {/*{{{*/
+    MIR_CONTEXT_ENTER;
+
     MIR_LOG_ERR("omp_get_max_active_levels() is not supported.");
+
+    MIR_CONTEXT_EXIT;
 }/*}}}*/
 
 int omp_get_cancellation (void)
 {/*{{{*/
+    MIR_CONTEXT_ENTER;
+
     MIR_LOG_ERR("omp_get_cancellation() is not supported.");
+
+    MIR_CONTEXT_EXIT;
 }/*}}}*/
 
 omp_proc_bind_t omp_get_proc_bind (void)
 {/*{{{*/
+    MIR_CONTEXT_ENTER;
+
     MIR_LOG_ERR("omp_get_proc_bind() is not supported.");
+
+    MIR_CONTEXT_EXIT;
 }/*}}}*/
 
 void omp_set_default_device (int device_num)
 {/*{{{*/
+    MIR_CONTEXT_ENTER;
+
     MIR_LOG_ERR("omp_set_default_device() is not supported.");
+
+    MIR_CONTEXT_EXIT;
 }/*}}}*/
 
 int omp_get_default_device (void)
 {/*{{{*/
+    MIR_CONTEXT_ENTER;
+
     MIR_LOG_ERR("omp_get_default_device() is not supported.");
+
+    MIR_CONTEXT_EXIT;
 }/*}}}*/
 
 int omp_get_num_devices (void)
 {/*{{{*/
+    MIR_CONTEXT_ENTER;
+
     MIR_LOG_ERR("omp_get_num_devices() is not supported.");
+
+    MIR_CONTEXT_EXIT;
 }/*}}}*/
 
 int omp_get_num_teams (void)
 {/*{{{*/
+    MIR_CONTEXT_ENTER;
+
     MIR_LOG_ERR("omp_get_num_teams() is not supported.");
+
+    MIR_CONTEXT_EXIT;
 }/*}}}*/
 
 int omp_get_team_num (void)
 {/*{{{*/
+    MIR_CONTEXT_ENTER;
+
     MIR_LOG_ERR("omp_get_team_num() is not supported.");
+
+    MIR_CONTEXT_EXIT;
 }/*}}}*/
 
 int omp_is_initial_device (void)
 {/*{{{*/
+    MIR_CONTEXT_ENTER;
+
     MIR_LOG_ERR("omp_is_initial_device() is not supported.");
+
+    MIR_CONTEXT_EXIT;
 }/*}}}*/
 
 int omp_get_num_procs (void)
 {/*{{{*/
+    MIR_CONTEXT_ENTER;
+
     MIR_LOG_ERR("omp_get_num_procs() is not supported.");
+
+    MIR_CONTEXT_EXIT;
 }/*}}}*/
 
 int omp_in_parallel (void)
 {/*{{{*/
+    MIR_CONTEXT_ENTER;
+
     MIR_LOG_ERR("omp_in_parallel() is not supported.");
+
+    MIR_CONTEXT_EXIT;
 }/*}}}*/
 
 void omp_init_lock (omp_lock_t * lock)
 {/*{{{*/
+    MIR_CONTEXT_ENTER;
+
     MIR_LOG_ERR("omp_init_lock() is not supported.");
+
+    MIR_CONTEXT_EXIT;
 }/*}}}*/
 
 void omp_destroy_lock (omp_lock_t * lock)
 {/*{{{*/
+    MIR_CONTEXT_ENTER;
+
     MIR_LOG_ERR("omp_destroy_lock() is not supported.");
+
+    MIR_CONTEXT_EXIT;
 }/*}}}*/
 
 void omp_set_lock (omp_lock_t * lock)
 {/*{{{*/
+    MIR_CONTEXT_ENTER;
+
     MIR_LOG_ERR("omp_set_lock() is not supported.");
+
+    MIR_CONTEXT_EXIT;
 }/*}}}*/
 
 void omp_unset_lock (omp_lock_t * lock)
 {/*{{{*/
+    MIR_CONTEXT_ENTER;
+
     MIR_LOG_ERR("omp_unset_lock() is not supported.");
+
+    MIR_CONTEXT_EXIT;
 }/*}}}*/
 
 int omp_test_lock (omp_lock_t * lock)
 {/*{{{*/
+    MIR_CONTEXT_ENTER;
+
     MIR_LOG_ERR("omp_test_lock() is not supported.");
+
+    MIR_CONTEXT_EXIT;
 }/*}}}*/
 
 void omp_init_nest_lock (omp_nest_lock_t * lock)
 {/*{{{*/
+    MIR_CONTEXT_ENTER;
+
     MIR_LOG_ERR("omp_init_nest_lock() is not supported.");
+
+    MIR_CONTEXT_EXIT;
 }/*}}}*/
 
 void omp_destroy_nest_lock (omp_nest_lock_t * lock)
 {/*{{{*/
+    MIR_CONTEXT_ENTER;
+
     MIR_LOG_ERR("omp_destroy_nest_lock() is not supported.");
+
+    MIR_CONTEXT_EXIT;
 }/*}}}*/
 
 void omp_set_nest_lock (omp_nest_lock_t * lock)
 {/*{{{*/
+    MIR_CONTEXT_ENTER;
+
     MIR_LOG_ERR("omp_set_nest_lock() is not supported.");
+
+    MIR_CONTEXT_EXIT;
 }/*}}}*/
 
 void omp_unset_nest_lock (omp_nest_lock_t * lock)
 {/*{{{*/
+    MIR_CONTEXT_ENTER;
+
     MIR_LOG_ERR("omp_unset_nest_lock() is not supported.");
+
+    MIR_CONTEXT_EXIT;
 }/*}}}*/
 
 int omp_test_nest_lock (omp_nest_lock_t * lock)
 {/*{{{*/
+    MIR_CONTEXT_ENTER;
+
     MIR_LOG_ERR("omp_test_nest_lock() is not supported.");
+
+    MIR_CONTEXT_EXIT;
 }/*}}}*/
 
 double omp_get_wtime (void)
 {/*{{{*/
+    MIR_CONTEXT_ENTER;
+
     MIR_LOG_ERR("omp_get_wtime() is not supported.");
+
+    MIR_CONTEXT_EXIT;
 }/*}}}*/
 
 double omp_get_wtick (void)
 {/*{{{*/
+    MIR_CONTEXT_ENTER;
+
     MIR_LOG_ERR("omp_get_wtick() is not supported.");
+
+    MIR_CONTEXT_EXIT;
 }/*}}}*/
 
 int omp_get_level (void)
 {/*{{{*/
+    MIR_CONTEXT_ENTER;
+
     MIR_LOG_ERR("omp_get_level() is not supported.");
+
+    MIR_CONTEXT_EXIT;
 }/*}}}*/
 
 int omp_get_ancestor_thread_num (int level)
 {/*{{{*/
+    MIR_CONTEXT_ENTER;
+
     MIR_LOG_ERR("omp_get_ancestor_thread_num() is not supported.");
+
+    MIR_CONTEXT_EXIT;
 }/*}}}*/
 
 int omp_get_team_size (int level)
 {/*{{{*/
+    MIR_CONTEXT_ENTER;
+
     MIR_LOG_ERR("omp_get_team_size() is not supported.");
+
+    MIR_CONTEXT_EXIT;
 }/*}}}*/
 
 int omp_get_active_level (void)
 {/*{{{*/
+    MIR_CONTEXT_ENTER;
+
     MIR_LOG_ERR("omp_get_active_level() is not supported.");
+
+    MIR_CONTEXT_EXIT;
 }/*}}}*/
 
 int omp_in_final (void)
 {/*{{{*/
+    MIR_CONTEXT_ENTER;
+
     MIR_LOG_ERR("omp_in_final() is not supported.");
+
+    MIR_CONTEXT_EXIT;
 }/*}}}*/

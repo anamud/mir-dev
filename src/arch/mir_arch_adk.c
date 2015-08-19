@@ -1,6 +1,7 @@
 #include "arch/mir_arch.h"
 #include "mir_types.h"
 #include "mir_utils.h"
+#include "mir_defines.h"
 
 void create_adk()
 { /*{{{*/
@@ -14,6 +15,8 @@ void destroy_adk()
 
 uint16_t sys_cpu_of_adk(uint16_t cpuid)
 {
+    MIR_CONTEXT_ENTER;
+
     struct mir_arch_topology_t topology_adk[] = {
         { 0, 0, 0, 0, 0 },
         { 1, 2, 1, 0, 0 },
@@ -21,27 +24,33 @@ uint16_t sys_cpu_of_adk(uint16_t cpuid)
         { 3, 6, 3, 0, 0 }
     };
     MIR_ASSERT(topology_adk[cpuid].log_cpu == cpuid);
-    return topology_adk[cpuid].sys_cpu;
+
+    MIR_CONTEXT_EXIT; return topology_adk[cpuid].sys_cpu;
 }
 
 uint16_t node_of_adk(uint16_t cpuid)
 { /*{{{*/
+    MIR_CONTEXT_ENTER;
+
     switch (cpuid) {
     case 0:
     case 1:
     case 2:
     case 3:
-        return 0;
+        MIR_CONTEXT_EXIT; return 0;
         break;
     default:
         MIR_LOG_ERR("Node of CPU %d not found.", cpuid);
         break;
     }
-    return 0;
+
+    MIR_CONTEXT_EXIT; return 0;
 } /*}}}*/
 
 void cpus_of_adk(struct mir_sbuf_t* cpuids, uint16_t nodeid)
 { /*{{{*/
+    MIR_CONTEXT_ENTER;
+
     MIR_ASSERT(cpuids != NULL);
     cpuids->size = 0;
     switch (nodeid) {
@@ -54,6 +63,8 @@ void cpus_of_adk(struct mir_sbuf_t* cpuids, uint16_t nodeid)
         MIR_LOG_ERR("CPUs of node %d not found.", nodeid);
         break;
     }
+
+    MIR_CONTEXT_EXIT;
 } /*}}}*/
 
 uint16_t vicinity_of_adk(uint16_t* neighbors, uint16_t nodeid, uint16_t diameter)

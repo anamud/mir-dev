@@ -7,21 +7,32 @@
 
 struct mir_sched_pol_t* mir_sched_pol_get_by_name(const char* name)
 { /*{{{*/
-    if (0 == strcmp(name, "central"))
-        return &policy_central;
-    else if (0 == strcmp(name, "ws"))
-        return &policy_ws;
+    MIR_CONTEXT_ENTER;
+
+    if (0 == strcmp(name, "central")) {
+        MIR_CONTEXT_EXIT; return &policy_central;
+    }
+    else if (0 == strcmp(name, "ws")) {
+        MIR_CONTEXT_EXIT; return &policy_ws;
+    }
 #ifdef MIR_MEM_POL_ENABLE
-    else if (0 == strcmp(name, "numa"))
-        return &policy_numa;
+    else if (0 == strcmp(name, "numa")) {
+        MIR_CONTEXT_EXIT; return &policy_numa;
+    }
 #endif
-    else if (0 == strcmp(name, "central-stack"))
-        return &policy_central_stack;
-    else if (0 == strcmp(name, "ws-de"))
-        return &policy_ws_de;
-    else if (0 == strcmp(name, "ws-de-node"))
-        return &policy_ws_de_node;
-    else
-        return NULL;
+    else if (0 == strcmp(name, "central-stack")) {
+        MIR_CONTEXT_EXIT; return &policy_central_stack;
+    }
+    else if (0 == strcmp(name, "ws-de")) {
+        MIR_CONTEXT_EXIT; return &policy_ws_de;
+    }
+    else if (0 == strcmp(name, "ws-de-node")) {
+        MIR_CONTEXT_EXIT; return &policy_ws_de_node;
+    }
+    else {
+        MIR_CONTEXT_EXIT; return NULL;
+    }
+
+    MIR_CONTEXT_EXIT;
 } /*}}}*/
 

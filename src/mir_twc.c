@@ -5,6 +5,8 @@
 
 struct mir_twc_t* mir_twc_create()
 { /*{{{*/
+    MIR_CONTEXT_ENTER;
+
     struct mir_twc_t* twc = mir_malloc_int(sizeof(struct mir_twc_t));
     MIR_CHECK_MEM(twc != NULL);
 
@@ -20,5 +22,5 @@ struct mir_twc_t* mir_twc_create()
     twc->pass_time->time = 0; // 0 => Not passed.
     twc->pass_time->next = NULL;
 
-    return twc;
+    MIR_CONTEXT_EXIT; return twc;
 } /*}}}*/

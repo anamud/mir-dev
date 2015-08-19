@@ -1,5 +1,6 @@
 #include "arch/mir_arch.h"
 #include "mir_types.h"
+#include "mir_defines.h"
 #include "mir_utils.h"
 
 void create_tilepro64()
@@ -27,12 +28,16 @@ uint16_t node_of_tilepro64(uint16_t cpuid)
 
 void cpus_of_tilepro64(struct mir_sbuf_t* cpuids, uint16_t nodeid)
 { /*{{{*/
+    MIR_CONTEXT_ENTER;
+
     MIR_ASSERT(cpuids != NULL);
     if (nodeid > 63)
         MIR_LOG_ERR("CPU of node %d not found.", nodeid);
 
     cpuids->size = 1;
     cpuids->buf[0] = nodeid;
+
+    MIR_CONTEXT_EXIT;
 } /*}}}*/
 
 uint16_t vicinity_of_tilepro64(uint16_t* neighbors, uint16_t nodeid, uint16_t diameter)
@@ -42,12 +47,15 @@ uint16_t vicinity_of_tilepro64(uint16_t* neighbors, uint16_t nodeid, uint16_t di
 
 uint16_t comm_cost_of_tilepro64(uint16_t from_nodeid, uint16_t to_nodeid)
 { /*{{{*/
+    MIR_CONTEXT_ENTER;
+
     uint8_t local_cost = 10;
     uint8_t remote_cost_base = 38;
     uint8_t remote_cost_per_hop = 2;
 
-    if (from_nodeid == to_nodeid)
-        return local_cost;
+    if (from_nodeid == to_nodeid) {
+        MIR_CONTEXT_EXIT; return local_cost;
+    }
 
     uint16_t row_from = from_nodeid / 8;
     uint16_t col_from = from_nodeid % 8;
@@ -57,7 +65,9 @@ uint16_t comm_cost_of_tilepro64(uint16_t from_nodeid, uint16_t to_nodeid)
     uint16_t row_hop = abs(row_from - row_to);
     uint16_t col_hop = abs(col_from - col_to);
 
-    return (remote_cost_base + remote_cost_per_hop * (row_hop + col_hop));
+    uint16_t retval = (remote_cost_base + remote_cost_per_hop * (row_hop + col_hop));
+
+    MIR_CONTEXT_EXIT; return retval;
 } /*}}}*/
 
 struct mir_arch_t arch_tilepro64 = { /*{{{*/

@@ -6,6 +6,8 @@
 
 struct mir_queue_t* mir_queue_create(uint32_t capacity)
 { /*{{{*/
+    MIR_CONTEXT_ENTER;
+
     MIR_ASSERT(capacity > 0);
 
     struct mir_queue_t* queue = mir_cmalloc_int(sizeof(struct mir_queue_t));
@@ -23,11 +25,13 @@ struct mir_queue_t* mir_queue_create(uint32_t capacity)
     mir_lock_create(&(queue->enq_lock));
     mir_lock_create(&(queue->deq_lock));
 
-    return queue;
+    MIR_CONTEXT_EXIT; return queue;
 } /*}}}*/
 
 void mir_queue_destroy(struct mir_queue_t* queue)
 { /*{{{*/
+    MIR_CONTEXT_ENTER;
+
     MIR_ASSERT(queue != NULL);
 
     mir_lock_destroy(&(queue->enq_lock));
@@ -36,10 +40,14 @@ void mir_queue_destroy(struct mir_queue_t* queue)
     queue->buffer = NULL;
     mir_free_int(queue, sizeof(struct mir_queue_t));
     queue = NULL;
+
+    MIR_CONTEXT_EXIT;
 } /*}}}*/
 
 int mir_queue_push(struct mir_queue_t* queue, void* data)
 { /*{{{*/
+    MIR_CONTEXT_ENTER;
+
     MIR_ASSERT(queue != NULL);
     MIR_ASSERT(data != NULL);
 
@@ -49,7 +57,8 @@ int mir_queue_push(struct mir_queue_t* queue, void* data)
         Q_DBG("queue full!", queue);
         //__sync_synchronize();
         mir_lock_unset(&(queue->enq_lock));
-        return 0;
+
+        MIR_CONTEXT_EXIT; return 0;
     }
 
     queue->buffer[queue->in] = data;
@@ -61,11 +70,13 @@ int mir_queue_push(struct mir_queue_t* queue, void* data)
     //__sync_synchronize();
     mir_lock_unset(&(queue->enq_lock));
 
-    return 1;
+    MIR_CONTEXT_EXIT; return 1;
 } /*}}}*/
 
 void mir_queue_pop(struct mir_queue_t* queue, void** data)
 { /*{{{*/
+    MIR_CONTEXT_ENTER;
+
     MIR_ASSERT(queue != NULL);
     MIR_ASSERT(data != NULL);
 
@@ -85,16 +96,21 @@ void mir_queue_pop(struct mir_queue_t* queue, void** data)
 cleanup:
     //__sync_synchronize();
     mir_lock_unset(&(queue->deq_lock));
+
+    MIR_CONTEXT_EXIT;
 } /*}}}*/
 
 uint32_t mir_queue_size(const struct mir_queue_t* queue)
 { /*{{{*/
+    MIR_CONTEXT_ENTER;
+
     MIR_ASSERT(queue != NULL);
 
     //__sync_synchronize();
     //mir_lock_set(&(queue->lock));
     uint32_t size = queue->size;
     //mir_lock_unset(&(queue->lock));
-    return size;
+
+    MIR_CONTEXT_EXIT; return size;
 } /*}}}*/
 

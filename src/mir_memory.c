@@ -1,6 +1,7 @@
 #include "mir_memory.h"
 #include "mir_defines.h"
 #include "mir_utils.h"
+#include "mir_defines.h"
 
 #include <stdlib.h>
 #include <stdint.h>
@@ -23,20 +24,27 @@ static inline unsigned long upper_power_of_two(unsigned long v)
 
 void* mir_cmalloc_int(size_t bytes)
 { /*{{{*/
+    MIR_CONTEXT_ENTER;
+
     void* memptr = mir_malloc_int(bytes);
     memset(memptr, 0, bytes);
-    return memptr;
+
+    MIR_CONTEXT_EXIT; return memptr;
 } /*}}}*/
 
 uint64_t mir_get_allocated_memory()
 { /*{{{*/
-    return g_total_allocated_memory;
+    MIR_CONTEXT_ENTER;
+
+    MIR_CONTEXT_EXIT; return g_total_allocated_memory;
 } /*}}}*/
 
 #ifdef __tile__
 
 void* mir_malloc_int(size_t bytes)
 { /*{{{*/
+    MIR_CONTEXT_ENTER;
+
     unsigned long bytes_p2 = upper_power_of_two((unsigned long)bytes);
     void* memptr = NULL;
     tmc_alloc_t alloc = TMC_ALLOC_INIT;
@@ -48,11 +56,13 @@ void* mir_malloc_int(size_t bytes)
     __sync_fetch_and_add(&g_total_allocated_memory, bytes);
 #endif
 
-    return memptr;
+    MIR_CONTEXT_EXIT; return memptr;
 } /*}}}*/
 
 void mir_free_int(void* p, size_t bytes)
 { /*{{{*/
+    MIR_CONTEXT_ENTER;
+
     MIR_ASSERT(p != NULL);
     MIR_ASSERT(bytes > 0);
     unsigned long bytes_p2 = upper_power_of_two((unsigned long)bytes);
@@ -61,12 +71,16 @@ void mir_free_int(void* p, size_t bytes)
 #ifdef MIR_MEMORY_ALLOCATOR_DEBUG
     __sync_fetch_and_sub(&g_total_allocated_memory, bytes);
 #endif
+
+    MIR_CONTEXT_EXIT;
 } /*}}}*/
 
 #else
 
 void* mir_malloc_int(size_t bytes)
 { /*{{{*/
+    MIR_CONTEXT_ENTER;
+
     unsigned long bytes_p2 = upper_power_of_two((unsigned long)bytes);
     void* memptr = NULL;
     int rval = posix_memalign(&memptr, MIR_PAGE_ALIGNMENT, bytes_p2);
@@ -76,11 +90,13 @@ void* mir_malloc_int(size_t bytes)
     __sync_fetch_and_add(&g_total_allocated_memory, bytes);
 #endif
 
-    return memptr;
+    MIR_CONTEXT_EXIT; return memptr;
 } /*}}}*/
 
 void mir_free_int(void* p, size_t bytes)
 { /*{{{*/
+    MIR_CONTEXT_ENTER;
+
     MIR_ASSERT(p != NULL);
     MIR_ASSERT(bytes > 0);
     free(p);
@@ -88,6 +104,8 @@ void mir_free_int(void* p, size_t bytes)
 #ifdef MIR_MEMORY_ALLOCATOR_DEBUG
     __sync_fetch_and_sub(&g_total_allocated_memory, bytes);
 #endif
+
+    MIR_CONTEXT_EXIT;
 } /*}}}*/
 
 #endif
