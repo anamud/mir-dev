@@ -364,21 +364,29 @@ VOID Image(IMG img, VOID* v)
     }
 
     // Task create
-    RTN mirTaskCreateRtn = RTN_FindByName(img, "mir_task_create");
-    if (RTN_Valid(mirTaskCreateRtn)) {
-        std::cout << "Adding profiling hooks to runtime system function: mir_task_create" << std::endl;
-        RTN_Open(mirTaskCreateRtn);
-        RTN_InsertCall(mirTaskCreateRtn, IPOINT_BEFORE, (AFUNPTR)MIRTaskCreateBefore, IARG_END);
-        RTN_Close(mirTaskCreateRtn);
+    const int num_task_create_functions = 2;
+    const char* task_create_functions[num_task_create_functions] = {"mir_task_create", "GOMP_task"};
+    for (int i=0; i<num_task_create_functions; i++) {
+        RTN mirTaskCreateRtn = RTN_FindByName(img, task_create_functions[i]);
+        if (RTN_Valid(mirTaskCreateRtn)) {
+            std::cout << "Adding profiling hooks to runtime system function: " << task_create_functions[i] << std::endl;
+            RTN_Open(mirTaskCreateRtn);
+            RTN_InsertCall(mirTaskCreateRtn, IPOINT_BEFORE, (AFUNPTR)MIRTaskCreateBefore, IARG_END);
+            RTN_Close(mirTaskCreateRtn);
+        }
     }
 
     // Task wait
-    RTN mirTaskWaitRtn = RTN_FindByName(img, "mir_task_wait");
-    if (RTN_Valid(mirTaskWaitRtn)) {
-        std::cout << "Adding profiling hooks to runtime system function: mir_task_wait" << std::endl;
-        RTN_Open(mirTaskWaitRtn);
-        RTN_InsertCall(mirTaskWaitRtn, IPOINT_AFTER, (AFUNPTR)MIRTaskWaitAfter, IARG_END);
-        RTN_Close(mirTaskWaitRtn);
+    const int num_task_wait_functions = 2;
+    const char* task_wait_functions[num_task_wait_functions] = {"mir_task_wait", "GOMP_taskwait"};
+    for (int i=0; i<num_task_wait_functions; i++) {
+        RTN mirTaskWaitRtn = RTN_FindByName(img, task_wait_functions[i]);
+        if (RTN_Valid(mirTaskWaitRtn)) {
+            std::cout << "Adding profiling hooks to runtime system function: " << task_wait_functions[i] << std::endl;
+            RTN_Open(mirTaskWaitRtn);
+            RTN_InsertCall(mirTaskWaitRtn, IPOINT_AFTER, (AFUNPTR)MIRTaskWaitAfter, IARG_END);
+            RTN_Close(mirTaskWaitRtn);
+        }
     }
 } /*}}}*/
 
