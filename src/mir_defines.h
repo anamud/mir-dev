@@ -72,4 +72,9 @@
 #define MIR_OFP_SHM_KEY 31415926
 #define MIR_OFP_SHM_SIGREAD '*'
 
+// Context tracking
+#define MIR_CONTEXT_ENTER do{ __asm volatile ("mov %%bx, %%bx" ::: ); }while(0)
+#define MIR_CONTEXT_EXIT do{ __asm volatile ("mov %%cx, %%cx" ::: ); }while(0)
+#define MIR_CONTEXT_EXIT_VAL(val) do{ __asm volatile ("mov %%cx, %%cx" ::: ); return (val); }while(0)
+
 #endif
