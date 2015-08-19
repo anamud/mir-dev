@@ -23,6 +23,8 @@ KNOB<string> KnobCalledFunctionNames(KNOB_MODE_WRITEONCE, "pintool",
     "cf", "", "specify functions called (csv) from outline functions");
 KNOB<BOOL> KnobCalcMemShare(KNOB_MODE_WRITEONCE, "pintool",
     "ds", "0", "calculate data sharing (NOTE: a time consuming process!)");
+KNOB<BOOL> KnobDisableIgnoreContextDetection(KNOB_MODE_WRITEONCE, "pintool",
+    "ni", "0", "disable ignorable context detection");
 
 #define EXCLUDE_STACK_INS_FROM_MEM_FP 1
 #define GET_INS_MIX 1
@@ -342,19 +344,21 @@ VOID Image(IMG img, VOID* v)
 
             // For each instruction of the function, update entries in the stats counter
             for (INS ins = RTN_InsHead(mirRtn); INS_Valid(ins); ins = INS_Next(ins)) {
-                // Check if this instruction marks entry into an ignorable context
-                // Entry into ignorable context marked by assembly instruction "MOV BX, BX"
-                if (INS_IsMov(ins) && INS_FullRegWContain(ins, REG_BX) && INS_FullRegRContain(ins, REG_BX)) {
-                    //std::cout << "Function " << *it << " entered ignorable context" << std::endl;
-                    INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)MIROutlineFunctionIgnoreContextEntry, IARG_END);
-                    continue;
-                }
-                // Check if this instruction marks exit out of an ignorable context
-                // Exit out of ignorable context marked by assembly instruction "MOV CX, CX"
-                if (INS_IsMov(ins) && INS_FullRegWContain(ins, REG_CX) && INS_FullRegRContain(ins, REG_CX)) {
-                    //std::cout << "Function " << *it << " exited ignorable context" << std::endl;
-                    INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)MIROutlineFunctionIgnoreContextExit, IARG_END);
-                    continue;
+                if(!KnobDisableIgnoreContextDetection) {
+                    // Check if this instruction marks entry into an ignorable context
+                    // Entry into ignorable context marked by assembly instruction "MOV BX, BX"
+                    if (INS_IsMov(ins) && INS_FullRegWContain(ins, REG_BX) && INS_FullRegRContain(ins, REG_BX)) {
+                        //std::cout << "Function " << *it << " entered ignorable context" << std::endl;
+                        INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)MIROutlineFunctionIgnoreContextEntry, IARG_END);
+                        continue;
+                    }
+                    // Check if this instruction marks exit out of an ignorable context
+                    // Exit out of ignorable context marked by assembly instruction "MOV CX, CX"
+                    if (INS_IsMov(ins) && INS_FullRegWContain(ins, REG_CX) && INS_FullRegRContain(ins, REG_CX)) {
+                        //std::cout << "Function " << *it << " exited ignorable context" << std::endl;
+                        INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)MIROutlineFunctionIgnoreContextExit, IARG_END);
+                        continue;
+                    }
                 }
 
                 // Count instructions
