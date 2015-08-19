@@ -834,6 +834,7 @@ void GOMP_task(void (*fn)(void*), void* data, void (*copyfn)(void*, void*), long
         mir_task_create_on_worker((mir_tfunc_t)fn, data, (size_t)(arg_size), 0, NULL, task_name, team, NULL, -1);
 } /*}}}*/
 
+__attribute__((optimize("-fno-optimize-sibling-calls")))
 void GOMP_taskwait(void)
 { /*{{{*/
     mir_task_wait();
