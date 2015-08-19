@@ -42,7 +42,7 @@ char* g_shm;
 int g_id = 0;
 #endif
 
-long g_ignore_context_counter = 0;
+bool g_inside_ignore_context = false;
 
 //std::vector<std::string> &split(const std::string &s, char delim, std::vector<std::string> &elems)
 //{
@@ -109,7 +109,7 @@ std::stack<MIR_FUNCTION_STAT*> g_stat_stack;
 
 VOID MIROutlineFunctionUpdateMemRefRead(VOID* memp)
 { /*{{{*/
-    if (g_current_stat && g_ignore_context_counter == 0) {
+    if (g_current_stat && !g_inside_ignore_context) {
         g_current_stat->mem_read++;
         g_current_stat->mem_fp.insert(memp);
         //g_current_stat->mrefs_read.push_back(memp);
@@ -118,7 +118,7 @@ VOID MIROutlineFunctionUpdateMemRefRead(VOID* memp)
 
 VOID MIROutlineFunctionUpdateMemRefWrite(VOID* memp)
 { /*{{{*/
-    if (g_current_stat && g_ignore_context_counter == 0) {
+    if (g_current_stat && !g_inside_ignore_context) {
         g_current_stat->mem_write++;
         g_current_stat->mem_fp.insert(memp);
         //g_current_stat->mrefs_write.push_back(memp);
@@ -128,42 +128,36 @@ VOID MIROutlineFunctionUpdateMemRefWrite(VOID* memp)
 #ifdef GET_INS_MIX
 VOID MIROutlineFunctionUpdateInsMix(INT32 index)
 { /*{{{*/
-    if (g_current_stat && g_ignore_context_counter == 0)
+    if (g_current_stat && !g_inside_ignore_context)
         g_current_stat->ins_mix[index]++;
 } /*}}}*/
 #endif
 
 VOID MIROutlineFunctionIgnoreContextEntry()
 {/*{{{*/
-    // Increment ignorable context entry count
-    g_ignore_context_counter++;
-    // Sanity check for ignorable context exit and count bounds.
-    assert(g_ignore_context_counter >= 0);
+    g_inside_ignore_context = true;
 }/*}}}*/
 
 VOID MIROutlineFunctionIgnoreContextExit()
 {/*{{{*/
-    // Decrement ignorable context entry count
-    g_ignore_context_counter--;
-    // Sanity check for ignorable context exit and count bounds.
-    assert(g_ignore_context_counter >= 0);
+    g_inside_ignore_context = false;
 }/*}}}*/
 
 VOID MIROutlineFunctionUpdateInsCount()
 { /*{{{*/
-    if (g_current_stat && g_ignore_context_counter == 0)
+    if (g_current_stat && !g_inside_ignore_context)
         g_current_stat->ins_count++;
 } /*}}}*/
 
 VOID MIROutlineFunctionUpdateStackRead()
 { /*{{{*/
-    if (g_current_stat && g_ignore_context_counter == 0)
+    if (g_current_stat && !g_inside_ignore_context)
         g_current_stat->stack_read++;
 } /*}}}*/
 
 VOID MIROutlineFunctionUpdateStackWrite()
 { /*{{{*/
-    if (g_current_stat && g_ignore_context_counter == 0)
+    if (g_current_stat && !g_inside_ignore_context)
         g_current_stat->stack_write++;
 } /*}}}*/
 
