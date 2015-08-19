@@ -11,6 +11,7 @@
 #include <algorithm>
 #include <omp.h>
 #include <sys/shm.h>
+#include <assert.h>
 
 KNOB<string> KnobOutputFileSuffix(KNOB_MODE_WRITEONCE, "pintool",
     "pr", "mir-ofp", "specify output file prefix");
@@ -34,6 +35,12 @@ KNOB<BOOL> KnobCalcMemShare(KNOB_MODE_WRITEONCE, "pintool",
 bool g_shmat_done = false;
 int g_shmid;
 char* g_shm;
+
+#if 0
+int g_id = 0;
+#endif
+
+long g_ignore_context_counter = 0;
 
 //std::vector<std::string> &split(const std::string &s, char delim, std::vector<std::string> &elems)
 //{
@@ -100,7 +107,7 @@ std::stack<MIR_FUNCTION_STAT*> g_stat_stack;
 
 VOID MIROutlineFunctionUpdateMemRefRead(VOID* memp)
 { /*{{{*/
-    if (g_current_stat) {
+    if (g_current_stat && g_ignore_context_counter == 0) {
         g_current_stat->mem_read++;
         g_current_stat->mem_fp.insert(memp);
         //g_current_stat->mrefs_read.push_back(memp);
@@ -109,7 +116,7 @@ VOID MIROutlineFunctionUpdateMemRefRead(VOID* memp)
 
 VOID MIROutlineFunctionUpdateMemRefWrite(VOID* memp)
 { /*{{{*/
-    if (g_current_stat) {
+    if (g_current_stat && g_ignore_context_counter == 0) {
         g_current_stat->mem_write++;
         g_current_stat->mem_fp.insert(memp);
         //g_current_stat->mrefs_write.push_back(memp);
@@ -119,26 +126,42 @@ VOID MIROutlineFunctionUpdateMemRefWrite(VOID* memp)
 #ifdef GET_INS_MIX
 VOID MIROutlineFunctionUpdateInsMix(INT32 index)
 { /*{{{*/
-    if (g_current_stat)
+    if (g_current_stat && g_ignore_context_counter == 0)
         g_current_stat->ins_mix[index]++;
 } /*}}}*/
 #endif
 
+VOID MIROutlineFunctionIgnoreContextEntry()
+{/*{{{*/
+    // Increment ignorable context entry count
+    g_ignore_context_counter++;
+    // Sanity check for ignorable context exit and count bounds.
+    assert(g_ignore_context_counter >= 0);
+}/*}}}*/
+
+VOID MIROutlineFunctionIgnoreContextExit()
+{/*{{{*/
+    // Decrement ignorable context entry count
+    g_ignore_context_counter--;
+    // Sanity check for ignorable context exit and count bounds.
+    assert(g_ignore_context_counter >= 0);
+}/*}}}*/
+
 VOID MIROutlineFunctionUpdateInsCount()
 { /*{{{*/
-    if (g_current_stat)
+    if (g_current_stat && g_ignore_context_counter == 0)
         g_current_stat->ins_count++;
 } /*}}}*/
 
 VOID MIROutlineFunctionUpdateStackRead()
 { /*{{{*/
-    if (g_current_stat)
+    if (g_current_stat && g_ignore_context_counter == 0)
         g_current_stat->stack_read++;
 } /*}}}*/
 
 VOID MIROutlineFunctionUpdateStackWrite()
 { /*{{{*/
-    if (g_current_stat)
+    if (g_current_stat && g_ignore_context_counter == 0)
         g_current_stat->stack_write++;
 } /*}}}*/
 
@@ -171,6 +194,9 @@ VOID MIROutlineFunctionEntry(VOID* name)
     // Create new stat counter
     MIR_FUNCTION_STAT* stat = new MIR_FUNCTION_STAT;
     stat->id = atoi(buf);
+#if 0
+    stat->id = g_id++;
+#endif
     stat->ins_count = 0;
     stat->stack_read = 0;
     stat->stack_write = 0;
@@ -251,6 +277,7 @@ VOID Image(IMG img, VOID* v)
 
             // For each instruction with function, update entries in the stats counter
             for (INS ins = RTN_InsHead(mirRtn); INS_Valid(ins); ins = INS_Next(ins)) {
+                // Count instructions
                 INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)MIROutlineFunctionUpdateInsCount, IARG_END);
 #ifdef GET_INS_MIX
                 INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)MIROutlineFunctionUpdateInsMix, IARG_UINT32, INS_Category(ins), IARG_END);
@@ -315,6 +342,22 @@ VOID Image(IMG img, VOID* v)
 
             // For each instruction of the function, update entries in the stats counter
             for (INS ins = RTN_InsHead(mirRtn); INS_Valid(ins); ins = INS_Next(ins)) {
+                // Check if this instruction marks entry into an ignorable context
+                // Entry into ignorable context marked by assembly instruction "MOV BX, BX"
+                if (INS_IsMov(ins) && INS_FullRegWContain(ins, REG_BX) && INS_FullRegRContain(ins, REG_BX)) {
+                    //std::cout << "Function " << *it << " entered ignorable context" << std::endl;
+                    INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)MIROutlineFunctionIgnoreContextEntry, IARG_END);
+                    continue;
+                }
+                // Check if this instruction marks exit out of an ignorable context
+                // Exit out of ignorable context marked by assembly instruction "MOV CX, CX"
+                if (INS_IsMov(ins) && INS_FullRegWContain(ins, REG_CX) && INS_FullRegRContain(ins, REG_CX)) {
+                    //std::cout << "Function " << *it << " exited ignorable context" << std::endl;
+                    INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)MIROutlineFunctionIgnoreContextExit, IARG_END);
+                    continue;
+                }
+
+                // Count instructions
                 INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)MIROutlineFunctionUpdateInsCount, IARG_END);
 #ifdef GET_INS_MIX
                 INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)MIROutlineFunctionUpdateInsMix, IARG_UINT32, INS_Category(ins), IARG_END);
