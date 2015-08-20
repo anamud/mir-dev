@@ -87,8 +87,6 @@ static void* mir_worker_loop(void* arg)
 
 void mir_worker_master_init(struct mir_worker_t* worker)
 { /*{{{*/
-    MIR_CONTEXT_ENTER;
-
     MIR_ASSERT(worker != NULL);
     // Kill signal
     // Used during runtime system shutdown
@@ -111,18 +109,14 @@ void mir_worker_master_init(struct mir_worker_t* worker)
     // Create worker thread
     int rval = pthread_create(&(worker->pthread), &attr, mir_worker_loop, (void*)worker);
     MIR_ASSERT_STR(rval == 0, "Call to pthread_create failed.");
-
-    MIR_CONTEXT_EXIT;
 } /*}}}*/
 
 struct mir_worker_t* mir_worker_get_context()
 { /*{{{*/
-    MIR_CONTEXT_ENTER;
-
     struct mir_worker_t* worker = pthread_getspecific(runtime->worker_index);
     MIR_ASSERT_STR(worker != NULL, "Call to pthread_getspecific failed.");
 
-    MIR_CONTEXT_EXIT; return worker;
+    return worker;
 } /*}}}*/
 
 static int worker_get_cpu_affinity()
@@ -147,8 +141,6 @@ static int worker_get_cpu_affinity()
 
 void mir_worker_local_init(struct mir_worker_t* worker)
 { /*{{{*/
-    MIR_CONTEXT_ENTER;
-
     MIR_ASSERT(worker != NULL);
 
     // Set TLS
@@ -204,8 +196,6 @@ void mir_worker_local_init(struct mir_worker_t* worker)
     // Create private task queue
     worker->private_queue = mir_task_queue_create(runtime->sched_pol->queue_capacity);
     MIR_CHECK_MEM(worker->private_queue != NULL);
-
-    MIR_CONTEXT_EXIT;
 } /*}}}*/
 
 static inline void mir_worker_backoff_reset(struct mir_worker_t* worker)
@@ -222,8 +212,6 @@ static inline void mir_worker_backoff(struct mir_worker_t* worker)
 
 void mir_worker_push(struct mir_worker_t* worker, struct mir_task_t* task)
 { /*{{{*/
-    MIR_CONTEXT_ENTER;
-
     // Worker is the target worker.
     MIR_ASSERT(worker != NULL);
     MIR_ASSERT(task != NULL);
@@ -240,8 +228,6 @@ void mir_worker_push(struct mir_worker_t* worker, struct mir_task_t* task)
         MIR_ASSERT(this_worker != NULL);
         this_worker->statistics->num_tasks_created++;
     }
-
-    MIR_CONTEXT_EXIT;
 } /*}}}*/
 
 // The function mir_worker_pop() retrieves a task
@@ -283,8 +269,6 @@ static inline struct mir_task_t* mir_pop(struct mir_worker_t* worker)
 
 void mir_worker_do_work(struct mir_worker_t* worker, int backoff)
 { /*{{{*/
-    MIR_CONTEXT_ENTER;
-
     MIR_ASSERT(worker != NULL);
 
     // Overhead measurement
@@ -310,7 +294,7 @@ void mir_worker_do_work(struct mir_worker_t* worker, int backoff)
         // Update backoff
         mir_worker_backoff_reset(worker);
 
-        MIR_CONTEXT_EXIT; return;
+        return;
     }
 
     // Overhead measurement
@@ -326,14 +310,10 @@ void mir_worker_do_work(struct mir_worker_t* worker, int backoff)
     // Overhead measurement
     if (worker->current_task)
         worker->current_task->overhead_cycles += (mir_get_cycles() - start_instant);
-
-    MIR_CONTEXT_EXIT;
 } /*}}}*/
 
 void mir_worker_check_done()
 { /*{{{*/
-    MIR_CONTEXT_ENTER;
-
     while (1) {
         //mir_sleep_ms(300); // Butterfly effect!
         __sync_synchronize();
@@ -345,24 +325,16 @@ void mir_worker_check_done()
     }
     MIR_ASSERT(g_num_tasks_waiting == 0);
     MIR_ASSERT(g_worker_status_board == 0);
-
-    MIR_CONTEXT_EXIT;
 } /*}}}*/
 
 void mir_worker_update_bias(struct mir_worker_t* worker)
 { /*{{{*/
-    MIR_CONTEXT_ENTER;
-
     MIR_ASSERT(worker != NULL);
     worker->bias = (worker->bias + 1) % (runtime->num_workers);
-
-    MIR_CONTEXT_EXIT;
 } /*}}}*/
 
 void mir_worker_statistics_init(struct mir_worker_statistics_t* statistics)
 { /*{{{*/
-    MIR_CONTEXT_ENTER;
-
     MIR_ASSERT(statistics != NULL);
 
     // Get this worker
@@ -392,25 +364,17 @@ void mir_worker_statistics_init(struct mir_worker_statistics_t* statistics)
 #else
     statistics->num_comm_tasks_stolen_by_diameter = NULL;
 #endif
-
-    MIR_CONTEXT_EXIT;
 } /*}}}*/
 
 void mir_worker_statistics_destroy(struct mir_worker_statistics_t* statistics)
 { /*{{{*/
-    MIR_CONTEXT_ENTER;
-
     MIR_ASSERT(statistics != NULL);
     if (statistics->num_comm_tasks_stolen_by_diameter)
         mir_free_int(statistics->num_comm_tasks_stolen_by_diameter, sizeof(uint32_t) * runtime->arch->diameter);
-
-    MIR_CONTEXT_EXIT;
 } /*}}}*/
 
 void mir_worker_statistics_update_comm_cost(struct mir_worker_statistics_t* statistics, unsigned long comm_cost)
 { /*{{{*/
-    MIR_CONTEXT_ENTER;
-
     MIR_ASSERT(statistics != NULL);
     statistics->num_comm_tasks++;
     statistics->total_comm_cost += comm_cost;
@@ -418,23 +382,15 @@ void mir_worker_statistics_update_comm_cost(struct mir_worker_statistics_t* stat
         statistics->lowest_comm_cost = comm_cost;
     if (statistics->highest_comm_cost < comm_cost)
         statistics->highest_comm_cost = comm_cost;
-
-    MIR_CONTEXT_EXIT;
 } /*}}}*/
 
 void mir_worker_statistics_write_header_to_file(FILE* file)
 { /*{{{*/
-    MIR_CONTEXT_ENTER;
-
     fprintf(file, "worker,created,owned,stolen,inlined,comm_tasks,total_comm_cost,avg_comm_cost,lowest_comm_cost,highest_comm_cost,comm_tasks_stolen_by_diameter\n");
-
-    MIR_CONTEXT_EXIT;
 } /*}}}*/
 
 void mir_worker_statistics_write_to_file(const struct mir_worker_statistics_t* statistics, FILE* file)
 { /*{{{*/
-    MIR_CONTEXT_ENTER;
-
     MIR_ASSERT(file != NULL);
     MIR_ASSERT(statistics != NULL);
 
@@ -475,14 +431,10 @@ void mir_worker_statistics_write_to_file(const struct mir_worker_statistics_t* s
             statistics->lowest_comm_cost,
             statistics->highest_comm_cost);
     }
-
-    MIR_CONTEXT_EXIT;
 } /*}}}*/
 
 void mir_worker_update_task_list(struct mir_worker_t* worker, struct mir_task_t* task)
 { /*{{{*/
-    MIR_CONTEXT_ENTER;
-
     MIR_ASSERT(worker != NULL);
     MIR_ASSERT(task != NULL);
 
@@ -491,7 +443,5 @@ void mir_worker_update_task_list(struct mir_worker_t* worker, struct mir_task_t*
     list->task = task;
     list->next = worker->task_list;
     worker->task_list = list;
-
-    MIR_CONTEXT_EXIT;
 } /*}}}*/
 

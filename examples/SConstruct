@@ -89,7 +89,7 @@ prof['CCFLAGS'] += Split("""
 -g
 -fdump-tree-optimized
 """)
-prof.Prepend(LIBS = ['mir-opt'])
+prof.Prepend(LIBS = ['mir-prof'])
 
 # Verbose environment
 check = opt.Clone();

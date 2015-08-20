@@ -125,3 +125,16 @@ opt_src = opt.Glob('opt-build/*.c')
 opt_src += opt.Glob('opt-build/arch/*.c')
 opt_src += opt.Glob('opt-build/scheduling/*.c')
 opt.Library(target = 'mir-opt', source = opt_src)
+
+###################
+# Prof environment #
+###################
+
+prof = env.Clone();
+prof['CCFLAGS'] += ['-O2']
+prof['CCFLAGS'] += ['-finstrument-functions']
+prof.VariantDir('prof-build', MIR_ROOT+'/src', duplicate=0)
+prof_src = prof.Glob('prof-build/*.c')
+prof_src += prof.Glob('prof-build/arch/*.c')
+prof_src += prof.Glob('prof-build/scheduling/*.c')
+prof.Library(target = 'mir-prof', source = prof_src)

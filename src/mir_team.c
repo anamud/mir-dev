@@ -4,8 +4,6 @@
 
 struct mir_omp_team_t* mir_new_omp_team(struct mir_omp_team_t* pteam, unsigned nthreads)
 { /*{{{*/
-    MIR_CONTEXT_ENTER;
-
     struct mir_omp_team_t* team = mir_malloc_int(sizeof(struct mir_omp_team_t));
     MIR_CHECK_MEM(team != NULL);
     team->prev = pteam;
@@ -18,5 +16,5 @@ struct mir_omp_team_t* mir_new_omp_team(struct mir_omp_team_t* pteam, unsigned n
     for (int i = 0; i < MIR_WORKER_MAX_COUNT; i++)
         team->parallel_block_flag[i] = 0;
 
-    MIR_CONTEXT_EXIT; return team;
+    return team;
 } /*}}}*/

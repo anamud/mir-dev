@@ -64,20 +64,16 @@ static inline int inline_necessary()
 
 struct mir_task_t* mir_task_create_twin(char *name, struct mir_task_t* task, char *str)
 {/*{{{*/
-    MIR_CONTEXT_ENTER;
-
     MIR_ASSERT(task != NULL);
     struct mir_task_t* twin;
     twin = mir_task_create_common(task->func, task->data, task->data_size, task->num_data_footprints, task->data_footprints, name, task->team, task->loop, task->parent);
     mir_task_write_metadata(twin, str);
 
-    MIR_CONTEXT_EXIT; return twin;
+    return twin;
 }/*}}}*/
 
 struct mir_task_t* mir_task_create_common(mir_tfunc_t tfunc, void* data, size_t data_size, unsigned int num_data_footprints, const struct mir_data_footprint_t* data_footprints, const char* name, struct mir_omp_team_t* myteam, struct mir_loop_des_t* loopdes, struct mir_task_t* parent)
 { /*{{{*/
-    MIR_CONTEXT_ENTER;
-
     MIR_ASSERT(tfunc != NULL);
 
     // Overhead measurement
@@ -198,13 +194,11 @@ struct mir_task_t* mir_task_create_common(mir_tfunc_t tfunc, void* data, size_t 
     // Task is now created
     T_DBG("Cr", task);
 
-    MIR_CONTEXT_EXIT; return task;
+    return task;
 } /*}}}*/
 
 void mir_task_schedule_on_worker(struct mir_task_t* task, int workerid)
 { /*{{{*/
-    MIR_CONTEXT_ENTER;
-
     MIR_ASSERT(workerid < runtime->num_workers);
     MIR_ASSERT(task != NULL);
 
@@ -235,36 +229,33 @@ void mir_task_schedule_on_worker(struct mir_task_t* task, int workerid)
 
     //__sync_synchronize();
     T_DBG("Sb", task);
-
-    MIR_CONTEXT_EXIT;
 } /*}}}*/
 
 void mir_task_create(mir_tfunc_t tfunc, void* data, size_t data_size, unsigned int num_data_footprints, struct mir_data_footprint_t* data_footprints, const char* name)
 { /*{{{*/
-    MIR_CONTEXT_ENTER;
-
     MIR_ASSERT(tfunc != NULL);
 
     mir_task_create_on_worker(tfunc, data, data_size, num_data_footprints,
                               data_footprints, name, NULL, NULL, -1);
-
-    MIR_CONTEXT_EXIT;
 } /*}}}*/
 
 void mir_task_create_on_worker(mir_tfunc_t tfunc, void* data, size_t data_size, unsigned int num_data_footprints, struct mir_data_footprint_t* data_footprints, const char* name, struct mir_omp_team_t* myteam, struct mir_loop_des_t* loopdes, int workerid)
 { /*{{{*/
-    MIR_CONTEXT_ENTER;
-
     // To inline or not to line, that is the grand question!
     if (workerid < 0 && inline_necessary() == 1) {
+        MIR_CONTEXT_EXIT;
+
         tfunc(data);
+
+        MIR_CONTEXT_ENTER;
+
         // Update worker stats
         if (runtime->enable_worker_stats == 1) {
             struct mir_worker_t* worker = mir_worker_get_context();
             MIR_ASSERT(worker != NULL);
             worker->statistics->num_tasks_inlined++;
         }
-        MIR_CONTEXT_EXIT; return;
+        return;
         // FIXME: What about reporting inlining to the Pin profiler!?
     }
 
@@ -282,8 +273,6 @@ void mir_task_create_on_worker(mir_tfunc_t tfunc, void* data, size_t data_size, 
     mir_task_schedule_on_worker(task, workerid);
 
     MIR_RECORDER_STATE_END(NULL, 0);
-
-    MIR_CONTEXT_EXIT;
 } /*}}}*/
 
 static void mir_task_destroy(struct mir_task_t* task)
@@ -294,8 +283,6 @@ static void mir_task_destroy(struct mir_task_t* task)
 
 void mir_task_execute_prolog(struct mir_task_t* task)
 { /*{{{*/
-    MIR_CONTEXT_ENTER;
-
     MIR_ASSERT(task != NULL);
 
     // Get this worker
@@ -343,14 +330,10 @@ void mir_task_execute_prolog(struct mir_task_t* task)
         for (int i = 0; i < MIR_OFP_SHM_SIZE; i++)
             runtime->ofp_shm[i] = buf[i];
     }
-
-    MIR_CONTEXT_EXIT;
 } /*}}}*/
 
 void mir_task_execute_epilog(struct mir_task_t* task)
 { /*{{{*/
-    MIR_CONTEXT_ENTER;
-
     MIR_ASSERT(task != NULL);
 
     // Get this worker
@@ -404,14 +387,10 @@ void mir_task_execute_epilog(struct mir_task_t* task)
 
     // FIXME Destroy task !
     // NOTE: Destroying task upsets task list structure
-
-    MIR_CONTEXT_EXIT;
 } /*}}}*/
 
 void mir_task_execute(struct mir_task_t* task)
 { /*{{{*/
-    MIR_CONTEXT_ENTER;
-
     MIR_ASSERT(task != NULL);
 
     // Start profiling and book-keeping for task
@@ -433,19 +412,13 @@ void mir_task_execute(struct mir_task_t* task)
 
     // Debugging
     //MIR_LOG_INFO("Task %" MIR_FORMSPEC_UL " executed on worker %d\n", task->id.uid, worker->id);
-
-    MIR_CONTEXT_EXIT;
 } /*}}}*/
 
 void mir_task_write_metadata(struct mir_task_t* task, const char* metadata)
 {/*{{{*/
-    MIR_CONTEXT_ENTER;
-
     MIR_ASSERT(task != NULL);
     MIR_ASSERT(metadata == NULL || strlen(metadata) < MIR_SHORT_NAME_LEN);
     strcpy(task->metadata, metadata ? metadata : "NA");
-
-    MIR_CONTEXT_EXIT;
 }/*}}}*/
 
 #ifdef MIR_MEM_POL_ENABLE
@@ -478,10 +451,8 @@ static inline void mir_data_footprint_get_mem_node_dist(struct mir_mem_node_dist
 // FIXME: Multi-tasking fucntion. Seperate!
 struct mir_mem_node_dist_t* mir_task_get_mem_node_dist(struct mir_task_t* task, mir_data_access_t access)
 { /*{{{*/
-    MIR_CONTEXT_ENTER;
-
     if (task->num_data_footprints == 0) {
-        MIR_CONTEXT_EXIT; return NULL;
+        return NULL;
     }
 
     if (task->dist_by_access_type[access] == NULL) {
@@ -495,14 +466,12 @@ struct mir_mem_node_dist_t* mir_task_get_mem_node_dist(struct mir_task_t* task, 
                 mir_data_footprint_get_mem_node_dist(dist, &task->data_footprints[i]);
     }
 
-    MIR_CONTEXT_EXIT; return task->dist_by_access_type[access];
+    return task->dist_by_access_type[access];
 } /*}}}*/
 #endif
 
 void mir_task_wait_int(struct mir_twc_t* twc, int newval)
 { /*{{{*/
-    MIR_CONTEXT_ENTER;
-
     MIR_RECORDER_STATE_BEGIN(MIR_STATE_TSYNC);
 
     struct mir_worker_t* worker = mir_worker_get_context();
@@ -542,13 +511,11 @@ void mir_task_wait_int(struct mir_twc_t* twc, int newval)
 exit:
     MIR_RECORDER_STATE_END(NULL, 0);
 
-    MIR_CONTEXT_EXIT; return;
+    return;
 } /*}}}*/
 
 void mir_task_wait()
 { /*{{{*/
-    MIR_CONTEXT_ENTER;
-
     struct mir_worker_t* worker = pthread_getspecific(runtime->worker_index);
     struct mir_twc_t* twc;
     if (worker->current_task)
@@ -558,22 +525,16 @@ void mir_task_wait()
 
     mir_task_wait_int(twc, 0);
 
-    MIR_CONTEXT_EXIT; return;
+    return;
 } /*}}}*/
 
 void mir_task_stats_write_header_to_file(FILE* file)
 { /*{{{*/
-    MIR_CONTEXT_ENTER;
-
     fprintf(file, "task,parent,joins_at,cpu_id,child_number,num_children,exec_cycles,creation_cycles,overhead_cycles,queue_size,create_instant,exec_end_instant,tag,metadata,outline_function,wait_instants\n");
-
-    MIR_CONTEXT_EXIT;
 } /*}}}*/
 
 void mir_task_stats_write_to_file(struct mir_task_list_t* list, FILE* file)
 { /*{{{*/
-    MIR_CONTEXT_ENTER;
-
     struct mir_task_list_t* temp = list;
     while (temp != NULL) {
         mir_id_t task_parent;
@@ -610,14 +571,10 @@ void mir_task_stats_write_to_file(struct mir_task_list_t* list, FILE* file)
 
         temp = temp->next;
     }
-
-    MIR_CONTEXT_EXIT;
 } /*}}}*/
 
 void mir_task_list_destroy(struct mir_task_list_t* list)
 { /*{{{*/
-    MIR_CONTEXT_ENTER;
-
     struct mir_task_list_t* temp = list;
     while (temp != NULL) {
         struct mir_task_list_t* next = temp->next;
@@ -625,6 +582,4 @@ void mir_task_list_destroy(struct mir_task_list_t* list)
         temp = next;
         // FIXME: Can also free the task and wait counter here!
     }
-
-    MIR_CONTEXT_EXIT;
 } /*}}}*/

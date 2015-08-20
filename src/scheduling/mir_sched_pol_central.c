@@ -15,8 +15,6 @@
 
 void create_central()
 { /*{{{*/
-    MIR_CONTEXT_ENTER;
-
     struct mir_sched_pol_t* sp = runtime->sched_pol;
     MIR_ASSERT(NULL != sp);
 
@@ -28,14 +26,10 @@ void create_central()
         sp->queues[i] = mir_task_queue_create(sp->queue_capacity);
         MIR_ASSERT(NULL != sp->queues[i]);
     }
-
-    MIR_CONTEXT_EXIT;
 } /*}}}*/
 
 void destroy_central()
 { /*{{{*/
-    MIR_CONTEXT_ENTER;
-
     struct mir_sched_pol_t* sp = runtime->sched_pol;
     MIR_ASSERT(NULL != sp);
 
@@ -49,14 +43,10 @@ void destroy_central()
     MIR_ASSERT(NULL != sp->queues);
     mir_free_int(sp->queues, sizeof(struct mir_task_queue_t*) * sp->num_queues);
     sp->queues = NULL;
-
-    MIR_CONTEXT_EXIT;
 } /*}}}*/
 
 int push_central(struct mir_worker_t* worker, struct mir_task_t* task)
 { /*{{{*/
-    MIR_CONTEXT_ENTER;
-
     MIR_ASSERT(NULL != task);
     MIR_ASSERT(NULL != worker);
 
@@ -85,13 +75,11 @@ int push_central(struct mir_worker_t* worker, struct mir_task_t* task)
 
     //MIR_RECORDER_STATE_END(NULL, 0);
 
-    MIR_CONTEXT_EXIT; return pushed;
+    return pushed;
 } /*}}}*/
 
 int pop_central(struct mir_task_t** task)
 { /*{{{*/
-    MIR_CONTEXT_ENTER;
-
     //MIR_RECORDER_STATE_BEGIN(MIR_STATE_TMOBING);
 
     struct mir_sched_pol_t* sp = runtime->sched_pol;
@@ -99,7 +87,7 @@ int pop_central(struct mir_task_t** task)
     struct mir_queue_t* queue = sp->queues[0];
     MIR_ASSERT(NULL != queue);
     if (mir_queue_size(queue) == 0) {
-        MIR_CONTEXT_EXIT; return 0;
+        return 0;
     }
 
     struct mir_worker_t* worker = mir_worker_get_context();
@@ -108,7 +96,7 @@ int pop_central(struct mir_task_t** task)
     *task = NULL;
     mir_queue_pop(queue, (void**)&(*task));
     if (!*task) {
-        MIR_CONTEXT_EXIT; return 0;
+        return 0;
     }
 
     if (runtime->enable_task_stats == 1)
@@ -129,7 +117,7 @@ int pop_central(struct mir_task_t** task)
     __sync_fetch_and_sub(&g_num_tasks_waiting, 1);
     T_DBG("Dq", *task);
 
-    MIR_CONTEXT_EXIT; return 1;
+    return 1;
 } /*}}}*/
 
 struct mir_sched_pol_t policy_central = { /*{{{*/

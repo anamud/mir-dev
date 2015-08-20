@@ -8,8 +8,6 @@
 
 void* mir_task_queue_create(uint32_t capacity)
 { /*{{{*/
-    MIR_CONTEXT_ENTER;
-
     MIR_ASSERT(capacity > 0);
 
     struct mir_task_queue_t* queue = mir_cmalloc_int(sizeof(struct mir_task_queue_t));
@@ -26,13 +24,11 @@ void* mir_task_queue_create(uint32_t capacity)
     mir_lock_create(&(queue->enq_lock));
     mir_lock_create(&(queue->deq_lock));
 
-    MIR_CONTEXT_EXIT; return queue;
+    return queue;
 } /*}}}*/
 
 void mir_task_queue_destroy(struct mir_task_queue_t* queue)
 { /*{{{*/
-    MIR_CONTEXT_ENTER;
-
     MIR_ASSERT(queue != NULL);
 
     mir_lock_destroy(&(queue->enq_lock));
@@ -41,14 +37,10 @@ void mir_task_queue_destroy(struct mir_task_queue_t* queue)
     queue->buffer = NULL;
     mir_free_int(queue, sizeof(struct mir_task_queue_t));
     queue = NULL;
-
-    MIR_CONTEXT_EXIT;
 } /*}}}*/
 
 int mir_task_queue_push(struct mir_task_queue_t* queue, struct mir_task_t* data)
 { /*{{{*/
-    MIR_CONTEXT_ENTER;
-
     MIR_ASSERT(queue != NULL);
     MIR_ASSERT(data != NULL);
 
@@ -57,7 +49,7 @@ int mir_task_queue_push(struct mir_task_queue_t* queue, struct mir_task_t* data)
     if (TASK_QUEUE_FULL(queue)) {
         TQ_DBG("queue full!", queue);
         mir_lock_unset(&(queue->enq_lock));
-        MIR_CONTEXT_EXIT; return 0;
+        return 0;
     }
 
     queue->buffer[queue->in] = data;
@@ -68,13 +60,11 @@ int mir_task_queue_push(struct mir_task_queue_t* queue, struct mir_task_t* data)
 
     mir_lock_unset(&(queue->enq_lock));
 
-    MIR_CONTEXT_EXIT; return 1;
+    return 1;
 } /*}}}*/
 
 struct mir_task_t* mir_task_queue_pop(struct mir_task_queue_t* queue)
 { /*{{{*/
-    MIR_CONTEXT_ENTER;
-
     MIR_ASSERT(queue != NULL);
     struct mir_task_t* task = NULL;
 
@@ -108,16 +98,14 @@ struct mir_task_t* mir_task_queue_pop(struct mir_task_queue_t* queue)
 cleanup:
     mir_lock_unset(&(queue->deq_lock));
 
-    MIR_CONTEXT_EXIT; return task;
+    return task;
 } /*}}}*/
 
 uint32_t mir_task_queue_size(const struct mir_task_queue_t* queue)
 { /*{{{*/
-    MIR_CONTEXT_ENTER;
-
     MIR_ASSERT(queue != NULL);
 
-    MIR_CONTEXT_EXIT; return queue->size;
+    return queue->size;
 } /*}}}*/
 
 

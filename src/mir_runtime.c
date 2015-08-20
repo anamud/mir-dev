@@ -381,8 +381,6 @@ static void mir_config()
 
 void mir_create_int(int num_workers)
 { /*{{{*/
-    MIR_CONTEXT_ENTER;
-
     // Create only if first call
     if (runtime != NULL) {
         MIR_ASSERT_STR(num_workers == runtime->num_workers || num_workers == 0, "Runtime system is already created with number of workers (%d) different from number requested (%d).", runtime->num_workers, num_workers);
@@ -390,7 +388,7 @@ void mir_create_int(int num_workers)
 
         __sync_fetch_and_add(&(runtime->init_count), 1);
 
-        MIR_CONTEXT_EXIT; return;
+        return;
     }
 
     // Create the global runtime
@@ -419,17 +417,11 @@ void mir_create_int(int num_workers)
         // Start profiling and book-keeping for idle task
         mir_task_execute_prolog(task);
     }
-
-    MIR_CONTEXT_EXIT;
 } /*}}}*/
 
 void mir_create()
 { /*{{{*/
-    MIR_CONTEXT_ENTER;
-
     mir_create_int(0);
-
-    MIR_CONTEXT_EXIT;
 } /*}}}*/
 
 /**
@@ -439,26 +431,20 @@ void mir_create()
 */
 void mir_soft_destroy()
 { /*{{{*/
-    MIR_CONTEXT_ENTER;
-
     MIR_ASSERT(runtime->init_count > 0);
     __sync_fetch_and_sub(&(runtime->init_count), 1);
-
-    MIR_CONTEXT_EXIT;
 } /*}}}*/
 
 void mir_destroy()
 { /*{{{*/
-    MIR_CONTEXT_ENTER;
-
     // Destroy only once. Multiple calls happen if the user inserts
     // explicit calls to mir_destroy() in the program.
     if (runtime == NULL) {
-        MIR_CONTEXT_EXIT; return;
+        return;
     }
     //MIR_ASSERT(runtime->destroyed == 0);
     if (runtime->destroyed == 1) {
-        MIR_CONTEXT_EXIT; return;
+        return;
     }
 
     // Destory only if corresponding to first call to mir_create
@@ -467,7 +453,7 @@ void mir_destroy()
         runtime->destroyed = 1;
     }
     else {
-        MIR_CONTEXT_EXIT; return;
+        return;
     }
 
     if(runtime->idle_task) {
@@ -605,6 +591,15 @@ shutdown:
 
     MIR_DEBUG("Shutdown complete.");
 
-    MIR_CONTEXT_EXIT; return;
+    return;
 } /*}}}*/
 
+void __cyg_profile_func_enter(void *func, void *callsite)
+{/*{{{*/
+    MIR_CONTEXT_ENTER;
+}/*}}}*/
+
+void __cyg_profile_func_exit(void *func, void *callsite)
+{/*{{{*/
+    MIR_CONTEXT_EXIT;
+}/*}}}*/

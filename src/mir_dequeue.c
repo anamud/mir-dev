@@ -102,8 +102,6 @@ roundUp2(StgWord val)
 WSDeque*
 newWSDeque(nat size)
 { /*{{{*/
-    MIR_CONTEXT_ENTER;
-
     StgWord realsize;
     WSDeque* q;
 
@@ -121,7 +119,7 @@ newWSDeque(nat size)
     q->moduloSize = realsize - 1; /* n % size == n & moduloSize  */
 
     ASSERT_WSDEQUE_INVARIANTS(q);
-    MIR_CONTEXT_EXIT; return q;
+    return q;
 } /*}}}*/
 
 /* -----------------------------------------------------------------------------
@@ -130,12 +128,8 @@ newWSDeque(nat size)
 
 void freeWSDeque(WSDeque* q)
 { /*{{{*/
-    MIR_CONTEXT_ENTER;
-
     stgFree(q->elements);
     stgFree(q);
-
-    MIR_CONTEXT_EXIT;
 } /*}}}*/
 
 /* -----------------------------------------------------------------------------
@@ -153,8 +147,6 @@ void freeWSDeque(WSDeque* q)
 
 void* popWSDeque(WSDeque* q)
 { /*{{{*/
-    MIR_CONTEXT_ENTER;
-
     /* also a bit tricky, has to avoid concurrent steal() calls by
        accessing top with cas, when there is only one element left */
     StgWord t, b;
@@ -181,7 +173,7 @@ void* popWSDeque(WSDeque* q)
     if (currSize < 0) { /* was empty before decrementing b, set b
                            consistently and abort */
         q->bottom = t;
-        MIR_CONTEXT_EXIT; return NULL;
+        return NULL;
     }
 
     // read the element at b
@@ -189,7 +181,7 @@ void* popWSDeque(WSDeque* q)
 
     if (currSize > 0) { /* no danger, still elements in buffer after b-- */
         // debugBelch("popWSDeque: t=%ld b=%ld = %ld\n", t, b, removed);
-        MIR_CONTEXT_EXIT; return removed;
+        return removed;
     }
     /* otherwise, has someone meanwhile stolen the same (last) element?
        Check and increment top value to know  */
@@ -204,7 +196,7 @@ void* popWSDeque(WSDeque* q)
 
     // debugBelch("popWSDeque: t=%ld b=%ld = %ld\n", t, b, removed);
 
-    MIR_CONTEXT_EXIT; return removed;
+    return removed;
 } /*}}}*/
 
 /* -----------------------------------------------------------------------------
@@ -213,8 +205,6 @@ void* popWSDeque(WSDeque* q)
 
 void* stealWSDeque_(WSDeque* q)
 { /*{{{*/
-    MIR_CONTEXT_ENTER;
-
     void* stolen;
     StgWord b, t;
 
@@ -231,7 +221,7 @@ void* stealWSDeque_(WSDeque* q)
     // below, because it is possible that t > b during a
     // concurrent popWSQueue() operation.
     if ((long)b - (long)t <= 0) {
-        MIR_CONTEXT_EXIT; return NULL; /* already looks empty, abort */
+        return NULL; /* already looks empty, abort */
     }
 
     /* now access array, see pushBottom() */
@@ -240,7 +230,7 @@ void* stealWSDeque_(WSDeque* q)
     /* now decide whether we have won */
     if (!(CASTOP(&(q->top), t, t + 1))) {
         /* lost the race, someon else has changed top in the meantime */
-        MIR_CONTEXT_EXIT; return NULL;
+        return NULL;
     } /* else: OK, top has been incremented by the cas call */
 
     // debugBelch("stealWSDeque_: t=%d b=%d\n", t, b);
@@ -248,20 +238,18 @@ void* stealWSDeque_(WSDeque* q)
     // Can't do this on someone else's spark pool:
     // ASSERT_WSDEQUE_INVARIANTS(q);
 
-    MIR_CONTEXT_EXIT; return stolen;
+    return stolen;
 } /*}}}*/
 
 void* stealWSDeque(WSDeque* q)
 { /*{{{*/
-    MIR_CONTEXT_ENTER;
-
     void* stolen;
 
     do {
         stolen = stealWSDeque_(q);
     } while (stolen == NULL && !looksEmptyWSDeque(q));
 
-    MIR_CONTEXT_EXIT; return stolen;
+    return stolen;
 } /*}}}*/
 
 /* -----------------------------------------------------------------------------
@@ -275,8 +263,6 @@ void* stealWSDeque(WSDeque* q)
 rtsBool
 pushWSDeque(WSDeque* q, void* elem)
 { /*{{{*/
-    MIR_CONTEXT_ENTER;
-
     StgWord t;
     StgWord b;
     StgWord sz = q->moduloSize;
@@ -308,7 +294,7 @@ pushWSDeque(WSDeque* q, void* elem)
             */
 #if defined(DISCARD_NEW)
             ASSERT_WSDEQUE_INVARIANTS(q);
-            MIR_CONTEXT_EXIT; return rtsFalse; // we didn't push anything
+            return rtsFalse; // we didn't push anything
 #else
             /* could make room by incrementing the top position here.  In
              * this case, should use CASTOP. If this fails, someone else has
@@ -332,5 +318,5 @@ pushWSDeque(WSDeque* q, void* elem)
     q->bottom = b + 1;
 
     ASSERT_WSDEQUE_INVARIANTS(q);
-    MIR_CONTEXT_EXIT; return rtsTrue;
+    return rtsTrue;
 } /*}}}*/

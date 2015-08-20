@@ -15,38 +15,32 @@ void destroy_firenze()
 
 uint16_t sys_cpu_of_firenze(uint16_t cpuid)
 { /*{{{*/
-    MIR_CONTEXT_ENTER;
-
     struct mir_arch_topology_t topology_firenze[] = {
         { 0, 0, 0, 0, 0 },
         { 1, 2, 1, 0, 0 }
     };
     MIR_ASSERT(topology_firenze[cpuid].log_cpu == cpuid);
 
-    MIR_CONTEXT_EXIT; return topology_firenze[cpuid].sys_cpu;
+    return topology_firenze[cpuid].sys_cpu;
 } /*}}}*/
 
 uint16_t node_of_firenze(uint16_t cpuid)
 { /*{{{*/
-    MIR_CONTEXT_ENTER;
-
     switch (cpuid) {
     case 0:
     case 1:
-        MIR_CONTEXT_EXIT; return 0;
+        return 0;
         break;
     default:
         MIR_LOG_ERR("Node of CPU %d not found.", cpuid);
         break;
     }
 
-    MIR_CONTEXT_EXIT; return 0;
+    return 0;
 } /*}}}*/
 
 void cpus_of_firenze(struct mir_sbuf_t* cpuids, uint16_t nodeid)
 { /*{{{*/
-    MIR_CONTEXT_ENTER;
-
     MIR_ASSERT(cpuids != NULL);
     cpuids->size = 0;
     switch (nodeid) {
@@ -59,8 +53,6 @@ void cpus_of_firenze(struct mir_sbuf_t* cpuids, uint16_t nodeid)
         MIR_LOG_ERR("CPUs of node %d not found.", nodeid);
         break;
     }
-
-    MIR_CONTEXT_EXIT;
 } /*}}}*/
 
 uint16_t vicinity_of_firenze(uint16_t* neighbors, uint16_t nodeid, uint16_t diameter)

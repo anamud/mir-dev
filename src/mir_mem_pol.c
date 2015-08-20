@@ -31,8 +31,6 @@ struct mem_header_t { /*{{{*/
 
 static struct mem_header_t* get_mem_header(void* addr)
 { /*{{{*/
-    MIR_CONTEXT_ENTER;
-
     MIR_ASSERT(addr != NULL);
     struct mem_header_t* header = addr - sizeof(struct mem_header_t);
     if (header->magic == runtime->init_time) {
@@ -78,8 +76,6 @@ static inline uint16_t get_node_of(void* addr, void* base_addr)
 
 struct mir_mem_node_dist_t* mir_mem_node_dist_create()
 { /*{{{*/
-    MIR_CONTEXT_ENTER;
-
     struct mir_mem_node_dist_t* dist = mir_malloc_int(sizeof(struct mir_mem_node_dist_t));
     MIR_CHECK_MEM(dist != NULL);
 
@@ -88,25 +84,19 @@ struct mir_mem_node_dist_t* mir_mem_node_dist_create()
     for (uint16_t i = 0; i < runtime->arch->num_nodes; i++)
         dist->buf[i] = 0;
 
-    MIR_CONTEXT_EXIT; return dist;
+    return dist;
 } /*}}}*/
 
 void mir_mem_node_dist_destroy(struct mir_mem_node_dist_t* dist)
 { /*{{{*/
-    MIR_CONTEXT_ENTER;
-
     MIR_ASSERT(dist->buf != NULL);
     mir_free_int(dist->buf, sizeof(size_t) * runtime->arch->num_nodes);
     MIR_ASSERT(dist != NULL);
     mir_free_int(dist, sizeof(struct mir_mem_node_dist_t));
-
-    MIR_CONTEXT_EXIT;
 } /*}}}*/
 
 unsigned long mir_mem_node_dist_get_comm_cost(const struct mir_mem_node_dist_t* dist, uint16_t from_node)
 { /*{{{*/
-    MIR_CONTEXT_ENTER;
-
     MIR_ASSERT(dist != NULL);
     MIR_ASSERT(dist->buf != NULL);
     MIR_ASSERT(runtime->arch->num_nodes > from_node);
@@ -118,13 +108,11 @@ unsigned long mir_mem_node_dist_get_comm_cost(const struct mir_mem_node_dist_t* 
         comm_cost += (dist->buf[i] * runtime->arch->comm_cost_of(from_node, i));
     }
 
-    MIR_CONTEXT_EXIT; return comm_cost;
+    return comm_cost;
 } /*}}}*/
 
 void mir_mem_node_dist_get_stat(struct mir_mem_node_dist_stat_t* stat, const struct mir_mem_node_dist_t* dist)
 { /*{{{*/
-    MIR_CONTEXT_ENTER;
-
     MIR_ASSERT(dist != NULL);
     MIR_ASSERT(dist->buf != NULL);
     MIR_ASSERT(stat != NULL);
@@ -147,8 +135,6 @@ void mir_mem_node_dist_get_stat(struct mir_mem_node_dist_stat_t* stat, const str
         sum_dsq = (diff * diff);
     }
     stat->sd = sqrt(sum_dsq / (runtime->arch->num_nodes));
-
-    MIR_CONTEXT_EXIT;
 } /*}}}*/
 
 static void mem_node_dist_print(struct mir_mem_node_dist_t* dist)
@@ -163,8 +149,6 @@ static void mem_node_dist_print(struct mir_mem_node_dist_t* dist)
 
 void mir_mem_get_mem_node_dist(struct mir_mem_node_dist_t* dist, void* addr, size_t sz, void* part_of)
 { /*{{{*/
-    MIR_CONTEXT_ENTER;
-
     MIR_ASSERT(addr != NULL && sz != 0 && dist != NULL);
 
     // Check if the part_of address contains a header
@@ -176,7 +160,7 @@ void mir_mem_get_mem_node_dist(struct mir_mem_node_dist_t* dist, void* addr, siz
         if (header) {
             dist->buf[header->nodeid] += sz;
             //print_dist(dist);
-            MIR_CONTEXT_EXIT; return;
+            return;
         }
     }
 
@@ -188,7 +172,7 @@ void mir_mem_get_mem_node_dist(struct mir_mem_node_dist_t* dist, void* addr, siz
     if (header) {
         dist->buf[header->nodeid] += sz;
         //print_dist(dist);
-        MIR_CONTEXT_EXIT; return;
+        return;
     }
 
 #ifndef __tile__
@@ -223,8 +207,6 @@ void mir_mem_get_mem_node_dist(struct mir_mem_node_dist_t* dist, void* addr, siz
     // FIXME: What happens on TILEPRO64?
     MIR_ASSERT(1 == 1);
 #endif
-
-    MIR_CONTEXT_EXIT;
 } /*}}}*/
 
 struct mir_mem_pol_t { /*{{{*/
@@ -553,8 +535,6 @@ static void reset_coarse()
 
 void mir_mem_pol_config(const char* pol_name)
 { /*{{{*/
-    MIR_CONTEXT_ENTER;
-
     MIR_ASSERT(pol_name != NULL);
     MIR_ASSERT(strlen(pol_name) > 0);
 
@@ -580,14 +560,10 @@ void mir_mem_pol_config(const char* pol_name)
     }
 
     MIR_DEBUG("Memory allocation policy changed to %s.", pol_name);
-
-    MIR_CONTEXT_EXIT;
 } /*}}}*/
 
 void mir_mem_pol_create()
 { /*{{{*/
-    MIR_CONTEXT_ENTER;
-
     // Allocate mem_pol structure
     mem_pol = mir_malloc_int(sizeof(struct mir_mem_pol_t));
     MIR_CHECK_MEM(mem_pol != NULL);
@@ -608,57 +584,37 @@ void mir_mem_pol_create()
 #ifndef __tile__
     numa_set_strict(1);
 #endif
-
-    MIR_CONTEXT_EXIT;
 } /*}}}*/
 
 void mir_mem_pol_init()
 { /*{{{*/
-    MIR_CONTEXT_ENTER;
-
 #ifdef MIR_MEM_POL_RESTRICT
     mem_pol->node = runtime->arch->node_of(runtime->workers[0].cpu_id);
 #endif
-
-    MIR_CONTEXT_EXIT;
 } /*}}}*/
 
 void mir_mem_pol_destroy()
 { /*{{{*/
-    MIR_CONTEXT_ENTER;
-
     MIR_DEBUG("Stopping memory distributer ...");
     MIR_DEBUG("Total unfreed mem_pol memory=%" MIR_FORMSPEC_UL " bytes.", mem_pol->total_allocated);
     mir_lock_destroy(&mem_pol->lock);
     mir_free_int(mem_pol, sizeof(struct mir_mem_pol_t));
-
-    MIR_CONTEXT_EXIT;
 } /*}}}*/
 
 void* mir_mem_pol_allocate(size_t sz)
 { /*{{{*/
-    MIR_CONTEXT_ENTER;
-
     void* block =  mem_pol->allocate(sz);
 
-    MIR_CONTEXT_EXIT; return block;
+    return block;
 } /*}}}*/
 
 void mir_mem_pol_release(void* addr, size_t sz)
 { /*{{{*/
-    MIR_CONTEXT_ENTER;
-
     mem_pol->release(addr, sz);
-
-    MIR_CONTEXT_EXIT;
 } /*}}}*/
 
 void mir_mem_pol_reset()
 { /*{{{*/
-    MIR_CONTEXT_ENTER;
-
     mem_pol->reset();
-
-    MIR_CONTEXT_EXIT;
 } /*}}}*/
 #endif

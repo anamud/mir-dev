@@ -43,12 +43,10 @@ def write_posttext(fil):
     fil.write("""
 void cpus_of_this(struct mir_sbuf_t* cpuids, uint16_t nodeid)
 {{
-    MIR_CONTEXT_ENTER;
-
     MIR_ASSERT(cpuids != NULL);
     cpuids->size = 0;
     if(nodeid != 0) {{
-        MIR_CONTEXT_EXIT; return;
+        return;
     }}
     else
     {{
@@ -57,8 +55,6 @@ void cpus_of_this(struct mir_sbuf_t* cpuids, uint16_t nodeid)
         for(int i=0; i<num_cpus; i++)
             cpuids->buf[i] = i;
     }}
-
-    MIR_CONTEXT_EXIT;
 }}
 struct mir_arch_t arch_this = 
 {{
