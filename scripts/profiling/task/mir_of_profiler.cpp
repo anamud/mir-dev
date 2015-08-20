@@ -163,8 +163,19 @@ VOID MIROutlineFunctionUpdateStackWrite()
         g_current_stat->stack_write++;
 } /*}}}*/
 
+VOID MIRPrintFunctionStat(MIR_FUNCTION_STAT* stat)
+{/*{{{*/
+    std::cerr << "ol = " << stat->name << ", id = " << stat->id << ", ignore_context_count = " << stat->ignore_context_count << std::endl;
+}/*}}}*/
+
 VOID MIROutlineFunctionEntry(VOID* name)
 { /*{{{*/
+    // Debug
+    //if(g_current_stat) {
+        //std::cerr << "Outline function instance paused!" << std::endl;
+        //MIRPrintFunctionStat(g_current_stat);
+    //}
+
     // Attach to MIR shared memory
     if (g_shmat_done == false) {
         g_shmat_done = true;
@@ -211,17 +222,30 @@ VOID MIROutlineFunctionEntry(VOID* name)
     g_stat_stack.push(g_stat_list);
     g_current_stat = g_stat_list;
 
-    // Debug
-    //std::cout << "Function entered!\n";
+    //// Debug
+    //std::cerr << "Outline function instance started!" << std::endl;
+    //MIRPrintFunctionStat(g_current_stat);
 } /*}}}*/
 
 VOID MIROutlineFunctionExit()
 { /*{{{*/
-    // Memory optimziation: Free the mem_fp set
-    // We are only intersted in mem_fp size for now
     if (g_current_stat) {
+        //// Debug
+        //std::cerr << "Outline function instance exited!" << std::endl;
+        //MIRPrintFunctionStat(g_current_stat);
+
+        // Memory optimziation: Free the mem_fp set
+        // We are only intersted in mem_fp size for now
         g_current_stat->mem_fp_sz = g_current_stat->mem_fp.size();
         g_current_stat->mem_fp.clear();
+
+        // Ensure ignore contexts are properly exited
+        //assert(g_current_stat->ignore_context_count == 0);
+        if(g_current_stat->ignore_context_count != 0) {
+            std::cerr << "Ignore context count at outline function exit is non-zero!" << std::endl;
+            MIRPrintFunctionStat(g_current_stat);
+            exit(1);
+        }
     }
 
     // Restore context
@@ -231,8 +255,11 @@ VOID MIROutlineFunctionExit()
     else
         g_current_stat = NULL;
 
-    // Debug
-    //std::cout << "Function exited!\n";
+    //// Debug
+    //if(g_current_stat) {
+        //std::cerr << "Outline function instance resumed!\n";
+        //MIRPrintFunctionStat(g_current_stat);
+    //}
 } /*}}}*/
 
 VOID MIRTaskCreateBefore()
