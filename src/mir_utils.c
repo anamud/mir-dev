@@ -101,3 +101,17 @@ uint64_t mir_get_cycles()
     return ((uint64_t)a) | (((uint64_t)d) << 32);
 } /*}}}*/
 #endif
+
+/* This function is called upon every function entry
+ * when code is compiled using -finstrument-functions. */
+void __cyg_profile_func_enter(void *func, void *callsite)
+{/*{{{*/
+    MIR_CONTEXT_ENTER;
+}/*}}}*/
+
+/* This function is called upon every function exit
+ * when code is compiled using -finstrument-functions. */
+void __cyg_profile_func_exit(void *func, void *callsite)
+{/*{{{*/
+    MIR_CONTEXT_EXIT;
+}/*}}}*/

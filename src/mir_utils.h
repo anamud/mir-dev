@@ -49,6 +49,10 @@ int mir_pstack_set_size(size_t sz);
 
 /*PUB_INT*/ uint64_t mir_get_cycles();
 
+void __cyg_profile_func_enter (void *, void *) __attribute__((no_instrument_function));
+
+void __cyg_profile_func_exit (void *, void *) __attribute__((no_instrument_function));
+
 END_C_DECLS
 
 #endif

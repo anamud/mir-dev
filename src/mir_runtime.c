@@ -593,13 +593,3 @@ shutdown:
 
     return;
 } /*}}}*/
-
-void __cyg_profile_func_enter(void *func, void *callsite)
-{/*{{{*/
-    MIR_CONTEXT_ENTER;
-}/*}}}*/
-
-void __cyg_profile_func_exit(void *func, void *callsite)
-{/*{{{*/
-    MIR_CONTEXT_EXIT;
-}/*}}}*/
