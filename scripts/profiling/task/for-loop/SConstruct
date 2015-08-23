@@ -1,0 +1,34 @@
+import os
+GECODE_ROOT = os.environ.get('GECODE_ROOT')
+if(GECODE_ROOT == None):
+    print('GECODE_ROOT is not defined. Aborting!')
+    Exit(2)
+
+env = Environment()
+
+env['CXX'] = ['g++']
+
+env['CCFLAGS'] = Split("""
+-Wall
+-O3
+-g
+""")
+#-DUSE_NAIVE_PROPAGATOR
+#-DUSE_NAIVE_BRANCHER
+env['CCFLAGS'] += ['-I' + GECODE_ROOT + '/include']
+
+env['LINKFLAGS'] = ['-L' + GECODE_ROOT + '/lib']
+
+env['LIBS'] = Split("""
+-lgecodefloat
+-lgecodeset
+-lgecodesearch
+-lgecodeint
+-lgecodekernel
+-lgecodesupport
+-lgecodeminimodel
+-lpthread
+-lgecodegist
+""")
+
+env.Program('mir_loop_scheduler', source = 'mir_loop_scheduler.cpp')

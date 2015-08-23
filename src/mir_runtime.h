@@ -37,6 +37,7 @@ struct mir_runtime_t { /*{{{*/
     long omp_for_chunk_size;
     int single_parallel_block;
     int chunks_are_tasks;
+    char precomp_schedule_dir[MIR_LONG_NAME_LEN];
 
     // Flags
     int sig_dying;

@@ -22,7 +22,7 @@ static void parallel_start (void (*fn) (void *), void *data, unsigned num_thread
     struct mir_loop_des_t* loop = NULL;
     if (has_loop_desc && !private_loop_desc) {
         loop = mir_new_omp_loop_desc();
-        mir_omp_loop_desc_init(loop, start, end, incr, chunk_size);
+        mir_omp_loop_desc_init(loop, start, end, incr, chunk_size, false);
     }
 
     // Create thread team.
@@ -48,7 +48,7 @@ static void parallel_start (void (*fn) (void *), void *data, unsigned num_thread
         // Set loop parameters.
         if (has_loop_desc && private_loop_desc) {
             loop = mir_new_omp_loop_desc();
-            mir_omp_loop_desc_init(loop, start, end, incr, chunk_size);
+            mir_omp_loop_desc_init(loop, start, end, incr, chunk_size, false);
         }
 
         // Create and schedule loop tasks on all workers except current.
@@ -61,7 +61,7 @@ static void parallel_start (void (*fn) (void *), void *data, unsigned num_thread
     // Set loop parameters for fake task.
     if (has_loop_desc && private_loop_desc) {
         loop = mir_new_omp_loop_desc();
-        mir_omp_loop_desc_init(loop, start, end, incr, chunk_size);
+        mir_omp_loop_desc_init(loop, start, end, incr, chunk_size, false);
     }
 
     // Create fake loop task on current worker.
@@ -303,7 +303,7 @@ bool GOMP_loop_guided_start (long start, long end, long incr, long chunk_size, l
     if(team->loop == NULL)
     {
         struct mir_loop_des_t* loop = mir_new_omp_loop_desc();
-        mir_omp_loop_desc_init(loop, start, end, incr, chunk_size);
+        mir_omp_loop_desc_init(loop, start, end, incr, chunk_size, false);
         team->loop = loop;
     }
     mir_lock_unset(&team->loop_lock);
@@ -409,7 +409,7 @@ bool GOMP_loop_dynamic_start (long start, long end, long incr, long chunk_size, 
     if(team->loop == NULL)
     {
         struct mir_loop_des_t* loop = mir_new_omp_loop_desc();
-        mir_omp_loop_desc_init(loop, start, end, incr, chunk_size * incr);
+        mir_omp_loop_desc_init(loop, start, end, incr, chunk_size * incr, false);
         team->loop = loop;
     }
     mir_lock_unset(&team->loop_lock);
@@ -558,7 +558,7 @@ bool GOMP_loop_static_start (long start, long end, long incr, long chunk_size, l
 
     // Create loop description and associate with task.
     struct mir_loop_des_t* loop = mir_new_omp_loop_desc();
-    mir_omp_loop_desc_init(loop, start, end, incr, chunk_size);
+    mir_omp_loop_desc_init(loop, start, end, incr, chunk_size, false);
     chunk_task_start("GOMP_for_static_task", loop);
 
     bool retval = GOMP_loop_static_next(istart, iend);
@@ -580,6 +580,79 @@ void GOMP_parallel_loop_static(void (*fn)(void*), void* data, unsigned num_threa
 { /*{{{*/
     // Schedule for loop tasks on all workers except current.
     GOMP_parallel_loop_static_start(fn, data, num_threads, start, end, incr, chunk_size);
+
+    MIR_CONTEXT_EXIT;
+
+    // Execute task.
+    fn(data);
+
+    MIR_CONTEXT_ENTER;
+
+    // Wait for for loop tasks to finish.
+    GOMP_parallel_end();
+} /*}}}*/
+
+bool GOMP_loop_auto_next(long* istart, long* iend)
+{ /*{{{*/
+    struct mir_worker_t* worker = mir_worker_get_context();
+    MIR_ASSERT(worker != NULL);
+    MIR_ASSERT(worker->current_task != NULL);
+    MIR_ASSERT(worker->current_task->loop != NULL);
+    MIR_ASSERT(worker->current_task->loop->init == 1);
+
+    bool ret;
+
+    struct mir_loop_des_t* loop = worker->current_task->loop;
+    if (loop->precomp_schedule_exists) {
+        if (loop->precomp_schedule) {
+            *istart = loop->precomp_schedule->chunk_start;
+            *iend = loop->precomp_schedule->chunk_end;
+            loop->precomp_schedule = loop->precomp_schedule->next;
+            ret = true;
+        } else {
+            ret = false;
+        }
+    } else {
+        // Revert to static schedule if precomputed schedule is absent.
+        ret = !GOMP_loop_static_next_int(istart, iend);
+    }
+
+    chunk_task_next(*istart, *iend, !ret);
+
+    return ret;
+} /*}}}*/
+
+bool GOMP_loop_auto_start (long start, long end, long incr, long chunk_size, long *istart, long *iend)
+{ /*{{{*/
+    struct mir_worker_t* worker = mir_worker_get_context();
+    MIR_ASSERT(worker != NULL);
+    MIR_ASSERT(worker->current_task != NULL);
+    MIR_ASSERT_STR(worker->current_task->loop == NULL, "Nested parallel for loops are not supported.");
+
+    // Create loop description and associate with task.
+    struct mir_loop_des_t* loop = mir_new_omp_loop_desc();
+    mir_omp_loop_desc_init(loop, start, end, incr, chunk_size, true);
+    chunk_task_start("GOMP_for_auto_task", loop);
+
+    bool retval = GOMP_loop_auto_next(istart, iend);
+
+    return retval;
+} /*}}}*/
+
+void GOMP_parallel_loop_auto_start (void (*fn) (void *), void *data, unsigned num_threads, long start, long end, long incr, long chunk_size)
+{ /*{{{*/
+    parallel_start(fn, data, num_threads, start, end, incr, chunk_size, true, true, "GOMP_parallel_for_auto_task");
+} /*}}}*/
+
+// Tasks spawned in GOMP_parallel_loop_auto have their own local
+// loop iteration allocators which assign pre-decided, non-overlapping
+// loop iterations when GOMP_loop_auto_next_int is called. This is
+// different from GOMP_parallel_loop_dynamic.
+
+void GOMP_parallel_loop_auto(void (*fn)(void*), void* data, unsigned num_threads, long start, long end, long incr, long chunk_size, unsigned flags)
+{ /*{{{*/
+    // Schedule for loop tasks on all workers except current.
+    GOMP_parallel_loop_auto_start(fn, data, num_threads, start, end, incr, chunk_size);
 
     MIR_CONTEXT_EXIT;
 
@@ -615,6 +688,10 @@ static int parse_omp_schedule_chunk_size(void)
     else if (strncasecmp(env, "guided", 6) == 0) {
         omp_for_schedule = OFS_GUIDED;
         env += 6;
+    }
+    else if (strncasecmp(env, "auto", 4) == 0) {
+        omp_for_schedule = OFS_AUTO;
+        env += 4;
     }
     else
         goto unknown;
@@ -679,6 +756,10 @@ static enum omp_for_schedule_t parse_omp_schedule_name(void)
         omp_for_schedule = OFS_GUIDED;
         env += 6;
     }
+    else if (strncasecmp(env, "auto", 4) == 0) {
+        omp_for_schedule = OFS_GUIDED;
+        env += 4;
+    }
     else
         goto unknown;
 
@@ -709,6 +790,9 @@ bool GOMP_loop_runtime_next(long* istart, long* iend)
         retval = GOMP_loop_guided_next(istart, iend);
         break;
     case OFS_AUTO:
+        // The auto schedule uses a precomputed schedule if available or reverts to static schedule.
+        retval = GOMP_loop_auto_next(istart, iend);
+        break;
     default:
         MIR_LOG_ERR("OMP_SCHEDULE is unsupported.");
         break;
@@ -732,6 +816,9 @@ bool GOMP_loop_runtime_start (long start, long end, long incr, long *istart, lon
         retval = GOMP_loop_guided_start(start, end, incr, parse_omp_schedule_chunk_size(), istart, iend);
         break;
     case OFS_AUTO:
+        // The auto schedule uses a precomputed schedule if available or reverts to static schedule.
+        retval = GOMP_loop_auto_start(start, end, incr, parse_omp_schedule_chunk_size(), istart, iend);
+        break;
     default:
         MIR_LOG_ERR("OMP_SCHEDULE is unsupported.");
         break;
@@ -755,6 +842,8 @@ void GOMP_parallel_loop_runtime_start(void (*fn) (void *), void *data,
         GOMP_parallel_loop_guided_start(fn, data, num_threads, start, end, incr, parse_omp_schedule_chunk_size());
         break;
     case OFS_AUTO:
+        GOMP_parallel_loop_auto_start(fn, data, num_threads, start, end, incr, parse_omp_schedule_chunk_size());
+        break;
     default:
         MIR_LOG_ERR("OMP_SCHEDULE is unsupported.");
     }

@@ -2,6 +2,7 @@
 #define MIR_TYPES_H
 
 #include <stdint.h>
+#include <stdbool.h>
 #include <inttypes.h>
 #include <stdlib.h>
 #include "mir_defines.h"

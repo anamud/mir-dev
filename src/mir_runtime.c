@@ -63,6 +63,7 @@ static void mir_preconfig_init(int num_workers)
     runtime->omp_for_chunk_size = 0;
     runtime->single_parallel_block = 0;
     parse_omp_schedule();
+    strcpy(runtime->precomp_schedule_dir, "./");
 
     // Flags
     runtime->sig_dying = 0;
@@ -197,6 +198,7 @@ static inline void print_help()
                               "--queue-size=<int> task queue capacity\n"
                               "--numa-footprint=<int> for numa scheduling policy. Indicates data footprint size in bytes below which task is dealt to worker's private queue.\n"
                               "--single-parallel-block run parallel blocks with one worker\n"
+                              "--precomp_schedule_dir <str> location of precomputed schedules for for-loops. \n"
                               "--worker-stats collect worker statistics\n"
                               "--task-stats collect task statistics\n"
                               "--chunks-are-tasks treat loop chunks as tasks\n"
@@ -247,6 +249,7 @@ static void mir_config()
             { "stack-size", required_argument, 0, 0 },
             { "inlining-limit", required_argument, 0, 0 },
             { "single-parallel-block", no_argument, 0, 0 },
+            { "precomp-schedule-dir", required_argument, 0, 0},
             { "numa-footprint", required_argument, 0, 0 },
             { "queue-size", required_argument, 0, 0 },
             { "help", no_argument, 0, 'h' },
@@ -276,6 +279,12 @@ static void mir_config()
             else if (0 == strcmp(long_options[option_index].name, "single-parallel-block")) {
                 runtime->single_parallel_block = 1;
                 MIR_DEBUG("Executing parallel blocks with one worker enabled.");
+            }
+            else if (0 == strcmp(long_options[option_index].name, "precomp-schedule-dir")) {
+                if (strlen(optarg) >= MIR_LONG_NAME_LEN)
+                    MIR_LOG_ERR("Precomputed schedule directory name is longer than %d.", MIR_LONG_NAME_LEN);
+                strcpy(runtime->precomp_schedule_dir, optarg);
+                MIR_DEBUG("Precomputed schedule directory set to %s.", runtime->precomp_schedule_dir);
             }
             else if (0 == strcmp(long_options[option_index].name, "stack-size")) {
                 int ps_sz = atoi(optarg) * 1024 * 1024;
