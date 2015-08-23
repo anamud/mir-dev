@@ -142,7 +142,7 @@ private:
                 f2 -= c - get_work(n1);
             assert(n1 <= n12);
             // Make N3 smaller by removing elements
-            for (; (get_work(n3 - 1) < k) && (n3 > n12); n3--)
+            for (; (n3 > 0) && (get_work(n3 - 1) < k) && (n3 > n12); n3--)
                 s3 -= get_work(n3 - 1);
             // Overspill
             unsigned int o = (s3 > f2) ? ((s3 - f2 + c - 1) / c) : 0;
