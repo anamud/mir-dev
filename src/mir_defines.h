@@ -77,4 +77,8 @@
 #define MIR_CONTEXT_EXIT do{ __asm volatile ("mov %%cx, %%cx" ::: ); }while(0)
 #define MIR_CONTEXT_EXIT_VAL(val) do{ __asm volatile ("mov %%cx, %%cx" ::: ); return (val); }while(0)
 
+// Architecture
+// DO NOT EDIT
+#define MIR_IMPOSSIBLE_CPU_ID 299792458
+
 #endif
