@@ -34,7 +34,7 @@ void mir_omp_loop_desc_init(struct mir_loop_des_t* loop, long start, long end,
         MIR_ASSERT(worker->current_task != NULL);
 
         if (worker->current_task->parent) {
-            unsigned long idle_join = (strcmp(worker->current_task->parent->name, "idle_task") == 0) ? worker->current_task->sync_pass : worker->current_task->parent->sync_pass;
+            unsigned long idle_join = (strcmp(worker->current_task->parent->name, "idle_task") == 0) ? worker->current_task->twc->num_passes : worker->current_task->parent->twc->num_passes;
 
             char schedule_file_name[MIR_LONG_NAME_LEN + MIR_SHORT_NAME_LEN];
             char task_of[MIR_SHORT_NAME_LEN];
