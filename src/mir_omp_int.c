@@ -757,7 +757,7 @@ static enum omp_for_schedule_t parse_omp_schedule_name(void)
         env += 6;
     }
     else if (strncasecmp(env, "auto", 4) == 0) {
-        omp_for_schedule = OFS_GUIDED;
+        omp_for_schedule = OFS_AUTO;
         env += 4;
     }
     else
