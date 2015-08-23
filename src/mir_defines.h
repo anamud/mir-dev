@@ -87,6 +87,5 @@
 // Architecture
 // DO NOT EDIT
 #define MIR_IMPOSSIBLE_CPU_ID 299792458
-#define MIR_ALWAYS_AVAILABLE_CPU_ID 0
 
 #endif
