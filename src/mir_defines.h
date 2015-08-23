@@ -69,7 +69,9 @@
 
 // Shared memory
 #define MIR_OFP_SHM_SIZE 16
+// DO NOT EDIT
 #define MIR_OFP_SHM_KEY 31415926
+// DO NOT EDIT
 #define MIR_OFP_SHM_SIGREAD '*'
 
 // Context tracking
