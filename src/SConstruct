@@ -131,8 +131,13 @@ opt.Library(target = 'mir-opt', source = opt_src)
 ###################
 
 prof = env.Clone();
-prof['CCFLAGS'] += ['-O2']
-prof['CCFLAGS'] += ['-finstrument-functions']
+prof['CCFLAGS'] += Split("""
+-O2
+-g
+-ggdb
+-finstrument-functions
+-DMIR_ENABLE_PROF
+""")
 prof.VariantDir('prof-build', MIR_ROOT+'/src', duplicate=0)
 prof_src = prof.Glob('prof-build/*.c')
 prof_src += prof.Glob('prof-build/arch/*.c')

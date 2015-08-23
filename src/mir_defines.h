@@ -75,9 +75,14 @@
 #define MIR_OFP_SHM_SIGREAD '*'
 
 // Context tracking
+
+#ifdef MIR_ENABLE_PROF
 #define MIR_CONTEXT_ENTER do{ __asm volatile ("mov %%bx, %%bx" ::: ); }while(0)
 #define MIR_CONTEXT_EXIT do{ __asm volatile ("mov %%cx, %%cx" ::: ); }while(0)
-#define MIR_CONTEXT_EXIT_VAL(val) do{ __asm volatile ("mov %%cx, %%cx" ::: ); return (val); }while(0)
+#else
+#define MIR_CONTEXT_ENTER
+#define MIR_CONTEXT_EXIT
+#endif
 
 // Architecture
 // DO NOT EDIT
