@@ -21,6 +21,8 @@ KNOB<string> KnobFunctionNames(KNOB_MODE_WRITEONCE, "pintool",
     "of", "", "specify outline functions (csv)");
 KNOB<string> KnobCalledFunctionNames(KNOB_MODE_WRITEONCE, "pintool",
     "cf", "", "specify functions called (csv) from outline functions");
+KNOB<string> KnobDynamicallyCalledFunctionNames(KNOB_MODE_WRITEONCE, "pintool",
+    "df", "", "specify functions dynamically called (csv) from outline functions");
 KNOB<BOOL> KnobCalcMemShare(KNOB_MODE_WRITEONCE, "pintool",
     "ds", "0", "calculate data sharing (NOTE: a time consuming process!)");
 KNOB<BOOL> KnobDisableIgnoreContextDetection(KNOB_MODE_WRITEONCE, "pintool",
@@ -278,6 +280,7 @@ VOID MIRTaskWaitAfter()
 
 VOID Image(IMG img, VOID* v)
 { /*{{{*/
+    std::cout << "Analyzing loaded image: " << IMG_Name(img) << std::endl;
     std::string delims = ",";
     std::vector<string>::iterator it;
 
@@ -358,6 +361,7 @@ VOID Image(IMG img, VOID* v)
     tokenize(called_functions_csv, delims, called_functions);
     if (called_functions.size() == 0)
         std::cout << "Note: Called function list is empty." << std::endl;
+
     for (it = called_functions.begin(); it != called_functions.end(); it++) {
         //std::cout << "Analyzing called function: " << *it << std::endl;
         RTN mirRtn = RTN_FindByName(img, (*it).c_str());
@@ -432,6 +436,96 @@ VOID Image(IMG img, VOID* v)
 
             RTN_Close(mirRtn);
         } /*}}}*/
+    }
+
+    // The functions dynamically called by the outline functions
+    std::string dynamically_called_functions_csv = KnobDynamicallyCalledFunctionNames.Value();
+    std::vector<std::string> dynamically_called_functions;
+    tokenize(dynamically_called_functions_csv, delims, dynamically_called_functions);
+    if (dynamically_called_functions.size() == 0)
+        std::cout << "Note: Dynamically called function list is empty." << std::endl;
+
+    for (SYM sym = IMG_RegsymHead(img); SYM_Valid(sym); sym = SYM_Next(sym)) {
+        std::string undFuncName = PIN_UndecorateSymbolName(SYM_Name(sym), UNDECORATION_NAME_ONLY);
+        //std::cout << "Checking if any dynamically called function matches undecorated function: " << undFuncName << std::endl;
+        for (it = dynamically_called_functions.begin(); it != dynamically_called_functions.end(); it++) {
+            if (undFuncName == (*it).c_str()) {
+                //std::cout << "Analyzing called function: " << *it << std::endl;
+                RTN mirRtn = RTN_FindByAddress(IMG_LowAddress(img) + SYM_Value(sym));
+                if (RTN_Valid(mirRtn)) { /*{{{*/
+                    //std::cout << "Function " << *it << " is valid" << std::endl;
+                    std::cout << "Adding profiling hooks to dynamically called function: " << *it << std::endl;
+                    RTN_Open(mirRtn);
+
+                    // For each instruction of the function, update entries in the stats counter
+                    for (INS ins = RTN_InsHead(mirRtn); INS_Valid(ins); ins = INS_Next(ins)) {
+                        if (!KnobDisableIgnoreContextDetection) {
+                            // Check if this instruction marks entry into an ignorable context
+                            // Entry into ignorable context marked by assembly instruction "MOV BX, BX"
+                            if (INS_IsMov(ins) && INS_FullRegWContain(ins, REG_BX) && INS_FullRegRContain(ins, REG_BX)) {
+                                //std::cout << "Function " << *it << " entered ignorable context" << std::endl;
+                                INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)MIROutlineFunctionIgnoreContextEntry, IARG_END);
+                                continue;
+                            }
+                            // Check if this instruction marks exit out of an ignorable context
+                            // Exit out of ignorable context marked by assembly instruction "MOV CX, CX"
+                            if (INS_IsMov(ins) && INS_FullRegWContain(ins, REG_CX) && INS_FullRegRContain(ins, REG_CX)) {
+                                //std::cout << "Function " << *it << " exited ignorable context" << std::endl;
+                                INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)MIROutlineFunctionIgnoreContextExit, IARG_END);
+                                continue;
+                            }
+                        }
+
+                        // Count instructions
+                        INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)MIROutlineFunctionUpdateInsCount, IARG_END);
+#ifdef GET_INS_MIX
+                        INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)MIROutlineFunctionUpdateInsMix, IARG_UINT32, INS_Category(ins), IARG_END);
+#endif
+
+                        // Instrument stack accesses
+                        // If instruction operates using the SP or FP, its a stack operation
+                        if (INS_IsStackRead(ins))
+                            INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)MIROutlineFunctionUpdateStackRead, IARG_END);
+                        if (INS_IsStackWrite(ins))
+                            INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)MIROutlineFunctionUpdateStackWrite, IARG_END);
+
+#ifdef EXCLUDE_STACK_INS_FROM_MEM_FP
+                        if (!INS_IsStackRead(ins) && !INS_IsStackWrite(ins)) {
+#endif
+                            // Get memory operands of instruction
+                            UINT32 memOperands = INS_MemoryOperandCount(ins);
+                            // Iterate over each memory operand of the instruction.
+                            for (UINT32 memOp = 0; memOp < memOperands; memOp++) {
+                                if (INS_MemoryOperandIsRead(ins, memOp)) {
+                                    INS_InsertPredicatedCall(
+                                        ins, IPOINT_BEFORE, (AFUNPTR)MIROutlineFunctionUpdateMemRefRead,
+                                        //IARG_INST_PTR,
+                                        IARG_MEMORYOP_EA, memOp,
+                                        //IARG_REG_VALUE, REG_STACK_PTR,
+                                        IARG_END);
+                                }
+                                // Note that in some architectures a single memory operand can be
+                                // both read and written (for instance incl (%eax) on IA-32)
+                                // In that case we instrument it once for read and once for write.
+                                if (INS_MemoryOperandIsWritten(ins, memOp)) {
+                                    INS_InsertPredicatedCall(
+                                        ins, IPOINT_BEFORE, (AFUNPTR)MIROutlineFunctionUpdateMemRefWrite,
+                                        //IARG_INST_PTR,
+                                        IARG_MEMORYOP_EA, memOp,
+                                        //IARG_REG_VALUE, REG_STACK_PTR,
+                                        IARG_END);
+                                }
+                            }
+#ifdef EXCLUDE_STACK_INS_FROM_MEM_FP
+                        }
+#endif
+                    }
+
+                    RTN_Close(mirRtn);
+                } /*}}}*/
+                break;
+            }
+        }
     }
 
     // Task create

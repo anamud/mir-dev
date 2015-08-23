@@ -18,6 +18,9 @@ outline_funcs = []
 # Functions callable from outline functions
 callable_funcs = []
 
+# Functions dynamically callable from outline functions
+dynamically_callable_funcs = []
+
 def process(raw_out):
     # We will extract function names from objdump output
     str_out = raw_out.decode('utf-8')
@@ -41,8 +44,14 @@ def get_callable(obj_fil):
     raw_out = subprocess.Popen([command], shell=True, stdout = subprocess.PIPE, stderr = subprocess.STDOUT).communicate()[0]
     return process(raw_out)
 
+def get_dynamically_callable(obj_fil):
+    # We will use objdump to get a list of dynamic function (DF) symbols
+    command = 'objdump -T {0} | grep " DF " | grep -E -v "{1}"'.format(obj_fil,outline_func_pattern)
+    raw_out = subprocess.Popen([command], shell=True, stdout = subprocess.PIPE, stderr = subprocess.STDOUT).communicate()[0]
+    return process(raw_out)
+
 def main():
-    global outline_funcs, callable_funcs
+    global outline_funcs, callable_funcs, dynamically_callable_funcs
     try:
         opts, args = getopt.getopt(sys.argv[1:], "hve", ["help", "verbose", "export"])
     except getopt.GetoptError as err:
@@ -76,6 +85,7 @@ def main():
             print 'Processing file: {0}'.format(obj_fil)
         outline_funcs.append(get_outlined(obj_fil))
         callable_funcs.append(get_callable(obj_fil))
+        dynamically_callable_funcs.append(get_dynamically_callable(obj_fil))
     # Remove multiple commas and spaces in outline_funcs list
     outline_funcs = string.join(outline_funcs, ",")
     outline_funcs = re.sub(' +', '', outline_funcs)
@@ -84,6 +94,10 @@ def main():
     callable_funcs = string.join(callable_funcs, ",")
     callable_funcs = re.sub(' +', '', callable_funcs)
     callable_funcs = re.sub(',+', ',', callable_funcs)
+    # Remove multiple commas and spaces in dyanamically callable_funcs list
+    dynamically_callable_funcs = string.join(dynamically_callable_funcs, ",")
+    dynamically_callable_funcs = re.sub(' +', '', dynamically_callable_funcs)
+    dynamically_callable_funcs = re.sub(',+', ',', dynamically_callable_funcs)
     # Print out
     if export:
         sys.stdout.write('export CHECKME_OUTLINE_FUNCTIONS=')
@@ -95,6 +109,11 @@ def main():
     else:
         sys.stdout.write('CHECKME_CALLED_FUNCTIONS=')
     print callable_funcs.strip().strip(',')
+    if export:
+        sys.stdout.write('export CHECKME_DYNAMICALLY_CALLED_FUNCTIONS=')
+    else:
+        sys.stdout.write('CHECKME_DYNAMICALLY_CALLED_FUNCTIONS=')
+    print dynamically_callable_funcs.strip().strip(',')
 
 if __name__ == '__main__':
     main()
