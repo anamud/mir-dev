@@ -14,6 +14,8 @@
 #define MIR_IMPOSSIBLE_CPU_ID 299792458
 
 #define SEARCH_TIMEOUT_MS 20000
+#define NUM_BRUTE_SEARCH_STEPS 10
+
 // Choose one optimal CPU assignment from below:
 //#define OPTIMAL_CPU_ASSIGNMENT_START_FROM_END
 #define OPTIMAL_CPU_ASSIGNMENT_START_ONE_OFF
@@ -774,12 +776,15 @@ int main(int argc, char* argv[])
     // Brute force trial
     // TODO: Model this as a binary search intead of search from lowest.
     BinPacking* sol = NULL;
-    std::cout << "Searching for bin-optimal schedule within makespan bounds: ["
-              << s.get_lower_bound_makespan() << " : "
-              << s.get_upper_bound_makespan() << ") ..." << std::endl;
-    for (unsigned int i = s.get_lower_bound_makespan();
-         i < s.get_upper_bound_makespan();
-         i++) {
+    unsigned int lb = s.get_lower_bound_makespan();
+    unsigned int ub = s.get_upper_bound_makespan();
+    unsigned int step = (ub - lb)/NUM_BRUTE_SEARCH_STEPS;
+    if (step == 0)
+        step = 1;
+    std::cout << "Searching for bin-optimal schedule within makespan bounds ["
+              << lb << " : "
+              << ub << ") using " << step << " steps ..." << std::endl;
+    for (unsigned int i = lb; i < ub; i+=step ) {
         s.set_trial_bound_makespan(i);
 
         // Watchdog timer for search
