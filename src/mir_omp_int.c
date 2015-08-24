@@ -600,7 +600,7 @@ bool GOMP_loop_auto_next(long* istart, long* iend)
     MIR_ASSERT(worker->current_task->loop != NULL);
     MIR_ASSERT(worker->current_task->loop->init == 1);
 
-    bool ret;
+    bool ret = false;
 
     struct mir_loop_des_t* loop = worker->current_task->loop;
     if (loop->precomp_schedule_exists) {
@@ -609,8 +609,6 @@ bool GOMP_loop_auto_next(long* istart, long* iend)
             *iend = loop->precomp_schedule->chunk_end;
             loop->precomp_schedule = loop->precomp_schedule->next;
             ret = true;
-        } else {
-            ret = false;
         }
     } else {
         // Revert to static schedule if precomputed schedule is absent.
