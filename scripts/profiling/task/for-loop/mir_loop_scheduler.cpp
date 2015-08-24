@@ -14,6 +14,10 @@
 #define MIR_IMPOSSIBLE_CPU_ID 299792458
 
 #define SEARCH_TIMEOUT_MS 20000
+// Choose one optimal CPU assignment from below:
+//#define OPTIMAL_CPU_ASSIGNMENT_START_FROM_END
+#define OPTIMAL_CPU_ASSIGNMENT_START_ONE_OFF
+
 struct Chunk {
     long chunk_start;
     long chunk_end;
@@ -696,7 +700,13 @@ public:
                 if (bin[i].assigned() && (bin[i].val() == j)) {
                     Chunk c = schedule.get_chunk(i);
                     // Assign optimal CPU.
+#ifdef OPTIMAL_CPU_ASSIGNMENT_START_FROM_END
+                    c.cpu_id = schedule.get_num_cpus() - 1 - j;
+#elif defined(OPTIMAL_CPU_ASSIGNMENT_START_ONE_OFF)
+                    c.cpu_id = (j + 1) % schedule.get_num_cpus();
+#else
                     c.cpu_id = j;
+#endif
                     c.print(os);
                 }
         }
