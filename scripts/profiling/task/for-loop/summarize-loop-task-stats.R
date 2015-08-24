@@ -373,15 +373,44 @@ if ("sibling_work_balance" %in% colnames(task_stats)) {# {{{
 
 # Chunks
 if ("idle_join" %in% colnames(task_stats)) {# {{{
+    # Summary
     my_print("# Chunks summary:")
 
     chunk_tasks <- which(grepl(glob2rx("chunk_*"), task_stats$metadata))
     task_stats_only_chunks <- task_stats[chunk_tasks, ]
 
-    chunk_join_freq <- task_stats_only_chunks %>% group_by(idle_join) %>% summarise(count = n())
+    chunk_join_freq <- task_stats_only_chunks %>% group_by(outline_function, idle_join) %>% summarise(count = n())
+    print(chunk_join_freq, row.names=F)
     print(stat.desc(as.numeric(chunk_join_freq$count)), row.names=F)
     my_print()
     box_plotter(chunk_join_freq$count, xt="", yt="Number of chunks", mt=plot_title)
+
+    # Chunk parallel benefit
+    if ("parallel_benefit" %in% colnames(task_stats_only_chunks)) {
+        my_print("# Chunks parallel benefit:")
+
+        chunk_parallel_benefit <- task_stats_only_chunks %>% group_by(outline_function, idle_join) %>% summarise(parallel_benefit_median = median(parallel_benefit), parallel_benefit_mean = mean(parallel_benefit))
+        print(chunk_parallel_benefit, row.names=F)
+        my_print()
+    }
+
+    # Chunk memory hierarchy utilization (MHU)
+    if ("mem_hier_util" %in% colnames(task_stats_only_chunks)) {
+        my_print("# Chunks memory hierarchy utilization (MHU):")
+
+        chunk_MHU <- task_stats_only_chunks %>% group_by(outline_function, idle_join) %>% summarise(MHU_median = median(mem_hier_util), MHU_mean = mean(mem_hier_util))
+        print(chunk_MHU, row.names=F)
+        my_print()
+    }
+
+    # Chunk work deviation
+    if ("work_deviation" %in% colnames(task_stats_only_chunks)) {
+        my_print("# Chunks work deviation:")
+
+        chunk_work_deviation <- task_stats_only_chunks %>% group_by(outline_function, idle_join) %>% summarise(work_deviation_median = median(work_deviation), work_deviation_mean = mean(work_deviation))
+        print(chunk_work_deviation, row.names=F)
+        my_print()
+    }
 }# }}}
 
 # Chunk work balance
