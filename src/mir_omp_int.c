@@ -630,8 +630,8 @@ bool GOMP_loop_auto_start (long start, long end, long incr, long chunk_size, lon
     MIR_ASSERT_STR(worker->current_task->loop == NULL, "Nested parallel for loops are not supported.");
 
     // Create loop description and associate with task.
-    struct mir_loop_des_t* loop = mir_new_omp_loop_desc();
-    mir_omp_loop_desc_init(loop, start, end, incr, chunk_size, true);
+    struct mir_loop_des_t* loop;
+    loop = mir_new_omp_loop_desc_init(start, end, incr, chunk_size, true);
     chunk_task_start("GOMP_for_auto_task", loop);
 
     return GOMP_loop_auto_next(istart, iend);
