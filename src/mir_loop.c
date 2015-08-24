@@ -68,7 +68,7 @@ void mir_omp_loop_desc_init(struct mir_loop_des_t* loop, long start, long end,
                             MIR_LOG_ERR("Precomputed schedule in file %s uses unsupported MIR_IMPOSSIBLE_CPU_ID.",
                                         schedule_file_name);
                         }
-                        if (cpu_id > runtime->num_workers && cpu_id != MIR_IMPOSSIBLE_CPU_ID) {
+                        else if (cpu_id > runtime->num_workers) {
                             MIR_LOG_ERR("Precomputed schedule in file %s has more workers than available.",
                                         schedule_file_name);
                         }
