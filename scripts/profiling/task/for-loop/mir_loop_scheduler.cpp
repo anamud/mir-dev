@@ -13,6 +13,7 @@
 // DO NOT EDIT.
 #define MIR_IMPOSSIBLE_CPU_ID 299792458
 
+#define SEARCH_TIMEOUT_MS 20000
 struct Chunk {
     long chunk_start;
     long chunk_end;
@@ -773,7 +774,7 @@ int main(int argc, char* argv[])
 
         // Watchdog timer for search
         Search::Options so;
-        Search::TimeStop ts(10000); // stop after 10000 ms
+        Search::TimeStop ts(SEARCH_TIMEOUT_MS);
         so.stop = &ts;
 
         // Instantiate problem as BAB search.
