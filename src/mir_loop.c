@@ -79,16 +79,17 @@ void mir_omp_loop_desc_init(struct mir_loop_des_t* loop, long start, long end,
                 MIR_LOG_ERR("Precomputed schedule in file %s has more workers than available.",
                             schedule_file_name);
             }
-            if (cpu_id == worker->cpu_id) {
-                struct mir_loop_schedule_t* schedule = mir_malloc_int(sizeof(struct mir_loop_schedule_t));
-                MIR_CHECK_MEM(schedule != NULL);
-                schedule->chunk_start = chunk_start;
-                schedule->chunk_end = chunk_end;
-                schedule->work_cycles = work_cycles;
+            if (cpu_id != worker->cpu_id)
+                continue;
 
-                schedule->next = loop->precomp_schedule;
-                loop->precomp_schedule = schedule;
-            }
+            struct mir_loop_schedule_t* schedule = mir_malloc_int(sizeof(struct mir_loop_schedule_t));
+            MIR_CHECK_MEM(schedule != NULL);
+            schedule->chunk_start = chunk_start;
+            schedule->chunk_end = chunk_end;
+            schedule->work_cycles = work_cycles;
+
+            schedule->next = loop->precomp_schedule;
+            loop->precomp_schedule = schedule;
         }
         if (ferror(fp)) {
             MIR_LOG_ERR("Error occured while reading precomputed schedule file: %s.",
