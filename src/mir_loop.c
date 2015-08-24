@@ -27,6 +27,8 @@ void mir_omp_loop_desc_init(struct mir_loop_des_t* loop, long start, long end,
     loop->chunk_size = chunk_size;
     loop->static_trip = 0;
     loop->non_parallel_start = 0;
+    loop->precomp_schedule = NULL;
+    loop->precomp_schedule_exists = false;
 
     if (!use_precomp_schedule) {
         goto no_percomputed_schedule;
@@ -103,8 +105,6 @@ void mir_omp_loop_desc_init(struct mir_loop_des_t* loop, long start, long end,
     goto loop_init_done;
 
 no_percomputed_schedule:
-    loop->precomp_schedule = NULL;
-    loop->precomp_schedule_exists = false;
 
 loop_init_done:
     loop->init = 1;
