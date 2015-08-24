@@ -46,6 +46,10 @@ void mir_omp_loop_desc_init(struct mir_loop_des_t* loop, long start, long end,
 
             FILE* fp = fopen(schedule_file_name, "r");
             if (fp == NULL) {
+                if (worker->id == 0) {
+                    MIR_DEBUG("Cannot find precomputed schedule file: %s.",
+                            schedule_file_name);
+                }
                 goto no_percomputed_schedule;
             }
             else {
@@ -53,9 +57,11 @@ void mir_omp_loop_desc_init(struct mir_loop_des_t* loop, long start, long end,
                 int retval;
                 if (fp) {
                     if (worker->id == 0) {
-                        MIR_LOG_INFO("Using precomputed schedule file: %s.",
+                        MIR_DEBUG("Using precomputed schedule file: %s.",
                                 schedule_file_name);
                     }
+                    loop->precomp_schedule_exists = true;
+                    loop->precomp_schedule = NULL;
                     unsigned long chunk_start, chunk_end, cpu_id, work_cycles;
                     while (!feof(fp)) {
                         while (num_expect == (retval = fscanf(fp,
@@ -64,7 +70,6 @@ void mir_omp_loop_desc_init(struct mir_loop_des_t* loop, long start, long end,
                                                   &chunk_end,
                                                   &cpu_id,
                                                   &work_cycles))) {
-                            loop->precomp_schedule_exists = true;
                             if (cpu_id == MIR_IMPOSSIBLE_CPU_ID) {
                                 MIR_LOG_ERR("Precomputed schedule in file %s uses unsupported MIR_IMPOSSIBLE_CPU_ID.",
                                             schedule_file_name);
