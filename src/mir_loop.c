@@ -29,9 +29,10 @@ void mir_omp_loop_desc_init(struct mir_loop_des_t* loop, long start, long end,
     loop->non_parallel_start = 0;
     loop->precomp_schedule = NULL;
     loop->precomp_schedule_exists = false;
+    loop->init = 1;
 
     if (!use_precomp_schedule) {
-        goto loop_init_done;
+        return;
     }
 
     struct mir_worker_t* worker = mir_worker_get_context();
@@ -39,7 +40,7 @@ void mir_omp_loop_desc_init(struct mir_loop_des_t* loop, long start, long end,
     MIR_ASSERT(worker->current_task != NULL);
 
     if (!worker->current_task->parent) {
-        goto loop_init_done;
+        return;
     }
 
     unsigned long idle_join = (strcmp(worker->current_task->parent->name, "idle_task") == 0) ? worker->current_task->twc->num_passes : worker->current_task->parent->twc->num_passes;
@@ -54,7 +55,7 @@ void mir_omp_loop_desc_init(struct mir_loop_des_t* loop, long start, long end,
 
     FILE* fp = fopen(schedule_file_name, "r");
     if (fp == NULL) {
-        goto loop_init_done;
+        return;
     }
     int num_expect = 4;
     int retval;
@@ -101,9 +102,6 @@ void mir_omp_loop_desc_init(struct mir_loop_des_t* loop, long start, long end,
         }
     }
     fclose(fp);
-
-loop_init_done:
-    loop->init = 1;
 } /*}}}*/
 
 struct mir_loop_des_t* mir_new_omp_loop_desc_init(long start, long end, long incr, long chunk_size, bool use_precomp_schedule)
