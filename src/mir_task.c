@@ -305,7 +305,26 @@ void mir_task_execute_prolog(struct mir_task_t* task)
         // Record event
         MIR_RECORDER_EVENT(&event_meta_data_pre[0], MIR_RECORDER_EVENT_META_DATA_MAX_SIZE - 1);
         // Record state
-        MIR_RECORDER_STATE_BEGIN(MIR_STATE_TEXEC);
+        if (strcmp(task->metadata, "NA") == 0)
+        {
+            if (strcmp(task->name, MIR_IDLE_TASK_NAME) == 0) {
+                MIR_RECORDER_STATE_BEGIN(MIR_STATE_TIMPLICIT);
+            } else if (strcmp(task->name, "GOMP_parallel_task") == 0) {
+                MIR_RECORDER_STATE_BEGIN(MIR_STATE_TOMP_PAR);
+            } else if (strncmp(task->name, "GOMP_parallel_for", 17) == 0) {
+                MIR_RECORDER_STATE_BEGIN(MIR_STATE_TOMP_PAR);
+            } else {
+                MIR_RECORDER_STATE_BEGIN(MIR_STATE_TEXEC);
+            }
+        } else {
+            if (strcmp(task->metadata, "chunk_continuation") == 0 ||
+                strcmp(task->metadata, "chunk_start") == 0 ) {
+                MIR_RECORDER_STATE_BEGIN(MIR_STATE_TCHUNK_BOOK);
+            }
+            else {
+                MIR_RECORDER_STATE_BEGIN(MIR_STATE_TCHUNK_ITER);
+            }
+        }
     }
 
     // Current task timing

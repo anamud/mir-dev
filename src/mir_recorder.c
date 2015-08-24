@@ -19,7 +19,12 @@ const char* mir_state_name_string[MIR_RECORDER_NUM_STATES] = { /*{{{*/
     "TSYNC",
     "TPOP",
     "TSTEAL",
-    "TMALLOC"
+    "TMALLOC",
+    "TIMPLICIT",
+    "TCHUNK_BOOK",
+    "TCHUNK_ITER",
+    "TOMP_PAR",
+    "TOMP_PAR_FOR"
 }; /*}}}*/
 
 #ifdef MIR_RECORDER_USE_HW_PERF_COUNTERS

@@ -17,7 +17,7 @@
 BEGIN_C_DECLS
 
 // FIXME: WARNING AND NOTE! Update both state_name and state_name_string
-#define MIR_RECORDER_NUM_STATES 8
+#define MIR_RECORDER_NUM_STATES 13
 enum mir_state_name_t { /*{{{*/
     MIR_STATE_TIDLE = 0,
     MIR_STATE_TCREATE = 1,
@@ -26,7 +26,12 @@ enum mir_state_name_t { /*{{{*/
     MIR_STATE_TSYNC = 4,
     MIR_STATE_TPOP = 5,
     MIR_STATE_TSTEAL = 6,
-    MIR_STATE_TMALLOC = 7 //Ensure this is MIR_RECORDER_NUM_STATES - 1
+    MIR_STATE_TMALLOC = 7,
+    MIR_STATE_TIMPLICIT = 8,
+    MIR_STATE_TCHUNK_BOOK = 9,
+    MIR_STATE_TCHUNK_ITER = 10,
+    MIR_STATE_TOMP_PAR = 11,
+    MIR_STATE_TOMP_PAR_FOR = 12 //Ensure this is MIR_RECORDER_NUM_STATES - 1
 };                        /*}}}*/
 typedef enum mir_state_name_t mir_state_name_t;
 
