@@ -14,8 +14,6 @@ struct mir_loop_schedule_t;
 struct mir_loop_schedule_t {
     unsigned long chunk_start;
     unsigned long chunk_end;
-    unsigned int cpu_id;
-    unsigned long work_cycles;
     struct mir_loop_schedule_t* next;
 };
 

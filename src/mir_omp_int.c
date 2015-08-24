@@ -600,7 +600,7 @@ bool GOMP_loop_auto_next(long* istart, long* iend)
     MIR_ASSERT(worker->current_task->loop != NULL);
     MIR_ASSERT(worker->current_task->loop->init == 1);
 
-    bool ret;
+    bool ret = false;
 
     struct mir_loop_des_t* loop = worker->current_task->loop;
     if (loop->precomp_schedule_exists) {
@@ -609,8 +609,6 @@ bool GOMP_loop_auto_next(long* istart, long* iend)
             *iend = loop->precomp_schedule->chunk_end;
             loop->precomp_schedule = loop->precomp_schedule->next;
             ret = true;
-        } else {
-            ret = false;
         }
     } else {
         // Revert to static schedule if precomputed schedule is absent.
@@ -630,13 +628,11 @@ bool GOMP_loop_auto_start (long start, long end, long incr, long chunk_size, lon
     MIR_ASSERT_STR(worker->current_task->loop == NULL, "Nested parallel for loops are not supported.");
 
     // Create loop description and associate with task.
-    struct mir_loop_des_t* loop = mir_new_omp_loop_desc();
-    mir_omp_loop_desc_init(loop, start, end, incr, chunk_size, true);
+    struct mir_loop_des_t* loop;
+    loop = mir_new_omp_loop_desc_init(start, end, incr, chunk_size, true);
     chunk_task_start("GOMP_for_auto_task", loop);
 
-    bool retval = GOMP_loop_auto_next(istart, iend);
-
-    return retval;
+    return GOMP_loop_auto_next(istart, iend);
 } /*}}}*/
 
 void GOMP_parallel_loop_auto_start (void (*fn) (void *), void *data, unsigned num_threads, long start, long end, long incr, long chunk_size)
