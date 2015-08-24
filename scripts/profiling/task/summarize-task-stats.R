@@ -181,6 +181,19 @@ summarize_task_stats <- function(df, plot_title=" ")
         print(pb_outline_func, row.names=F)
         my_print()
         bar_plotter(pb_outline_func, xt="Outline function", yt="Mean parallel benefit", mt=plot_title, tilt=T, tilt_angle=90)
+
+        # Median parallel benefit by outline function
+        if (any(is.na(task_stats_temp$parallel_benefit))) {
+            stop("Error: Parallel benefit data contains NAs. Aborting!")
+            quit("no", 1)
+        }
+        pb_outline_func <- as.table(tapply(task_stats_temp$parallel_benefit, task_stats_temp$outline_function, FUN= function(x) {median(as.numeric(x))} ))
+        pb_outline_func <- data.frame(pb_outline_func)
+        colnames(pb_outline_func) <- c("outline_function", "parallel_benefit")
+        my_print("Median parallel benefit by outline function:")
+        print(pb_outline_func, row.names=F)
+        my_print()
+        bar_plotter(pb_outline_func, xt="Outline function", yt="Median parallel benefit", mt=plot_title, tilt=T, tilt_angle=90)
     }# }}}
 
     # Last tasks to finish
