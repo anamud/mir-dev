@@ -87,7 +87,6 @@ void mir_omp_loop_desc_init(struct mir_loop_des_t* loop, long start, long end,
             MIR_CHECK_MEM(schedule != NULL);
             schedule->chunk_start = chunk_start;
             schedule->chunk_end = chunk_end;
-            schedule->work_cycles = work_cycles;
 
             schedule->next = loop->precomp_schedule;
             loop->precomp_schedule = schedule;
