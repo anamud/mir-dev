@@ -634,9 +634,7 @@ bool GOMP_loop_auto_start (long start, long end, long incr, long chunk_size, lon
     mir_omp_loop_desc_init(loop, start, end, incr, chunk_size, true);
     chunk_task_start("GOMP_for_auto_task", loop);
 
-    bool retval = GOMP_loop_auto_next(istart, iend);
-
-    return retval;
+    return GOMP_loop_auto_next(istart, iend);
 } /*}}}*/
 
 void GOMP_parallel_loop_auto_start (void (*fn) (void *), void *data, unsigned num_threads, long start, long end, long incr, long chunk_size)
