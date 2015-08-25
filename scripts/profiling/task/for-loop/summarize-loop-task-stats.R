@@ -376,7 +376,7 @@ if ("idle_join" %in% colnames(task_stats)) {# {{{
     # Summary
     my_print("# Chunks summary:")
 
-    chunk_tasks <- which(grepl(glob2rx("chunk_*"), task_stats$metadata))
+    chunk_tasks <- which(grepl(glob2rx("chunk_*_*"), task_stats$metadata))
     task_stats_only_chunks <- task_stats[chunk_tasks, ]
 
     chunk_join_freq <- task_stats_only_chunks %>% group_by(outline_function, idle_join) %>% summarise(count = n())
@@ -417,7 +417,7 @@ if ("idle_join" %in% colnames(task_stats)) {# {{{
 if ("chunk_work_balance" %in% colnames(task_stats)) {# {{{
     my_print("# Chunk work balance (max(work_cycles)/mean(work_cycles)):")
 
-    chunk_tasks <- which(grepl(glob2rx("chunk_*"), task_stats$metadata))
+    chunk_tasks <- which(grepl(glob2rx("chunk_*_*"), task_stats$metadata))
     task_stats_only_chunks <- task_stats[chunk_tasks, ]
     task_stats_only_chunks <- subset(task_stats_only_chunks, select=c(task, chunk_work_balance, outline_function))
 
@@ -444,7 +444,7 @@ if ("chunk_work_balance" %in% colnames(task_stats)) {# {{{
 if ("chunk_work_cpu_balance" %in% colnames(task_stats)) {# {{{
     my_print("# Chunk CPU work balance (max(work_cycles/core)/mean(work_cycles/core)):")
 
-    chunk_tasks <- which(grepl(glob2rx("chunk_*"), task_stats$metadata))
+    chunk_tasks <- which(grepl(glob2rx("chunk_*_*"), task_stats$metadata))
     task_stats_only_chunks <- task_stats[chunk_tasks, ]
     task_stats_only_chunks <- subset(task_stats_only_chunks, select=c(task, chunk_work_cpu_balance, outline_function))
 
