@@ -21,8 +21,7 @@ static void parallel_start (void (*fn) (void *), void *data, unsigned num_thread
 { /*{{{*/
     struct mir_loop_des_t* loop = NULL;
     if (has_loop_desc && !private_loop_desc) {
-        loop = mir_new_omp_loop_desc();
-        mir_omp_loop_desc_init(loop, start, end, incr, chunk_size, false);
+        loop = mir_new_omp_loop_desc_init(start, end, incr, chunk_size, false);
     }
 
     // Create thread team.
@@ -47,8 +46,7 @@ static void parallel_start (void (*fn) (void *), void *data, unsigned num_thread
 
         // Set loop parameters.
         if (has_loop_desc && private_loop_desc) {
-            loop = mir_new_omp_loop_desc();
-            mir_omp_loop_desc_init(loop, start, end, incr, chunk_size, false);
+            loop = mir_new_omp_loop_desc_init(start, end, incr, chunk_size, false);
         }
 
         // Create and schedule loop tasks on all workers except current.
@@ -60,8 +58,7 @@ static void parallel_start (void (*fn) (void *), void *data, unsigned num_thread
 
     // Set loop parameters for fake task.
     if (has_loop_desc && private_loop_desc) {
-        loop = mir_new_omp_loop_desc();
-        mir_omp_loop_desc_init(loop, start, end, incr, chunk_size, false);
+        loop = mir_new_omp_loop_desc_init(start, end, incr, chunk_size, false);
     }
 
     // Create fake loop task on current worker.
@@ -302,9 +299,7 @@ bool GOMP_loop_guided_start (long start, long end, long incr, long chunk_size, l
     mir_lock_set(&team->loop_lock);
     if(team->loop == NULL)
     {
-        struct mir_loop_des_t* loop = mir_new_omp_loop_desc();
-        mir_omp_loop_desc_init(loop, start, end, incr, chunk_size, false);
-        team->loop = loop;
+        team->loop = mir_new_omp_loop_desc_init(start, end, incr, chunk_size, false);
     }
     mir_lock_unset(&team->loop_lock);
     chunk_task_start("GOMP_for_guided_task", team->loop);
@@ -408,9 +403,7 @@ bool GOMP_loop_dynamic_start (long start, long end, long incr, long chunk_size, 
     mir_lock_set(&team->loop_lock);
     if(team->loop == NULL)
     {
-        struct mir_loop_des_t* loop = mir_new_omp_loop_desc();
-        mir_omp_loop_desc_init(loop, start, end, incr, chunk_size * incr, false);
-        team->loop = loop;
+        team->loop = mir_new_omp_loop_desc_init(start, end, incr, chunk_size * incr, false);
     }
     mir_lock_unset(&team->loop_lock);
     chunk_task_start("GOMP_for_dynamic_task", team->loop);
@@ -557,8 +550,8 @@ bool GOMP_loop_static_start (long start, long end, long incr, long chunk_size, l
     MIR_ASSERT_STR(worker->current_task->loop == NULL, "Nested parallel for loops are not supported.");
 
     // Create loop description and associate with task.
-    struct mir_loop_des_t* loop = mir_new_omp_loop_desc();
-    mir_omp_loop_desc_init(loop, start, end, incr, chunk_size, false);
+    struct mir_loop_des_t* loop;
+    loop = mir_new_omp_loop_desc_init(start, end, incr, chunk_size, false);
     chunk_task_start("GOMP_for_static_task", loop);
 
     bool retval = GOMP_loop_static_next(istart, iend);
