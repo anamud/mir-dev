@@ -943,14 +943,14 @@ void GOMP_task(void (*fn)(void*), void* data, void (*copyfn)(void*, void*), long
     if (team && runtime->num_workers != team->num_threads)
         MIR_LOG_ERR("Combining tasks and parallel sections specifying num_threads is not supported.");
 
+    char* buf = NULL;
     if (copyfn) {
-        char* buf = mir_malloc_int(sizeof(char) * arg_size);
+        buf = mir_malloc_int(sizeof(char) * arg_size);
         MIR_CHECK_MEM(buf != NULL);
         copyfn(buf, data);
-        mir_task_create_on_worker((mir_tfunc_t)fn, buf, (size_t)(arg_size), 0, NULL, task_name, team, NULL, -1);
     }
-    else
-        mir_task_create_on_worker((mir_tfunc_t)fn, data, (size_t)(arg_size), 0, NULL, task_name, team, NULL, -1);
+
+    mir_task_create_on_worker((mir_tfunc_t)fn, buf ? buf : data, (size_t)(arg_size), 0, NULL, task_name, team, NULL, -1);
 } /*}}}*/
 
 __attribute__((optimize("-fno-optimize-sibling-calls")))
