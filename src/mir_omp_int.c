@@ -1,3 +1,4 @@
+#include <sys/time.h>
 #include <ctype.h>
 #include <errno.h>
 #include <string.h>
@@ -1163,7 +1164,11 @@ int omp_test_nest_lock (omp_nest_lock_t * lock)
 
 double omp_get_wtime (void)
 {/*{{{*/
-    MIR_LOG_ERR("omp_get_wtime() is not supported.");
+    struct timeval tv;
+    if (gettimeofday(&tv, NULL) != 0)
+        MIR_LOG_ERR("gettimeofday() failed.");
+
+    return tv.tv_sec + (double) tv.tv_usec / 1000000.0;
 }/*}}}*/
 
 double omp_get_wtick (void)
