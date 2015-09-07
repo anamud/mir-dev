@@ -13,7 +13,7 @@ source(paste(mir_root,"/scripts/profiling/task/common.R",sep=""))
 
 # Library
 suppressMessages(library(data.table, quietly=TRUE, warn.conflicts=FALSE))
-library(igraph, quietly=TRUE)
+suppressMessages(library(igraph, quietly=TRUE))
 #library(bit64)
 
 # Parse arguments
