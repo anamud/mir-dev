@@ -13,6 +13,7 @@ source(paste(mir_root,"/scripts/profiling/task/common.R",sep=""))
 
 # Library
 suppressMessages(library(data.table, quietly=TRUE, warn.conflicts=FALSE))
+suppressMessages(library(dplyr))
 suppressMessages(library(igraph, quietly=TRUE))
 #library(bit64)
 
@@ -27,12 +28,22 @@ if (running_outside_rstudio) {
                         make_option(c("-o","--out"), default="full-task-graph", help = "Output file prefix [default \"%default\"].", metavar="STRING"),
                         make_option(c("--verbose"), action="store_true", default=TRUE, help="Print output [default]."),
                         make_option(c("--quiet"), action="store_false", dest="verbose", help="Print little output."),
-                        make_option(c("--timing"), action="store_true", default=FALSE, help="Print processing time."))
+                        make_option(c("--timing"), action="store_true", default=FALSE, help="Print processing time."),
+                        make_option(c("--overlap"), default="any", help = "Overlap type for instantaneous parallelism calculation. Choose one among: any, full. [default \"%default\"].", metavar="STRING"))
     parsed <- parse_args(OptionParser(option_list = option_list), args = commandArgs(TRUE))
     if (!exists("data", where=parsed))
     {
         my_print("Error: Data argument missing. Check help (-h)")
         quit("no", 1)
+    }
+    if (!(parsed$overlap == "any" | parsed$overlap == "full"))
+    {
+        my_print("Error: Invalid overlap argument. Check help (-h)")
+        quit("no", 1)
+    }
+    if (parsed$overlap == "full")
+    {
+        parsed$overlap <- "within"
     }
 
     # Set argments into placeholders
@@ -46,6 +57,7 @@ if (running_outside_rstudio) {
 } else {
     arg_data <- "mir-task-stats"
     arg_palette <- "color"
+    arg_overlap <- "any"
     arg_outfileprefix <- "full-task-graph"
     arg_verbose <- 1
     arg_timing <- 1
@@ -310,7 +322,7 @@ subject <- data.table(interval =  tg_vertices_df$name,
 query <- data.table(start = shape_bins_lower,
                     end = shape_bins_upper)
 setkey(subject, start, end)
-overlaps <- foverlaps(query, subject, type="any")
+overlaps <- foverlaps(query, subject, type=parsed$overlap)
 overlaps <- overlaps[,
                      .(count = sum(!is.na(start)), fragment = paste(interval, collapse=";")),
                      by = .(i.start, i.end)]

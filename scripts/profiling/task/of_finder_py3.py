@@ -35,20 +35,29 @@ def get_outlined(obj_fil):
     # We will use objdump to get a list of function (F) symbols in the .text segment
     # We will then filter that list for known outline function patterns
     command = 'objdump --syms  --section=.text {} | grep " F " | grep -E "{}"'.format(obj_fil,outline_func_pattern)
-    raw_out = subprocess.Popen([command], shell=True, stdout = subprocess.PIPE, stderr = subprocess.STDOUT).communicate()[0]
-    return process(raw_out)
+    child = subprocess.Popen([command], shell=True, stdout = subprocess.PIPE, stderr = subprocess.STDOUT)
+    if(child.returncode == 0):
+        return process(child.communicate()[0])
+    else:
+        return ""
 
 def get_callable(obj_fil):
     # We will use objdump to get a list of function (F) symbols in the .text segment
     command = 'objdump --syms  --section=.text {} | grep " F " | grep -E -v "{}"'.format(obj_fil,outline_func_pattern)
-    raw_out = subprocess.Popen([command], shell=True, stdout = subprocess.PIPE, stderr = subprocess.STDOUT).communicate()[0]
-    return process(raw_out)
+    child = subprocess.Popen([command], shell=True, stdout = subprocess.PIPE, stderr = subprocess.STDOUT)
+    if(child.returncode == 0):
+        return process(child.communicate()[0])
+    else:
+        return ""
 
 def get_dynamically_callable(obj_fil):
     # We will use objdump to get a list of dynamic function (DF) symbols
     command = 'objdump -T {} | grep " DF " | grep -E -v "{}"'.format(obj_fil,outline_func_pattern)
-    raw_out = subprocess.Popen([command], shell=True, stdout = subprocess.PIPE, stderr = subprocess.STDOUT).communicate()[0]
-    return process(raw_out)
+    child = subprocess.Popen([command], shell=True, stdout = subprocess.PIPE, stderr = subprocess.STDOUT)
+    if(child.returncode == 0):
+        return process(child.communicate()[0])
+    else:
+        return ""
 
 def main():
     global outline_funcs, callable_funcs, dynamically_callable_funcs

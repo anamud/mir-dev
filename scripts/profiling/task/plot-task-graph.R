@@ -100,7 +100,7 @@ create_edge_color <- fork_color
 sync_edge_color <- join_color
 scope_edge_color <- "#000000"
 cont_edge_color <- "#000000"
-color_fun <- colorRampPalette(c("blue", "red"))
+color_fun <- colorRampPalette(c("yellow", "red"))
 
 if (parsed$palette == "gray") {
     join_color <- "#D3D3D3"  # light gray
@@ -656,6 +656,8 @@ if (parsed$analyze) {
     if (!parsed$tree) {
         base_tg_edge_color <- add.alpha(get.edge.attribute(base_tg, name='color'), alpha=0.2)
         base_tg <- set.edge.attribute(base_tg, name='color', value=base_tg_edge_color)
+        # Set base tg edge colors to gray
+        #base_tg <- set.edge.attribute(base_tg, name='color', value="#c0c0c0")
     }
 
     # Analysis text output
@@ -910,7 +912,35 @@ if (parsed$analyze) {
         sink()
 
         prob_task_index <- match(as.character(prob_task$task), V(prob_tg)$name)
-        prob_task_color <- get.vertex.attribute(prob_tg, name='min_shape_contrib_to_color', index=prob_task_index)
+
+        # Set color in proportion to shape_attrib of all tasks
+        #prob_task_color <- get.vertex.attribute(prob_tg, name='min_shape_contrib_to_color', index=prob_task_index)
+
+        # Set color in proportion to shape_attrib of problem tasks
+        prob_task_shape_contrib <- as.numeric(get.vertex.attribute(prob_tg, name='min_shape_contrib', index=prob_task_index))
+        prob_task_shape_contrib_unique <- unique(prob_task_shape_contrib)
+        invert_colors <- 1
+        if (invert_colors) {
+            if (length(prob_task_shape_contrib_unique) == 1) prob_task_color <- task_color_pal[task_color_bins]
+            else prob_task_color <- rev(task_color_pal)[as.numeric(cut(prob_task_shape_contrib, task_color_bins))]
+        } else {
+            if (length(prob_task_shape_contrib_unique) == 1) prob_task_color <- task_color_pal[1]
+            else prob_task_color <- task_color_pal[as.numeric(cut(prob_task_shape_contrib, task_color_bins))]
+        }
+        # Write colors for reference
+        tg_out_file <- paste(gsub(". $", "", parsed$out), "prob_task_min_shape_contrib_to_color", sep=".")
+        if (length(prob_task_shape_contrib_unique) == 1) {
+            write.csv(data.frame(value=prob_task_shape_contrib_unique, color=prob_task_color), tg_out_file, row.names=F)
+        } else {
+            v <- unique(cut(prob_task_shape_contrib, task_color_bins))
+            if (invert_colors) {
+                write.csv(data.frame(value=v, color=rev(task_color_pal)[as.numeric(v)]), tg_out_file, row.names=F)
+            } else {
+                write.csv(data.frame(value=v, color=task_color_pal[as.numeric(v)]), tg_out_file, row.names=F)
+            }
+        }
+        my_print(paste("Wrote file:", tg_out_file))
+
         prob_tg <- set.vertex.attribute(prob_tg, name='color', index=prob_task_index, value=prob_task_color)
         prob_tg <- set.vertex.attribute(prob_tg, name='problematic', index=prob_task_index, value=1)
 
