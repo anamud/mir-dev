@@ -100,7 +100,7 @@ create_edge_color <- fork_color
 sync_edge_color <- join_color
 scope_edge_color <- "#000000"
 cont_edge_color <- "#000000"
-color_fun <- colorRampPalette(c("blue", "red"))
+color_fun <- colorRampPalette(c("yellow", "red"))
 
 if (parsed$palette == "gray") {
     join_color <- "#D3D3D3"  # light gray
@@ -656,6 +656,8 @@ if (parsed$analyze) {
     if (!parsed$tree) {
         base_tg_edge_color <- add.alpha(get.edge.attribute(base_tg, name='color'), alpha=0.2)
         base_tg <- set.edge.attribute(base_tg, name='color', value=base_tg_edge_color)
+        # Set base tg edge colors to gray
+        #base_tg <- set.edge.attribute(base_tg, name='color', value="#c0c0c0")
     }
 
     # Analysis text output
