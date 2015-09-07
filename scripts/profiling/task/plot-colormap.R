@@ -24,6 +24,7 @@ if(!exists("data", where=parsed)) {
 if(parsed$verbose) print(paste("Reading file", parsed$data))
 
 cm_data <- read.csv(parsed$data, header=TRUE)
+cm_data <- cm_data[complete.cases(cm_data),]
 outf <- paste(gsub("\\.", "-", parsed$data), ".pdf", sep="")
 
 # Plot colormap
