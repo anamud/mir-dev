@@ -127,7 +127,7 @@ if (!parsed$nochunks) {
     if (parsed$verbose) my_print("Calculating chunk work balance statistics ...")
 
     # Subset
-    task_stats_only_chunks <- task_stats[chunk_tasks,]
+    task_stats_only_chunks <- task_stats[iteration_bound_chunk_tasks,]
 
     # Calculate chunk work balance
     task_stats_only_chunks <- task_stats_only_chunks %>% group_by(idle_join) %>% mutate(chunk_work_balance = max(work_cycles)/mean(work_cycles))
