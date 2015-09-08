@@ -68,6 +68,11 @@ if (arg_timing) tic(type="elapsed")
 tg_file_in <- arg_data
 if (arg_verbose) my_print(paste("Reading file:", tg_file_in, sep=" "))
 tg_data <- fread(tg_file_in, header=TRUE)
+if ("integer64" %in% sapply(tg_data, class))
+{
+    my_print("Error: Data contains unsupported integer64 class.")
+    quit("no", 1)
+}
 if (arg_timing) toc("Read data")
 
 # Join frequeny
