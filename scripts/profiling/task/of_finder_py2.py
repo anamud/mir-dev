@@ -54,7 +54,8 @@ def get_callable(obj_fil):
 
 def get_dynamically_callable(obj_fil):
     # We will use objdump to get a list of dynamic function (DF) symbols
-    command = 'objdump -T {0} | grep " DF " | grep -E -v "{1}"'.format(obj_fil,outline_func_pattern)
+    command = 'objdump -T {0} | grep " DF " | sed "/\.text\t/d" | grep -E -v "{1}"'.format(obj_fil,outline_func_pattern)
+
     child = subprocess.Popen([command], shell=True, stdout = subprocess.PIPE, stderr = subprocess.STDOUT)
     raw_out = child.communicate()[0]
     if child.returncode == 0:
