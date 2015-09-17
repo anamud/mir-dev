@@ -920,23 +920,36 @@ if (parsed$analyze) {
         prob_task_shape_contrib <- as.numeric(get.vertex.attribute(prob_tg, name='min_shape_contrib', index=prob_task_index))
         prob_task_shape_contrib_unique <- unique(prob_task_shape_contrib)
         invert_colors <- 1
+
+        breaks <- pretty(prob_task_shape_contrib, n=10)
+        num_bins <- length(breaks)
+        color_pal <- color_fun(num_bins)
         if (invert_colors) {
-            if (length(prob_task_shape_contrib_unique) == 1) prob_task_color <- task_color_pal[task_color_bins]
-            else prob_task_color <- rev(task_color_pal)[as.numeric(cut(prob_task_shape_contrib, task_color_bins))]
+            if (length(prob_task_shape_contrib_unique) == 1) {
+                prob_task_color <- color_pal[num_bins]
+            } else {
+                #prob_task_color <- rev(color_pal)[as.numeric(cut(prob_task_shape_contrib, num_bins))]
+                prob_task_color <- rev(color_pal)[as.numeric(cut(prob_task_shape_contrib, breaks=breaks))]
+            }
         } else {
-            if (length(prob_task_shape_contrib_unique) == 1) prob_task_color <- task_color_pal[1]
-            else prob_task_color <- task_color_pal[as.numeric(cut(prob_task_shape_contrib, task_color_bins))]
+            if (length(prob_task_shape_contrib_unique) == 1) {
+                prob_task_color <- color_pal[1]
+            } else {
+                #prob_task_color <- color_pal[as.numeric(cut(prob_task_shape_contrib, num_bins))]
+                prob_task_color <- color_pal[as.numeric(cut(prob_task_shape_contrib, breaks=breaks))]
+            }
         }
         # Write colors for reference
         tg_out_file <- paste(gsub(". $", "", parsed$out), "prob_task_min_shape_contrib_to_color", sep=".")
         if (length(prob_task_shape_contrib_unique) == 1) {
             write.csv(data.frame(value=prob_task_shape_contrib_unique, color=prob_task_color), tg_out_file, row.names=F)
         } else {
-            v <- unique(cut(prob_task_shape_contrib, task_color_bins))
+            #v <- unique(cut(prob_task_shape_contrib, num_bins))
+            v <- unique(cut(prob_task_shape_contrib, breaks=breaks))
             if (invert_colors) {
-                write.csv(data.frame(value=v, color=rev(task_color_pal)[as.numeric(v)]), tg_out_file, row.names=F)
+                write.csv(data.frame(value=v, color=rev(color_pal)[as.numeric(v)]), tg_out_file, row.names=F)
             } else {
-                write.csv(data.frame(value=v, color=task_color_pal[as.numeric(v)]), tg_out_file, row.names=F)
+                write.csv(data.frame(value=v, color=color_pal[as.numeric(v)]), tg_out_file, row.names=F)
             }
         }
         my_print(paste("Wrote file:", tg_out_file))
