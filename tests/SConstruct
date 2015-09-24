@@ -76,12 +76,15 @@ opt.Prepend(LIBS = ['mir-opt'])
 # Export environments
 Export('opt','debug')
 
-# Register build scripts
-SConscript(os.path.join('omp_parallel', 'SConscript'))
-SConscript(os.path.join('omp_single', 'SConscript'))
-SConscript(os.path.join('omp_critical', 'SConscript'))
-SConscript(os.path.join('omp_atomic', 'SConscript'))
-SConscript(os.path.join('omp_for', 'SConscript'))
-SConscript(os.path.join('omp_barrier', 'SConscript'))
-SConscript(os.path.join('fib_omp', 'SConscript'))
+# Register native build scripts
 SConscript(os.path.join('fib_native', 'SConscript'))
+
+# Conditionally register OpenMP build scripts.
+if os.path.isfile(MIR_ROOT+'/src/mir_omp_int.c'):
+    SConscript(os.path.join('omp_parallel', 'SConscript'))
+    SConscript(os.path.join('omp_single', 'SConscript'))
+    SConscript(os.path.join('omp_critical', 'SConscript'))
+    SConscript(os.path.join('omp_atomic', 'SConscript'))
+    SConscript(os.path.join('omp_for', 'SConscript'))
+    SConscript(os.path.join('omp_barrier', 'SConscript'))
+    SConscript(os.path.join('fib_omp', 'SConscript'))
