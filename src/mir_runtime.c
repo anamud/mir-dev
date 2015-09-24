@@ -276,14 +276,23 @@ static void mir_config()
                 MIR_DEBUG("Task inlining limit set to %u.", runtime->task_inlining_limit);
             }
             else if (0 == strcmp(long_options[option_index].name, "single-parallel-block")) {
+#ifdef MIR_GPL
                 runtime->single_parallel_block = 1;
                 MIR_DEBUG("Executing parallel blocks with one worker enabled.");
+#else
+                MIR_LOG_ERR("MIR built without OpenMP support.");
+#endif
             }
             else if (0 == strcmp(long_options[option_index].name, "precomp-schedule-dir")) {
+#ifdef MIR_GPL
                 if (strlen(optarg) >= MIR_LONG_NAME_LEN)
                     MIR_LOG_ERR("Precomputed schedule directory name is longer than %d.", MIR_LONG_NAME_LEN);
                 strcpy(runtime->precomp_schedule_dir, optarg);
                 MIR_DEBUG("Precomputed schedule directory set to %s.", runtime->precomp_schedule_dir);
+#else
+                MIR_LOG_ERR("MIR built without OpenMP support.");
+#endif
+
             }
             else if (0 == strcmp(long_options[option_index].name, "stack-size")) {
                 int ps_sz = atoi(optarg) * 1024 * 1024;
@@ -300,8 +309,12 @@ static void mir_config()
                 MIR_DEBUG("Task statistics collection is enabled.");
             }
             else if (0 == strcmp(long_options[option_index].name, "chunks-are-tasks")) {
+#ifdef MIR_GPL
                 runtime->chunks_are_tasks = 1;
                 MIR_DEBUG("Treating loop chunks as tasks.");
+#else
+                MIR_LOG_ERR("MIR built without OpenMP support.");
+#endif
             }
             else if (0 == strcmp(long_options[option_index].name, "idle-task")) {
                 runtime->idle_task = 1;
