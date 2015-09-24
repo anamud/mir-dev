@@ -11,6 +11,14 @@
 #include "mir_memory.h"
 #include "mir_mem_pol.h"
 
+#ifdef MIR_GPL
+#define OMP_INIT omp_init();
+#define OMP_DESTROY omp_destroy();
+#else
+#define OMP_INIT
+#define OMP_DESTROY
+#endif
+
 // The global runtime object
 struct mir_runtime_t* runtime = NULL;
 
@@ -54,16 +62,7 @@ static void mir_preconfig_init(int num_workers)
     int ret_val = pthread_key_create(&runtime->worker_index, NULL);
     MIR_ASSERT_STR(ret_val == 0, "Call to pthread_key_create failed.");
 
-    // OpenMP support
-    // This is the unnamed critical section lock
-    mir_lock_create(&runtime->omp_critsec_lock);
-    // This is the global atomic lock.
-    mir_lock_create(&runtime->omp_atomic_lock);
-    runtime->omp_for_schedule = OFS_STATIC;
-    runtime->omp_for_chunk_size = 0;
-    runtime->single_parallel_block = 0;
-    parse_omp_schedule();
-    strcpy(runtime->precomp_schedule_dir, "./");
+    OMP_INIT
 
     // Flags
     runtime->sig_dying = 0;
@@ -575,11 +574,7 @@ dead:
     MIR_DEBUG("Releasing architecture memory ...");
     runtime->arch->destroy();
 
-    // OpenMP support
-    // Destroy unnamed omp critical lock
-    mir_lock_destroy(&runtime->omp_critsec_lock);
-    // Destroy omp atomic lock
-    mir_lock_destroy(&runtime->omp_atomic_lock);
+    OMP_DESTROY
 
     // Release runtime memory
     MIR_DEBUG("Releasing runtime memory ...");

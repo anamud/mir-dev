@@ -15,8 +15,30 @@
 #include "mir_team.h"
 #include "mir_barrier.h"
 #include "mir_defines.h"
+#include "mir_runtime.h"
 
 /* MIR internal functions. */
+
+void omp_init()
+{ /*{{{*/
+    // This is the unnamed critical section lock
+    mir_lock_create(&runtime->omp_critsec_lock);
+    // This is the global atomic lock.
+    mir_lock_create(&runtime->omp_atomic_lock);
+    runtime->omp_for_schedule = OFS_STATIC;
+    runtime->omp_for_chunk_size = 0;
+    runtime->single_parallel_block = 0;
+    parse_omp_schedule();
+    strcpy(runtime->precomp_schedule_dir, "./");
+}/*}}}*/
+
+void omp_destroy()
+{ /*{{{*/
+    // Destroy unnamed omp critical lock
+    mir_lock_destroy(&runtime->omp_critsec_lock);
+    // Destroy omp atomic lock
+    mir_lock_destroy(&runtime->omp_atomic_lock);
+}/*}}}*/
 
 static void parallel_start (void (*fn) (void *), void *data, unsigned num_threads, long start, long end, long incr, long chunk_size, bool has_loop_desc, bool private_loop_desc, const char* name)
 { /*{{{*/
