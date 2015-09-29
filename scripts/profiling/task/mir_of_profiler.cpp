@@ -536,6 +536,7 @@ VOID Image(IMG img, VOID* v)
         if (RTN_Valid(mirTaskCreateRtn)) {
             std::cout << "Adding profiling hooks to runtime system function: " << task_create_functions[i] << std::endl;
             RTN_Open(mirTaskCreateRtn);
+            // FIXME: Sibling call optimization can prevent inserted call from happening. Current solution is to disable sibling call optimization, as seen in GOMP_taskwait implementation in MIR. Inserting call after is also an option.
             RTN_InsertCall(mirTaskCreateRtn, IPOINT_BEFORE, (AFUNPTR)MIRTaskCreateBefore, IARG_END);
             RTN_Close(mirTaskCreateRtn);
         }
@@ -549,6 +550,7 @@ VOID Image(IMG img, VOID* v)
         if (RTN_Valid(mirTaskWaitRtn)) {
             std::cout << "Adding profiling hooks to runtime system function: " << task_wait_functions[i] << std::endl;
             RTN_Open(mirTaskWaitRtn);
+            // FIXME: Sibling call optimization can prevent inserted call from happening. Current solution is to disable sibling call optimization, as seen in GOMP_taskwait implementation in MIR. Inserting call before is also an option.
             RTN_InsertCall(mirTaskWaitRtn, IPOINT_AFTER, (AFUNPTR)MIRTaskWaitAfter, IARG_END);
             RTN_Close(mirTaskWaitRtn);
         }
