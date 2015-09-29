@@ -7,7 +7,9 @@
 
 #include "scheduling/mir_sched_pol.h"
 #include "arch/mir_arch.h"
+#ifdef MIR_GPL
 #include "mir_omp_int.h"
+#endif
 
 BEGIN_C_DECLS
 
@@ -30,6 +32,7 @@ struct mir_runtime_t { /*{{{*/
     int init_count;
     int destroyed;
 
+#ifdef MIR_GPL
     // OpenMP support
     struct mir_lock_t omp_critsec_lock;
     struct mir_lock_t omp_atomic_lock;
@@ -38,6 +41,7 @@ struct mir_runtime_t { /*{{{*/
     int single_parallel_block;
     int chunks_are_tasks;
     char precomp_schedule_dir[MIR_LONG_NAME_LEN];
+#endif
 
     // Flags
     int sig_dying;

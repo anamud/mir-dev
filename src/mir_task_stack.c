@@ -65,12 +65,14 @@ void mir_task_stack_pop(struct mir_task_stack_t* stack, struct mir_task_t** data
         goto cleanup;
     }
 
+#ifdef MIR_GPL
     // Ensure we have executed our parallel block before this task.
     struct mir_task_t* task = stack->buffer[stack->head - 1];
     struct mir_worker_t* worker = mir_worker_get_context();
     if (!runtime->single_parallel_block && task->team &&
         task->team->parallel_block_flag[worker->id] == 0)
         goto cleanup;
+#endif
 
     *data = stack->buffer[stack->head - 1];
     MIR_ASSERT(*data != NULL);

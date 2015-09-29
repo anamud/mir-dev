@@ -7,6 +7,9 @@
 
 BEGIN_C_DECLS
 
+void omp_init(void);
+void omp_destroy(void);
+
 enum omp_for_schedule_t {
     OFS_RUNTIME,
     OFS_STATIC,

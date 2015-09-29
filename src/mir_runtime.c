@@ -11,6 +11,14 @@
 #include "mir_memory.h"
 #include "mir_mem_pol.h"
 
+#ifdef MIR_GPL
+#define OMP_INIT omp_init();
+#define OMP_DESTROY omp_destroy();
+#else
+#define OMP_INIT
+#define OMP_DESTROY
+#endif
+
 // The global runtime object
 struct mir_runtime_t* runtime = NULL;
 
@@ -54,16 +62,7 @@ static void mir_preconfig_init(int num_workers)
     int ret_val = pthread_key_create(&runtime->worker_index, NULL);
     MIR_ASSERT_STR(ret_val == 0, "Call to pthread_key_create failed.");
 
-    // OpenMP support
-    // This is the unnamed critical section lock
-    mir_lock_create(&runtime->omp_critsec_lock);
-    // This is the global atomic lock.
-    mir_lock_create(&runtime->omp_atomic_lock);
-    runtime->omp_for_schedule = OFS_STATIC;
-    runtime->omp_for_chunk_size = 0;
-    runtime->single_parallel_block = 0;
-    parse_omp_schedule();
-    strcpy(runtime->precomp_schedule_dir, "./");
+    OMP_INIT
 
     // Flags
     runtime->sig_dying = 0;
@@ -277,14 +276,23 @@ static void mir_config()
                 MIR_DEBUG("Task inlining limit set to %u.", runtime->task_inlining_limit);
             }
             else if (0 == strcmp(long_options[option_index].name, "single-parallel-block")) {
+#ifdef MIR_GPL
                 runtime->single_parallel_block = 1;
                 MIR_DEBUG("Executing parallel blocks with one worker enabled.");
+#else
+                MIR_LOG_ERR("MIR built without OpenMP support.");
+#endif
             }
             else if (0 == strcmp(long_options[option_index].name, "precomp-schedule-dir")) {
+#ifdef MIR_GPL
                 if (strlen(optarg) >= MIR_LONG_NAME_LEN)
                     MIR_LOG_ERR("Precomputed schedule directory name is longer than %d.", MIR_LONG_NAME_LEN);
                 strcpy(runtime->precomp_schedule_dir, optarg);
                 MIR_DEBUG("Precomputed schedule directory set to %s.", runtime->precomp_schedule_dir);
+#else
+                MIR_LOG_ERR("MIR built without OpenMP support.");
+#endif
+
             }
             else if (0 == strcmp(long_options[option_index].name, "stack-size")) {
                 int ps_sz = atoi(optarg) * 1024 * 1024;
@@ -301,8 +309,12 @@ static void mir_config()
                 MIR_DEBUG("Task statistics collection is enabled.");
             }
             else if (0 == strcmp(long_options[option_index].name, "chunks-are-tasks")) {
+#ifdef MIR_GPL
                 runtime->chunks_are_tasks = 1;
                 MIR_DEBUG("Treating loop chunks as tasks.");
+#else
+                MIR_LOG_ERR("MIR built without OpenMP support.");
+#endif
             }
             else if (0 == strcmp(long_options[option_index].name, "idle-task")) {
                 runtime->idle_task = 1;
@@ -575,11 +587,7 @@ dead:
     MIR_DEBUG("Releasing architecture memory ...");
     runtime->arch->destroy();
 
-    // OpenMP support
-    // Destroy unnamed omp critical lock
-    mir_lock_destroy(&runtime->omp_critsec_lock);
-    // Destroy omp atomic lock
-    mir_lock_destroy(&runtime->omp_atomic_lock);
+    OMP_DESTROY
 
     // Release runtime memory
     MIR_DEBUG("Releasing runtime memory ...");

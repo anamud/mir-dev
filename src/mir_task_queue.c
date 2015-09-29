@@ -75,6 +75,7 @@ struct mir_task_t* mir_task_queue_pop(struct mir_task_queue_t* queue)
     }
     task = queue->buffer[queue->out];
     MIR_ASSERT(task != NULL);
+#ifdef MIR_GPL
     struct mir_worker_t* worker = mir_worker_get_context();
     if (!runtime->single_parallel_block && task->team) {
         // The private queue is FIFO ordered. We have either already
@@ -89,6 +90,7 @@ struct mir_task_t* mir_task_queue_pop(struct mir_task_queue_t* queue)
             goto cleanup;
 	}
     }
+#endif
 
     __sync_fetch_and_sub(&(queue->size), 1);
     queue->out++;

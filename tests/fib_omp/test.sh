@@ -2,6 +2,16 @@
 
 cat test-info.txt
 scons -cu -Q --quiet &> /dev/null && scons -u -Q --quiet &> /dev/null
+if [ $? -ne 0 ];
+then echo Building test FAILED.
+     exit 1
+fi
+
+if [ ! -f test-opt.out ];
+then echo "  Passed"
+     exit 0
+fi
+
 echo -n Running test ...
 num_trials=1
 if [ $# -gt 0 ];

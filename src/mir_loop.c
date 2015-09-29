@@ -43,6 +43,7 @@ void mir_omp_loop_desc_init(struct mir_loop_des_t* loop, long start, long end,
         return;
     }
 
+#ifdef MIR_GPL
     unsigned long idle_join = (strcmp(worker->current_task->parent->name, "idle_task") == 0) ? worker->current_task->twc->num_passes : worker->current_task->parent->twc->num_passes;
 
     char schedule_file_name[MIR_LONG_NAME_LEN + MIR_SHORT_NAME_LEN];
@@ -101,6 +102,7 @@ void mir_omp_loop_desc_init(struct mir_loop_des_t* loop, long start, long end,
         }
     }
     fclose(fp);
+#endif
 } /*}}}*/
 
 struct mir_loop_des_t* mir_new_omp_loop_desc_init(long start, long end, long incr, long chunk_size, bool use_precomp_schedule)
