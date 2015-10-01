@@ -1,23 +1,16 @@
 # RUNTIME SYSTEM
-- Test on TILEPro64.
-- Test on Valaruko.
-- Improve OpenMP 3.0 support.
-- Rewrite libgomp OpenMP wrapper.
-- Add support for implicit data dependence resolution.
+- Add support for task data dependence resolution.
 - Add clang and LLVM support.
 - Inline functions for speed.
 
 # PROFILING
 - Add dependence graph generation support.
-- Profile omp for loops.
 - Improve outline function detection of of_finder.py.
+- Support task graph aggregation.
 
 # TESTING
--Test for structural porperties such as number of tasks and task graph shape.
--Nightly tests on Gothmog and Valarauko.
+- Test for structural porperties such as number of tasks and task graph shape.
 
 # DOCUMENTS
-- Improve documents structure.
 - Provide more documentation.
-- Add better help system.
 

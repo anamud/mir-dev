@@ -131,7 +131,6 @@ The MIR source repository is easy to navigate. Files and directories have famili
     |__scheduling : scheduling policies
     |__arch : architecture specific code
 |__scripts
-    |__helpers : helpful scripts, one-time hacks
     |__profiling : all things related to profiling
         |__task
             |__for_loop
@@ -192,7 +191,7 @@ $ scons -c && scons
 \subsubsection{Enabling OpenMP support}\label{enable-omp-support}
 
 \begin{itemize}
-\item You should have recieved the GPL implementation of the libGOMP interface in a package seperate from MIR sources. Point the environment variable MIR\_OMP\_INT\_ROOT to the location of the package.
+\item You should have received the GPL implementation of the libGOMP interface in a package separate from MIR sources. Point the environment variable MIR\_OMP\_INT\_ROOT to the location of the package.
 
 \item Add the GPL implementation to the source directory and rebuild MIR.
 
@@ -261,7 +260,7 @@ Note: OpenMP tasks are supported by intercepting GCC translated calls to GNU lib
 \subsubsection{Tips for writing MIR-supported OpenMP programs}\label{tips-for-writing-mir-supported-openmp-programs}
 
 \begin{itemize}
-    \item Use \texttt{taskwait} explicitly to sychronize tasks. Do not expect implicit taskwaits within thread barriers.
+    \item Use \texttt{taskwait} explicitly to synchronize tasks. Do not expect implicit taskwaits within thread barriers.
         \item Avoid distributing work to threads manually.
         \item Study example and test programs.
         \item You can expect a compiler/runtime error when a non-supported interface is used.
@@ -432,7 +431,7 @@ $ Rscript ${MIR_ROOT}/scripts/profiling/task/plot-task-graph.R -d task-stats.pro
 
 TODO: Explain file contents.
 
-Hardware performance counter readings obtained during thread-based profiling can be summarized on a per-task basis. Note that performance counter readings will include the effects of all actions that occured during task execution such as runtime system activity, system calls, interrupts etc.
+Hardware performance counter readings obtained during thread-based profiling can be summarized on a per-task basis. Note that performance counter readings will include the effects of all actions that occurred during task execution such as runtime system activity, system calls, interrupts etc.
 
 \begin{lstlisting}[style=MyInputStyle]
 $ $MIR_ROOT/scripts/profiling/thread/get-events-per-task.sh mir-recorder-trace-*.rec
