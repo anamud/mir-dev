@@ -1,6 +1,4 @@
-Description: This is the source repository of the MIR task-based runtime system library. To get started with using MIR, please read docs/MIR_UG.pdf. The name MIR is inspired by Mir Publishers from Moscow. I enjoyed Mir books on electronics and geometry during my childhood.
-
-Alternative names of the MIR runtime system: mir, Mir.
+This is the source repository of the MIR task-based runtime system library. To get started with using MIR, please read docs/MIR_UG.pdf. The name MIR is inspired by Mir Publishers from Moscow. I enjoyed Mir books on electronics and geometry during my childhood.
 
 Author: Ananya Muddukrishna.
 
