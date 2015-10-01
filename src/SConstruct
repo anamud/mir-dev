@@ -15,7 +15,6 @@ if(MIR_ROOT == None):
     MIR_ROOT=File(this_sconscript_file).Dir("..").abspath
 
 sys.path.append(MIR_ROOT + '/scripts')
-import mir_utils
 
 # Check for PAPI support
 if os.path.isfile('HAVE_PAPI'):
@@ -28,21 +27,10 @@ if os.path.isfile('HAVE_PAPI'):
             print('PAPI_ROOT is not defined and papi.h can not be found. Aborting!')
             Exit(2)
 
-# Choose compiler
-# Note: OpenMP support only enabled for GCC. 
-compilers = ['gcc']
-compiler = ''
-for item in compilers:
-    compiler = mir_utils.which(item)
-    if(len(compiler) > 0):
-        break;
-if(len(compiler) == 0):
-    print('Could not find a compiler. Aborting!')
-    Exit(2)
-
 # Base environment
 env = Environment()
-env['CC'] = [compiler[0]]
+# Note: OpenMP support only enabled for GCC. 
+env['CC'] = ['gcc']
 # -D_XOPEN_SOURCE=600 needed for exposing pthread_barrier_t on recent Linux.
 env['CCFLAGS'] = Split("""
 -Wall 
