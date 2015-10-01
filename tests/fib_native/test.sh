@@ -1,6 +1,11 @@
 #!/bin/bash
 
-sched_policies="central central-stack ws ws-de numa"
+if [ -f "$MIR_ROOT/src/HAVE_LIBNUMA" ];
+then
+    sched_policies="central central-stack ws ws-de numa"
+else
+    sched_policies="central central-stack ws ws-de"
+fi
 
 cat test-info.txt
 scons -cu -Q --quiet &> /dev/null && scons -u -Q --quiet &> /dev/null

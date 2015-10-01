@@ -38,8 +38,10 @@ do
                      exitcode=1
 		 fi
 	     done
+             echo " Passed"
+        else
+            echo "  Test NOT APPLICABLE"
 	fi
-	echo "  Passed"
     fi
     popd > /dev/null
 done

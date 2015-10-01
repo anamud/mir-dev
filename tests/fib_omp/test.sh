@@ -8,7 +8,7 @@ then echo Building test FAILED.
 fi
 
 if [ ! -f test-opt.out ];
-then echo "  Passed"
+then echo "  Test NOT APPLICABLE"
      exit 0
 fi
 
