@@ -28,14 +28,19 @@ toc <- function(message)
 # Read data
 tic(type="elapsed")
 print("Processing accumulated events")
-args <- commandArgs(TRUE)
-if(length(args) != 1) 
-{
-  print("Error: Invaild arguments. Please provide accumulated events file (arg1).")
-  quit("no", 1)
+Rstudio_mode <- F
+if (Rstudio_mode) {
+  dat_file <- "accumulated-events.rec"
+} else {
+  args <- commandArgs(TRUE)
+  if(length(args) != 1) 
+  {
+      print("Error: Invaild arguments. Please provide accumulated events file (arg1).")
+      quit("no", 1)
+  }
+  dat_file <- args[1]
 }
-dat_file <- args[1]
-dat_raw <- read.csv(dat_file, sep=':', na.strings=c(""))
+dat_raw <- read.csv(dat_file, sep=':', na.strings=c(""), header=F)
 
 toc("Read data")
 
@@ -56,7 +61,8 @@ for(event_str in events_1)
 # Split columns
 dat_proper <- with(dat_int, cbind(colsplit(dat_int$meta, pattern = ",", names=c("id","name")), colsplit(dat_int$value, pattern = "\\,", names=event_names)))
 # Remove "EVENT=" and trailing comma from each event
-dat_more_proper <- as.data.frame(apply(dat_proper[,event_names], 2, function(x) gsub("[[:alpha:]]+|[[:punct:]]+","",x)))
+dat_more_proper <- as.data.frame(apply(dat_proper[,event_names], 1:2, function(x) unlist(strsplit(x,"="))[2]))
+dat_more_proper <- as.data.frame(apply(dat_more_proper[,event_names], 1:2, function(x) unlist(strsplit(x,","))[1]))
 # Add id and name
 dat_most_proper <- data.frame(dat_proper[,c("id")], dat_more_proper)
 setnames(dat_most_proper,c("id", event_names))
