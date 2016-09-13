@@ -98,7 +98,7 @@ void mir_omp_loop_desc_init(struct mir_loop_des_t* loop, long start, long end,
         }
         else if (retval != EOF) {
             // Skip over.
-            fscanf(fp, "%*[^\n]");
+            retval = fscanf(fp, "%*[^\n]");
         }
     }
     fclose(fp);
