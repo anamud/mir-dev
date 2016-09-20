@@ -54,10 +54,6 @@ if (parsed$verbose) my_print("Removing non-sense data ...")
 # Remove background task
 task_stats <- task_stats[!is.na(parent),]
 
-# Find task executed last per worker
-if (parsed$verbose) my_print("Calculating last tasks to finish ...")
-task_stats <- task_stats %>% group_by(cpu_id) %>% mutate(last_to_finish = (exec_end_instant == max(exec_end_instant)))
-
 # Mark leaf tasks
 if (parsed$verbose) my_print("Marking leaf tasks ...")
 task_stats <- task_stats[, leaf := F]
@@ -122,6 +118,10 @@ task_stats <- task_stats %>% group_by(parent,joins_at) %>% mutate(sibling_work_b
 # Calculate sibling scatter
 if (parsed$verbose) my_print("Calculating scatter ...")
 task_stats <- task_stats %>% group_by(parent,joins_at) %>% mutate(sibling_scatter = median(c(dist(cpu_id))))
+
+# Find task executed last per worker
+if (parsed$verbose) my_print("Calculating last tasks to finish ...")
+task_stats <- task_stats %>% group_by(cpu_id) %>% mutate(last_to_finish = (exec_end_instant == max(exec_end_instant)))
 
 # Stop processing
 if (parsed$timing) toc("Processing")
