@@ -103,7 +103,7 @@ int pop_ws_de_node(struct mir_task_t** task)
         }
 
         // Worker outside this node, move on.
-        if (node != runtime->arch->node_of(ctr));
+        if (node != runtime->arch->node_of(ctr))
             continue;
 
         mir_dequeue_t* queue = (mir_dequeue_t*)sp->queues[ctr];
