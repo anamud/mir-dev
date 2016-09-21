@@ -93,6 +93,7 @@ In order to build and use MIR for task-based program execution, you will minimal
   \item Python (for executing scripts)
   \item GNU Binutils.
   \item Scons build system.
+  \item Check, a unit testing framework.
   \item R (for executing scripts)
   \item These R packages:
   \begin{itemize}
@@ -201,6 +202,8 @@ $ ln -s $MIR_OMP_INT_ROOT/mir_omp_int.c mir_omp_int.c
 \end{lstlisting}
 
 \item Clean and rebuild MIR.
+
+TODO: Move mir\_omp\_int.c to a separate repository. Provide a copy of the GPL license.
 
 \begin{lstlisting}[style=MyInputStyle]
 $ cd $MIR_ROOT/src
@@ -410,16 +413,18 @@ TODO: Explain file contents.
 
 Task are first-class citizens in task-based profiling.
 
-Enable the \texttt{--task-stats} flag to collect task statistics in a CSV file called \texttt{mir-task-stats}. Inspect the file manually or plot and visualize the fork-join task graph.
+Enable the \texttt{--task-stats} flag to collect task statistics in a CSV file called \texttt{mir-task-stats}. Inspect the file manually, or process it for summary information.
 
 \begin{lstlisting}[style=MyInputStyle]
 $ MIR_CONF="--task-stats" <invoke mir-linked program>
-$ Rscript ${MIR_ROOT}/scripts/profiling/task/plot-task-graph.R -d mir-task-stats
+$ Rscript ${MIR_ROOT}/scripts/profiling/task/process-task-stats.R -d mir-task-stats
+$ Rscript ${MIR_ROOT}/scripts/profiling/task/summarize-task-stats.R -d task-stats.processed
+$ cat task-stats.summarized
 \end{lstlisting}
 
 TODO: Explain file contents.
 
-The \texttt{mir-task-stats} file can be further processed for additional information such as number of tasks and task lineage (run-independent unique identifier for tasks). Processed information can also be used to visualize the fork-join task graph.
+The processing step computes additional information such as number of tasks and task lineage (run-independent unique identifier for tasks). Processed information can be manually inspected or visualized on a fork-join task graph.
 
 \begin{lstlisting}[style=MyInputStyle]
 $ Rscript ${MIR_ROOT}/scripts/profiling/task/process-task-stats.R -d mir-task-stats --lineage
@@ -528,8 +533,14 @@ $ Rscript ${MIR_ROOT}/scripts/profiling/task/plot-task-graph.R -d mir-task-perf 
 
 TODO: Instructions to use the full task graph profiler.
 
+\begin{framed}
+\begin{quote}
+Tip: Mapping profiling data to visual attributes of the task graph is essential to understand the program structure and problems quickly. If you are using YEd to see the task graph, then import and apply property mapper settings from files called \texttt{*-property-map-yed.cnfx} under \texttt{\$MIR\_ROOT/scripts/profiling/task/}, and then layout the graph using the hierarchical layout.
+\end{quote}
+\end{framed}
+
 \subsection{Profiling Case Study}
 
-TODO.
+This section is yet to be written. See paper \textit{Grain Graphs: OpenMP Performance Analysis Made Easy} published in PPOPP16 for profiling and visualization case studies that use MIR.
 
 \end{document}
