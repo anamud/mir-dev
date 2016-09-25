@@ -107,6 +107,7 @@ if (parsed$lineage) {
 }
 
 # Input: outline function address as a number (double)
+# TODO: Memoize outline function addresses and their line numbers
 find_line_number <- function(outline_func_addr) {
     # The existence of addr2line is assumed
     system(paste("addr2line -s -e", parsed$executable, sprintf("%x", outline_func_addr)), intern=TRUE)
