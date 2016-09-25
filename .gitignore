@@ -74,3 +74,6 @@ cscope.files
 *.aux
 *.fdb_latexmk
 *.fls
+
+# The GPL implementation
+mir_omp_int.c
