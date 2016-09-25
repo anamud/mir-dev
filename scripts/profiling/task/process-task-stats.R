@@ -26,7 +26,7 @@ if (Rstudio_mode) {
                         make_option(c("-d","--data"), help = "Task stats.", metavar="FILE"),
                         make_option(c("-e","--executable"), help = "The executable that generated the stats", metavar="EXECUTABLE"),
                         make_option(c("--lineage"), action="store_true", default=FALSE, help="Calculate task lineage."),
-                        make_option(c("--linenumbers"), action="store_true", default=FALSE, help="Find the source line number for each task."),
+                        make_option(c("--linenumbers"), action="store_true", default=FALSE, help="Find the source filename and line number for each task."),
                         make_option(c("--verbose"), action="store_true", default=TRUE, help="Print output [default]."),
                         make_option(c("--timing"), action="store_true", default=FALSE, help="Print timing information."),
                         make_option(c("-o","--out"), default="task-stats.processed", help = "Output file name [default \"%default\"]", metavar="STRING"),
@@ -113,11 +113,11 @@ find_line_number <- function(outline_func_addr) {
     system(paste("addr2line -s -e", parsed$executable, sprintf("%x", outline_func_addr)), intern=TRUE)
 }
 
-# Find line numbers
+# Find source filename and line numbers
 if (parsed$linenumbers) {
     if (!exists("executable", where=parsed)) {
         my_print(paste(
-            "Warning: Cannot find line numbers when the profiled executable has not been specified!",
+            "Warning: Cannot find source filenames and line numbers when the profiled executable has not been specified!",
             "Specify it using the -e option", sep="\n         "))
     }
     else {
