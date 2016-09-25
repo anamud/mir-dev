@@ -115,7 +115,9 @@ find_line_number <- function(outline_func_addr) {
 # Find line numbers
 if (parsed$linenumbers) {
     if (!exists("executable", where=parsed)) {
-        my_print("Warning: Cannot find line numbers when the profiled executable has not been specified!\n         Specify it using the -e option")
+        my_print(paste(
+            "Warning: Cannot find line numbers when the profiled executable has not been specified!",
+            "Specify it using the -e option", sep="\n         "))
     }
     else {
         if (parsed$verbose) my_print("Finding line numbers ...")
