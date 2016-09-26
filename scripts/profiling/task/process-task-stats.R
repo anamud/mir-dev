@@ -106,11 +106,18 @@ if (parsed$lineage) {
     }
 }
 
+# Enviroment used to memoize the find_line_number function
+line_number_memo <- new.env(hash=TRUE, parent=emptyenv())
+
 # Input: outline function address as a number (double)
-# TODO: Memoize outline function addresses and their line numbers
 find_line_number <- function(outline_func_addr) {
-    # The existence of addr2line is assumed
-    system(paste("addr2line -s -e", parsed$executable, sprintf("%x", outline_func_addr)), intern=TRUE)
+    if (exists(toString(outline_func_addr), where=line_number_memo)) return(line_number_memo[[toString(outline_func_addr)]])
+    else {
+        # The existence of addr2line is assumed
+        line_number <- system(paste("addr2line -s -e", parsed$executable, sprintf("%x", outline_func_addr)), intern=TRUE)
+        line_number_memo[[toString(outline_func_addr)]] <- line_number
+        return(line_number)
+    }
 }
 
 # Find source filename and line numbers
