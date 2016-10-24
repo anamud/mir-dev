@@ -1,6 +1,12 @@
 # Clean slate
 rm(list=ls())
 
+# Strings as factors
+options(stringsAsFactors = F)
+
+# Set number of precision digits
+options("scipen"=999)
+
 # Libraries
 require(reshape2, quietly=T)
 require(data.table, quietly=T)
