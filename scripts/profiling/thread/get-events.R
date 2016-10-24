@@ -76,34 +76,33 @@ events_comb <- merge(events_comb, events_mean, by="cpu", all=T)
 events_comb <- merge(events_comb, events_sd, by="cpu", all=T)
 
 # Write out
-cat("Writing event summary:", "event-summary-all.txt", "\n")
-sink("event-summary-all.txt")
-print(events_comb)
-sink()
+out_file <- "events-all.csv"
+cat("Writing all events to file:", out_file, "\n")
+write.csv(events_comb, out_file, row.names=F)
 
 # Write out individual event summary
 cust_summary <- function(data, name=F)
 {
   if(name==T)
     return(c("min", "lhinge", "median", "uhinge", "max", "mad", "mean", "sd"))
-  
+
   fiveps <- fivenum(as.numeric(data))
   avg <- mean(as.numeric(data))
-  s.d <- sd(as.numeric(data))
-  m.a.d <- mad(as.numeric(data))
-  return(c(fiveps, m.a.d, avg, s.d))
+  stddev <- sd(as.numeric(data))
+  minabsdev <- mad(as.numeric(data))
+  return(c(fiveps, minabsdev, avg, stddev))
 }
 etypes <- unique(events$event)
 for(etype in etypes)
 {
-  df <- events_comb[,grepl(etype, names(events_comb))]
-  sum.df <- as.data.frame(sapply(df, cust_summary))
-  rownames(sum.df) <- cust_summary(0,T)
+  events <- events_comb[,grepl(etype, names(events_comb))]
+  events_summarized <- as.data.frame(sapply(events, cust_summary))
+  events_summarized <- cbind(summary=cust_summary(0,T), events_summarized)
 
-  fi <- paste("event-summary-",etype,".txt",sep="")
-  cat("Summarizing event", etype, "in file:", fi, "\n")
-  sink(fi)
-  print(df)
-  print(sum.df)
-  sink()
+  out_file <- paste("events-",etype,".csv",sep="")
+  cat("Writing events by type to file:", out_file, "\n")
+  write.csv(events, out_file, row.names=F)
+  out_file <- paste("events-",etype,"-summary.csv",sep="")
+  cat("Writing summary of events by type to file:", out_file, "\n")
+  write.csv(events_summarized, out_file, row.names=F)
 }
