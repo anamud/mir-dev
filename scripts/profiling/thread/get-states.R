@@ -53,3 +53,9 @@ write.csv(states_tasks_processed, out_file, row.names=F)
 out_file <- "states_summary.csv"
 cat("Writing summary of states to file:", out_file, "\n")
 write.csv(states_tasks_summarized, out_file, row.names=F)
+
+# Warn
+wa <- warnings()
+if (class(wa) != "NULL")
+    print(wa)
+
