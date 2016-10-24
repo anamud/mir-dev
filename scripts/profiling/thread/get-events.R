@@ -106,3 +106,9 @@ for(etype in etypes)
   cat("Writing summary of events by type to file:", out_file, "\n")
   write.csv(events_summarized, out_file, row.names=F)
 }
+
+# Warn
+wa <- warnings()
+if (class(wa) != "NULL")
+    print(wa)
+
