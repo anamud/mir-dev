@@ -11,7 +11,7 @@ tic <- function(gcFirst = TRUE, type=c("elapsed", "user.self", "sys.self"))
   type <- match.arg(type)
   assign(".type", type, envir=baseenv())
   if(gcFirst) gc(FALSE)
-  tic <- proc.time()[type]         
+  tic <- proc.time()[type]
   assign(".tic", tic, envir=baseenv())
   invisible(tic)
 }
@@ -33,7 +33,7 @@ if (Rstudio_mode) {
   dat_file <- "accumulated-events.rec"
 } else {
   args <- commandArgs(TRUE)
-  if(length(args) != 1) 
+  if(length(args) != 1)
   {
       print("Error: Invaild arguments. Please provide accumulated events file (arg1).")
       quit("no", 1)
@@ -48,13 +48,13 @@ toc("Read data")
 tic(type="elapsed")
 dat_raw <- dat_raw[complete.cases(dat_raw),]
 setnames(dat_raw, c("type","number","instant","count","value","meta"))
-num_events <- dat_raw[1,]$count 
+num_events <- dat_raw[1,]$count
 dat_int <- subset(dat_raw, select=c(value, meta))
 
 # Get events and meta data field names
 event_names <- character()
 events_1 <- strsplit(as.character(dat_raw[1,]$value), ",")[[1]]
-for(event_str in events_1) 
+for(event_str in events_1)
   event_names <- append(event_names, strsplit(event_str, "=")[[1]][1])
 
 # Make proper
@@ -73,11 +73,11 @@ toc("Tabulating")
 tic(type="elapsed")
 dat_table <- data.table(dat_most_proper)
 setkey(dat_table, id)
-dat_table_sd <- dat_table[, lapply(.SD, sd, na.rm=TRUE), by=id, .SDcols=event_names] 
+dat_table_sd <- dat_table[, lapply(.SD, sd, na.rm=TRUE), by=id, .SDcols=event_names]
 setnames(dat_table_sd, c("id", paste(event_names,sep="","_sd")))
-dat_table_mean <- dat_table[, lapply(.SD, mean, na.rm=TRUE), by=id, .SDcols=event_names] 
+dat_table_mean <- dat_table[, lapply(.SD, mean, na.rm=TRUE), by=id, .SDcols=event_names]
 setnames(dat_table_mean, c("id", paste(event_names,sep="","_mean")))
-dat_table_sum <- dat_table[, lapply(.SD, sum, na.rm=TRUE), by=id, .SDcols=event_names] 
+dat_table_sum <- dat_table[, lapply(.SD, sum, na.rm=TRUE), by=id, .SDcols=event_names]
 setnames(dat_table_sum, c("id", paste(event_names,sep="","_sum")))
 dat_table_merged <- merge(dat_table_sd, dat_table_mean, by="id")
 dat_table_merged <- merge(dat_table_merged, dat_table_sum, by="id")
