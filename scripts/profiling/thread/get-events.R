@@ -1,7 +1,15 @@
 rm(list=ls())
+
+# Strings as factors
+options(stringsAsFactors = F)
+
+# Set number of precision digits
+options("scipen"=999)
+
+# Libary
 library(reshape2)
 
-# Read data 
+# Read data
 args <- commandArgs(TRUE)
 if(length(args) != 1) quit("no", 1)
 cat("Reading events file:", args[1], "\n")
