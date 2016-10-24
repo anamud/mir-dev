@@ -14,42 +14,42 @@ cust_summary <- function(data, name=F)
 
     fiveps <- fivenum(as.numeric(data))
     avg <- mean(as.numeric(data))
-    s.d <- sd(as.numeric(data))
-    m.a.d <- mad(as.numeric(data))
-    return(c(fiveps, m.a.d, avg, s.d))
+    stddev <- sd(as.numeric(data))
+    minabsdev <- mad(as.numeric(data))
+    return(c(fiveps, minabsdev, avg, stddev))
 }
 
 ### Summarize
-states.tasks <- merge(states,tasks,by.x=c("THREAD"),by.y=c("worker"))
-states.tasks.processed <- cbind(states.tasks, 
+states_tasks <- merge(states,tasks,by.x=c("THREAD"),by.y=c("worker"))
+states_tasks_processed <- cbind(states_tasks,
                                 data.frame(
-                                "owned_And_stolen" = as.numeric(states.tasks$owned)+as.numeric(states.tasks$stolen),
-                                "TIDLE_Per_owned_And_stolen" = as.numeric(states.tasks$TIDLE)/(as.numeric(states.tasks$owned)+as.numeric(states.tasks$stolen)),
-                                "TCREATE_Per_created" = as.numeric(states.tasks$TCREATE)/as.numeric(states.tasks$created),
-                                "TSYNC_Per_created" = as.numeric(states.tasks$TSYNC)/as.numeric(states.tasks$created),
-                                "TEXEC_Per_owned_And_stolen" = as.numeric(states.tasks$TEXEC)/(as.numeric(states.tasks$owned)+as.numeric(states.tasks$stolen))))
+                                "owned_AND_stolen" = as.numeric(states_tasks$owned)+as.numeric(states_tasks$stolen),
+                                "TIDLE_owned_AND_stolen" = as.numeric(states_tasks$TIDLE)/(as.numeric(states_tasks$owned)+as.numeric(states_tasks$stolen)),
+                                "TCREATE_created" = as.numeric(states_tasks$TCREATE)/as.numeric(states_tasks$created),
+                                "TSYNC_created" = as.numeric(states_tasks$TSYNC)/as.numeric(states_tasks$created),
+                                "TEXEC_owned_AND_stolen" = as.numeric(states_tasks$TEXEC)/(as.numeric(states_tasks$owned)+as.numeric(states_tasks$stolen))))
 
-#sum.df <- cbind(cust_summary(states$TIDLE, "TIDLE"),
-            #cust_summary(states$TCREATE, "TCREATE"),
-            #cust_summary(states$TEXEC, "TEXEC"),
-            #cust_summary(states$TSYNC, "TSYNC"),
-            #cust_summary(tasks$created, "created"),
-            #cust_summary(tasks$owned, "owned"),
-            #cust_summary(tasks$stolen, "stolen"),
-            #cust_summary(tasks$inlined, "inlined"),
-            #cust_summary(states.tasks.processed$owned_And_stolen, "owned_And_stolen"),
-            #cust_summary(states.tasks.processed$TCREATE_Per_created, "TCREATE_Per_created"),
-            #cust_summary(states.tasks.processed$TSYNC_Per_created, "TSYNC_Per_created"),
-            #cust_summary(states.tasks.processed$TEXEC_Per_owned_And_stolen, "TEXEC_Per_owned_And_stolen"))
+#states_tasks_summarized <- cbind(cust_summary(states$TIDLE, "TIDLE"),
+                                 #cust_summary(states$TCREATE, "TCREATE"),
+                                 #cust_summary(states$TEXEC, "TEXEC"),
+                                 #cust_summary(states$TSYNC, "TSYNC"),
+                                 #cust_summary(tasks$created, "created"),
+                                 #cust_summary(tasks$owned, "owned"),
+                                 #cust_summary(tasks$stolen, "stolen"),
+                                 #cust_summary(tasks$inlined, "inlined"),
+                                 #cust_summary(states_tasks_processed$owned_AND_stolen, "owned_AND_stolen"),
+                                 #cust_summary(states_tasks_processed$TCREATE_created, "TCREATE_created"),
+                                 #cust_summary(states_tasks_processed$TSYNC_created, "TSYNC_created"),
+                                 #cust_summary(states_tasks_processed$TEXEC_owned_AND_stolen, "TEXEC_owned_AND_stolen"))
 
-sum.df <- as.data.frame(sapply(states.tasks.processed, cust_summary))
-rownames(sum.df) <- cust_summary(0,T)
+states_tasks_summarized <- as.data.frame(sapply(states_tasks_processed, cust_summary))
+states_tasks_summarized <- cbind(summary=cust_summary(0,T), states_tasks_summarized)
 
 ### Print summary to file
-#out.file <- paste(gsub(". $", "", args[1]), ".info", sep="")
-out.file <- "states.info"
-cat("Writing state summary in file:", out.file, "\n")
-sink(out.file)
-print(states.tasks.processed)
-print(sum.df)
-sink()
+#out_file <- paste(gsub(". $", "", args[1]), ".info", sep="")
+out_file <- "states.csv"
+cat("Writing states to file:", out_file, "\n")
+write.csv(states_tasks_processed, out_file, row.names=F)
+out_file <- "states_summary.csv"
+cat("Writing summary of states to file:", out_file, "\n")
+write.csv(states_tasks_summarized, out_file, row.names=F)
