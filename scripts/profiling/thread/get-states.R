@@ -1,4 +1,8 @@
-#### Libary
+# Strings as factors
+options(stringsAsFactors = F)
+
+# Set number of precision digits
+options("scipen"=999)
 
 ### Read data
 args <- commandArgs(TRUE)
