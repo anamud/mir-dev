@@ -28,7 +28,7 @@ shift $(( OPTIND - 1 ))
 # Collect state time from all recorders
 OUTF=accumulated-state-time.rec
 rm -f $OUTF
-cat "$@" > $OUTF 
+cat "$@" > $OUTF
 sed '/THREAD/d' $OUTF > $OUTF.body
 sed '/THREAD/!d' $OUTF > $OUTF.header
 LC_NUMERIC=C sort -n $OUTF.body > $OUTF.body.sorted
@@ -39,7 +39,7 @@ rm -f $OUTF.header $OUTF.body*
 rm -f $OUTF.info
 SCRIPT="`readlink -e $0`"
 SCRIPTPATH="`dirname $SCRIPT`"
-Rscript $SCRIPTPATH/get-states.R accumulated-state-time.rec $WS
+Rscript $SCRIPTPATH/get-states.R $OUTF $WS
 
 # Cleanup
 rm -f $OUTF
