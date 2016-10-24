@@ -43,9 +43,15 @@ append_to_colnames <- function(df, name)
 events_sum <- dcast(events, cpu~event, sum, value.var="value")
 events_sum <- append_to_colnames(events_sum, ".sum")
 
+## This throws warning "no non-missing arguments to min; returning Inf"
+## Warning can be ignored
+## See: http://stackoverflow.com/questions/24282550/no-non-missing-arguments-warning-when-using-min-or-max-in-reshape2
 events_min <- dcast(events, cpu~event, min, value.var="value")
 events_min <- append_to_colnames(events_min, ".min")
 
+## This throws warning "no non-missing arguments to max; returning -Inf"
+## Warning can be ignored
+## See: http://stackoverflow.com/questions/24282550/no-non-missing-arguments-warning-when-using-min-or-max-in-reshape2
 events_max <- dcast(events, cpu~event, max, value.var="value")
 events_max <- append_to_colnames(events_max, ".max")
 
