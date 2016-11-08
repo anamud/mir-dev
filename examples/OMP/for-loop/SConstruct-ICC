@@ -1,0 +1,36 @@
+import os
+env = Environment(ENV = {'PATH' : os.environ['PATH']})
+env['CC'] = ['icc']
+env['CCFLAGS'] = Split("""
+-std=c99
+-Wall
+-Werror
+-Wno-unused-function
+-Wno-unused-variable
+-Wno-unused-but-set-variable
+-Wno-maybe-uninitialized
+-openmp
+-g
+-O3
+-D_XOPEN_SOURCE
+-D_XOPEN_SOURCE_EXTENDED
+""")
+# These are ICC flags.
+#-vec-
+#-axsse4.2
+#-opt-prefetch
+#-vec-report
+#-opt-report3
+#-opt-report-phase hlo
+#-flto
+env['CCFLAGS'] += ['-I../../utils']
+env['LINKFLAGS'] = ['-openmp']
+env['LIBS'] = ['m']
+env.VariantDir('ICC-build', '.', duplicate=0)
+env_src = env.Glob('ICC-build/*.c')
+# Program name is prefixed with name of this directory
+import os
+this_dir = os.getcwd().split(os.sep)[-1]
+env.Program(this_dir +'-ICC.out', source = env_src)
+Clean('.','ICC-build')
+

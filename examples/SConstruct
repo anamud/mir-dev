@@ -103,5 +103,6 @@ Export('opt','debug','prof','check')
 # Register build scripts
 # OpenMP test programs
 SConscript(os.path.join('OMP/fib', 'SConscript'))
+SConscript(os.path.join('OMP/for-loop', 'SConscript'))
 # Native interface test programs
 SConscript(os.path.join('native/fib/', 'SConscript'))
