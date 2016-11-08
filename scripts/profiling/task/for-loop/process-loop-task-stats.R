@@ -63,10 +63,6 @@ task_stats <- task_stats[!(tag == "idle_task" & num_children == 0),]
 #task_stats <- task_stats[!(!is.na(metadata) & metadata == "chunk_start"),]
 #task_stats <- task_stats[!(!is.na(metadata) & metadata == "chunk_continuation"),]
 
-# Find task executed last per worker
-if (parsed$verbose) my_print("Calculating last tasks to finish ...")
-task_stats <- task_stats %>% group_by(cpu_id) %>% mutate(last_to_finish = (exec_end_instant == max(exec_end_instant)))
-
 # Mark leaf tasks
 if (parsed$verbose) my_print("Marking leaf tasks ...")
 task_stats <- task_stats[, leaf := F]
@@ -153,6 +149,10 @@ task_stats <- ungroup(task_stats)
 # Calculate sibling work balance
 if (parsed$verbose) my_print("Calculating sibling work balance ...")
 task_stats <- task_stats %>% group_by(parent,joins_at) %>% mutate(sibling_work_balance = max(work_cycles)/mean(work_cycles))
+
+# Find task executed last per worker
+if (parsed$verbose) my_print("Calculating last tasks to finish ...")
+task_stats <- task_stats %>% group_by(cpu_id) %>% mutate(last_to_finish = (exec_end_instant == max(exec_end_instant)))
 
 # Stop processing
 if (parsed$timing) toc("Processing")
