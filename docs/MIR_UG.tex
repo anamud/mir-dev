@@ -9,55 +9,55 @@
 \usepackage[parfill]{parskip}
 
 \lstdefinestyle{MyInputStyle}{
-	language=bash,
-	basicstyle=\small\sffamily,
-	commentstyle=\color{black},
-	numberstyle=\tiny\color{black},
-	keywordstyle=\color{black},
-	extendedchars=true,
-	numbers=none,
-	numbersep=3pt,
-	frame=none,
-	columns=fullflexible,
-	backgroundcolor=\color{gray!10},
-	linewidth=\linewidth,
-	breaklines=true,
-	breakatwhitespace=false,
-	showspaces=false,
-	keepspaces=true,
-	captionpos=b,
-	showspaces=false,
-	showstringspaces=false,
-	showtabs=false,
-	tabsize=2,
-	aboveskip=\bigskipamount,
-	belowskip=\bigskipamount,
+    language=bash,
+    basicstyle=\small\sffamily,
+    commentstyle=\color{black},
+    numberstyle=\tiny\color{black},
+    keywordstyle=\color{black},
+    extendedchars=true,
+    numbers=none,
+    numbersep=3pt,
+    frame=none,
+    columns=fullflexible,
+    backgroundcolor=\color{gray!10},
+    linewidth=\linewidth,
+    breaklines=true,
+    breakatwhitespace=false,
+    showspaces=false,
+    keepspaces=true,
+    captionpos=b,
+    showspaces=false,
+    showstringspaces=false,
+    showtabs=false,
+    tabsize=2,
+    aboveskip=\bigskipamount,
+    belowskip=\bigskipamount,
 }
 
 \lstdefinestyle{MyCStyle}{
-	language=c,
-	basicstyle=\small\sffamily,
-	commentstyle=\color{black},
-	numberstyle=\tiny\color{black},
-	keywordstyle=\color{black},
-	extendedchars=true,
-	numbers=left,
-	numbersep=3pt,
-	frame=none,
-	columns=fullflexible,
-	backgroundcolor=\color{gray!10},
-	linewidth=\linewidth,
-	breaklines=true,
-	breakatwhitespace=false,
-	showspaces=false,
-	keepspaces=true,
-	captionpos=b,
-	showspaces=false,
-	showstringspaces=false,
-	showtabs=false,
-	tabsize=2,
-	aboveskip=\bigskipamount,
-	belowskip=\bigskipamount,
+    language=c,
+    basicstyle=\small\sffamily,
+    commentstyle=\color{black},
+    numberstyle=\tiny\color{black},
+    keywordstyle=\color{black},
+    extendedchars=true,
+    numbers=left,
+    numbersep=3pt,
+    frame=none,
+    columns=fullflexible,
+    backgroundcolor=\color{gray!10},
+    linewidth=\linewidth,
+    breaklines=true,
+    breakatwhitespace=false,
+    showspaces=false,
+    keepspaces=true,
+    captionpos=b,
+    showspaces=false,
+    showstringspaces=false,
+    showtabs=false,
+    tabsize=2,
+    aboveskip=\bigskipamount,
+    belowskip=\bigskipamount,
 }
 
 
@@ -68,17 +68,25 @@
 
 \section{Introduction}\label{introduction}
 
-MIR is an experimental task-based runtime system library written using C99. Prominent features of MIR include:
+MIR is an experimental task-based runtime system library written using C99.
+Core features of MIR include:
+
 \begin{itemize}
     \item Detailed per-task performance profiling and visualization.
-    \item Flexible, high performance task scheduling and data distribution policies. Examples: Locality-aware scheduling and data distribution on NUMA systems, work-stealing scheduling for multicore systems.
-    \item Support for a capable subset of OpenMP 3.0 tasks and parallel for-loops interface.
+    \item Flexible, high performance task scheduling and data distribution
+        policies. Examples: Locality-aware scheduling and data distribution on
+        NUMA systems and work-stealing scheduling for multicore systems.
+    \item Support for a capable subset of OpenMP 3.0 tasks and parallel
+        for-loops interfaces.
     \item Competitive performance for medium-grained task-based programs.
 \end{itemize}
 
 \section{Intended Audience}\label{intended-audience}
 
-MIR is intended to be used by advanced task-based programmers. Knowledge of OpenMP compilation and role of runtime system in task-based programming is required to use and appreciate MIR.
+MIR is intended to be used by advanced task-based programmers. Knowledge of
+OpenMP compilation and role of runtime system in task-based programming is
+required to use and appreciate MIR. Since MIR is experimental, some user
+interfaces may be unpolished. Be prepared to get your hands dirty.
 
 \section{Installation}\label{installation}
 
@@ -112,18 +120,20 @@ Enabling core features such as per-task profiling and NUMA-specialized execution
 \item These R packages:
   \begin{itemize}
   \item optparse (for parsing data)
-  \item igraph (for task graph processing)
+  \item igraph (for graph processing)
   \item RColorBrewer (for colors)
   \item ggplot2 and reshape2 (for plotting)
-  \item gdata, plyr, dplyr (for data structure transformations)
+  \item gdata, plyr, dplyr, scales (for data structure transformations)
+  \item pastecs (for summmarizing)
   \end{itemize}
-\item yEd (for task graph viewing, preferred)
-\item Cytoscape (for task graph viewing)
+\item yEd (for graph viewing, preferred)
+\item Cytoscape (for graph viewing)
 \end{itemize}
 
 \subsection{Source Structure}\label{source-structure}
 
-The MIR source repository is easy to navigate. Files and directories have familiar, purpose-oriented names. The directory structure of MIR is as follows :
+The MIR source repository is easy to navigate. Files and directories have
+familiar, purpose-oriented names. The directory structure is:
 
 \begin{lstlisting}[style=MyInputStyle]
 . : MIR_ROOT
@@ -136,8 +146,8 @@ The MIR source repository is easy to navigate. Files and directories have famili
         |__task
             |__for_loop
         |__thread
-|__tests : test suite.
-|__examples : example programs.
+|__tests : test suite
+|__examples : example programs
 \end{lstlisting}
 
 \subsection{Licensing}\label{license}
