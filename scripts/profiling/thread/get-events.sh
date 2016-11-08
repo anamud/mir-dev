@@ -6,6 +6,11 @@ if (( $# != 1 )); then
     exit 1
 fi
 
+# Get PCF file
+PCF_FILE=$(basename $1 .prv).pcf
+echo "Events found in PCF:"
+sed -n '/EVENT_TYPE/ {n;p}' $PCF_FILE
+
 # Remove comment character
 sed '/^#/ d' $1 > $1.templ
 
