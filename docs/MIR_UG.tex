@@ -68,25 +68,18 @@
 
 \section{Introduction}\label{introduction}
 
-MIR is an experimental task-based runtime system library written using C99.
-Core features of MIR include:
+MIR is an experimental task-based runtime system library written using C99. Core features of MIR include:
 
 \begin{itemize}
     \item Detailed per-task performance profiling and visualization.
-    \item Flexible, high performance task scheduling and data distribution
-        policies. Examples: Locality-aware scheduling and data distribution on
-        NUMA systems and work-stealing scheduling for multicore systems.
-    \item Support for a capable subset of OpenMP 3.0 tasks and parallel
-        for-loops.
+    \item Flexible, high performance task scheduling and data distribution policies. Examples: Locality-aware scheduling and data distribution on NUMA systems and work-stealing scheduling for multicore systems.
+    \item Support for a capable subset of OpenMP 3.0 tasks and parallel for-loops.
     \item Competitive performance for medium-grained task-based programs.
 \end{itemize}
 
 \section{Intended Audience}\label{intended-audience}
 
-MIR is intended to be used by advanced task-based programmers. Knowledge of
-OpenMP compilation and role of runtime system in task-based programming is
-required to use and appreciate MIR. Since MIR is experimental, some user
-interfaces may be unpolished. Be prepared to get your hands dirty.
+MIR is intended to be used by advanced task-based programmers. Knowledge of OpenMP compilation and role of runtime system in task-based programming is required to use and appreciate MIR. Since MIR is experimental, some user interfaces may be unpolished. Be prepared to get your hands dirty.
 
 \section{Installation}\label{installation}
 
@@ -132,8 +125,7 @@ Enabling core features such as per-task profiling and NUMA-specialized execution
 
 \subsection{Source Structure}\label{source-structure}
 
-The MIR source repository is easy to navigate. Files and directories have
-familiar, purpose-oriented names. The directory structure is:
+The MIR source repository is easy to navigate. Files and directories have familiar, purpose-oriented names. The directory structure is:
 
 \begin{lstlisting}[style=MyInputStyle]
 . : MIR_ROOT
@@ -151,14 +143,9 @@ familiar, purpose-oriented names. The directory structure is:
 \end{lstlisting}
 
 \subsection{Licensing}\label{license}
-MIR is released under the Apache 2.0 license.
-As long as the MIR native library interface is used to compose task-based
-programs, the Apache 2.0 license is binding.
+MIR is released under the Apache 2.0 license.  As long as the MIR native library interface is used to compose task-based programs, the Apache 2.0 license is binding.
 
-However, OpenMP support is enabled through a GPL (v3.0) implementation
-of the GNU libgomp interface. Therefore a combination of Apache 2.0 License and
-GPL is applicable when OpenMP programs are linked with MIR. Understanding the
-implications of the combination is the responsibility of the reader.
+However, OpenMP support is enabled through a GPL (v3.0) implementation of the GNU libgomp interface. Therefore a combination of Apache 2.0 License and GPL is applicable when OpenMP programs are linked with MIR. Understanding the implications of the combination is the responsibility of the reader.
 
 \subsection{Build}\label{build}
 
@@ -206,9 +193,7 @@ $ scons -c && scons
 \subsubsection{Enabling OpenMP support}\label{enable-omp-support}
 
 \begin{itemize}
-    \item Download the GPL implementation of the libGOMP interface from
-        \texttt{https://github.com/anamud/mir-omp-int}.  Point the environment
-        variable MIR\_OMP\_INT\_ROOT to the dowload location.
+    \item Download the GPL implementation of the libGOMP interface from \texttt{https://github.com/anamud/mir-omp-int}.  Point the environment variable MIR\_OMP\_INT\_ROOT to the dowload location.
 
 \item Link the GPL implementation to the source directory and rebuild MIR.
 
@@ -247,8 +232,7 @@ $ ./fib-opt.out
 
 \begin{framed}
 \begin{quote}
-Note: A dedicated suite of example task-based programs is available upon
-    request.
+Note: A dedicated suite of benchmark programs for testing MIR is available upon request.
 \end{quote}
 \end{framed}
 
@@ -279,26 +263,28 @@ Note: OpenMP support is restricted to programs compiled using GCC. MIR intercept
 \subsubsection{Tips for writing MIR-supported OpenMP programs}\label{tips-for-writing-mir-supported-openmp-programs}
 
 \begin{itemize}
-    \item Use \texttt{taskwait} explicitly to synchronize tasks. Do not expect implicit taskwaits within thread barriers.
-        \item Avoid distributing work to threads manually.
+    \item Use \texttt{taskwait} explicitly to synchronize tasks. Do not expect implicit task synchronization points within thread barriers.
+        \item Avoid distributing work to threads manually. Let the runtime system schedule tasks on threads.
         \item Study example and test programs.
         \item You can expect a compiler/runtime error when a non-supported interface is used.
 \end{itemize}
 
 \subsection{Native Interface}\label{native-interface}
 
-The MIR library interface can also be directly used to compose task-based programs. Look at mir\_public\_int.h in MIR\_ROOT/src for interface details and example programs in MIR\_ROOT/examples/native for interface usage examples.
+The MIR library interface can be directly used to compose task-based programs. Look at mir\_public\_int.h in MIR\_ROOT/src for interface details and example programs in MIR\_ROOT/examples/native to understand usage.
 
 \subsection{Compiling and Linking}\label{compiling-and-linking}
 
-Add \texttt{-lmir-opt} to \texttt{LDFLAGS}. Enable MIR to intercept outline function calls\\correctly by adding \texttt{{\footnotesize -fno-inline-functions -fno-inline-functions-called-once -fno-optimize-sibling-calls -fno-omit-frame-pointer -g}}  to \texttt{CFLAGS} and/or \\\texttt{CXXFLAGS}.
+A quick way to compile and link with programs is to reuse the SConstruct or SConscript files of example programs in MIR\_ROOT/examples/.
+
+If compiling manually, add \texttt{-lmir-opt} to \texttt{LDFLAGS}. When profiling instructions of programs, enable MIR to profile outline function calls correctly by adding \texttt{{\footnotesize -fno-inline-functions -fno-inline-functions-called-once \\ -fno-optimize-sibling-calls -fno-omit-frame-pointer -g}}  to \texttt{CFLAGS} and/or \\\texttt{CXXFLAGS}.
 
 \subsection{Runtime Configuration}\label{runtime-configuration}
 
-MIR has several runtime configurable options which can be set using the environment variable \texttt{MIR\_CONF}. Set the \texttt{-h} flag to see available configuration options.
+MIR has several runtime configurable options that can be set using the environment variable \texttt{MIR\_CONF}. Set the \texttt{-h} flag to see available configuration options.
 
 \begin{lstlisting}[style=MyInputStyle]
-$ MIR_CONF="-h" <invoke mir-linked program>
+$ MIR_CONF="-h" <invoke MIR-linked program>
 ...
 -h (--help) print this help message
 -w <int> (--workers) number of workers
@@ -307,17 +293,20 @@ $ MIR_CONF="-h" <invoke mir-linked program>
 --inlining-limit=<int> task inlining limit based on number of tasks per worker.
 --stack-size=<int> worker stack size in MB
 --queue-size=<int> task queue capacity
---numa-footprint=<int> for numa scheduling policy. Indicates data footprint size in bytes below which task is dealt to worker's private queue.
+--numa-footprint=<int> data footprint size threshold in bytes for numa scheduling policy. Tasks with data footprints below threshold are dealt to worker's private queue.
 --worker-stats collect worker statistics
 --task-stats collect task statistics
 -r (--recorder) enable worker recorder
 -p (--profiler) enable communication with Outline Function Profiler. Note: This option is supported only for single-worker execution!]
---single-parallel-block
+...
 \end{lstlisting}
 
 \subsubsection{Binding workers to cores}\label{binding-workers-to-cores}
+Threads created by MIR are called \textit{workers}. The master thread is also a worker.
 
-MIR creates and binds one worker thread per core by default. Hardware threads are excluded while binding. Binding is based on worker identifiers --- worker thread 0 is bound to core 0, worker thread 1 to core 1 and so on. The binding scheme can be changed to a specific mapping using the environment variable \texttt{MIR\_WORKER\_CORE\_MAP}. Ensure \texttt{MIR\_WORKER\_EXPLICIT\_BIND} is defined in \texttt{mir\_defines.h} to enable explicit binding support. An example is shown below.
+MIR creates and binds one worker per core by default. Hardware threads are always disregarded while binding. Binding is based on worker identifiers --- worker thread 0 is bound to core 0, worker thread 1 to core 1 and so on.
+
+The binding scheme can be changed to a specific mapping using the environment variable \texttt{MIR\_WORKER\_CORE\_MAP}. Ensure \texttt{MIR\_WORKER\_EXPLICIT\_BIND} is defined in \texttt{mir\_defines.h} to enable explicit binding support. An example is shown below.
 
 \begin{lstlisting}[style=MyInputStyle]
 $ cd $MIR_ROOT/src
@@ -326,7 +315,7 @@ $ grep "EXPLICIT_BIND" mir_defines.h
 $ cat /proc/cpuinfo | grep -c Core
 4
 $ export MIR_WORKER_CORE_MAP="0,2,3,1"
-$ <invoke mir-linked program>
+$ <invoke MIR-linked program>
 MIR_DBG: Starting initialization ...
 MIR_DBG: Architecture set to firenze
 MIR_DBG: Memory allocation policy set to system
@@ -343,46 +332,50 @@ MIR_DBG: Binding worker 1 to core 1
 
 \section{Profiling}\label{profiling}
 
-MIR supports extensive and detailed thread-based and task-based profiling.
+MIR supports extensive and detailed thread-based and task-based profiling through scripts. Profiling data is stored mainly as CSV, Paraver, and GRAPHML files.
+
+For CSV files, columns names are self-explanatory. Contact MIR contributors for clarifications about column names.
 
 \subsection{Thread-based Profiling}\label{thread-based-profiling}
 
 Thread states and events are the main performance indicators in thread-based profiling.
 
-Enable the \texttt{--worker-stats} flag to get basic load-balance information in a CSV file called \texttt{mir-worker-stats}.
+Enable the \texttt{--worker-stats} flag to get basic thread statistics in a CSV file called \texttt{mir-worker-stats}.
 
 \begin{lstlisting}[style=MyInputStyle]
-$ MIR_CONF="--worker-stats" <invoke mir-linked program>
+$ MIR_CONF="--worker-stats" <invoke MIR-linked program>
 $ cat mir-worker-stats
 \end{lstlisting}
 
-TODO: Explain file contents.
-
-MIR contains a \texttt{recorder} which produces execution traces. Use the \texttt{-r} flag to enable the recorder and get detailed state and event traces in a set of \texttt{mir-recorder-trace-*.rec} files.  Each file represents a worker thread. The files can be inspected individually or combined and visualized using Paraver.
+MIR contains a tracing module called the \texttt{recorder} that produces time-stamped execution traces. Set the \texttt{-r} flag to enable the recorder and get detailed state and event traces in a set of \texttt{mir-recorder-trace-*.rec} files.  Each file represents a worker. Inspect the files individually, or combine them for visualization on Paraver using a special script.
 
 \begin{lstlisting}[style=MyInputStyle]
-$ MIR_CONF="-r" <invoke mir-linked program>
+$ MIR_CONF="-r" <invoke MIR-linked program>
 $ $MIR_ROOT/scripts/profiling/thread/rec2paraver.py \
 mir-recorder-trace-config.rec
 $ wxparaver mir-recorder-trace.prv
 \end{lstlisting}
 
-Paraver configuration files for MIR traces are co-located with the script \texttt{rec2paraver.py}.
+\begin{framed}
+\begin{quote}
+Tip: Paraver configuration files for studying memory hierarchy utilization problems are placed in \$MIR\_ROOT/scripts/profiling/thread/paraver-configs.
+\end{quote}
+\end{framed}
 
-A set of \texttt{mir-recorder-state-time-*.rec} files are also created when \texttt{-r} is set. These files contain thread state duration information which can be accumulated for analysis without Paraver.
+To understand time spent by workers in individual states without using Paraver, use a special script to process \texttt{mir-recorder-state-time-*.rec} files created by the recorder.
 
 \begin{lstlisting}[style=MyInputStyle]
-$ $MIR_ROOT/scripts/profiling/thread/get-states.sh \
-mir-recorder-state-time
-$ cat accumulated-state-file.info
+$MIR_ROOT/scripts/profiling/thread/get-states.sh -w mir-worker-stats \
+mir-recorder-state-time-*
+$ cat state-summary.csv
+$ head states.csv
 \end{lstlisting}
-
-TODO: Explain file contents.
 
 \subsubsection{Enabling hardware performance counters}\label{enabling-hardware-performance-counters}
 
-MIR can read hardware performance counters through PAPI during task execution events. Events currently supported are the beginning and end of task execution.
-Hardware performance counters are not read during during a task switch event.
+MIR can read hardware performance counters through PAPI during task execution events. Events currently supported are task start and task end events.
+In particular, the task switch event is not supported.
+This means that counter readings will include effects of runtime system activity, system calls, interrupts etc that happened during task execution.
 
 \begin{itemize}
 \item Install PAPI.
@@ -398,7 +391,7 @@ $ export PAPI_ROOT=<PAPI install path>
 $ touch $MIR_ROOT/src/HAVE_PAPI
 \end{lstlisting}
 
-\item Enable additional PAPI hardware performance counters by editing \texttt{MIR\_ROOT/src/mir\_recorder.c}.
+\item Enable additional PAPI hardware performance counters by editing \texttt{MIR\_ROOT/src/mir\_recorder.c}. In the example below, counters \\ \texttt{PAPI\_TOT\_INS} and \texttt{PAPI\_TOT\_CYC} are enabled. Ignore the 0x0 value.
 
 \begin{lstlisting}[style=MyInputStyle]
 $ grep -i "{PAPI_" $MIR_ROOT/src/mir_recorder.c
@@ -417,14 +410,12 @@ $ scons -c && scons
 \end{lstlisting}
 \end{itemize}
 
-Performance counter values will appear in the \texttt{mir-recorder-trace-*.rec} files produced by the recorder during thread-based profiling. The counter readings can either be viewed on Paraver or accumulated for analysis outside Paraver.
+Performance counter readings will appear in the \texttt{mir-recorder-trace-*.rec} files created by the recorder during profiling. They can either be viewed on Paraver or processed using a special script for manual analysis.
 
 \begin{lstlisting}[style=MyInputStyle]
 $ $MIR_ROOT/scripts/profiling/thread/get-events.sh mir-recorder-trace.prv
-$ cat event-summary-*.txt
+$ cat events-*-summary.csv
 \end{lstlisting}
-
-TODO: Explain file contents.
 
 \subsection{Task-based Profiling}\label{task-based-profiling}
 
@@ -433,7 +424,7 @@ Task are first-class citizens in task-based profiling.
 Enable the \texttt{--task-stats} flag to collect task statistics in a CSV file called \texttt{mir-task-stats}. Inspect the file manually, or process it for summary information.
 
 \begin{lstlisting}[style=MyInputStyle]
-$ MIR_CONF="--task-stats" <invoke mir-linked program>
+$ MIR_CONF="--task-stats" <invoke MIR-linked program>
 $ Rscript ${MIR_ROOT}/scripts/profiling/task/process-task-stats.R -d mir-task-stats
 $ Rscript ${MIR_ROOT}/scripts/profiling/task/summarize-task-stats.R -d task-stats.processed
 $ cat task-stats.summarized
@@ -452,7 +443,7 @@ $ Rscript ${MIR_ROOT}/scripts/profiling/task/plot-task-graph.R -d task-stats.pro
 
 TODO: Explain file contents.
 
-Hardware performance counter readings obtained during thread-based profiling can be summarized on a per-task basis. Note that performance counter readings will include the effects of all actions that occurred during task execution such as runtime system activity, system calls, interrupts etc.
+Hardware performance counter readings obtained during thread-based profiling can be summarized on a per-task basis. 
 
 \begin{lstlisting}[style=MyInputStyle]
 $ $MIR_ROOT/scripts/profiling/thread/get-events-per-task.sh mir-recorder-trace-*.rec
