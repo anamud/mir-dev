@@ -77,7 +77,7 @@ Core features of MIR include:
         policies. Examples: Locality-aware scheduling and data distribution on
         NUMA systems and work-stealing scheduling for multicore systems.
     \item Support for a capable subset of OpenMP 3.0 tasks and parallel
-        for-loops interfaces.
+        for-loops.
     \item Competitive performance for medium-grained task-based programs.
 \end{itemize}
 
@@ -95,39 +95,39 @@ MIR is built and tested on modern (2012+) Linux-based systems.
 In order to build and use MIR for task-based program execution, you will minimally require:
 
 \begin{itemize}
-  \item A machine with x86 architecture.
-  \item Linux kernel later than January 2012.
-  \item GCC.
-  \item Python (for executing scripts)
-  \item GNU Binutils.
-  \item Scons build system.
-  \item Check, a unit testing framework.
-  \item R (for executing scripts)
-  \item These R packages:
-  \begin{itemize}
-      \item data.table (for data structure transformations)
-  \end{itemize}
+    \item A machine with x86 architecture.
+    \item Linux kernel later than January 2012.
+    \item GCC.
+    \item Python (for executing scripts)
+    \item GNU Binutils.
+    \item Scons build system.
+    \item Check, a unit testing framework.
+    \item R (for executing scripts)
+    \item These R packages:
+    \begin{itemize}
+        \item data.table (for data structure transformations)
+    \end{itemize}
 \end{itemize}
 
 Enabling core features such as per-task profiling and NUMA-specialized execution requires:
 
 \begin{itemize}
-\item Libraries libnuma and numactl (for data distribution and locality-aware scheduling on NUMA systems)
-\item GCC with OpenMP support (for linking task-based OpenMP programs)
-\item PAPI (for reading hardware performance counters during profiling)
-\item Paraver (for visualizing thread execution traces)
-\item Intel Pin sources (for profiling instructions executed by tasks)
-\item These R packages:
-  \begin{itemize}
-  \item optparse (for parsing data)
-  \item igraph (for graph processing)
-  \item RColorBrewer (for colors)
-  \item ggplot2 and reshape2 (for plotting)
-  \item gdata, plyr, dplyr, scales (for data structure transformations)
-  \item pastecs (for summmarizing)
-  \end{itemize}
-\item yEd (for graph viewing, preferred)
-\item Cytoscape (for graph viewing)
+    \item Libraries libnuma and numactl (for data distribution and locality-aware scheduling on NUMA systems)
+    \item GCC with OpenMP support (for linking task-based OpenMP programs)
+    \item PAPI (for reading hardware performance counters during profiling)
+    \item Paraver (for visualizing thread execution traces)
+    \item Intel Pin sources (for profiling instructions executed by tasks)
+    \item These R packages:
+    \begin{itemize}
+        \item optparse (for parsing data)
+        \item igraph (for graph processing)
+        \item RColorBrewer (for colors)
+        \item ggplot2 and reshape2 (for plotting)
+        \item gdata, plyr, dplyr, scales (for data structure transformations)
+        \item pastecs (for summmarizing)
+    \end{itemize}
+    \item yEd (for graph viewing, preferred)
+    \item Cytoscape (for graph viewing)
 \end{itemize}
 
 \subsection{Source Structure}\label{source-structure}
@@ -152,16 +152,20 @@ familiar, purpose-oriented names. The directory structure is:
 
 \subsection{Licensing}\label{license}
 MIR is released under the Apache 2.0 license.
-As long as the MIR native library interface is used to compose task-based programs, the Apache 2.0 License is binding.
+As long as the MIR native library interface is used to compose task-based
+programs, the Apache 2.0 license is binding.
 
-However, OpenMP in MIR support is enabled through a GPL (v3.0) implementation of the GNU libGOMP interface. Therefore a combination of Apache 2.0 License and GPL is applicable when OpenMP programs are linked with MIR. Understanding the implications of the combination is the responsibility of the reader.
+However, OpenMP support is enabled through a GPL (v3.0) implementation
+of the GNU libgomp interface. Therefore a combination of Apache 2.0 License and
+GPL is applicable when OpenMP programs are linked with MIR. Understanding the
+implications of the combination is the responsibility of the reader.
 
 \subsection{Build}\label{build}
 
 Follow below steps to build the basic runtime system library.
 
 \begin{itemize}
-\item Set MIR\_ROOT environment variable.
+    \item Set MIR\_ROOT environment variable.
 
 \begin{lstlisting}[style=MyInputStyle]
 $ export MIR_ROOT=<MIR source repository path>
@@ -173,7 +177,7 @@ Tip: Add the export statement to .bashrc to avoid repeated initialization.
 \end{quote}
 \end{framed}
 
-\item Build.
+    \item Build.
 
 \begin{lstlisting}[style=MyInputStyle]
 $ cd $MIR_ROOT/src
@@ -184,14 +188,14 @@ $ scons
 \subsubsection{Enabling data distribution and locality-aware scheduling on NUMA systems}\label{enabling-data-distribution-and-locality-aware-scheduling-on-numa-systems}
 
 \begin{itemize}
-\item Install libnuma and numactl.
-\item Create an empty file called HAVE\_LIBNUMA.
+    \item Install the libraries libnuma and numactl.
+    \item Create an empty file called HAVE\_LIBNUMA.
 
 \begin{lstlisting}[style=MyInputStyle]
 $ touch $MIR_ROOT/src/HAVE_LIBNUMA
 \end{lstlisting}
 
-\item Clean and rebuild MIR.
+    \item Clean and rebuild MIR.
 
 \begin{lstlisting}[style=MyInputStyle]
 $ cd $MIR_ROOT/src
@@ -202,9 +206,11 @@ $ scons -c && scons
 \subsubsection{Enabling OpenMP support}\label{enable-omp-support}
 
 \begin{itemize}
-\item You should have received the GPL implementation of the libGOMP interface in a package separate from MIR sources. Point the environment variable MIR\_OMP\_INT\_ROOT to the location of the package.
+    \item Download the GPL implementation of the libGOMP interface from
+        \texttt{https://github.com/anamud/mir-omp-int}.  Point the environment
+        variable MIR\_OMP\_INT\_ROOT to the dowload location.
 
-\item Add the GPL implementation to the source directory and rebuild MIR.
+\item Link the GPL implementation to the source directory and rebuild MIR.
 
 \begin{lstlisting}[style=MyInputStyle]
 $ cd $MIR_ROOT/src
@@ -221,7 +227,8 @@ $ scons -c && scons
 
 \subsection{Testing}\label{testing}
 
-Run tests in MIR\_ROOT/tests.
+Run tests in MIR\_ROOT/tests. Make it a habit to run tests for each change to
+source repository. Add new tests if necessary.
 
 \begin{lstlisting}[style=MyInputStyle]
 $ cd $MIR_ROOT/tests
@@ -240,7 +247,8 @@ $ ./fib-opt.out
 
 \begin{framed}
 \begin{quote}
-Note: A dedicated suite of example task-based programs is available upon request.
+Note: A dedicated suite of example task-based programs is available upon
+    request.
 \end{quote}
 \end{framed}
 
@@ -253,9 +261,10 @@ OpenMP support is restricted to the following interfaces:
 \begin{itemize}
     \item Task creation: \texttt{task shared(list) private(list) firstprivate(list) default(shared|none)}
     \item Task synchronization: \texttt{taskwait}
-    \item Parallel block: \texttt{parallel shared(list) private(list) firstprivate(list) num\_threads(integer\_expression)} default(shared|none)
+    \item Parallel block: \texttt{parallel shared(list) private(list) firstprivate(list) num\_threads(integer\_expression) default(shared|none)}
     \item Single block: \texttt{single}
-    \item For-loop: \texttt{for shared(list) private(list) firstprivate(list) lastprivate(list)} \texttt{reduction(reduction-identifier:list)} \\ \texttt{schedule(static|dynamic|runtime|guided[,chunk\_size])}. Can also be combined with \texttt{parallel} with applicable clauses.
+    \item For-loop: \texttt{for shared(list) private(list) firstprivate(list) lastprivate(list)} \texttt{reduction(reduction-identifier:list)} \\ \texttt{schedule(static|dynamic|runtime|guided[,chunk\_size])}.
+    \item Combined parallel block and for-loop: \texttt{parallel for}
     \item Serialization: \texttt{atomic}, \{\texttt{critical [,name]}\}, \texttt{barrier}
     \item Runtime functions: \texttt{omp\_get\_num\_threads, omp\_get\_thread\_num, \\omp\_get\_max\_threads, omp\_get\_wtime}
     \item Environment variables: \texttt{OMP\_NUM\_THREADS, OMP\_SCHEDULE}
@@ -263,7 +272,7 @@ OpenMP support is restricted to the following interfaces:
 
 \begin{framed}
 \begin{quote}
-Note: OpenMP tasks are supported by intercepting GCC translated calls to GNU libgomp. OpenMP 3.0 task interface support is therefore restricted to programs compiled using GCC.
+Note: OpenMP support is restricted to programs compiled using GCC. MIR intercepts GCC translated calls to GNU libgomp when linked with OpenMP programs.
 \end{quote}
 \end{framed}
 
