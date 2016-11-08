@@ -91,11 +91,11 @@ toc("Summarizing")
 
 # Write out
 tic(type="elapsed")
-out_file <- paste(sub("^([^.]*).*", "\\1", dat_file), ".table", sep="")
+out_file <- "events-per-task-all.csv"
 print(paste("Writing tabulated info to file", out_file))
 setnames(dat_most_proper, "id", "task")
 write.table(dat_most_proper, out_file, sep=",", row.names=F)
-out_file <- paste(sub("^([^.]*).*", "\\1", dat_file), ".summary", sep="")
+out_file <- "events-per-task-summary.csv"
 print(paste("Writing summary info to file", out_file))
 setnames(dat_table_merged, "id", "task")
 write.table(dat_table_merged, out_file, sep=",", row.names=F)
