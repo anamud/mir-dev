@@ -231,7 +231,7 @@ def print_stats():
 
 def main():
     global quiet
-    p = optparse.OptionParser(description='Converts recorder files to paraver format. Takes *-recorder-prv-config.rec file as input. Optional args: quiet', prog='mirtoparaver', version='mirtoparaver v0.2', usage='mirtoparaver *-prv-config.rec [quiet]')
+    p = optparse.OptionParser(description='Converts recorder files to paraver format. Takes *-recorder-prv-config.rec file as input. Optional args: quiet', prog='mirtoparaver', version='mirtoparaver v0.2', usage='mirtoparaver mir-recorder-trace-config.rec [quiet]')
     options, arguments = p.parse_args()
     if len(arguments) == 1:
         print 'Parsing file: ' + arguments[0]
