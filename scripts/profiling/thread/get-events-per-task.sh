@@ -2,8 +2,8 @@
 
 # Arguments check
 if (($# == 0)); then
-    echo "Usage: $0 recorder-files"
-    echo "Recorder files have .rec as extension."
+    echo "Usage: $0 <recorder files>"
+    echo "Recorder files are called mir-recorder-trace-*.rec."
     exit 1
 fi
 
