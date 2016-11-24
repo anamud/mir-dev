@@ -100,7 +100,7 @@ create_edge_color <- fork_color
 sync_edge_color <- join_color
 scope_edge_color <- "#000000"
 cont_edge_color <- "#000000"
-color_fun <- colorRampPalette(c("yellow", "red"))
+color_fun <- colorRampPalette(c("yellow", "orange"))
 
 if (parsed$palette == "gray") {
     join_color <- "#D3D3D3"  # light gray
@@ -391,7 +391,7 @@ for(attrib in attrib_color_distinct) {
         # Map distinct color to attrib
         attrib_val <- as.character(tg_data[,attrib])
         unique_attrib_val <- unique(attrib_val)
-        attrib_color <- rainbow(length(unique_attrib_val))
+        attrib_color <- rainbow(length(unique_attrib_val),start=1/6)
         annot_name <- paste(attrib, "_to_color", sep="")
         tg <- set.vertex.attribute(tg, name=annot_name, index=task_index, value=attrib_color[match(attrib_val, unique_attrib_val)])
 
