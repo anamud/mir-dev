@@ -178,7 +178,7 @@ $ scons
 To enable data distribution and locality-aware scheduling on NUMA systems, follow below instructions.
 
 \begin{itemize}
-    \item Install the libraries \textsf{libnuma} and \textsf{numactl}.
+    \item Install the libraries libnuma and numactl.
     \item Create an empty file called \textsf{HAVE\_LIBNUMA}.
 
 \begin{lstlisting}[style=MyInputStyle]
@@ -198,7 +198,7 @@ $ scons -c && scons
 To enable support for OpenMP, follow below instructions.
 
 \begin{itemize}
-    \item Download the GPL implementation of the libgomp interface from the GitHub repository \textsf{https://github.com/anamud/mir-omp-int}.  Point the environment variable \texttt{MIR\_OMP\_INT\_ROOT} to the download location.
+    \item Download the GPL implementation of the libgomp interface from the GitHub repository \textsf{https://github.com/anamud/mir-omp-int}.  Point the environment variable \texttt{MIR\_OMP\_INT\_ROOT} to the download directory.
 
     \item Link the GPL implementation to the source directory and rebuild MIR.
 
@@ -295,8 +295,8 @@ $ MIR_CONF="-h" <invoke MIR-linked program>
 --stack-size=<int> worker stack size in MB
 --queue-size=<int> task queue capacity
 --numa-footprint=<int> data footprint size threshold in bytes for numa scheduling policy. Tasks with data footprints below threshold are dealt to worker's private queue.
---worker-stats collect worker statistics
---task-stats collect task statistics
+--worker-stats enable worker statistics
+--task-stats enable task statistics
 -r (--recorder) enable worker recorder
 -p (--profiler) enable communication with Outline Function Profiler. Note: This option is supported only for single-worker execution!
 ...
@@ -342,7 +342,7 @@ MIR_DBG: Binding worker 1 to core 1
 MIR supports extensive and detailed thread-based profiling. Profiling data is obtained and processed using special scripts and stored mainly as CSV files. Columns names in CSV files are self-explanatory. Contact MIR contributors for clarifications about column names.
 
 Thread states and events are the main performance indicators in thread-based profiling.
-Set the \texttt{--worker-stats} flag to get basic thread statistics in a CSV file called \textsf{mir-worker-stats}.
+Set the \texttt{--worker-stats} flag to get basic thread metrics in a CSV file called \textsf{mir-worker-stats}.
 
 \begin{lstlisting}[style=MyInputStyle]
 $ MIR_CONF="--worker-stats" <invoke MIR-linked program>
@@ -375,8 +375,8 @@ $ head states.csv
 
 \subsection{Enabling hardware performance counters}\label{sec:enabling-hardware-performance-counters}
 
-MIR can read hardware performance counters through PAPI during task execution events. Events currently supported are task start and task end events.
-In particular, the task switch event is not supported.
+The recorer module can read hardware performance counters through PAPI during task execution events. Events currently supported are \textit{task start} and \textit{task end} events.
+In particular, the \textit{task switch} event is not supported.
 This means that counter readings will include effects of runtime system activity, system calls, interrupts etc that happened during task execution.
 
 \begin{itemize}
@@ -412,10 +412,11 @@ $ scons -c && scons
 \end{lstlisting}
 \end{itemize}
 
-Performance counter readings will appear in the \textsf{mir-recorder-trace-*.rec} files created by the recorder during profiling. These files can either be viewed on Paraver or processed using a special script for manual analysis.
+Performance counter readings will appear in the \textsf{mir-recorder-trace-*.rec} files created by the recorder during profiling. These files can processed using the \textsf{rec2paraver.py} script to obtain Paraver files as indicated earlier. They can also be processed using a special script for manual analysis.
 
 \begin{lstlisting}[style=MyInputStyle]
 $ $MIR_ROOT/scripts/profiling/thread/get-events.sh mir-recorder-trace.prv
+$ sed -n '/EVENT/ {n;p}' mir-recorder-trace.pcf | cut -f 2,3
 $ cat events-*-summary.csv
 \end{lstlisting}
 
@@ -424,9 +425,9 @@ $ cat events-*-summary.csv
 MIR supports extensive and detailed task-based profiling. Profiling data is obtained and processed using special scripts and stored mainly as CSV files. Columns names in CSV files are self-explanatory. Contact MIR contributors for clarifications about column names.
 
 Per-task metrics are first-class performance indicators in task-based profiling.
-Per-task refers to individual task instances whose count is typically much larger than the number of task definition sites in source code. For example, the Fibonacci number program (\texttt{MIR\_ROOT/examples/OMP/fib}) defines two tasks in source code that together create 8193 task instances for the inputs \textit{n}=45 and \textit{depth cutoff}=12.
+Per-task refers to individual task instances whose count is typically much larger than the number of task definition sites in source code. For example, the Fibonacci number program (\texttt{MIR\_ROOT/examples/OMP/fib}) defines two tasks in source code that together create 8193 task instances for the inputs \textit{n}=45 and \textit{cutoff}=12.
 
-Set the \texttt{--task-stats} flag to obtain per-task statistics in a CSV file called \textsf{mir-task-stats}. The file contains raw data that should be processed using a special script before starting any analysis. The script straightens out the raw data and optionally derives metrics such as run-independent unique identifiers. Check out options by setting the \texttt{-h} flag.
+Set the \texttt{--task-stats} flag to obtain per-task metrics in a CSV file called \textsf{mir-task-stats}. The file contains raw data that should be processed using a special script before starting any analysis. The script straightens out the raw data and optionally derives metrics such as \textit{lineage}, run-independent unique identifier for tasks. Check out options by setting the \texttt{-h} flag.
 
 \begin{lstlisting}[style=MyInputStyle]
 $ MIR_CONF="--task-stats" <invoke MIR-linked program>
@@ -444,10 +445,13 @@ $ Rscript ${MIR_ROOT}/scripts/profiling/task/summarize-task-stats.R \
 $ cat task-stats.summarized
 \end{lstlisting}
 
-\subsection{Advanced task-based metrics}
-\label{sub:advanced_task_based_metrics}
+\subsection{Merging task-based metrics}
+\label{sub:merging_task_based_metrics}
 
-Hardware performance counter readings collected by the recorder (Section~\ref{sec:thread-based-profiling}) can be merged with processed task statistics using special scripts.
+Merging task-based metrics from different sources into a common CSV file is beneficial for analysis. Let us look at a couple of examples of merging.
+
+\begin{itemize}
+    \item Hardware performance counter readings collected by the recorder (Section~\ref{sec:thread-based-profiling}) can be merged with processed task statistics using special scripts.
 
 \begin{lstlisting}[style=MyInputStyle]
 $ $MIR_ROOT/scripts/profiling/thread/get-events-per-task.sh \
@@ -457,7 +461,7 @@ $ Rscript $MIR_ROOT/scripts/profiling/task/merge-task-stats.R \
 $ head task-stats.merged
 \end{lstlisting}
 
-Work deviation is a derived performance metric that requires comparing execution times of tasks under multithreaded execution. See the paper~\cite{muddukrishna2015grain} for more details. Below is an example of how to calculate work deviation across 1 and 4 workers for the Fibonacci example program for inputs \textit{n}=45 and\textit{depth cutoff}=12.
+    \item Work deviation is a derived performance metric that requires comparing execution times of tasks under multithreaded execution. See the paper~\cite{muddukrishna2015grain} for more details about the metric. Below is an example of how to calculate work deviation across 1 and 4 workers for the Fibonacci example program for inputs \textit{n}=45 and\textit{cutoff}=12.
 
 \begin{lstlisting}[style=MyInputStyle]
 $ MIR_CONF="--task-stats -w 1" ./fib-opt 45 12
@@ -475,6 +479,7 @@ $ Rscript $MIR_ROOT/scripts/profiling/task/merge-task-stats.R \
 -k lineage
 $ head task-stats.merged
 \end{lstlisting}
+\end{itemize}
 
 \subsubsection{Instruction-level task profiling}\label{sec:instruction-level-task-profiling}
 
