@@ -271,7 +271,9 @@ OpenMP support is restricted to the following interfaces from OpenMP version 3.0
     \item Environment variables: \texttt{OMP\_NUM\_THREADS, OMP\_SCHEDULE}
 \end{itemize}
 
-\subsection{Tips for writing MIR-supported OpenMP programs}\label{sec:tips-for-writing-mir-supported-openmp-programs}
+\subsection{Tips for writing supported OpenMP programs}\label{sec:tips-for-writing-mir-supported-openmp-programs}
+
+Follow the tips below to write OpenMP 3.0 programs supported by MIR.
 
 \begin{itemize}
     \item Use \texttt{taskwait} explicitly to synchronize tasks. Do not expect implicit task synchronization points within thread barriers.
