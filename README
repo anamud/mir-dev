@@ -1,12 +1,12 @@
-This is the source repository of the MIR task-based runtime system library. To get started with using MIR, please read docs/MIR_UG.pdf. The name MIR is inspired by Mir Publishers from Moscow. I enjoyed Mir books on electronics and geometry during my childhood.
+This is the source repository of MIR, an experimental task-based runtime system library. To get started with using MIR, please read docs/MIR_UG.pdf. The name MIR is inspired by Mir Publishers from Moscow. I enjoyed Mir books on electronics and geometry during my childhood.
 
-Author: Ananya Muddukrishna.
+Author: Ananya Muddukrishna
 
-E-mail: ananya@kth.se.
+E-mail: ananya@kth.se
 
-Contributors: Peter A. Jonsson, Peder Langdal
+Contributors: Ananya Muddukrishna, Peter A. Jonsson, Peder Langdal
 
-Selected Publications:
+If you use MIR in your work, please cite it atleast one of its basis publications:
 
 [1] Muddukrishna, Ananya, P. A. Jonsson, A. Podobas, and M. Brorsson, “Grain Graphs: OpenMP Performance Analysis Made Easy,” in Proceedings of the 21st ACM SIGPLAN Symposium on Principles and Practice of Parallel Programming, New York, NY, USA, 2016, p. 28:1–28:13.
 
