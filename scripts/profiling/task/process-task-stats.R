@@ -24,7 +24,9 @@ if (Rstudio_mode) {
 } else {
     option_list <- list(
                         make_option(c("-d","--data"), help = "Task stats.", metavar="FILE"),
+                        make_option(c("-e","--executable"), help = "The executable that generated the stats", metavar="EXECUTABLE"),
                         make_option(c("--lineage"), action="store_true", default=FALSE, help="Calculate task lineage."),
+                        make_option(c("--linenumbers"), action="store_true", default=FALSE, help="Find the source filename and line number for each task."),
                         make_option(c("--verbose"), action="store_true", default=TRUE, help="Print output [default]."),
                         make_option(c("--timing"), action="store_true", default=FALSE, help="Print timing information."),
                         make_option(c("-o","--out"), default="task-stats.processed", help = "Output file name [default \"%default\"]", metavar="STRING"),
@@ -101,6 +103,33 @@ if (parsed$lineage) {
     if (anyDuplicated(task_stats$lineage, incomparables="NA")) {
         my_print("Error: Duplicate lineages exist. Aborting!")
         quit("no", 1)
+    }
+}
+
+# Enviroment used to memoize the find_line_number function
+line_number_memo <- new.env(hash=TRUE, parent=emptyenv())
+
+# Input: outline function address as a number (double)
+find_line_number <- function(outline_func_addr) {
+    if (exists(toString(outline_func_addr), where=line_number_memo)) return(line_number_memo[[toString(outline_func_addr)]])
+    else {
+        # The existence of addr2line is assumed
+        line_number <- system(paste("addr2line -s -e", parsed$executable, sprintf("%x", outline_func_addr)), intern=TRUE)
+        line_number_memo[[toString(outline_func_addr)]] <- line_number
+        return(line_number)
+    }
+}
+
+# Find source filename and line numbers
+if (parsed$linenumbers) {
+    if (!exists("executable", where=parsed)) {
+        my_print(paste(
+            "Warning: Cannot find source filenames and line numbers when the profiled executable has not been specified!",
+            "Specify it using the -e option", sep="\n         "))
+    }
+    else {
+        if (parsed$verbose) my_print("Finding line numbers ...")
+        task_stats <- task_stats[, source_line := sapply(outline_function, find_line_number)] 
     }
 }
 
