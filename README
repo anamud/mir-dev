@@ -1,4 +1,4 @@
-# About
+# MIR
 
 This is the source repository of MIR, an experimental task-based runtime system library. To get started with using MIR, please read docs/MIR_UG.pdf. The name MIR is inspired by Mir Publishers from Moscow. I enjoyed Mir books on electronics and geometry during my childhood.
 
@@ -6,7 +6,7 @@ Contributors: Ananya Muddukrishna (main), Peter A. Jonsson, Peder Langdal
 
 E-mail: ananya.muddu@gmail.com
 
-# Citation
+## Citation
 
 If you use MIR in your work, please cite it one or more of its basis publications:
 
