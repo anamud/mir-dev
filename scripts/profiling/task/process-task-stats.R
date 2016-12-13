@@ -129,7 +129,7 @@ if (parsed$linenumbers) {
     }
     else {
         if (parsed$verbose) my_print("Finding line numbers ...")
-        task_stats <- task_stats[, source_line := sapply(outline_function, find_line_number)] 
+        task_stats <- task_stats[, source_line := sapply(outline_function, find_line_number)]
     }
 }
 
