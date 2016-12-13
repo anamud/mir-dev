@@ -155,7 +155,7 @@ However, OpenMP support is enabled through a GPL (v3.0) implementation of the GN
 
 \section{Citation}
 
-If you use MIR in your work, please cite it using one of (or all) these related papers that led to the construction of MIR:
+If you use MIR in your work, please cite one (or all) of these related papers that shaped MIR:
 \begin{itemize}
 \item ~\bibentry{muddukrishna2015grain}.
 \item ~\bibentry{muddukrishna2015characterizing}.
@@ -292,7 +292,7 @@ OpenMP support is restricted to programs compiled using GCC. MIR intercepts GCC 
 
 MIR interfaces can be directly used to compose task-based programs. Look at the header file \textsf{mir\_public\_int.h} in \textsf{MIR\_ROOT/src} for interface details and programs in \textsf{MIR\_ROOT/examples/native} for usage examples.
 
-\section{Compiling and Linking}\label{sec:compiling-and-linking}
+\section{Compiling and Linking Programs}\label{sec:compiling-and-linking}
 
 A quick way to compile and link with programs is to reuse the \textsf{SConstruct} or \textsf{SConscript} files of example programs in \textsf{MIR\_ROOT/examples/}.
 The scripts have configurations to produce release, debug and profiling friendly executables.
@@ -456,8 +456,7 @@ $ Rscript ${MIR_ROOT}/scripts/profiling/task/process-task-stats.R \
 $ head task-stats.processed
 \end{lstlisting}
 
-The processed file \textsf{task-stats.processed} is too large for manual inspection in a text editor. Crunch it with powerful data analysis tools such as R to derive useful information. The output of scripts that process task metrics i.e., \textsf{process-task-stats.R} and \texttt{merge-task-stats.R} can be summarized by a special script called \textsf{summarize-task-stats.R}.
-
+The processed file \textsf{task-stats.processed} is too large for manual inspection in a text editor. Crunch it with powerful data analysis tools such as R to derive useful information. There is a special script called \textsf{summarize-task-stats.R} that summarizes the output of processing scripts (\textsf{process-task-stats.R} and \texttt{merge-task-stats.R}).
 \begin{lstlisting}[style=MyInputStyle]
 $ Rscript ${MIR_ROOT}/scripts/profiling/task/summarize-task-stats.R \
 -d task-stats.processed
@@ -468,7 +467,7 @@ Processed task metrics in \textsf{task-stats.processed} can be visualized on a g
 
 \subsection{Profiling for-loop programs}
 
-Parallel for-loops are executed as special tasks by MIR. To enable per-chunk statistics, set \texttt{--chunks-are-tasks} in \texttt{MIR\_CONF}. Process chunk metrics using special scripts in the \textsf{for-loop} directory in \textsf{scripts/profiling/task}. These scripts have the same name as scripts that process task metrics, except for the prefix \textsf{loop-}.
+Parallel for-loops are executed as special tasks by MIR. To enable per-chunk statistics, set \texttt{--chunks-are-tasks} in \texttt{MIR\_CONF}. Process for-loop metrics using special scripts in the \textsf{for-loop} directory in \textsf{scripts/profiling/task}. These scripts have the same name as scripts that process task metrics, except for the prefix \textsf{loop-}.
 
 \begin{lstlisting}[style=MyInputStyle]
 $ MIR_CONF="--task-stats --chunks-are-tasks" <invoke MIR-linked for-loop program>
@@ -495,7 +494,7 @@ $ Rscript $MIR_ROOT/scripts/profiling/task/merge-task-stats.R \
 $ head task-stats.merged
 \end{lstlisting}
 
-    \item \textit{Work deviation} is a derived performance metric that requires comparing execution times of tasks under multi-threaded execution. See the paper~\cite{muddukrishna2015grain} for more details about the metric. Below is an example of how to calculate work deviation across 1 and 4 workers for the Fibonacci example program for inputs \textit{n}=45 and\textit{cutoff}=12.
+    \item \textit{Work deviation} is a derived performance metric that requires comparing execution times of tasks under multi-threaded execution using run-independent task identifiers. See the paper~\cite{muddukrishna2015grain} for more details about the metric. Below is an example of how to calculate work deviation across 1 and 4 workers for the Fibonacci example program for inputs \textit{n}=45 and\textit{cutoff}=12.
 
 \begin{lstlisting}[style=MyInputStyle]
 $ MIR_CONF="--task-stats -w 1" ./fib-opt 45 12
@@ -517,7 +516,7 @@ $ head task-stats.merged
 
 \subsection{Instruction-level task profiler}\label{sec:instruction-level-task-profiling}
 
-MIR provides a Pin-based instruction profiler for tasks called the \textit{Outline Function Profiler} (OFP).
+MIR comes along with a Pin-based instruction profiler for tasks called the \textit{Outline Function Profiler} (OFP).
 The OFP traces instructions executed within outline functions of tasks.
 Outline functions are inserted by the compiler as wrappers for task structure blocks.
 Read paper~\cite{muddukrishna2015characterizing} for more details.
@@ -559,7 +558,7 @@ The program to be profiled by the OFP should be compiled in a special manner usi
 Use an explicit two-step compilation process. First, compile source files into objects. Next, link the object files together to create the executable.
 
 Provide the following flags during compilation:
-\texttt{-fno-inline-functions -fno-inline-functions-called-once -fno-optimize-sibling-calls \\ -fno-omit-frame-pointer}. The SConstruct build file for example programs supplied with MIR uses these compilation flags to produce an executable with the suffix \texttt{-prof.out}.
+\texttt{-fno-inline-functions -fno-inline-functions-called-once -fno-optimize-sibling-calls \\ -fno-omit-frame-pointer}. The \textsf{SConstruct} build file for example programs supplied with MIR uses these compilation flags to produce an executable with the suffix \textsf{-prof.out}.
 
 \subsubsection{Usage}
 
