@@ -18,12 +18,14 @@ Rstudio_mode <- F
 if (Rstudio_mode) {
     parsed <- list(data="task-stats.processed",
                    extend=F,
+                   forloop=F,
                    verbose=T,
                    timing=F)
 } else {
     option_list <- list(
                         make_option(c("-d","--data"), help = "Processed task profiling data.", metavar="FILE"),
                         make_option(c("--extend"), action="store_true", default=FALSE, help="Extensive summary."),
+                        make_option(c("--forloop"), action="store_true", default=FALSE, help="Profiling data obtained from for-loop program."),
                         make_option(c("--verbose"), action="store_true", default=TRUE, help="Print output [default]."),
                         make_option(c("--timing"), action="store_true", default=FALSE, help="Print timing information."),
                         make_option(c("--quiet"), action="store_false", dest="verbose", help="Print little output."))
@@ -43,6 +45,16 @@ task_stats <- as_data_frame(read.csv(parsed$data, header=TRUE))
 # Remove background task
 task_stats <- task_stats[!is.na(task_stats$parent),]
 #task_stats <- task_stats[!task_stats$parent==0,]
+
+if (parsed$forloop) {
+    # Remove idle task without children
+    task_stats <- task_stats[!(task_stats$outline_function == "idle_task" & task_stats$num_children == 0),]
+
+    # Remove chunk_start and chunk_continuation tasks
+    # Metada can be NA. Handle that!
+    #task_stats <- task_stats[!(!is.na(task_stats$metadata) & task_stats$metadata == "chunk_start"),]
+    #task_stats <- task_stats[!(!is.na(task_stats$metadata) & task_stats$metadata == "chunk_continuation"),]
+}
 
 # Summary helper function
 summarize_task_stats <- function(df)
@@ -287,15 +299,125 @@ summarize_task_stats <- function(df)
         my_print()
     }# }}}
 
-    # Sibling scatter
-    if ("sibling_scatter" %in% colnames(task_stats)) {# {{{
-        my_print("# Sibling scatter:")
+    if (!parsed$forloop) {
+        # Sibling scatter
+        if ("sibling_scatter" %in% colnames(task_stats)) {# {{{
+            my_print("# Sibling scatter:")
 
-        # Summary
-        my_print("Sibling scatter summary:")
-        print(stat.desc(as.numeric(task_stats$sibling_scatter)), row.names=F)
-        my_print()
-    }# }}}
+            # Summary
+            my_print("Sibling scatter summary:")
+            print(stat.desc(as.numeric(task_stats$sibling_scatter)), row.names=F)
+            my_print()
+        }# }}}
+    } else {
+        # Chunks
+        if ("idle_join" %in% colnames(task_stats)) {# {{{
+            # Summary
+            my_print("# Chunks summary:")
+
+            chunk_tasks <- which(grepl(glob2rx("chunk_*_*"), task_stats$metadata))
+            task_stats_only_chunks <- task_stats[chunk_tasks, ]
+
+            chunk_join_freq <- task_stats_only_chunks %>% group_by(outline_function, idle_join) %>% summarise(count = n())
+            print.data.frame(chunk_join_freq, row.names=F)
+            print(stat.desc(as.numeric(chunk_join_freq$count)), row.names=F)
+            my_print()
+
+            # Chunk parallel benefit
+            if ("parallel_benefit" %in% colnames(task_stats_only_chunks)) {
+                my_print("# Chunks parallel benefit:")
+
+                chunk_parallel_benefit <- task_stats_only_chunks %>% group_by(outline_function, idle_join) %>% summarise(parallel_benefit_median = median(parallel_benefit, na.rm=T), parallel_benefit_mean = mean(parallel_benefit, na.rm=T), parallel_benefit_sd = sd(parallel_benefit, na.rm=T))
+                print.data.frame(chunk_parallel_benefit, row.names=F)
+                my_print()
+
+                chunk_parallel_benefit <- task_stats_only_chunks %>% group_by(outline_function) %>% summarise(parallel_benefit_median = median(parallel_benefit, na.rm=T), parallel_benefit_mean = mean(parallel_benefit, na.rm=T), parallel_benefit_sd = sd(parallel_benefit, na.rm=T))
+                print.data.frame(chunk_parallel_benefit, row.names=F)
+                my_print()
+            }
+
+            # Chunk memory hierarchy utilization (MHU)
+            if ("mem_hier_util" %in% colnames(task_stats_only_chunks)) {
+                my_print("# Chunks memory hierarchy utilization (MHU):")
+
+                chunk_MHU <- task_stats_only_chunks %>% group_by(outline_function, idle_join) %>% summarise(MHU_median = median(mem_hier_util, na.rm=T), MHU_mean = mean(mem_hier_util, na.rm=T), MHU_sd = sd(mem_hier_util, na.rm=T))
+                print.data.frame(chunk_MHU, row.names=F)
+                my_print()
+
+                chunk_MHU <- task_stats_only_chunks %>% group_by(outline_function) %>% summarise(MHU_median = median(mem_hier_util, na.rm=T), MHU_mean = mean(mem_hier_util, na.rm=T), MHU_sd = sd(mem_hier_util, na.rm=T))
+                print.data.frame(chunk_MHU, row.names=F)
+                my_print()
+            }
+
+            # Chunk work deviation
+            if ("work_deviation" %in% colnames(task_stats_only_chunks)) {
+                my_print("# Chunks work deviation:")
+
+                # Summary
+                my_print("Work deviation summary:")
+                print(stat.desc(as.numeric(task_stats_only_chunks$work_deviation)), row.names=F)
+                my_print()
+
+                # By outline function and idlejoin
+                my_print("Work deviation by outline_function:")
+                chunk_work_deviation <- task_stats_only_chunks %>% group_by(outline_function, idle_join) %>% summarise(work_deviation_median = median(work_deviation, na.rm=T), work_deviation_mean = mean(work_deviation, na.rm=T), work_deviation_sd = sd(work_deviation, na.rm=T))
+                print.data.frame(chunk_work_deviation, row.names=F)
+                my_print()
+
+                chunk_work_deviation <- task_stats_only_chunks %>% group_by(outline_function) %>% summarise(work_deviation_median = median(work_deviation, na.rm=T), work_deviation_mean = mean(work_deviation, na.rm=T), work_deviation_sd = sd(work_deviation, na.rm=T))
+                print.data.frame(chunk_work_deviation, row.names=F)
+                my_print()
+            }
+        }# }}}
+
+        # Chunk work balance
+        if ("chunk_work_balance" %in% colnames(task_stats)) {# {{{
+            my_print("# Chunk work balance (max(work_cycles)/mean(work_cycles)):")
+
+            chunk_tasks <- which(grepl(glob2rx("chunk_*_*"), task_stats$metadata))
+            task_stats_only_chunks <- task_stats[chunk_tasks, ]
+            task_stats_only_chunks <- subset(task_stats_only_chunks, select=c(task, chunk_work_balance, outline_function, idle_join))
+
+            # Chunk work balance summary
+            my_print("Chunk work balance summary:")
+            print(stat.desc(as.numeric(task_stats_only_chunks$chunk_work_balance)), row.names=F)
+            my_print()
+
+            # By outline function and idlejoin
+            my_print("Chunk work balance by outline_function:")
+            chunk_chunk_work_balance <- task_stats_only_chunks %>% group_by(outline_function, idle_join) %>% summarise(chunk_work_balance_median = median(chunk_work_balance, na.rm=T), chunk_work_balance_mean = mean(chunk_work_balance, na.rm=T), chunk_work_balance_sd = sd(chunk_work_balance, na.rm=T))
+            print.data.frame(chunk_chunk_work_balance, row.names=F)
+            my_print()
+
+            chunk_chunk_work_balance <- task_stats_only_chunks %>% group_by(outline_function) %>% summarise(chunk_work_balance_median = median(chunk_work_balance, na.rm=T), chunk_work_balance_mean = mean(chunk_work_balance, na.rm=T), chunk_work_balance_sd = sd(chunk_work_balance, na.rm=T))
+            print.data.frame(chunk_chunk_work_balance, row.names=F)
+            my_print()
+        }# }}}
+
+        # Chunk work CPU balance
+        if ("chunk_work_cpu_balance" %in% colnames(task_stats)) {# {{{
+            my_print("# Chunk CPU work balance (max(work_cycles/core)/mean(work_cycles/core)):")
+
+            chunk_tasks <- which(grepl(glob2rx("chunk_*_*"), task_stats$metadata))
+            task_stats_only_chunks <- task_stats[chunk_tasks, ]
+            task_stats_only_chunks <- subset(task_stats_only_chunks, select=c(task, chunk_work_cpu_balance, outline_function, idle_join))
+
+            # Chunk work CPU balance summary
+            my_print("Chunk work CPU balance summary:")
+            print(stat.desc(as.numeric(task_stats_only_chunks$chunk_work_cpu_balance)), row.names=F)
+            my_print()
+
+            # By outline function and idlejoin
+            my_print("Chunk work CPU balance by outline_function:")
+            chunk_chunk_work_cpu_balance <- task_stats_only_chunks %>% group_by(outline_function, idle_join) %>% summarise(chunk_work_cpu_balance_median = median(chunk_work_cpu_balance, na.rm=T), chunk_work_cpu_balance_mean = mean(chunk_work_cpu_balance, na.rm=T), chunk_work_cpu_balance_sd = sd(chunk_work_cpu_balance, na.rm=T))
+            print.data.frame(chunk_chunk_work_cpu_balance, row.names=F)
+            my_print()
+
+            chunk_chunk_work_cpu_balance <- task_stats_only_chunks %>% group_by(outline_function) %>% summarise(chunk_work_cpu_balance_median = median(chunk_work_cpu_balance, na.rm=T), chunk_work_cpu_balance_mean = mean(chunk_work_cpu_balance, na.rm=T), chunk_work_cpu_balance_sd = sd(chunk_work_cpu_balance, na.rm=T))
+            print.data.frame(chunk_chunk_work_cpu_balance, row.names=F)
+            my_print()
+        }# }}}
+    }
 }
 
 # Start summarizing
