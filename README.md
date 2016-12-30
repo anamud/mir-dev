@@ -8,7 +8,7 @@ E-mail: ananya.muddu@gmail.com
 
 ## Citation
 
-If you use MIR in your work, please cite it one or more of its basis publications:
+If you use MIR in your work, please cite one or more of its basis publications:
 
 [1] Muddukrishna, Ananya, P. A. Jonsson, A. Podobas, and M. Brorsson, “Grain Graphs: OpenMP Performance Analysis Made Easy,” in Proceedings of the 21st ACM SIGPLAN Symposium on Principles and Practice of Parallel Programming, New York, NY, USA, 2016, p. 28:1–28:13.
 
