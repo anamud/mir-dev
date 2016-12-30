@@ -17,7 +17,10 @@ suppressMessages(library(dplyr))
 Rstudio_mode <- F
 if (Rstudio_mode) {
     parsed <- list(data="mir-task-stats",
+                   executable="a.out",
                    lineage=T,
+                   forloop=F,
+                   linenumbers=F,
                    verbose=T,
                    timing=F,
                    out="task-stats.processed")
