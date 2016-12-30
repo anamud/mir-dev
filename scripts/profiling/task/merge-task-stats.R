@@ -15,8 +15,8 @@ option_list <- list(
                     make_option(c("-v", "--verbose"), action="store_true", default=TRUE, help="Print output [default]"),
                     make_option(c("-q", "--quiet"), action="store_false", dest="verbose", help="Print little output"),
                     make_option(c("--timing"), action="store_true", default=FALSE, help="Print timing"),
-                    make_option(c("-l","--left"), help = "Task stats to be merged", metavar="FILE"),
-                    make_option(c("-r","--right"), help = "Other task stats to be merged", metavar="FILE"),
+                    make_option(c("-l","--left"), help = "Task profiling data to be merged.", metavar="FILE"),
+                    make_option(c("-r","--right"), help = "Other task profiling data to be merged.", metavar="FILE"),
                     make_option(c("-o","--out"), default="task-stats.merged", help = "Output file name [default \"%default\"]", metavar="STRING"),
                     make_option(c("-k","--key"), help = "Column used for merging"),
                     make_option(c("-c","--common"), default="prompt", help = "How to treat common columns? Choose from: left, right, both, avoid, prompt [default \"%default\"]", metavar="STRING"))

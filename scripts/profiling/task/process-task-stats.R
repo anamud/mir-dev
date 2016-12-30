@@ -23,8 +23,8 @@ if (Rstudio_mode) {
                    out="task-stats.processed")
 } else {
     option_list <- list(
-                        make_option(c("-d","--data"), help = "Task stats.", metavar="FILE"),
-                        make_option(c("-e","--executable"), help = "The executable that generated the stats", metavar="EXECUTABLE"),
+                        make_option(c("-d","--data"), help = "Task profiling data.", metavar="FILE"),
+                        make_option(c("-e","--executable"), help = "The executable that generated the profiling data", metavar="EXECUTABLE"),
                         make_option(c("--lineage"), action="store_true", default=FALSE, help="Calculate task lineage."),
                         make_option(c("--forloop"), action="store_true", default=FALSE, help="Profiling data obtained from a for-loop program"),
                         make_option(c("--linenumbers"), action="store_true", default=FALSE, help="Find the source filename and line number for each task."),

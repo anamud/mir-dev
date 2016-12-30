@@ -17,8 +17,8 @@ comp_type_default_file <- "scripts/profiling/task/task-stats-comparison-default.
 
 # Read arguments
 option_list <- list(
-                    make_option(c("-l","--left"), help = "Task stats to be compared", metavar="FILE"),
-                    make_option(c("-r","--right"), help = "Other task stats to be compared", metavar="FILE"),
+                    make_option(c("-l","--left"), help = "Task profiling data to be compared.", metavar="FILE"),
+                    make_option(c("-r","--right"), help = "Other task profiling data to be compared.", metavar="FILE"),
                     make_option(c("-k","--key"), default="lineage", help = "Column used for comparison [default \"%default\"]", metavar="STRING"),
                     make_option(c("--config"), default=comp_type_default_file, help = "Comparison configuration [default \"%default\"]", metavar="FILE"),
                     make_option(c("-o","--out"), default="task-stats", help = "Output file suffix [default \"%default\"].", metavar="STRING"),
@@ -34,13 +34,13 @@ if(!exists("left", where=parsed) | !exists("right", where=parsed)) {
 }
 
 # Read data
-if(parsed$verbo) my_print("Reading task stats ...")
+if(parsed$verbo) my_print("Reading task profiiling data...")
 
 ts_data_l <- read.csv(parsed$left, header=TRUE)
 ts_data_r <- read.csv(parsed$right, header=TRUE)
 
 if(!(parsed$key %in% colnames(ts_data_l)) | !(parsed$key %in% colnames(ts_data_r))) {
-    my_print("Error: Key not found in task stats. Aborting!")
+    my_print("Error: Key not found in task profiling data. Aborting!")
     quit("no", 1)
 }
 
@@ -62,7 +62,7 @@ ts_data_out <- subset(ts_data_l, select=parsed$key)
 
 # Compare
 if(parsed$timing) tic(type="elapsed")
-if(parsed$verbose) my_print("Comparing task stats ...")
+if(parsed$verbose) my_print("Comparing task profiling data ...")
 
 for(r in seq(1,nrow(comp_type))) {
     # Paramters
@@ -73,7 +73,7 @@ for(r in seq(1,nrow(comp_type))) {
     if(attrib %in% colnames(ts_data_l) & attrib %in% colnames(ts_data_l)) {
         if(parsed$verbose) my_print(paste("Processing comparison type:" , attrib, op, name))
 
-        # Subset and merge left and right task stats
+        # Subset and merge left and right task profiling data
         ts_data_l_sub <- ts_data_l[,c(parsed$key,attrib)]
         ts_data_r_sub <- ts_data_r[,c(parsed$key,attrib)]
         ts_data_comp <- merge(ts_data_l_sub, ts_data_r_sub, by=parsed$key, suffixes=c("_left","_right"))
@@ -91,7 +91,7 @@ for(r in seq(1,nrow(comp_type))) {
         # Merge with output
         ts_data_out <- merge(ts_data_out, ts_data_comp, by=parsed$key, suffixes=c("",""))
     } else {
-        if(parsed$verbose) my_print(paste("Warning: Could not find comparsion attribute [", attrib, "] in task stats. Check comparison types.", sep=""))
+        if(parsed$verbose) my_print(paste("Warning: Could not find comparsion attribute [", attrib, "] in task profiling data. Check comparison types.", sep=""))
     }
 }
 

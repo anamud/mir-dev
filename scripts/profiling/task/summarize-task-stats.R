@@ -22,7 +22,7 @@ if (Rstudio_mode) {
                    timing=F)
 } else {
     option_list <- list(
-                        make_option(c("-d","--data"), help = "Task stats.", metavar="FILE"),
+                        make_option(c("-d","--data"), help = "Processed task profiling data.", metavar="FILE"),
                         make_option(c("--extend"), action="store_true", default=FALSE, help="Extensive summary."),
                         make_option(c("--verbose"), action="store_true", default=TRUE, help="Print output [default]."),
                         make_option(c("--timing"), action="store_true", default=FALSE, help="Print timing information."),
