@@ -46,7 +46,7 @@ if (Rstudio_mode) {
 
 # Read data
 if (parsed$verbose) my_print(paste("Reading file", parsed$data))
-task_stats <- read.csv(parsed$data, header=TRUE)
+task_stats <- read.csv(parsed$data, header=TRUE, comment.char='#', na.strings="NA")
 setDT(task_stats)
 setkey(task_stats, task, parent)
 

@@ -36,8 +36,8 @@ if(!exists("left", where=parsed) | !exists("right", where=parsed)) {
 # Read data
 if(parsed$verbo) my_print("Reading task profiiling data...")
 
-ts_data_l <- read.csv(parsed$left, header=TRUE)
-ts_data_r <- read.csv(parsed$right, header=TRUE)
+ts_data_l <- read.csv(parsed$left, header=TRUE, comment.char='#', na.strings="NA")
+ts_data_r <- read.csv(parsed$right, header=TRUE, comment.char='#', na.strings="NA")
 
 if(!(parsed$key %in% colnames(ts_data_l)) | !(parsed$key %in% colnames(ts_data_r))) {
     my_print("Error: Key not found in task profiling data. Aborting!")
@@ -48,9 +48,9 @@ if(!(parsed$key %in% colnames(ts_data_l)) | !(parsed$key %in% colnames(ts_data_r
 if(parsed$verbo) my_print("Reading comparison configuration ...")
 
 if(parsed$config == comp_type_default_file) {
-    comp_type <- read.csv(paste(mir_root, comp_type_default_file, sep="/"), header=T)
+    comp_type <- read.csv(paste(mir_root, comp_type_default_file, sep="/"), header=T, comment.char='#', na.strings="NA")
 } else {
-    comp_type <- read.csv(parsed$config, header=T)
+    comp_type <- read.csv(parsed$config, header=T, comment.char='#', na.strings="NA")
 }
 
 # Remove rows where key is NA.

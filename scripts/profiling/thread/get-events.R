@@ -13,7 +13,7 @@ library(reshape2)
 args <- commandArgs(TRUE)
 if(length(args) != 1) quit("no", 1)
 cat("Reading events file:", args[1], "\n")
-events <- read.csv(args[1],sep=':',header=F)
+events <- read.csv(args[1],sep=':',header=F,comment.char='#',na.strings="NA")
 colnames(events) <- c("indicator","cpu","appl","task","thread","time","event","value")
 events[,"value"] <- as.numeric(events[,"value"])
 

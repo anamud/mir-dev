@@ -10,7 +10,7 @@ if(length(args) != 1)
     print("Arguments missing! Please provide table(arg1) for comparing work cycles")
     quit("no", 1)
 }
-dat <- read.csv(args[1])
+dat <- read.csv(args[1], comment.char='#', na.strings="NA")
 if(!("work_cycles.left" %in% colnames(dat)) | !("work_cycles.right" %in% colnames(dat)))
 {
     print("Error: Columns work_cycles.{left|right} not found in table. Aborting!")

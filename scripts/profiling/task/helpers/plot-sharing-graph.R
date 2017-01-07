@@ -21,7 +21,7 @@ if(length(args) > 1) sg_ignore_weight_lt <- as.integer(args[2])
 if(length(args) > 2) sg_ignore_weight_gt <- as.integer(args[3])
 
 # Read data
-sg_data <- read.csv(sg_file, header=FALSE)
+sg_data <- read.csv(sg_file, header=FALSE, comment.char='#', na.strings="NA")
 sg_data_len <- length(sg_data)
 
 # Create graph

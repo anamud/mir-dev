@@ -7,8 +7,8 @@ options("scipen"=999)
 ### Read data
 args <- commandArgs(TRUE)
 if(length(args) != 2) quit("no", 1)
-states <- read.csv(args[1], header=T)
-tasks <- read.csv(args[2], header=T)
+states <- read.csv(args[1], header=T, comment.char='#', na.strings="NA")
+tasks <- read.csv(args[2], header=T, comment.char='#', na.strings="NA")
 
 ### Custom summary function
 cust_summary <- function(data, name=F)

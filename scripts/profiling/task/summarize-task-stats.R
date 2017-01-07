@@ -40,7 +40,7 @@ if (Rstudio_mode) {
 
 # Read data
 if (parsed$verbose) my_print(paste("Reading file", parsed$data))
-task_stats <- as_data_frame(read.csv(parsed$data, header=TRUE))
+task_stats <- as_data_frame(read.csv(parsed$data, header=TRUE, comment.char='#', na.strings="NA"))
 
 # Remove background task
 task_stats <- task_stats[!is.na(task_stats$parent),]

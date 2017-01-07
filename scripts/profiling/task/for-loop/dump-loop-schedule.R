@@ -39,7 +39,7 @@ if (Rstudio_mode) {
 
 # Read data
 if (parsed$verbose) my_print(paste("Reading file", parsed$data))
-d <- read.csv(parsed$data, header=TRUE)
+d <- read.csv(parsed$data, header=TRUE, comment.char='#', na.strings="NA")
 
 # Filter and group by outline function and idle join
 e <- d %>% filter(!is.na(metadata) & grepl(glob2rx("chunk_*_*"), metadata)) %>% group_by(outline_function,idle_join)

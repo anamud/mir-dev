@@ -31,8 +31,8 @@ if(!exists("left", where=parsed) | !exists("right", where=parsed) | !exists("key
 # Read data
 if(parsed$verbose) my_print("Reading data ...")
 
-dleft <- read.csv(parsed$left, header=TRUE)
-dright <- read.csv(parsed$right, header=TRUE)
+dleft <- read.csv(parsed$left, header=TRUE, comment.char='#', na.strings="NA")
+dright <- read.csv(parsed$right, header=TRUE, comment.char='#', na.strings="NA")
 
 # Sanity check for key
 if(parsed$verbose) my_print("Running sanity checks ...")
