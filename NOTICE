@@ -1,11 +1,16 @@
 MIR task-based runtime system
-Copyright 2012-2016 Ananya Muddukrishna 
+Copyright 2012-2017 Ananya Muddukrishna
 
-The MIR task-based runtime system is academic software developed by Ananya Muddukrishna at KTH Royal Institute of Technology.
+The MIR task-based runtime system is academic software developed by Ananya Muddukrishna.
+MIR developement began during Ananya's PhD studies at KTH Royal Institute of Technology.
 
-This software includes code derived from the Glasgow Haskell Compiler.
+# Inclusions
 
-This software includes code part of redistributable sources of Intel Pin.
+This software includes:
+
+- Code derived from the Glasgow Haskell Compiler.
+
+- Code part of redistributable sources of Intel Pin.
 
 # Citation
 
