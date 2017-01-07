@@ -361,7 +361,7 @@ void mir_recorder_state_end(const char* meta_data, uint32_t meta_data_length)
     // If buffer is near full, dump!
     if (r->state_buffer_head == (MIR_RECORDER_BUFFER_MAX_SIZE - 1)) {
         mir_recorder_write_to_file(r);
-        MIR_LOG_WARN("Dumped recorder statistics to file. This will add I/O noise to profiling measurements. Increase recorder buffer size to avoid.");
+        MIR_LOG_WARN("Dumped recorder statistics to file mid-execution. This will add I/O noise to profiling measurements. Increase recorder buffer size to avoid.");
         MIR_ASSERT(r->state_buffer_head == 0);
     }
 } /*}}}*/
@@ -429,7 +429,7 @@ void mir_recorder_event(const char* meta_data, uint32_t meta_data_length)
     //MIR_ASSERT(r->event_buffer_head < MIR_RECORDER_BUFFER_MAX_SIZE);
     if (r->event_buffer_head == (MIR_RECORDER_BUFFER_MAX_SIZE - 1)) {
         mir_recorder_write_to_file(r);
-        MIR_LOG_WARN("Dumped recorder statistics to file. This will add I/O noise to profiling measurements. Increase recorder buffer size to avoid.");
+        MIR_LOG_WARN("Dumped recorder statistics to file mid-execution. This will add I/O noise to profiling measurements. Increase recorder buffer size to avoid.");
         MIR_ASSERT(r->state_buffer_head == 0);
     }
 } /*}}}*/
