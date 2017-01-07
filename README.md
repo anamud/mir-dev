@@ -1,6 +1,6 @@
 # MIR
 
-This is the source repository of MIR, an experimental task-based runtime system library. To get started with using MIR, please read docs/MIR_UG.pdf. 
+This is the source repository of MIR, an experimental task-based runtime system library. To get started with using MIR, please read docs/MIR_UG.pdf.
 
 Main author: Ananya Muddukrishna (e-mail: ananya.muddu@gmail.com)
 
