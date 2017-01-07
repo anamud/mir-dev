@@ -549,6 +549,11 @@ void mir_task_wait()
 
 void mir_task_stats_write_header_to_file(FILE* file)
 { /*{{{*/
+    /* TODO:
+     * - Rename create_instant to create_instant_rel_parent
+     * - Rename wait_instants to wait_instants_rel_self
+     * - Rename exec_end_instant to exec_end_instant_rel_runtime
+     */
     fprintf(file, "task,parent,joins_at,cpu_id,child_number,num_children,exec_cycles,creation_cycles,overhead_cycles,queue_size,create_instant,exec_end_instant,tag,metadata,outline_function,wait_instants\n");
 } /*}}}*/
 
