@@ -1,15 +1,14 @@
 # RUNTIME SYSTEM
 - Add support for task data dependence resolution.
+- Add support for task loop.
 - Add clang and LLVM support.
 - Inline functions for speed.
 
 # PROFILING
 - Add dependence graph generation support.
 - Improve outline function detection of of_finder.py.
-- Support task graph aggregation.
 
 # TESTING
-- Test for structural porperties such as number of tasks and task graph shape.
 - Create issue tracking support.
 
 # DOCUMENTS
