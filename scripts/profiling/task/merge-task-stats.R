@@ -113,6 +113,8 @@ row.has.na <- apply(dmerge.mod, 1, function(x){any(is.na(x))})
 sum.row.has.na <- sum(row.has.na)
 if(sum.row.has.na > 0) {
     my_print(sprintf("Warning: %d rows contained NAs in the merged table", sum.row.has.na ))
+    columns_with_NAs <- paste(colnames(dmerge.mod)[apply(dmerge.mod, 2, anyNA)], collapse=", ")
+    my_print(paste("Columns with NAs:", columns_with_NAs))
 }
 
 if(parsed$timing) toc("Merge")
