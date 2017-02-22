@@ -359,8 +359,30 @@ MIR_DBG: Binding worker 1 to core 1
 \end{lstlisting}
 
 \subsection{Scheduling policies}\label{sec:scheduling-policies}
+MIR scheduling is configurable through scheduling policies. The scheduling policy is set using the \texttt{--schedule} or \texttt{-s} option in \texttt{MIR\_CONF} and cannot be changed during execution.
+
+The scheduling policies available are:
+\begin{description}
+    \item[central]: This policy adds all created tasks to a single queue. Idle workers remove the oldest tasks from the queue. Tasks are immediately executed if the queue is full. The capacity of the queue is set in \textsf{mir\_defines.h}. Workers contend with each other to add and remove tasks from the single queue. This creates a performance bottleneck when the number of workers are large.
+    \item[central-stack] This is similar to the central policy except that the container to hold tasks is a stack. Newest tasks are removed first by workers.
+    \item[ws] This is a work-stealing policy based on double-ended queues. Each worker adds and removes tasks from a local queue. When tasks cannot be found in the local queue, workers steal tasks from local queues of other workers. This policy is scalable to a large number of threads when steals are rare. Tasks are immediately executed if the queue is full. The capacity of the queue is set in \textsf{mir\_defines.h}
+    \item[ws-de] This is similar to the ws policy except that the container to hold tasks is a lock-free double-ended queue designed by Chase and Lev~\cite{Chase:2005:DCW:1073970.1073974}.
+    \item[numa] This is a locality-aware policy for NUMA systems that works well with prudent data distribution. The policy uses a double-ended queue per NUMA node. Each task is added to the queue that has the least latency to data not in the L3 cache. Idle workers remove tasks from the queue local to their own NUMA node. If the queue is empty, workers steal from queues local to other NUMA nodes starting from the closest. Tasks are immediately executed if the queue is full. The capacity of the queue is set in \textsf{mir\_defines.h}. See the paper~\cite{muddukrishnalocality} for details.
+\end{description}
+
+Note: MIR does not support \textit{untied} tasks model of OpenMP.
 
 \subsection{Memory allocation policies}\label{sec:memory-allocation-policies}
+MIR enables data distribution through memory allocation policies. Data distribution refers to distributing memory pages to NUMA nodes. The memory allocation policy, set using the \texttt{--memory-policy} or \texttt{-m} option in \texttt{MIR\_CONF}, controls how the pages are distributed.
+
+The memory allocation policy works only on memory allocation operations made using the functions \texttt{mir\_mem\_pol\_reset}, \texttt{mir\_mem\_pol\_allocate}, and \texttt{mir\_mem\_pol\_release}. See \textsf{mir\_public\_int.h} for exact function signatures.
+
+Available memory allocation policies are:
+\begin{description}
+    \item[system] This delegates memory page distribution to the OS.
+    \item[fine] This distributes memory pages to all NUMA nodes page-wise round-robin. If \texttt{MIR\_MEM\_POL\_RESTRICT} is defined in \textsf{mir\_defines.h}, then pages are distributed to NUMA nodes local to workers.
+    \item[coarse] This distributes all memory pages requested by a \texttt{mir\_mem\_pol\_allocate} call to a single NUMA node. Pages of the next call are distributed to another node chosen round-robin. Calling \texttt{mir\_mem\_pol\_reset} resets the round.
+\end{description}
 
 \section{Thread-based Profiling}\label{sec:thread-based-profiling}
 
