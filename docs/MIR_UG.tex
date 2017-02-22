@@ -452,7 +452,7 @@ MIR supports extensive and detailed task-based profiling. Profiling data is obta
 Per-task metrics are first-class performance indicators in task-based profiling.
 Per-task refers to individual task instances whose count is typically much larger than the number of task definition sites in source code. For example, the Fibonacci number program (\texttt{MIR\_ROOT/examples/OMP/fib}) defines two tasks in source code that together create 8193 task instances for the inputs \textit{n}=45 and \textit{cutoff}=12.
 
-Set the \texttt{--task-stats} flag to obtain per-task metrics in a CSV file called \textsf{mir-task-stats}. The file contains raw data that should be processed using a special script before starting any analysis. The script straightens out the raw data and optionally derives metrics such as run-independent unique identifier (called \textit{lineage}) and scatter for tasks. Understand script options by setting the \texttt{-h} flag.
+Set the \texttt{--task-stats} flag to obtain per-task metrics in a CSV file called \textsf{mir-task-stats}. The file contains raw data that should be processed using a special script before starting any analysis. The script straightens out the raw data and optionally derives metrics such as the run-independent unique identifier (called \textit{lineage}), scatter, and source line number (definition sites) for tasks. Understand script options by setting the \texttt{-h} flag.
 
 \begin{lstlisting}[style=MyInputStyle]
 $ MIR_CONF="--task-stats" <invoke MIR-linked program>
