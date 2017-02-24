@@ -12,6 +12,9 @@
 
 \usepackage[parfill]{parskip}
 
+\usepackage{longtable}
+\usepackage[titletoc]{appendix}
+
 \lstdefinestyle{MyInputStyle}{
     language=bash,
     basicstyle=\small\sffamily,
@@ -388,7 +391,8 @@ Available memory allocation policies are:
 
 \section{Thread-based Profiling}\label{sec:thread-based-profiling}
 
-MIR supports extensive and detailed thread-based profiling. Profiling data is obtained and processed using special scripts and stored mainly as CSV files. Columns names in CSV files are self-explanatory. Contact MIR contributors for clarifications about column names.
+MIR supports extensive and detailed thread-based profiling. Profiling data is obtained and processed using special scripts and stored mainly as CSV files.
+Columns names in CSV files are explained in Appendix A. Contact MIR contributors for further clarifications about column names.
 
 Thread states and events are the main performance indicators in thread-based profiling.
 Set the \texttt{--worker-stats} flag to get basic thread metrics in a CSV file called \textsf{mir-worker-stats}.
@@ -471,7 +475,8 @@ $ cat events-*-summary.csv
 
 \section{Task-based Profiling}\label{sec:task-based-profiling}
 
-MIR supports extensive and detailed task-based profiling. Profiling data is obtained and processed using special scripts and stored mainly as CSV files. Columns names in CSV files are self-explanatory. Contact MIR contributors for clarifications about column names.
+MIR supports extensive and detailed task-based profiling. Profiling data is obtained and processed using special scripts and stored mainly as CSV files.
+Columns names in CSV files are explained in Appendix B. Contact MIR contributors for further clarifications about column names.
 
 Per-task metrics are first-class performance indicators in task-based profiling.
 Per-task refers to individual task instances whose count is typically much larger than the number of task definition sites in source code. For example, the Fibonacci number program (\texttt{MIR\_ROOT/examples/OMP/fib}) defines two tasks in source code that together create 8193 task instances for the inputs \textit{n}=45 and \textit{cutoff}=12.
@@ -668,5 +673,85 @@ $ head task-stats.merged
 
 \bibliographystyle{IEEEtran}
 \bibliography{MIR_UG}
+
+\begin{appendices}
+\section{Thread Profiling Data}
+The columns in CSV files containing thread profiling data are described in Table~\ref{tab:thread-prof-data}.
+
+    \begin{longtable}{|p{4cm}|p{7cm}|}
+    \hline
+    \textbf{Name} & \textbf{Description} \\ \hline
+    worker & Unique identifier of the worker \\ \hline
+    created & Number of tasks created \\ \hline
+    inlined & Number of tasks executed immediately \\ \hline
+    owned & Number of tasks executed from own queue \\ \hline
+    stolen & Number of tasks stolen from other queues \\ \hline
+    comm\_tasks & Number of tasks with data footprints executed \\ \hline
+    total\_comm\_cost & Total communication cost of tasks with data footprints \\ \hline
+    avg\_comm\_cost & Average communication cost of tasks with data footprints \\ \hline
+    highest\_comm\_cost & Maximum communication cost among tasks with data footprints \\ \hline
+    lowest\_comm\_cost & Minimum communication cost among tasks with data footprints \\ \hline
+    comm\_tasks\_stolen\_\newline...by\_diameter & Tasks with data footprints stolen from other queues sorted by NUMA distance \\ \hline
+    \caption{Thread profiling data}
+    \label{tab:thread-prof-data}
+\end{longtable}
+
+\section{Task Profiling Data}
+The columns in CSV files containing task profiling data are described in Table~\ref{tab:task-prof-data}.
+
+\begin{longtable}{|l|l|}
+    \hline
+    \textbf{Name} & \textbf{Description} \\ \hline
+    PAPI\_RES\_STL\_mean & \\ \hline
+    PAPI\_RES\_STL\_sd & \\ \hline
+    PAPI\_RES\_STL\_sum & \\ \hline
+    PAPI\_TLB\_DM\_mean & \\ \hline
+    PAPI\_TLB\_DM\_sd & \\ \hline
+    PAPI\_TLB\_DM\_sum & \\ \hline
+    child\_number & \\ \hline
+    chunk\_lineage & \\ \hline
+    chunk\_work\_balance & \\ \hline
+    chunk\_work\_cpu & \\ \hline
+    chunk\_work\_cpu\_balance & \\ \hline
+    cpu\_id & \\ \hline
+    create\_instant & \\ \hline
+    creation\_cycles & \\ \hline
+    exec\_cycles & \\ \hline
+    exec\_end\_instant & \\ \hline
+    idle\_join & \\ \hline
+    inst\_par\_median & \\ \hline
+    inst\_par\_min & \\ \hline
+    joins\_at & \\ \hline
+    last\_to\_finish & \\ \hline
+    leaf & \\ \hline
+    lineage & \\ \hline
+    mem\_hier\_util & \\ \hline
+    metadata & \\ \hline
+    num\_children & \\ \hline
+    outline\_function & \\ \hline
+    overhead\_cycles & \\ \hline
+    parallel\_benefit & \\ \hline
+    parent & \\ \hline
+    parent\_ind & \\ \hline
+    parent\_joins\_at & \\ \hline
+    parent\_overhead\_cycles & \\ \hline
+    parent\_tag & \\ \hline
+    queue\_size & \\ \hline
+    sibling\_scatter & \\ \hline
+    sibling\_work\_balance & \\ \hline
+    source\_line & \\ \hline
+    sync\_cycles\_per\_child & \\ \hline
+    tag & \\ \hline
+    task & \\ \hline
+    wait\_instants & \\ \hline
+    work\_cycles & \\ \hline
+    work\_cycles\_left & \\ \hline
+    work\_cycles\_right & \\ \hline
+    work\_deviation & \\ \hline
+    \caption{Task profiling data}
+    \label{tab:task-prof-data}
+\end{longtable}
+
+\end{appendices}
 
 \end{document}
