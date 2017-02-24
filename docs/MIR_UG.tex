@@ -702,52 +702,48 @@ The columns in CSV files containing task profiling data are described in Table~\
     \begin{longtable}{|p{4cm}|p{7cm}|}
     \hline
     \textbf{Name} & \textbf{Description} \\ \hline
-    task & \\ \hline
-    exec\_cycles & \\ \hline
-    cpu\_id & \\ \hline
-    create\_instant & \\ \hline
-    exec\_end\_instant & \\ \hline
-    creation\_cycles & \\ \hline
-    idle\_join & \\ \hline
-    child\_number & \\ \hline
-    wait\_instants & \\ \hline
-    joins\_at & \\ \hline
-    last\_to\_finish & \\ \hline
-    leaf & \\ \hline
-    lineage & \\ \hline
-    tag & \\ \hline
-    source\_line & \\ \hline
-    metadata & \\ \hline
-    num\_children & \\ \hline
-    outline\_function & \\ \hline
-    parent & \\ \hline
-    parent\_tag & \\ \hline
-    parent\_ind & \\ \hline
-    parent\_joins\_at & \\ \hline
-    parent\_overhead\_cycles & \\ \hline
-    queue\_size & \\ \hline
-    overhead\_cycles & \\ \hline
-    work\_cycles & \\ \hline
-    work\_cycles\_left & \\ \hline
-    work\_cycles\_right & \\ \hline
-    work\_deviation & \\ \hline
-    chunk\_lineage & \\ \hline
-    chunk\_work\_balance & \\ \hline
-    chunk\_work\_cpu & \\ \hline
-    chunk\_work\_cpu\_balance & \\ \hline
-    inst\_par\_median & \\ \hline
-    inst\_par\_min & \\ \hline
-    mem\_hier\_util & \\ \hline
-    PAPI\_RES\_STL\_mean & \\ \hline
-    PAPI\_RES\_STL\_sd & \\ \hline
-    PAPI\_RES\_STL\_sum & \\ \hline
-    PAPI\_TLB\_DM\_mean & \\ \hline
-    PAPI\_TLB\_DM\_sd & \\ \hline
-    PAPI\_TLB\_DM\_sum & \\ \hline
-    parallel\_benefit & \\ \hline
-    sync\_cycles\_per\_child & \\ \hline
-    sibling\_work\_balance & \\ \hline
-    sibling\_scatter & \\ \hline
+    task & Unique identifier \\ \hline
+    exec\_cycles & Number of execution cycles \\ \hline
+    cpu\_id & CPU that executed the task \\ \hline
+    create\_instant & Instant created relative to parent execution start \\ \hline
+    exec\_end\_instant & Execution end instant relative to runtime system start \\ \hline
+    num\_children & Number of children \\ \hline
+    creation\_cycles & Number of cycles taken for creation \\ \hline
+    overhead\_cycles & Number of cycles taken to create, schudule, and synchronize with children \\ \hline
+    work\_cycles & Number of cycles taken for execution ignoring overheads. This is a measure of useful computation. \\ \hline
+    child\_number & The \textit{n}th child of the parent \\ \hline
+    wait\_instants & Instants when waiting for children was initiated. This is relative to self execution start. \\ \hline
+    joins\_at & Join point relative to parent \\ \hline
+    last\_to\_finish & True if last task executed on worker \\ \hline
+    leaf & True if task has no children \\ \hline
+    idle\_join & The join point relative to implicit task that encountered the loop construct \\ \hline
+    lineage & Child number tracing back to root. This is a schedule-independent identifier.\\ \hline
+    tag & Name set by program or runtime system \\ \hline
+    source\_line & Source line and file name of definition \\ \hline
+    outline\_function & Outline function pointer \\ \hline
+    metadata & Useful extra information from program or runtime system \\ \hline
+    queue\_size & Queue size when removed by worker. This is an alternative measure of parallelism. \\ \hline
+    parent & Parent identifier \\ \hline
+    parent\_tag & Name of parent \\ \hline
+    parent\_ind & Index of parent in tabular CSV data \\ \hline
+    parent\_joins\_at & Join point of parent \\ \hline
+    parent\_overhead\_cycles & Overhead cycles of parent \\ \hline
+    chunk\_lineage & A tuple x-y, where x is the idle join point, and y the start of the iteration range.  This is a schedule-independent identifier for chunks. \\ \hline
+    chunk\_work\_balance & Maximum work cycles among chunk siblings divided by the mean. This is a measure of how evenly work is distributed across chunk siblings. \\ \hline
+    chunk\_work\_cpu & Chunk sibling work cycles across CPUs \\ \hline
+    chunk\_work\_cpu\_balance & Chunk sibling work CPU balance across CPUs \\ \hline
+    inst\_par\_median & Median contribution to instantaneous parallelism by fragments \\ \hline
+    inst\_par\_min & Minimum contribution to instantaneous parallelism by fragments \\ \hline
+    inst\_par\_max & Maximum contribution to instantaneous parallelism by fragments \\ \hline
+    mem\_hier\_util & Ratio of cycles spent waiting for data to the number of work cycles. This is a measure of the locality exploited by the scheduler. \\ \hline
+    PAPI\_* & PAPI event statistics \\ \hline
+    parallel\_benefit & Ratio of work cycles to the overhead borne (overhead cycles) by parent \\ \hline
+    sync\_cycles\_per\_child & Average number of cycles taken to synchronize with children \\ \hline
+    sibling\_work\_balance & Maximum work cycles among siblings divided by the mean \\ \hline
+    sibling\_scatter & Median euclidean distance between identifiers of CPUs that executed siblings. This is a measure of locality exploited while executing siblings. \\ \hline
+    work\_deviation & Difference in work cycles from another run \\ \hline
+    work\_cycles\_left & Work cycles for computing work deviation \\ \hline
+    work\_cycles\_right & Work cycles for computing work deviation \\ \hline
     \caption{Task profiling data}
     \label{tab:task-prof-data}
 \end{longtable}
