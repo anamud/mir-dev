@@ -40,7 +40,11 @@ static void* mir_worker_loop(void* arg)
     MIR_ASSERT(g_sig_worker_alive < runtime->num_workers);
 
     // Record state and event
-    MIR_RECORDER_EVENT(NULL, 0);
+    char worker_loop_str[MIR_SHORT_NAME_LEN] = { 0 };
+    sprintf(worker_loop_str, "0,in_worker_loop(%d)", worker->id);
+    unsigned int worker_loop_str_len = strlen(worker_loop_str);
+    MIR_ASSERT(worker_loop_str_len < (MIR_RECORDER_EVENT_META_DATA_MAX_SIZE - 1));
+    MIR_RECORDER_EVENT(worker_loop_str, worker_loop_str_len);
     MIR_RECORDER_STATE_BEGIN(MIR_STATE_TIDLE);
 
     if(runtime->idle_task) {
@@ -71,7 +75,7 @@ static void* mir_worker_loop(void* arg)
 
             // Dump MIR_STATE_TIDLE state
             MIR_RECORDER_STATE_END(NULL, 0);
-            MIR_RECORDER_EVENT(NULL, 0);
+            MIR_RECORDER_EVENT(worker_loop_str, worker_loop_str_len);
 
             // Wait
             mir_lock_set(&worker->sig_die);

@@ -489,7 +489,9 @@ void mir_destroy()
     }
 
     // Set a marking event
-    MIR_RECORDER_EVENT(NULL, 0);
+    const char* temp = "0,in_mir_destroy";
+    MIR_ASSERT(strlen(temp) < (MIR_RECORDER_EVENT_META_DATA_MAX_SIZE - 1));
+    MIR_RECORDER_EVENT(temp, strlen(temp));
 
     // Check if workers are free
     MIR_DEBUG("Checking if workers are done ...");

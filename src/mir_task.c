@@ -295,13 +295,15 @@ void mir_task_execute_prolog(struct mir_task_t* task)
         // Compose event metadata
         char event_meta_data_pre[MIR_RECORDER_EVENT_META_DATA_MAX_SIZE - 1] = { 0 };
         if (worker->current_task) {
+            // Event is attributed to the current task
             char temp[MIR_LONG_NAME_LEN] = { 0 };
             sprintf(temp, "%" MIR_FORMSPEC_UL ",%s", worker->current_task->id.uid, worker->current_task->name);
             MIR_ASSERT(strlen(temp) < (MIR_RECORDER_EVENT_META_DATA_MAX_SIZE - 1));
             strcpy(event_meta_data_pre, temp);
         }
-        else
-            sprintf(event_meta_data_pre, "0, NULL");
+        else {
+            sprintf(event_meta_data_pre, "0,in_task_execute_prolog");
+        }
         // Record event
         MIR_RECORDER_EVENT(&event_meta_data_pre[0], MIR_RECORDER_EVENT_META_DATA_MAX_SIZE - 1);
         // Record state
