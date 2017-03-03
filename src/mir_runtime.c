@@ -201,7 +201,7 @@ static inline void print_help()
                               "--worker-stats collect worker statistics\n"
                               "--task-stats collect task statistics\n"
                               "--chunks-are-tasks treat loop chunks as tasks\n"
-                              "--idle-task workers idle under implicit task\n"
+                              "--idle-task idle context is a task\n"
                               "-r (--recorder) enable worker recorder\n"
                               "-p (--profiler) enable communication with Outline Function Profiler. Note: This option is supported only for single-worker execution!\n");
 } /*}}}*/
@@ -318,7 +318,7 @@ static void mir_config()
             }
             else if (0 == strcmp(long_options[option_index].name, "idle-task")) {
                 runtime->idle_task = 1;
-                MIR_DEBUG("Workers idle under implicit task enabled.");
+                MIR_DEBUG("Idle context is a task enabled.");
             }
             else if (0 == strcmp(long_options[option_index].name, "queue-size")) {
                 runtime->sched_pol->queue_capacity = atoi(optarg);
@@ -428,10 +428,12 @@ void mir_create_int(int num_workers)
     atexit(mir_destroy);
 
     // Set a marking event
-    MIR_RECORDER_EVENT(NULL, 0);
+    const char* temp = "0,in_mir_create_int";
+    MIR_ASSERT(strlen(temp) < (MIR_RECORDER_EVENT_META_DATA_MAX_SIZE - 1));
+    MIR_RECORDER_EVENT(temp, strlen(temp));
 
     if(runtime->idle_task) {
-        // Start idle task as fake task
+        // Start idle context as fake task
         struct mir_task_t* task = mir_task_create_common((mir_tfunc_t) idle_task_func, NULL, 0, 0, NULL, MIR_IDLE_TASK_NAME, NULL, NULL, mir_worker_get_context()->current_task);
         MIR_CHECK_MEM(task != NULL);
 
