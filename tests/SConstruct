@@ -40,6 +40,8 @@ env['LINKFLAGS'] = ['-pthread']
 env['LIBS'] = Split("""
 m
 check
+rt
+subunit
 """)
 
 env['LIBPATH'] = [MIR_ROOT + '/src']
