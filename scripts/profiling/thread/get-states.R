@@ -1,3 +1,8 @@
+# TODO: Load common functionality from common.R
+
+# Clean slate
+rm(list=ls())
+
 # Strings as factors
 options(stringsAsFactors = F)
 

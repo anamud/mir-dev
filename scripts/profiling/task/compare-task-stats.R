@@ -34,7 +34,7 @@ if(!exists("left", where=parsed) | !exists("right", where=parsed)) {
 }
 
 # Read data
-if(parsed$verbo) my_print("Reading task profiiling data...")
+if(parsed$verbo) my_print("Reading task profiling data...")
 
 ts_data_l <- read.csv(parsed$left, header=TRUE, comment.char='#', na.strings="NA")
 ts_data_r <- read.csv(parsed$right, header=TRUE, comment.char='#', na.strings="NA")
