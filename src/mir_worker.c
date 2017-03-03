@@ -92,13 +92,6 @@ static void* mir_worker_loop(void* arg)
 void mir_worker_master_init(struct mir_worker_t* worker)
 { /*{{{*/
     MIR_ASSERT(worker != NULL);
-    // Kill signal
-    // Used during runtime system shutdown
-    // When this is unset, the worker dies
-    mir_lock_create(&worker->sig_die);
-    mir_lock_set(&worker->sig_die);
-    worker->sig_dying = 0;
-
     // Worker thread attributes
     pthread_attr_t attr;
     pthread_attr_init(&attr);
@@ -200,6 +193,13 @@ void mir_worker_local_init(struct mir_worker_t* worker)
     // Create private task queue
     worker->private_queue = mir_task_queue_create(runtime->sched_pol->queue_capacity);
     MIR_CHECK_MEM(worker->private_queue != NULL);
+
+    // Kill signal
+    // Used during runtime system shutdown
+    // When this is unset, the worker dies
+    mir_lock_create(&worker->sig_die);
+    mir_lock_set(&worker->sig_die);
+    worker->sig_dying = 0;
 } /*}}}*/
 
 static inline void mir_worker_backoff_reset(struct mir_worker_t* worker)
