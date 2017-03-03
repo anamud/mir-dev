@@ -7,7 +7,7 @@ options(stringsAsFactors = F)
 options("scipen"=999)
 
 # Libary
-library(reshape2)
+suppressPackageStartupMessages(library(reshape2))
 
 # Read data
 args <- commandArgs(TRUE)

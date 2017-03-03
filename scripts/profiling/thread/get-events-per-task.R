@@ -8,8 +8,8 @@ options(stringsAsFactors = F)
 options("scipen"=999)
 
 # Libraries
-require(reshape2, quietly=T)
-require(data.table, quietly=T)
+suppressPackageStartupMessages(require(reshape2, quietly=T))
+suppressPackageStartupMessages(require(data.table, quietly=T))
 
 # Timing functions
 tic <- function(gcFirst = TRUE, type=c("elapsed", "user.self", "sys.self"))
