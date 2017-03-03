@@ -716,7 +716,7 @@ The columns in CSV files containing task profiling data are described in Table~\
     joins\_at & Join point relative to parent \\ \hline
     last\_to\_finish & True if last task executed on worker \\ \hline
     leaf & True if task has no children \\ \hline
-    idle\_join & The join point relative to implicit task that encountered the loop construct \\ \hline
+    idle\_join & The join point relative to the idle context (implicit task) that encountered the loop construct \\ \hline
     lineage & Child number tracing back to root. This is a schedule-independent identifier.\\ \hline
     tag & Name set by program or runtime system \\ \hline
     source\_line & Source line and file name of definition \\ \hline
@@ -728,7 +728,7 @@ The columns in CSV files containing task profiling data are described in Table~\
     parent\_ind & Index of parent in tabular CSV data \\ \hline
     parent\_joins\_at & Join point of parent \\ \hline
     parent\_overhead\_cycles & Overhead cycles of parent \\ \hline
-    chunk\_lineage & A tuple x-y, where x is the idle join point, and y the start of the iteration range.  This is a schedule-independent identifier for chunks. \\ \hline
+    chunk\_lineage & A tuple x-y, where x is the idle context join point, and y the start of the iteration range.  This is a schedule-independent identifier for chunks. \\ \hline
     chunk\_work\_balance & Maximum work cycles among chunk siblings divided by the mean. This is a measure of how evenly work is distributed across chunk siblings. \\ \hline
     chunk\_work\_cpu & Chunk sibling work cycles across CPUs \\ \hline
     chunk\_work\_cpu\_balance & Chunk sibling work CPU balance across CPUs \\ \hline
