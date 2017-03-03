@@ -429,9 +429,8 @@ $ head states.csv
 
 \subsection{Enabling hardware performance counters}\label{sec:enabling-hardware-performance-counters}
 
-The recorder module can read hardware performance counters through PAPI during task execution events. Events currently supported are \textit{task start} and \textit{task end} events.
-In particular, the \textit{task switch} event is not supported.
-This means that counter readings will include effects of runtime system activity, system calls, interrupts, etc., that happened during task execution.
+The recorder module can read hardware performance counters through PAPI during task switch events.
+Counter readings are attributed to the task that switched out and include effects of runtime system activity, system calls, interrupts, etc., that happened during task execution upto the event.
 
 \begin{itemize}
     \item Install PAPI.
