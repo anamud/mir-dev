@@ -14,11 +14,12 @@
 
 // Task
 //#define MIR_TASK_DEBUG
-#define MIR_TASK_DEFAULT_NAME "NO_NAME"
+#define MIR_TASK_DEFAULT_NAME "nameless_task"
 #define MIR_IDLE_TASK_NAME "idle_task"
 //#define MIR_TASK_ALLOCATE_ON_STACK
-#define MIR_TASK_ID_START 0
-#define MIR_TASKWAIT_ID_START 0
+// Note: Don't change to 0. 0 is reserved for the idle context.
+#define MIR_TASK_ID_START 1
+#define MIR_TASKWAIT_ID_START 1
 #define MIR_TASK_FIXED_DATA_SIZE
 // Uncomment below define statement only if MIR_TASK_FIXED_DATA_SIZE is also defined
 #define MIR_TASK_DATA_MAX_SIZE 256

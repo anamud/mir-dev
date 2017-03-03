@@ -19,7 +19,7 @@
 extern uint32_t g_num_tasks_waiting;
 
 // FIXME: Make these per-worker
-uint64_t g_tasks_uidc = MIR_TASK_ID_START + 1;
+uint64_t g_tasks_uidc = MIR_TASK_ID_START;
 
 static inline unsigned int mir_twc_reduce(struct mir_twc_t* twc)
 { /*{{{*/

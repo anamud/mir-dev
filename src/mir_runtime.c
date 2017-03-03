@@ -606,7 +606,7 @@ shutdown:
     runtime = NULL;
     g_sig_worker_alive = 0;
     g_num_tasks_waiting = 0;
-    g_tasks_uidc = MIR_TASK_ID_START + 1;
+    g_tasks_uidc = MIR_TASK_ID_START;
     g_worker_status_board = 0;
     g_total_allocated_memory = 0;
 
