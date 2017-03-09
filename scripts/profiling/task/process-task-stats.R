@@ -136,7 +136,7 @@ if (parsed$forloop) {
     task_stats_only_chunks <- task_stats_only_chunks %>% group_by(idle_join) %>% mutate(chunk_work_balance = max(work_cycles)/mean(work_cycles))
 
     # Calculate chunk work per cpu
-    task_stats_only_chunks <- task_stats_only_chunks %>% group_by(idle_join, cpu_id) %>% mutate(chunk_work_cpu = sum(work_cycles))
+    task_stats_only_chunks <- task_stats_only_chunks %>% group_by(idle_join, cpu_id) %>% mutate(chunk_work_cpu = sum(as.numeric(work_cycles)))
 
     # Calculate chunk per cpu
     task_stats_only_chunks <- task_stats_only_chunks %>% group_by(idle_join) %>% mutate(chunk_work_cpu_balance = max(chunk_work_cpu)/mean(unique(chunk_work_cpu)))
@@ -205,7 +205,7 @@ if (parsed$linenumbers) {
 # Calculate parallel benefit
 if (parsed$verbose) my_print("Calculating parallel benefit ...")
 task_stats$parent_overhead_cycles <- task_stats$overhead_cycles[match(task_stats$parent, task_stats$task)]
-task_stats <- task_stats %>% group_by(parent) %>% mutate(sync_cycles_per_child = (parent_overhead_cycles - sum(creation_cycles))/n())
+task_stats <- task_stats %>% group_by(parent) %>% mutate(sync_cycles_per_child = (parent_overhead_cycles - sum(as.numeric(creation_cycles)))/n())
 task_stats <- task_stats %>% rowwise() %>% mutate(parallel_benefit = work_cycles/(creation_cycles + sync_cycles_per_child))
 task_stats <- ungroup(task_stats)
 
