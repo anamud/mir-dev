@@ -70,8 +70,7 @@ void mir_sleep_us(uint32_t usec)
     struct timespec* tmp;
     struct timespec* t0 = &timeout0;
     struct timespec* t1 = &timeout1;
-    //
-    // FIXME: Check this!
+
     t0->tv_sec = usec / (1000 * 1000);
     t0->tv_nsec = (usec % (1000 * 1000)) * (1000);
 
