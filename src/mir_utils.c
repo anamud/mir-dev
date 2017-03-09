@@ -95,8 +95,17 @@ uint64_t mir_get_cycles()
 uint64_t mir_get_cycles()
 { /*{{{*/
     unsigned a, d;
-    __asm__ volatile("rdtsc"
-                     : "=a"(a), "=d"(d));
+    // Serialize before calling RDTSC
+    // See: http://www.intel.com/content/dam/www/public/us/en/documents/white-papers/ia-32-ia-64-benchmark-code-execution-paper.pdf
+    __asm__ volatile(
+        "xor %%eax,%%eax\n\t"
+        "cpuid\n\t"
+        "rdtsc\n\t"
+        "movl %%eax, %0\n\t"
+        "movl %%edx, %1\n\t"
+        : "=r" (a), "=r" (d)
+        :
+        : "%eax","%ebx","%ecx","%edx");
 
     return ((uint64_t)a) | (((uint64_t)d) << 32);
 } /*}}}*/
