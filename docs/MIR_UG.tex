@@ -502,15 +502,15 @@ Processed task metrics in \textsf{task-stats.processed} can be visualized on gra
 
 \subsection{Profiling for-loop programs}
 
-Parallel for-loops are executed as special tasks by MIR. To enable per-chunk statistics, set \texttt{--chunks-are-tasks} in \texttt{MIR\_CONF}. Process for-loop metrics by providing the \texttt{forloop} argument to task processing scripts.
+Parallel for-loops are executed as special tasks by MIR. To enable per-chunk statistics, set \texttt{--chunks-are-tasks} in \texttt{MIR\_CONF}. Process for-loop metrics by providing the \texttt{--forloop} argument to task processing scripts.
 
 \begin{lstlisting}[style=MyInputStyle]
 $ MIR_CONF="--task-stats --chunks-are-tasks" <invoke MIR-linked for-loop program>
-$ Rscript ${MIR_ROOT}/scripts/profiling/task/process-task-stats.R -d mir-task-stats -forloop
-$ head loop-task-stats.processed
+$ Rscript ${MIR_ROOT}/scripts/profiling/task/process-task-stats.R -d mir-task-stats --forloop
+$ head task-stats.processed
 $ Rscript ${MIR_ROOT}/scripts/profiling/task/summarize-task-stats.R \
--d task-tats.processed -forloop
-$ cat loop-task-stats.summarized
+-d loop-task-stats.processed --forloop
+$ cat task-stats.summarized
 \end{lstlisting}
 
 \subsection{Merging task-based metrics}
