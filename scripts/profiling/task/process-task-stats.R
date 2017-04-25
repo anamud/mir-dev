@@ -224,6 +224,10 @@ if (!parsed$forloop)
 if (parsed$verbose) my_print("Calculating last tasks to finish ...")
 task_stats <- task_stats %>% group_by(cpu_id) %>% mutate(last_to_finish = (exec_end_instant == max(exec_end_instant)))
 
+# Calculate number of siblings
+if (parsed$verbose) my_print("Calculating number of siblings ...")
+task_stats <- task_stats %>% group_by(parent,joins_at) %>% mutate(num_siblings = n())
+
 # Stop processing
 if (parsed$timing) toc("Processing")
 
