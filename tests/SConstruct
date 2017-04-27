@@ -40,6 +40,8 @@ env['LINKFLAGS'] = ['-pthread']
 env['LIBS'] = Split("""
 m
 check
+rt
+subunit
 """)
 # Check framework requires librt and libsubunit on Ubuntu 16.04
 import platform
