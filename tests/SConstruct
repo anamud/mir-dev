@@ -40,12 +40,11 @@ env['LINKFLAGS'] = ['-pthread']
 env['LIBS'] = Split("""
 m
 check
-rt
-subunit
 """)
-# Check framework requires librt and libsubunit on Ubuntu 16.04
+# Check framework requires librt and libsubunit on Ubuntu flavors
+# starting from v16.04
 import platform
-if platform.linux_distribution()[0]=="Ubuntu":
+if platform.linux_distribution()[0].find("buntu"):
     if platform.linux_distribution()[1]=="16.04":
         env['LIBS'] += Split("""
         rt
