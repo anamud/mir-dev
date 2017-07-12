@@ -28,7 +28,7 @@ if os.path.isfile('HAVE_PAPI'):
             Exit(2)
 
 # Base environment
-env = Environment()
+env = Environment(ENV = os.environ)
 # Note: OpenMP support only enabled for GCC. 
 env['CC'] = ['gcc']
 # -D_XOPEN_SOURCE=600 needed for exposing pthread_barrier_t on recent Linux.

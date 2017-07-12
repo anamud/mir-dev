@@ -19,7 +19,7 @@ if os.path.isfile(MIR_ROOT+'/src/HAVE_PAPI'):
             Exit(2)
 
 # Common environment
-env = Environment()
+env = Environment(ENV = os.environ)
 env['CC'] = 'gcc'
 env['CXX'] = 'g++'
 env['CFLAGS'] = ['-std=c99']

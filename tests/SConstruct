@@ -20,8 +20,7 @@ if os.path.isfile(MIR_ROOT+'/src/HAVE_PAPI'):
             Exit(2)
 
 # Define base environment
-
-env = Environment()
+env = Environment(ENV = os.environ)
 env['CC'] = ['gcc']
 env['CCFLAGS'] = Split("""
 -std=c99
