@@ -42,13 +42,15 @@ check
 """)
 # Check framework requires librt and libsubunit on Ubuntu flavors
 # starting from v16.04
+import distro
 import platform
-if platform.linux_distribution()[0].find("buntu"):
-    if platform.linux_distribution()[1]=="16.04":
-        env['LIBS'] += Split("""
-        rt
-        subunit
-        """)
+if platform.system() == "Linux" and distro.id() == "ubuntu":
+    (major, minor, _) = distro.version_parts()
+    if int(major) >= 16 and int(minor) >= 4:
+      env['LIBS'] += Split("""
+      rt
+      subunit
+      """)
 
 env['LIBPATH'] = [MIR_ROOT + '/src']
 

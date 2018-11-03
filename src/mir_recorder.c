@@ -61,11 +61,11 @@ struct _perf_ctr_map perf_ctr_map[4] = {
 // Ignore the codes 0x0
 // Add as many perf counters as MIR_RECORDER_NUM_PAPI_HWPC
 struct _perf_ctr_map perf_ctr_map[MIR_RECORDER_NUM_PAPI_HWPC] = {
-    /*{"PAPI_TOT_INS", 0x0},*/
-    /*{"PAPI_TOT_CYC", 0x0},*/
+    {"PAPI_TOT_INS", 0x0},
+    {"PAPI_TOT_CYC", 0x0},
     /*{"PAPI_LD_INS", 0x0},*/
-    { "PAPI_TLB_DM", 0x0 },
-    { "PAPI_RES_STL", 0x0 },
+    /*{ "PAPI_TLB_DM", 0x0 },*/
+    /*{ "PAPI_RES_STL", 0x0 },*/
     /*{"PAPI_L1_DCA", 0x0},*/
     /*{"PAPI_L1_DCM", 0x0},*/
     /*{"PAPI_L2_DCA", 0x0},*/
