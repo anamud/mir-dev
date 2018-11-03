@@ -44,7 +44,8 @@ struct _perf_ctr_map {
 #define SPR_AUX_PERF_COUNT_1 0x6006
 // Count=4 is hard-coded. Do not change count.
 struct _perf_ctr_map perf_ctr_map[4] = {
-    { "LOCAL_DRD_CNT", 0x28 } { "REMOTE_DRD_CNT", 0x2b },
+    { "LOCAL_DRD_CNT", 0x28 },
+    { "REMOTE_DRD_CNT", 0x2b },
     { "LOCAL_DRD_MISS", 0x34 },
     { "REMOTE_DRD_MISS", 0x37 },
     /*{"DATA_CACHE_STALL", 0x10},*/
