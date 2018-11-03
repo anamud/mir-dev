@@ -240,6 +240,7 @@ static void mir_config()
         tok = strtok(NULL, " ");
     }
     int c;
+    optind = 1; // reset optind in case getopt is used elsewhere
     while (1) {
         static struct option long_options[] = {
             { "workers", required_argument, 0, 'w' },
